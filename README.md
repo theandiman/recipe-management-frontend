@@ -38,40 +38,28 @@ npm install
 
 ### Firebase Setup
 
-This app uses Firebase for authentication. Firebase projects are managed via Terraform in a multi-project GCP setup.
-
-**Infrastructure Overview:**
-- `recipe-mgmt-infra` - Houses Terraform state, Cloud Build, Artifact Registry
-- `recipe-mgmt-dev` - Development Firebase project (created by Terraform)
-- `recipe-mgmt-prod` - Production Firebase project (future)
+This app uses Firebase for authentication. Firebase projects are managed by the **[recipe-management-infrastructure](https://github.com/theandiman/recipe-management-infrastructure)** repository.
 
 **Quick Start:**
 
-1. **Deploy infrastructure project (one-time):**
+1. **Clone the infrastructure repository:**
    ```bash
-   cd terraform/environments/infra
+   git clone git@github.com:theandiman/recipe-management-infrastructure.git
+   ```
+
+2. **Get Firebase configuration for development:**
+   ```bash
+   cd recipe-management-infrastructure/terraform/environments/dev
    terraform init
-   export TF_VAR_billing_account="YOUR_BILLING_ACCOUNT"
-   export TF_VAR_org_id="YOUR_ORG_ID"
-   terraform apply
+   terraform output -raw env_file_content > /path/to/recipe-management-frontend/.env
    ```
 
-2. **Deploy dev environment:**
+3. **Restart development server:**
    ```bash
-   # Via Cloud Build (recommended)
-   ./scripts/deploy-terraform.sh dev YOUR_BILLING_ACCOUNT YOUR_ORG_ID
+   npm run dev
    ```
 
-3. **Get Firebase config for local development:**
-   ```bash
-   cd terraform/environments/dev
-   terraform output -raw env_file_content > ../../../.env
-   ```
-
-**Complete setup guide:** See [terraform/SETUP.md](./terraform/SETUP.md)
-
-**Manual Firebase setup (alternative):**
-If you prefer not to use Terraform, see [FIREBASE_SETUP.md](./FIREBASE_SETUP.md)
+**For detailed setup:** See [INFRASTRUCTURE.md](./INFRASTRUCTURE.md) for complete guide on getting Firebase configuration and working with the infrastructure repository.
 
 ### Development
 

@@ -17,9 +17,16 @@ The recipe management frontend is ready for development with:
 - Firebase Auth with email/password
 - Protected routes with automatic redirect
 - User session persistence
-- See FIREBASE_SETUP.md for configuration
+- Firebase projects managed by [recipe-management-infrastructure](https://github.com/theandiman/recipe-management-infrastructure) repo
+- See INFRASTRUCTURE.md for how to get Firebase config
+
+## Infrastructure
+- All Firebase projects, GCP resources, and Terraform code managed in separate repository
+- This frontend repo consumes Firebase config from infrastructure outputs
+- No Terraform files in this repository
+- See INFRASTRUCTURE.md for complete guide
 
 ## Development
 Start development: `npm run dev`
 Build for production: `npm run build`
-Deploy to Firebase: `firebase deploy` (after `firebase init`)
+Deploy to Firebase: `firebase deploy` (after configuring Firebase CLI with project from infrastructure repo)
