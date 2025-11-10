@@ -1,4 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { 
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  updateProfile,
+  type User as FirebaseUser
+} from 'firebase/auth'
+import { auth } from '../../config/firebase'
+import { getFirebaseErrorMessage } from '../../utils/firebaseErrors'
 import type { AuthContextType, LoginCredentials, RegisterData, User } from '../../types/auth'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -11,23 +21,34 @@ export const useAuth = () => {
   return context
 }
 
+/**
+ * Convert Firebase User to our User type
+ */
+const convertFirebaseUser = (firebaseUser: FirebaseUser): User => ({
+  uid: firebaseUser.uid,
+  email: firebaseUser.email,
+  displayName: firebaseUser.displayName,
+  photoURL: firebaseUser.photoURL,
+})
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Check for existing session on mount
+  // Listen to Firebase auth state changes
   useEffect(() => {
-    const storedUser = localStorage.getItem('user')
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser))
-      } catch (err) {
-        console.error('Failed to parse stored user', err)
-        localStorage.removeItem('user')
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        setUser(convertFirebaseUser(firebaseUser))
+      } else {
+        setUser(null)
       }
-    }
-    setIsLoading(false)
+      setIsLoading(false)
+    })
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe()
   }, [])
 
   const login = async (credentials: LoginCredentials) => {
@@ -35,23 +56,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null)
     
     try {
-      // TODO: Replace with actual API call
-      // Simulated API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Mock successful login
-      const mockUser: User = {
-        id: '1',
-        email: credentials.email,
-        name: credentials.email.split('@')[0],
-        createdAt: new Date().toISOString(),
-      }
-      
-      setUser(mockUser)
-      localStorage.setItem('user', JSON.stringify(mockUser))
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        credentials.email,
+        credentials.password
+      )
+      setUser(convertFirebaseUser(userCredential.user))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed')
-      throw err
+      const errorMessage = getFirebaseErrorMessage(err)
+      setError(errorMessage)
+      throw new Error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -62,31 +76,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null)
     
     try {
-      // TODO: Replace with actual API call
-      // Simulated API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Create the user account
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        data.email,
+        data.password
+      )
       
-      // Mock successful registration
-      const mockUser: User = {
-        id: '1',
-        email: data.email,
-        name: data.name,
-        createdAt: new Date().toISOString(),
-      }
+      // Update the user's display name
+      await updateProfile(userCredential.user, {
+        displayName: data.name
+      })
       
-      setUser(mockUser)
-      localStorage.setItem('user', JSON.stringify(mockUser))
+      // Update local state with the display name
+      setUser({
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        displayName: data.name,
+        photoURL: null,
+      })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed')
-      throw err
+      const errorMessage = getFirebaseErrorMessage(err)
+      setError(errorMessage)
+      throw new Error(errorMessage)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem('user')
+  const logout = async () => {
+    try {
+      await firebaseSignOut(auth)
+      setUser(null)
+    } catch (err) {
+      const errorMessage = getFirebaseErrorMessage(err)
+      setError(errorMessage)
+      console.error('Logout error:', errorMessage)
+    }
   }
 
   const value: AuthContextType = {

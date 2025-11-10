@@ -1,8 +1,8 @@
 export interface User {
-  id: string
-  email: string
-  name: string
-  createdAt: string
+  uid: string
+  email: string | null
+  displayName: string | null
+  photoURL: string | null
 }
 
 export interface LoginCredentials {
@@ -26,5 +26,5 @@ export interface AuthState {
 export interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>
   register: (data: RegisterData) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
 }

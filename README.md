@@ -9,6 +9,7 @@ A modern recipe management application frontend built with React, TypeScript, Vi
 - **Vite** - Build tool and dev server
 - **Tailwind CSS** - Utility-first CSS framework
 - **React Router** - Client-side routing
+- **Firebase** - Authentication and hosting
 
 ## Project Structure
 
@@ -34,6 +35,16 @@ src/
 ```bash
 npm install
 ```
+
+### Firebase Setup
+
+This app uses Firebase for authentication. See [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) for detailed setup instructions.
+
+Quick setup:
+1. Create a Firebase project
+2. Enable Email/Password authentication
+3. Copy `.env.example` to `.env` and add your Firebase config
+4. Restart the dev server
 
 ### Development
 
