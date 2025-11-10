@@ -1,6 +1,12 @@
 import React from 'react'
 import type { NutritionalInfo, NutritionalValues } from '../types/nutrition'
 
+// Nutrition calculation constants
+const SATURATED_FAT_RATIO = 0.4 // Estimate saturated fat as ~40% of total fat
+const SUGAR_RATIO = 0.3 // Estimate sugars as ~30% of carbohydrates
+const SODIUM_TO_SALT_CONVERSION = 400 // Convert mg sodium to g salt (sodium * 2.5 / 1000)
+const DEFAULT_SERVING_SIZE = 150 // Typical serving size in grams
+
 interface NutritionFactsProps {
   nutritionalInfo: NutritionalInfo;
   servings?: string | number;
@@ -48,32 +54,32 @@ export default function NutritionFacts({ nutritionalInfo, servings, targetServin
     },
     {
       name: 'Saturates',
-      value: `${formatNumber(perServing.fat * 0.4)}g`, // Estimate saturated fat as ~40% of total
-      percentage: calculatePercentage(perServing.fat * 0.4, 20),
-      color: (perServing.fat * 0.4) > 5 ? 'bg-red-500 text-white' : 
-             (perServing.fat * 0.4) > 1.5 ? 'bg-amber-500 text-white' : 
+      value: `${formatNumber(perServing.fat * SATURATED_FAT_RATIO)}g`,
+      percentage: calculatePercentage(perServing.fat * SATURATED_FAT_RATIO, 20),
+      color: (perServing.fat * SATURATED_FAT_RATIO) > 5 ? 'bg-red-500 text-white' : 
+             (perServing.fat * SATURATED_FAT_RATIO) > 1.5 ? 'bg-amber-500 text-white' : 
              'bg-green-500 text-white'
     },
     {
       name: 'Sugars',
-      value: `${formatNumber(perServing.carbohydrates * 0.3)}g`, // Estimate sugars as ~30% of carbs
-      percentage: calculatePercentage(perServing.carbohydrates * 0.3, 90),
-      color: (perServing.carbohydrates * 0.3) > 22.5 ? 'bg-red-500 text-white' : 
-             (perServing.carbohydrates * 0.3) > 5 ? 'bg-amber-500 text-white' : 
+      value: `${formatNumber(perServing.carbohydrates * SUGAR_RATIO)}g`,
+      percentage: calculatePercentage(perServing.carbohydrates * SUGAR_RATIO, 90),
+      color: (perServing.carbohydrates * SUGAR_RATIO) > 22.5 ? 'bg-red-500 text-white' : 
+             (perServing.carbohydrates * SUGAR_RATIO) > 5 ? 'bg-amber-500 text-white' : 
              'bg-green-500 text-white'
     },
     {
       name: 'Salt',
-      value: `${formatNumber(perServing.sodium / 400)}g`, // Convert mg sodium to g salt (sodium * 2.5 / 1000)
-      percentage: calculatePercentage(perServing.sodium / 400, 6),
-      color: (perServing.sodium / 400) > 1.5 ? 'bg-red-500 text-white' : 
-             (perServing.sodium / 400) > 0.3 ? 'bg-amber-500 text-white' : 
+      value: `${formatNumber(perServing.sodium / SODIUM_TO_SALT_CONVERSION)}g`,
+      percentage: calculatePercentage(perServing.sodium / SODIUM_TO_SALT_CONVERSION, 6),
+      color: (perServing.sodium / SODIUM_TO_SALT_CONVERSION) > 1.5 ? 'bg-red-500 text-white' : 
+             (perServing.sodium / SODIUM_TO_SALT_CONVERSION) > 0.3 ? 'bg-amber-500 text-white' : 
              'bg-green-500 text-white'
     }
   ]
 
-  // Calculate serving size estimate (typical serving ~150g)
-  const servingSize = 150
+  // Calculate serving size estimate
+  const servingSize = DEFAULT_SERVING_SIZE
 
   return (
     <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 w-full shadow-sm">

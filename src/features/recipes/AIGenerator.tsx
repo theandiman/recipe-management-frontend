@@ -32,9 +32,16 @@ export const AIGenerator: React.FC = () => {
   const [progress, setProgress] = useState(0)
   const [targetServings, setTargetServings] = useState<number | null>(null)
   const progressRef = useRef<number>(0)
-  const imageAbortControllerRef = useRef<AbortController | null>(null)
 
-  const parsedRecipe: Recipe | null = result ? JSON.parse(result) : null
+  let parsedRecipe: Recipe | null = null
+  if (result) {
+    try {
+      parsedRecipe = JSON.parse(result)
+    } catch (e) {
+      console.error('Failed to parse recipe JSON:', e)
+      parsedRecipe = null
+    }
+  }
 
   // Handler functions
   const handleAddIngredient = (item: string) => {
@@ -86,24 +93,12 @@ export const AIGenerator: React.FC = () => {
   const handleGenerateImage = useCallback(() => {
     if (!parsedRecipe) return
 
-    // Cancel any ongoing image generation
-    if (imageAbortControllerRef.current) {
-      imageAbortControllerRef.current.abort()
-    }
-
-    const controller = new AbortController()
-    imageAbortControllerRef.current = controller
-
     dispatch(generateImage({
       recipe: parsedRecipe
     }))
   }, [parsedRecipe, dispatch])
 
   const handleClearImage = () => {
-    if (imageAbortControllerRef.current) {
-      imageAbortControllerRef.current.abort()
-      imageAbortControllerRef.current = null
-    }
     dispatch(clearImage())
   }
 
@@ -136,15 +131,6 @@ export const AIGenerator: React.FC = () => {
       return () => clearTimeout(timer)
     }
   }, [parsedRecipe, imageUrl, imageLoading, imageError, handleGenerateImage])
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (imageAbortControllerRef.current) {
-        imageAbortControllerRef.current.abort()
-      }
-    }
-  }, [])
 
   return (
     <div className="max-w-6xl mx-auto">

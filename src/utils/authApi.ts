@@ -1,4 +1,5 @@
 import axios from 'axios'
+import type { AxiosRequestConfig } from 'axios'
 import { auth } from '../config/firebase'
 
 async function getIdToken(): Promise<string | null> {
@@ -12,9 +13,8 @@ async function getIdToken(): Promise<string | null> {
   return null
 }
 
-export async function postWithAuth(url: string, data: any, config: any = {}) {
+export async function postWithAuth(url: string, data: unknown, config: AxiosRequestConfig = {}) {
   const token = await getIdToken()
-  console.log('[authApi] postWithAuth: willAttachAuth=', !!token, 'url=', url)
   const headers = {
     ...config.headers,
     ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -25,7 +25,6 @@ export async function postWithAuth(url: string, data: any, config: any = {}) {
 
 export async function fetchWithAuth(url: string, opts: RequestInit = {}) {
   const token = await getIdToken()
-  console.log('[authApi] fetchWithAuth: willAttachAuth=', !!token, 'url=', url)
   const headers = {
     ...opts.headers,
     ...(token ? { Authorization: `Bearer ${token}` } : {})
