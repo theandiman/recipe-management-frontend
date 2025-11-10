@@ -390,7 +390,7 @@ export const AIGenerator: React.FC = () => {
             {/* Ingredients */}
             <div className="mb-8">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Ingredients</h3>
-              <ul className="space-y-2">
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
                 {parsedRecipe.ingredients?.map((ing, idx) => {
                   const scaledIngredient = targetServings !== null ? scaleIngredient(ing, targetServings / (Number(parsedRecipe.servings) || 1)) : ing
                   return (
