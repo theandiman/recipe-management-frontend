@@ -1,0 +1,50 @@
+# Gitleaks configuration for Recipe Management Frontend
+title = "Recipe Management Frontend Secret Scanning"
+
+[extend]
+# Use default gitleaks rules
+useDefault = true
+
+[[rules]]
+id = "firebase-api-key"
+description = "Firebase API Key"
+regex = '''AIza[0-9A-Za-z-_]{35}'''
+tags = ["firebase", "api-key"]
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api[_-]?key|apikey)[\s]*[=:]["']?([0-9a-zA-Z\-_]{20,})["']?'''
+tags = ["api-key"]
+entropy = 3.5
+
+[[rules]]
+id = "firebase-private-key"
+description = "Firebase Private Key"
+regex = '''-----BEGIN PRIVATE KEY-----'''
+tags = ["firebase", "private-key"]
+
+[[rules]]
+id = "gcp-service-account"
+description = "GCP Service Account JSON"
+regex = '''"type":\s*"service_account"'''
+tags = ["gcp", "service-account"]
+
+[allowlist]
+description = "Allowlist for false positives"
+paths = [
+  '''.env''',              # Local env file (gitignored)
+  '''.env.example''',
+  '''dist/''',             # Build output (gitignored)
+  '''node_modules/''',
+  '''package-lock.json''',
+  '''yarn.lock''',
+  '''pnpm-lock.yaml''',
+]
+
+regexes = [
+  '''VITE_FIREBASE_API_KEY''',  # Environment variable name, not actual key
+  '''your-api-key-here''',      # Placeholder text
+  '''example\.com''',
+  '''localhost''',
+]
