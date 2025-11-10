@@ -38,13 +38,25 @@ npm install
 
 ### Firebase Setup
 
-This app uses Firebase for authentication. See [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) for detailed setup instructions.
+This app uses Firebase for authentication. Firebase projects are managed via Terraform.
 
-Quick setup:
-1. Create a Firebase project
+**Using Terraform (Recommended for teams):**
+1. See [terraform/README.md](./terraform/README.md) for complete setup
+2. Deploy dev environment via Cloud Build:
+   ```bash
+   ./scripts/deploy-terraform.sh dev YOUR_BILLING_ACCOUNT YOUR_ORG_ID
+   ```
+3. Get Firebase config:
+   ```bash
+   cd terraform/environments/dev
+   terraform output -raw env_file_content > ../../../.env
+   ```
+
+**Manual setup (Alternative):**
+1. Create a Firebase project manually at [console.firebase.google.com](https://console.firebase.google.com)
 2. Enable Email/Password authentication
 3. Copy `.env.example` to `.env` and add your Firebase config
-4. Restart the dev server
+4. See [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) for details
 
 ### Development
 
