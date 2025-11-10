@@ -1,15 +1,30 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider } from './features/auth/AuthContext'
+import { Login } from './features/auth/Login'
+import { Register } from './features/auth/Register'
+import { Dashboard } from './components/Dashboard'
+import { ProtectedRoute } from './components/ProtectedRoute'
+import './App.css'
+
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Recipe Management App
-        </h1>
-        <p className="text-gray-600">
-          Your recipe management application frontend is ready!
-        </p>
-      </div>
-    </div>
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   )
 }
 
