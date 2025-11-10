@@ -376,13 +376,13 @@ export const AIGenerator: React.FC = () => {
             {/* Ingredients */}
             <div className="mb-8">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Ingredients</h3>
-              <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-left">
                 {parsedRecipe.ingredients?.map((ing, idx) => {
                   const scaledIngredient = targetServings !== null ? scaleIngredient(ing, targetServings / (Number(parsedRecipe.servings) || 1)) : ing
                   return (
-                    <li key={idx} className="flex items-start">
+                    <li key={idx} className="flex items-start text-left">
                       <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0" />
-                      <span className="text-gray-700">{String(scaledIngredient)}</span>
+                      <span className="text-gray-700 text-left">{String(scaledIngredient)}</span>
                     </li>
                   )
                 })}
