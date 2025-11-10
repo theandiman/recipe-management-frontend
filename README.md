@@ -38,25 +38,40 @@ npm install
 
 ### Firebase Setup
 
-This app uses Firebase for authentication. Firebase projects are managed via Terraform.
+This app uses Firebase for authentication. Firebase projects are managed via Terraform in a multi-project GCP setup.
 
-**Using Terraform (Recommended for teams):**
-1. See [terraform/README.md](./terraform/README.md) for complete setup
-2. Deploy dev environment via Cloud Build:
+**Infrastructure Overview:**
+- `recipe-mgmt-infra` - Houses Terraform state, Cloud Build, Artifact Registry
+- `recipe-mgmt-dev` - Development Firebase project (created by Terraform)
+- `recipe-mgmt-prod` - Production Firebase project (future)
+
+**Quick Start:**
+
+1. **Deploy infrastructure project (one-time):**
    ```bash
+   cd terraform/environments/infra
+   terraform init
+   export TF_VAR_billing_account="YOUR_BILLING_ACCOUNT"
+   export TF_VAR_org_id="YOUR_ORG_ID"
+   terraform apply
+   ```
+
+2. **Deploy dev environment:**
+   ```bash
+   # Via Cloud Build (recommended)
    ./scripts/deploy-terraform.sh dev YOUR_BILLING_ACCOUNT YOUR_ORG_ID
    ```
-3. Get Firebase config:
+
+3. **Get Firebase config for local development:**
    ```bash
    cd terraform/environments/dev
    terraform output -raw env_file_content > ../../../.env
    ```
 
-**Manual setup (Alternative):**
-1. Create a Firebase project manually at [console.firebase.google.com](https://console.firebase.google.com)
-2. Enable Email/Password authentication
-3. Copy `.env.example` to `.env` and add your Firebase config
-4. See [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) for details
+**Complete setup guide:** See [terraform/SETUP.md](./terraform/SETUP.md)
+
+**Manual Firebase setup (alternative):**
+If you prefer not to use Terraform, see [FIREBASE_SETUP.md](./FIREBASE_SETUP.md)
 
 ### Development
 

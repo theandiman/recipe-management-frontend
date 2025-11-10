@@ -8,6 +8,7 @@ variable "billing_account" {
   description = "The billing account ID"
   type        = string
   # Set via environment variable: TF_VAR_billing_account
+  # Or get from infra project outputs
 }
 
 variable "org_id" {
@@ -15,6 +16,13 @@ variable "org_id" {
   type        = string
   default     = null
   # Set via environment variable: TF_VAR_org_id (if using org structure)
+}
+
+variable "folder_id" {
+  description = "The folder ID (alternative to org_id)"
+  type        = string
+  default     = null
+  # Set via environment variable: TF_VAR_folder_id
 }
 
 variable "region" {

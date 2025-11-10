@@ -2,7 +2,9 @@ terraform {
   required_version = ">= 1.0"
   
   backend "gcs" {
-    bucket = "recipe-mgmt-terraform-state"  # Update with your actual bucket name
+    # Update this bucket name after creating the infra project
+    # Get the value from: terraform output -raw terraform_state_bucket (in infra environment)
+    bucket = "recipe-mgmt-infra-terraform-state"
     prefix = "environments/dev"
   }
 }
@@ -22,6 +24,7 @@ module "firebase_project" {
   project_id      = var.project_id
   billing_account = var.billing_account
   org_id          = var.org_id
+  folder_id       = var.folder_id
   
   web_app_name = "Recipe Management Web App (Dev)"
   

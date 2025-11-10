@@ -1,21 +1,41 @@
 # Terraform Infrastructure for Recipe Management App
 
-This directory contains Terraform configurations to provision Firebase projects via GCP Cloud Build.
+This directory contains Terraform configurations to provision a multi-project GCP infrastructure with Firebase.
+
+## Quick Start
+
+**🚀 New to this setup?** See [SETUP.md](./SETUP.md) for complete step-by-step instructions.
+
+## Architecture
+
+```
+recipe-mgmt-infra (Infrastructure Project)
+├── Terraform State (GCS bucket)
+├── Cloud Build
+├── Artifact Registry
+└── Service Accounts
+    ├── terraform-deploy
+    └── app-deploy
+
+recipe-mgmt-dev (Development Environment)
+├── Firebase (Auth, Hosting, Firestore)
+└── Future: Cloud Run, Cloud SQL, etc.
+
+recipe-mgmt-prod (Production Environment)
+├── Firebase (Auth, Hosting, Firestore)
+└── Future: Cloud Run, Cloud SQL, etc.
+```
 
 ## Structure
 
 ```
 terraform/
 ├── modules/
+│   ├── infra-project/        # Infrastructure project (state, Cloud Build, etc.)
 │   └── firebase-project/     # Reusable Firebase project module
-│       ├── main.tf
-│       ├── variables.tf
-│       └── outputs.tf
 └── environments/
+    ├── infra/                # Infrastructure/admin project
     ├── dev/                  # Development environment
-    │   ├── main.tf
-    │   ├── variables.tf
-    │   └── outputs.tf
     ├── staging/              # Staging environment (future)
     └── prod/                 # Production environment (future)
 ```
@@ -24,92 +44,43 @@ terraform/
 
 ### 1. GCP Setup
 
-1. **Create a GCS bucket for Terraform state**:
-   ```bash
-   gsutil mb -p YOUR_ADMIN_PROJECT gs://recipe-mgmt-terraform-state
-   gsutil versioning set on gs://recipe-mgmt-terraform-state
-   ```
+**First: Deploy the infrastructure project**
 
-2. **Update backend configuration**:
-   Edit `terraform/environments/dev/main.tf` and update the bucket name in the `backend "gcs"` block.
+The infrastructure project hosts Terraform state and Cloud Build. Deploy it first:
 
-3. **Create Cloud Build service account** (or use default):
-   ```bash
-   gcloud iam service-accounts create terraform-deploy \
-     --display-name="Terraform Deployment Service Account"
-   ```
+```bash
+cd terraform/environments/infra
 
-4. **Grant required permissions**:
-   ```bash
-   # Replace YOUR_PROJECT with your Cloud Build project
-   # Replace YOUR_ORG_ID with your organization ID
-   
-   gcloud organizations add-iam-policy-binding YOUR_ORG_ID \
-     --member="serviceAccount:terraform-deploy@YOUR_PROJECT.iam.gserviceaccount.com" \
-     --role="roles/resourcemanager.projectCreator"
-   
-   gcloud organizations add-iam-policy-binding YOUR_ORG_ID \
-     --member="serviceAccount:terraform-deploy@YOUR_PROJECT.iam.gserviceaccount.com" \
-     --role="roles/firebase.admin"
-   
-   gcloud organizations add-iam-policy-binding YOUR_ORG_ID \
-     --member="serviceAccount:terraform-deploy@YOUR_PROJECT.iam.gserviceaccount.com" \
-     --role="roles/billing.projectManager"
-   ```
+terraform init
+export TF_VAR_billing_account="YOUR_BILLING_ACCOUNT"
+export TF_VAR_org_id="YOUR_ORG_ID"  # or TF_VAR_folder_id
+terraform apply
 
-### 2. Update Configuration
+# After deployment, note the state bucket name
+terraform output terraform_state_bucket
+```
 
-1. **Update project ID**:
-   Edit `terraform/environments/dev/variables.tf` and set your desired `project_id` (must be globally unique).
-
-2. **Set your billing account**:
-   Get your billing account ID:
-   ```bash
-   gcloud billing accounts list
-   ```
+See [SETUP.md](./SETUP.md) for detailed instructions.
 
 ## Deployment via Cloud Build
 
-### Method 1: Manual Cloud Build Trigger
+All deployments run in the `recipe-mgmt-infra` project.
+
+### Deploy Development Environment
 
 ```bash
+# Option 1: Using Cloud Build trigger (recommended)
+# - Configure trigger in GCP Console
+# - Manually run the trigger
+
+# Option 2: Command line
 gcloud builds submit \
   --config=cloudbuild-terraform.yaml \
-  --substitutions=_ENVIRONMENT=dev,_BILLING_ACCOUNT=YOUR_BILLING_ACCOUNT_ID,_ORG_ID=YOUR_ORG_ID \
-  --project=YOUR_CLOUDBUILD_PROJECT
-```
+  --substitutions=_ENVIRONMENT=dev,_BILLING_ACCOUNT=XXX,_ORG_ID=XXX \
+  --project=recipe-mgmt-infra
 
-### Method 2: Create Cloud Build Trigger
-
-1. Go to [Cloud Build Triggers](https://console.cloud.google.com/cloud-build/triggers)
-2. Click "Create Trigger"
-3. Configure:
-   - **Name**: `terraform-deploy-dev`
-   - **Event**: Manual invocation (or branch push)
-   - **Source**: Connect your GitHub repository
-   - **Configuration**: Cloud Build configuration file
-   - **Location**: `cloudbuild-terraform.yaml`
-   - **Substitution variables**:
-     - `_ENVIRONMENT`: `dev`
-     - `_BILLING_ACCOUNT`: Your billing account ID
-     - `_ORG_ID`: Your organization ID (or leave empty if using folders)
-   - **Service account**: Select the service account with required permissions
-
-### Method 3: Local Development (Optional)
-
-```bash
-cd terraform/environments/dev
-
-# Initialize
-terraform init
-
-# Plan
-export TF_VAR_billing_account="YOUR_BILLING_ACCOUNT_ID"
-export TF_VAR_org_id="YOUR_ORG_ID"
-terraform plan
-
-# Apply
-terraform apply
+# Option 3: Helper script  
+./scripts/deploy-terraform.sh dev YOUR_BILLING_ACCOUNT YOUR_ORG_ID
 ```
 
 ## Getting Firebase Config
