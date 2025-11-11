@@ -355,4 +355,24 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       expect(step1Button.textContent).toContain('✓')
     })
   })
+
+  describe('Image Upload', () => {
+    it('should show file upload UI when no image is uploaded', () => {
+      renderWithRouter(<CreateRecipe />)
+      
+      expect(screen.getByText(/Click to upload/i)).toBeInTheDocument()
+      expect(screen.getByText(/drag and drop/i)).toBeInTheDocument()
+      expect(screen.getByText('Recipe Image')).toBeInTheDocument()
+    })
+
+    it('should have file input with correct attributes', () => {
+      const { container } = renderWithRouter(<CreateRecipe />)
+      
+      const input = container.querySelector('input[type="file"]') as HTMLInputElement
+      expect(input).toBeInTheDocument()
+      expect(input).toHaveAttribute('accept', 'image/*')
+      expect(input).toHaveClass('hidden')
+    })
+  })
 })
+
