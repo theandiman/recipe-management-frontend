@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom'
 export const CreateRecipe: React.FC = () => {
   const navigate = useNavigate()
   
+  // View mode state
+  const [isPreview, setIsPreview] = useState(false)
+  
   // Form state
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -82,12 +85,178 @@ export const CreateRecipe: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Recipe</h1>
-        <p className="text-gray-600">Add a new recipe to your collection</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Recipe</h1>
+          <p className="text-gray-600">Add a new recipe to your collection</p>
+        </div>
+        
+        {/* Edit/Preview Toggle */}
+        <div className="flex items-center bg-gray-100 rounded-lg p-1">
+          <button
+            type="button"
+            onClick={() => setIsPreview(false)}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              !isPreview
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <div className="flex items-center space-x-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              <span>Edit</span>
+            </div>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsPreview(true)}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              isPreview
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <div className="flex items-center space-x-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              <span>Preview</span>
+            </div>
+          </button>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+      {/* Preview Mode */}
+      {isPreview ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+          {/* Recipe header */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              {title || 'Untitled Recipe'}
+            </h1>
+            
+            {description && (
+              <p className="text-lg text-gray-600 mb-6">{description}</p>
+            )}
+
+            {/* Recipe meta */}
+            <div className="flex flex-wrap gap-6 pb-6 border-b border-gray-200">
+              {prepTime && (
+                <div className="flex items-center text-gray-700">
+                  <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <div className="text-sm text-gray-500">Prep Time</div>
+                    <div className="font-medium">{prepTime} min</div>
+                  </div>
+                </div>
+              )}
+              
+              {cookTime && (
+                <div className="flex items-center text-gray-700">
+                  <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                  </svg>
+                  <div>
+                    <div className="text-sm text-gray-500">Cook Time</div>
+                    <div className="font-medium">{cookTime} min</div>
+                  </div>
+                </div>
+              )}
+
+              {servings && (
+                <div className="flex items-center text-gray-700">
+                  <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  <div>
+                    <div className="text-sm text-gray-500">Servings</div>
+                    <div className="font-medium">{servings}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Ingredients */}
+          {ingredients.filter(i => i.trim()).length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Ingredients</h2>
+              <ul className="space-y-2">
+                {ingredients.filter(i => i.trim()).map((ingredient, index) => (
+                  <li key={index} className="flex items-start">
+                    <svg className="w-5 h-5 mr-3 mt-0.5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-gray-700">{ingredient}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Instructions */}
+          {instructions.filter(i => i.trim()).length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Instructions</h2>
+              <ol className="space-y-4">
+                {instructions.filter(i => i.trim()).map((instruction, index) => (
+                  <li key={index} className="flex items-start">
+                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-green-600 text-white font-bold text-sm mr-4 flex-shrink-0 mt-0.5">
+                      {index + 1}
+                    </span>
+                    <p className="text-gray-700 pt-1">{instruction}</p>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          {/* Tags */}
+          {tags.length > 0 && (
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <h3 className="text-sm font-medium text-gray-500 mb-3">Tags</h3>
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-medium"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Action buttons in preview mode */}
+          <div className="flex items-center justify-end space-x-4 pt-8 mt-8 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors shadow-lg flex items-center space-x-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Save Recipe</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Edit Mode */
+        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
         <div className="space-y-8">
           {/* Basic Info Section */}
           <div className="space-y-6">
@@ -337,7 +506,8 @@ export const CreateRecipe: React.FC = () => {
             </button>
           </div>
         </div>
-      </form>
+        </form>
+      )}
     </div>
   )
 }
