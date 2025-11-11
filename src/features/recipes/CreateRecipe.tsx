@@ -24,7 +24,6 @@ export const CreateRecipe: React.FC = () => {
   const [instructions, setInstructions] = useState<string[]>([''])
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
-  const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   // Ingredient handlers
@@ -77,8 +76,6 @@ export const CreateRecipe: React.FC = () => {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      setImageFile(file)
-      
       // Create preview URL
       const reader = new FileReader()
       reader.onloadend = () => {
@@ -89,7 +86,6 @@ export const CreateRecipe: React.FC = () => {
   }
 
   const removeImage = () => {
-    setImageFile(null)
     setImagePreview(null)
   }
 
