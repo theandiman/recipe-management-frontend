@@ -40,7 +40,9 @@ jobs:
       - name: Comment PR with test results
         uses: actions/github-script@v7
         if: always()
+        continue-on-error: true  # May not have permissions in some repos
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
             let comment = '## 🧪 Test Results\n\n';
@@ -50,12 +52,17 @@ jobs:
             comment += '- ✅ Tests passed\n';
             comment += '- ✅ Build successful\n';
             
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
+            try {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            } catch (error) {
+              console.log('Unable to comment on PR (permissions may be required)');
+              console.log(error.message);
+            }
 
   security-check:
     name: Security Check
