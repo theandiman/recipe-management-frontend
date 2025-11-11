@@ -263,42 +263,28 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       fireEvent.click(step4Button)
     })
 
-    it('should render review section', () => {
-      expect(screen.getByText('Review Your Recipe')).toBeInTheDocument()
-    })
-
-    it('should show Edit/Preview toggle only on step 4', () => {
-      expect(screen.getByText('Edit')).toBeInTheDocument()
-      expect(screen.getByText('Preview')).toBeInTheDocument()
-    })
-
-    it('should toggle between Edit and Preview modes', () => {
-      // Should start in Edit mode
-      expect(screen.getByText('Review Your Recipe')).toBeInTheDocument()
-      
-      // Switch to Preview mode
-      const previewButton = screen.getByRole('button', { name: /Preview/i })
-      fireEvent.click(previewButton)
-      
-      // Preview mode should show "Untitled Recipe" for empty title
+    it('should render preview on step 4', () => {
+      // Step 4 should show preview with "Untitled Recipe" for empty title
       expect(screen.getByText('Untitled Recipe')).toBeInTheDocument()
-      
-      // Switch back to Edit mode
-      const editButton = screen.getByRole('button', { name: /Edit/i })
-      fireEvent.click(editButton)
-      
-      expect(screen.getByText('Review Your Recipe')).toBeInTheDocument()
     })
 
-    it('should not show Edit/Preview toggle on other steps', () => {
-      // Go back to step 1
-      const backButton = screen.getByRole('button', { name: /← Back/i })
-      fireEvent.click(backButton)
-      fireEvent.click(backButton)
-      fireEvent.click(backButton)
-      
+    it('should not show Edit/Preview toggle', () => {
+      // Toggle should not exist anymore
       expect(screen.queryByRole('button', { name: /Edit/i })).not.toBeInTheDocument()
       expect(screen.queryByRole('button', { name: /Preview/i })).not.toBeInTheDocument()
+    })
+
+    it('should show Save Recipe button on step 4', () => {
+      expect(screen.getByRole('button', { name: /Save Recipe/i })).toBeInTheDocument()
+    })
+
+    it('should show Back button on step 4', () => {
+      const backButton = screen.getByRole('button', { name: /← Back/i })
+      expect(backButton).toBeInTheDocument()
+      
+      // Should navigate back to step 3
+      fireEvent.click(backButton)
+      expect(screen.getByText(/Step 3 of 4: Instructions/i)).toBeInTheDocument()
     })
   })
 

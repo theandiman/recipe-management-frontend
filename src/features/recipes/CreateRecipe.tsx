@@ -10,9 +10,6 @@ export const CreateRecipe: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1)
   const totalSteps = 4
   
-  // View mode state
-  const [isPreview, setIsPreview] = useState(false)
-  
   // Save state
   const [saveLoading, setSaveLoading] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -147,45 +144,6 @@ export const CreateRecipe: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Recipe</h1>
             <p className="text-gray-600">Step {currentStep} of {totalSteps}: {steps[currentStep - 1].title}</p>
           </div>
-          
-          {/* Edit/Preview Toggle - only show on step 4 */}
-          {currentStep === 4 && (
-            <div className="flex items-center bg-gray-100 rounded-lg p-1">
-              <button
-                type="button"
-                onClick={() => setIsPreview(false)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  !isPreview
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  <span>Edit</span>
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsPreview(true)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isPreview
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  <span>Preview</span>
-                </div>
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Step Progress Indicator */}
@@ -226,8 +184,8 @@ export const CreateRecipe: React.FC = () => {
         </div>
       </div>
 
-      {/* Preview Mode */}
-      {isPreview ? (
+      {/* Step 4: Preview Mode */}
+      {currentStep === 4 ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           {/* Error message */}
           {saveError && (
@@ -354,43 +312,52 @@ export const CreateRecipe: React.FC = () => {
           )}
 
           {/* Action buttons in preview mode */}
-          <div className="flex items-center justify-end space-x-4 pt-8 mt-8 border-t border-gray-200">
+          <div className="flex items-center justify-between pt-8 mt-8 border-t border-gray-200">
             <button
               type="button"
-              onClick={handleCancel}
-              disabled={saveLoading}
-              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={prevStep}
+              className="px-6 py-3 rounded-lg font-medium transition-colors bg-gray-200 text-gray-700 hover:bg-gray-300"
             >
-              Cancel
+              ← Back
             </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={saveLoading}
-              className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saveLoading ? (
-                <>
-                  <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span>Save Recipe</span>
-                </>
-              )}
-            </button>
+            <div className="flex items-center space-x-4">
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={saveLoading}
+                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={saveLoading}
+                className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saveLoading ? (
+                  <>
+                    <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Save Recipe</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       ) : (
-        /* Edit Mode with Multi-Step */
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        /* Steps 1-3: Form */
+        <form className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           <div className="space-y-8">
             
             {/* Step 1: Basic Info */}
@@ -629,18 +596,6 @@ export const CreateRecipe: React.FC = () => {
             </div>
               </div>
             )}
-
-          {/* Step 4: Review */}
-          {currentStep === 4 && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-gray-900 pb-2 border-b border-gray-200">
-                Review Your Recipe
-              </h2>
-              <p className="text-gray-600 text-sm">
-                Preview how your recipe will look when saved. Toggle to edit mode if you need to make changes.
-              </p>
-            </div>
-          )}
 
             {/* Navigation Buttons */}
             <div className="flex items-center justify-between pt-6 border-t border-gray-200">
