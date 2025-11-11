@@ -8,8 +8,6 @@ const DEFAULT_SERVING_SIZE = 150 // Typical serving size in grams
 
 interface NutritionFactsProps {
   nutritionalInfo: NutritionalInfo;
-  servings?: string | number;
-  targetServings?: number | null;
 }
 
 /**
