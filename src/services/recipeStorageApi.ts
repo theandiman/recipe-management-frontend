@@ -1,5 +1,6 @@
 import { postWithAuth } from '../utils/authApi'
 import { buildApiUrl } from '../utils/apiUtils'
+import { uploadRecipeImage } from '../utils/imageStorage'
 import type { Recipe, RecipeTips } from '../types/nutrition'
 
 const STORAGE_API_BASE = import.meta.env.VITE_STORAGE_API_URL || ''
@@ -126,12 +127,61 @@ const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
  */
 export const saveRecipe = async (recipe: Recipe): Promise<RecipeResponse> => {
   const url = buildApiUrl(STORAGE_API_BASE, '/api/recipes')
-  const request = mapRecipeToCreateRequest(recipe)
+  let request = mapRecipeToCreateRequest(recipe)
+  
+  // If there's a base64 image, upload it to Firebase Storage first
+  if (recipe.imageUrl?.startsWith('data:')) {
+    try {
+      // Generate a temporary ID for the image (will use recipe ID later)
+      const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      const downloadURL = await uploadRecipeImage(recipe.imageUrl, tempId)
+      
+      // Update request with Firebase Storage URL
+      request = {
+        ...request,
+        imageUrl: downloadURL
+      }
+    } catch (error) {
+      console.error('Failed to upload image, saving recipe without image:', error)
+      // Continue without image rather than failing completely
+      request = {
+        ...request,
+        imageUrl: undefined
+      }
+    }
+  }
   
   const response = await postWithAuth(url, request)
   return response.data
 }
 
+/**
+ * Fetch all recipes for the current user
+ * @returns List of recipes
+ */
+export const getRecipes = async (): Promise<RecipeResponse[]> => {
+  const { default: axios } = await import('axios')
+  const { auth } = await import('../config/firebase')
+  
+  const user = auth.currentUser
+  if (!user) {
+    throw new Error('User not authenticated')
+  }
+
+  const token = await user.getIdToken()
+  const url = buildApiUrl(STORAGE_API_BASE, '/api/recipes')
+  
+  const response = await axios.get(url, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  
+  return response.data
+}
+
 export default {
-  saveRecipe
+  saveRecipe,
+  getRecipes
 }
