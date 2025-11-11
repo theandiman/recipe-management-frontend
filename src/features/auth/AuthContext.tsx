@@ -80,6 +80,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const provider = new GoogleAuthProvider()
       const userCredential = await signInWithPopup(auth, provider)
+      
+      // Note: Email allowlist is enforced by Firebase Cloud Functions
+      // If we get here, the email was allowed
       setUser(convertFirebaseUser(userCredential.user))
     } catch (err) {
       console.error('Google sign-in error:', err)
@@ -97,6 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     try {
       // Create the user account
+      // Firebase Cloud Functions will check email allowlist and block if not allowed
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         data.email,
