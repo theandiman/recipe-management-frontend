@@ -1,5 +1,3 @@
-import React from 'react'
-
 type Props = {
   servings: unknown
   targetServings: number | null

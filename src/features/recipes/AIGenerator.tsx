@@ -5,6 +5,7 @@ import NutritionFacts from '../../components/NutritionFacts'
 import ServingsStepper from '../../components/ServingsStepper'
 import { scaleIngredient } from '../../utils/quantityUtils'
 import { formatMinutes } from '../../utils/timeUtils'
+import { saveRecipe } from '../../services/recipeStorageApi'
 import type { Recipe } from '../../types/nutrition'
 import type { RootState } from '../../store'
 
@@ -31,6 +32,9 @@ export const AIGenerator: React.FC = () => {
   const [selectedDiets, setSelectedDiets] = useState<string[]>([])
   const [progress, setProgress] = useState(0)
   const [targetServings, setTargetServings] = useState<number | null>(null)
+  const [saveLoading, setSaveLoading] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const progressRef = useRef<number>(0)
 
   let parsedRecipe: Recipe | null = null
@@ -88,6 +92,29 @@ export const AIGenerator: React.FC = () => {
   const handleClear = () => {
     dispatch(clearRecipe())
     setTargetServings(null)
+    setSaveSuccess(false)
+    setSaveError(null)
+  }
+
+  const handleSaveRecipe = async () => {
+    if (!parsedRecipe) return
+
+    setSaveLoading(true)
+    setSaveError(null)
+    setSaveSuccess(false)
+
+    try {
+      await saveRecipe(parsedRecipe)
+      setSaveSuccess(true)
+      // Clear success message after 3 seconds
+      setTimeout(() => setSaveSuccess(false), 3000)
+    } catch (err: any) {
+      console.error('Failed to save recipe:', err)
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to save recipe. Please try again.'
+      setSaveError(errorMessage)
+    } finally {
+      setSaveLoading(false)
+    }
   }
 
   const handleGenerateImage = useCallback(() => {
@@ -283,13 +310,48 @@ export const AIGenerator: React.FC = () => {
                   <p className="mt-2 text-gray-600">{parsedRecipe.description}</p>
                 )}
               </div>
-              <button
-                onClick={handleClear}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Generate New
-              </button>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={handleSaveRecipe}
+                  disabled={saveLoading || saveSuccess}
+                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                >
+                  {saveLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                      <span>Saving...</span>
+                    </>
+                  ) : saveSuccess ? (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Saved!</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                      </svg>
+                      <span>Save Recipe</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={handleClear}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Generate New
+                </button>
+              </div>
             </div>
+
+            {/* Save Error Message */}
+            {saveError && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                {saveError}
+              </div>
+            )}
 
             {/* Recipe Image Section */}
             <div className="mb-6">
@@ -409,8 +471,6 @@ export const AIGenerator: React.FC = () => {
               <div className="mt-8">
                 <NutritionFacts
                   nutritionalInfo={parsedRecipe.nutritionalInfo}
-                  servings={parsedRecipe.servings}
-                  targetServings={targetServings}
                 />
               </div>
             )}

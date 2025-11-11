@@ -1,5 +1,4 @@
-import React from 'react'
-import type { NutritionalInfo, NutritionalValues } from '../types/nutrition'
+import type { NutritionalInfo } from '../types/nutrition'
 
 // Nutrition calculation constants
 const SATURATED_FAT_RATIO = 0.4 // Estimate saturated fat as ~40% of total fat
@@ -9,15 +8,13 @@ const DEFAULT_SERVING_SIZE = 150 // Typical serving size in grams
 
 interface NutritionFactsProps {
   nutritionalInfo: NutritionalInfo;
-  servings?: string | number;
-  targetServings?: number | null;
 }
 
 /**
  * NutritionFacts component displays nutritional information in UK-style format
  * with colored indicators for each nutrient (similar to traffic light system)
  */
-export default function NutritionFacts({ nutritionalInfo, servings, targetServings }: NutritionFactsProps) {
+export default function NutritionFacts({ nutritionalInfo }: NutritionFactsProps) {
   const perServing = nutritionalInfo?.perServing
   
   if (!perServing) {

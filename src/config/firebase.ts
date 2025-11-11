@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
+import { getStorage } from 'firebase/storage'
 
 // Firebase configuration from environment variables
 // Create a .env file with these variables for local development
@@ -17,3 +18,6 @@ const app = initializeApp(firebaseConfig)
 
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app)
+
+// Initialize Firebase Storage
+export const storage = getStorage(app)
