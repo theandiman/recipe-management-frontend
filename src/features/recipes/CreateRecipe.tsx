@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { saveRecipe } from '../../services/recipeStorageApi'
+import type { Recipe } from '../../types/nutrition'
 
 export const CreateRecipe: React.FC = () => {
   const navigate = useNavigate()
@@ -10,6 +12,10 @@ export const CreateRecipe: React.FC = () => {
   
   // View mode state
   const [isPreview, setIsPreview] = useState(false)
+  
+  // Save state
+  const [saveLoading, setSaveLoading] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   
   // Form state
   const [title, setTitle] = useState('')
@@ -68,19 +74,41 @@ export const CreateRecipe: React.FC = () => {
     setTags(tags.filter((_, i) => i !== index))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Implement save functionality
-    console.log({
-      title,
-      description,
-      prepTime: prepTime ? parseInt(prepTime) : undefined,
-      cookTime: cookTime ? parseInt(cookTime) : undefined,
-      servings: servings ? parseInt(servings) : undefined,
-      ingredients: ingredients.filter(i => i.trim()),
-      instructions: instructions.filter(i => i.trim()),
-      tags
-    })
+    
+    setSaveLoading(true)
+    setSaveError(null)
+    
+    try {
+      // Convert form data to Recipe format
+      const recipe: Recipe = {
+        recipeName: title,
+        description: description || undefined,
+        prepTime: prepTime ? `${prepTime} minutes` : undefined,
+        cookTime: cookTime ? `${cookTime} minutes` : undefined,
+        servings: servings ? parseInt(servings) : 1,
+        ingredients: ingredients.filter(i => i.trim()),
+        instructions: instructions.filter(i => i.trim())
+      }
+      
+      // Save with user-created source
+      const savedRecipe = await saveRecipe(recipe)
+      
+      console.log('Recipe saved successfully:', savedRecipe)
+      
+      // Navigate back to recipe library on success
+      navigate('/dashboard/recipes')
+    } catch (err: any) {
+      console.error('Failed to save recipe:', err)
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to save recipe. Please try again.'
+      setSaveError(errorMessage)
+      
+      // Scroll to top to show error
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } finally {
+      setSaveLoading(false)
+    }
   }
 
   const handleCancel = () => {
@@ -201,6 +229,29 @@ export const CreateRecipe: React.FC = () => {
       {/* Preview Mode */}
       {isPreview ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+          {/* Error message */}
+          {saveError && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
+              <svg className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-red-800">Error saving recipe</h3>
+                <p className="text-sm text-red-700 mt-1">{saveError}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSaveError(null)}
+                className="ml-3 text-red-600 hover:text-red-800 transition-colors"
+                aria-label="Dismiss"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           {/* Recipe header */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -307,19 +358,33 @@ export const CreateRecipe: React.FC = () => {
             <button
               type="button"
               onClick={handleCancel}
-              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              disabled={saveLoading}
+              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleSubmit}
-              className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors shadow-lg flex items-center space-x-2"
+              disabled={saveLoading}
+              className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Save Recipe</span>
+              {saveLoading ? (
+                <>
+                  <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Save Recipe</span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -611,13 +676,27 @@ export const CreateRecipe: React.FC = () => {
                 </button>
               ) : (
                 <button
-                  type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors shadow-lg flex items-center space-x-2"
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={saveLoading}
+                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span>Save Recipe</span>
+                  {saveLoading ? (
+                    <>
+                      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Save Recipe</span>
+                    </>
+                  )}
                 </button>
               )}
             </div>
