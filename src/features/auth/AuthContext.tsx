@@ -82,6 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userCredential = await signInWithPopup(auth, provider)
       setUser(convertFirebaseUser(userCredential.user))
     } catch (err) {
+      console.error('Google sign-in error:', err)
       const errorMessage = getFirebaseErrorMessage(err)
       setError(errorMessage)
       throw new Error(errorMessage)

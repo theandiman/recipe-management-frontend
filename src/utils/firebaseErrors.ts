@@ -26,6 +26,18 @@ export const getFirebaseErrorMessage = (error: unknown): string => {
     case 'auth/operation-not-allowed':
       return 'Email/password authentication is not enabled'
     
+    case 'auth/unauthorized-domain':
+      return 'This domain is not authorized for OAuth. Please add it to Firebase Console → Authentication → Settings → Authorized domains'
+    
+    case 'auth/popup-blocked':
+      return 'Sign-in popup was blocked. Please allow popups for this site'
+    
+    case 'auth/popup-closed-by-user':
+      return 'Sign-in was cancelled'
+    
+    case 'auth/cancelled-popup-request':
+      return 'Sign-in was cancelled'
+    
     case 'auth/too-many-requests':
       return 'Too many failed attempts. Please try again later'
     
