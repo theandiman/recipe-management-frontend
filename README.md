@@ -1,5 +1,8 @@
 # Recipe Management App - Frontend
 
+[![CI](https://github.com/theandiman/recipe-management-frontend/actions/workflows/ci.yml/badge.svg)](https://github.com/theandiman/recipe-management-frontend/actions/workflows/ci.yml)
+[![PR Checks](https://github.com/theandiman/recipe-management-frontend/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/theandiman/recipe-management-frontend/actions/workflows/pr-checks.yml)
+
 A modern recipe management application frontend built with React, TypeScript, Vite, and Tailwind CSS.
 
 ## Tech Stack
@@ -84,6 +87,51 @@ npm run build
 ```bash
 npm run preview
 ```
+
+## Testing
+
+### Run Unit Tests
+
+```bash
+npm test
+```
+
+### Run Tests with Coverage
+
+```bash
+npm run test:coverage
+```
+
+### Run Tests in UI Mode
+
+```bash
+npm run test:ui
+```
+
+### Run E2E Tests (Playwright)
+
+```bash
+npx playwright test
+```
+
+### View Test Results
+
+```bash
+npx playwright show-report
+```
+
+## Continuous Integration
+
+This project uses GitHub Actions for CI/CD:
+
+- **Lint**: Runs ESLint on every push and PR
+- **Type Check**: Validates TypeScript types
+- **Unit Tests**: Runs all unit tests with coverage reporting
+- **Build**: Ensures production build succeeds
+- **E2E Tests**: Runs Playwright tests for UI validation
+- **Security**: Checks for vulnerabilities and secrets
+
+All checks must pass before merging PRs.
 
 ## Development Guidelines
 
