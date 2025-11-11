@@ -1,6 +1,6 @@
 import { postWithAuth } from '../utils/authApi'
 import { buildApiUrl } from '../utils/apiUtils'
-import { uploadRecipeImage } from '../utils/imageStorage'
+import { uploadRecipeImage, deleteRecipeImage } from '../utils/imageStorage'
 import type { Recipe, RecipeTips } from '../types/nutrition'
 
 const STORAGE_API_BASE = import.meta.env.VITE_STORAGE_API_URL || ''
@@ -224,12 +224,22 @@ export const deleteRecipe = async (id: string): Promise<void> => {
   const token = await user.getIdToken()
   const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}`)
   
+  // Delete recipe from backend
   await axios.delete(url, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     }
   })
+
+  // Delete associated image from Firebase Storage
+  // This runs after backend deletion to ensure recipe is gone first
+  try {
+    await deleteRecipeImage(id)
+  } catch (error) {
+    // Log but don't throw - image might not exist or already deleted
+    console.warn('Failed to delete recipe image:', error)
+  }
 }
 
 export default {
