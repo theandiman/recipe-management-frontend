@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { saveRecipe } from '../../services/recipeStorageApi'
+import type { Recipe } from '../../types/nutrition'
 
 export const CreateRecipe: React.FC = () => {
   const navigate = useNavigate()
@@ -8,8 +10,9 @@ export const CreateRecipe: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1)
   const totalSteps = 4
   
-  // View mode state
-  const [isPreview, setIsPreview] = useState(false)
+  // Save state
+  const [saveLoading, setSaveLoading] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   
   // Form state
   const [title, setTitle] = useState('')
@@ -21,6 +24,7 @@ export const CreateRecipe: React.FC = () => {
   const [instructions, setInstructions] = useState<string[]>([''])
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   // Ingredient handlers
   const addIngredient = () => {
@@ -68,19 +72,60 @@ export const CreateRecipe: React.FC = () => {
     setTags(tags.filter((_, i) => i !== index))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Image upload handler
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Create preview URL
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removeImage = () => {
+    setImagePreview(null)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Implement save functionality
-    console.log({
-      title,
-      description,
-      prepTime: prepTime ? parseInt(prepTime) : undefined,
-      cookTime: cookTime ? parseInt(cookTime) : undefined,
-      servings: servings ? parseInt(servings) : undefined,
-      ingredients: ingredients.filter(i => i.trim()),
-      instructions: instructions.filter(i => i.trim()),
-      tags
-    })
+    
+    setSaveLoading(true)
+    setSaveError(null)
+    
+    try {
+      // Convert form data to Recipe format
+      const recipe: Recipe = {
+        recipeName: title,
+        description: description || undefined,
+        prepTime: prepTime ? `${prepTime} minutes` : undefined,
+        cookTime: cookTime ? `${cookTime} minutes` : undefined,
+        servings: servings ? parseInt(servings) : 1,
+        ingredients: ingredients.filter(i => i.trim()),
+        instructions: instructions.filter(i => i.trim()),
+        imageUrl: imagePreview || undefined,
+        source: 'manual'
+      }
+      
+      // Save with user-created source
+      const savedRecipe = await saveRecipe(recipe)
+      
+      console.log('Recipe saved successfully:', savedRecipe)
+      
+      // Navigate back to recipe library on success
+      navigate('/dashboard/recipes')
+    } catch (err: any) {
+      console.error('Failed to save recipe:', err)
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to save recipe. Please try again.'
+      setSaveError(errorMessage)
+      
+      // Scroll to top to show error
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } finally {
+      setSaveLoading(false)
+    }
   }
 
   const handleCancel = () => {
@@ -119,45 +164,6 @@ export const CreateRecipe: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Recipe</h1>
             <p className="text-gray-600">Step {currentStep} of {totalSteps}: {steps[currentStep - 1].title}</p>
           </div>
-          
-          {/* Edit/Preview Toggle - only show on step 4 */}
-          {currentStep === 4 && (
-            <div className="flex items-center bg-gray-100 rounded-lg p-1">
-              <button
-                type="button"
-                onClick={() => setIsPreview(false)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  !isPreview
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  <span>Edit</span>
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsPreview(true)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isPreview
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  <span>Preview</span>
-                </div>
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Step Progress Indicator */}
@@ -198,9 +204,32 @@ export const CreateRecipe: React.FC = () => {
         </div>
       </div>
 
-      {/* Preview Mode */}
-      {isPreview ? (
+      {/* Step 4: Preview Mode */}
+      {currentStep === 4 ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+          {/* Error message */}
+          {saveError && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
+              <svg className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-red-800">Error saving recipe</h3>
+                <p className="text-sm text-red-700 mt-1">{saveError}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSaveError(null)}
+                className="ml-3 text-red-600 hover:text-red-800 transition-colors"
+                aria-label="Dismiss"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           {/* Recipe header */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -209,6 +238,17 @@ export const CreateRecipe: React.FC = () => {
             
             {description && (
               <p className="text-lg text-gray-600 mb-6">{description}</p>
+            )}
+
+            {/* Recipe image */}
+            {imagePreview && (
+              <div className="mb-6">
+                <img
+                  src={imagePreview}
+                  alt={title || 'Recipe'}
+                  className="w-full h-96 object-cover rounded-lg shadow-md"
+                />
+              </div>
             )}
 
             {/* Recipe meta */}
@@ -303,29 +343,52 @@ export const CreateRecipe: React.FC = () => {
           )}
 
           {/* Action buttons in preview mode */}
-          <div className="flex items-center justify-end space-x-4 pt-8 mt-8 border-t border-gray-200">
+          <div className="flex items-center justify-between pt-8 mt-8 border-t border-gray-200">
             <button
               type="button"
-              onClick={handleCancel}
-              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              onClick={prevStep}
+              className="px-6 py-3 rounded-lg font-medium transition-colors bg-gray-200 text-gray-700 hover:bg-gray-300"
             >
-              Cancel
+              ← Back
             </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors shadow-lg flex items-center space-x-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Save Recipe</span>
-            </button>
+            <div className="flex items-center space-x-4">
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={saveLoading}
+                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={saveLoading}
+                className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saveLoading ? (
+                  <>
+                    <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Save Recipe</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       ) : (
-        /* Edit Mode with Multi-Step */
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        /* Steps 1-3: Form */
+        <form className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           <div className="space-y-8">
             
             {/* Step 1: Basic Info */}
@@ -406,6 +469,53 @@ export const CreateRecipe: React.FC = () => {
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     />
                   </div>
+                </div>
+
+                {/* Recipe Image Upload */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Recipe Image
+                  </label>
+                  
+                  {!imagePreview ? (
+                    <div className="flex items-center justify-center w-full">
+                      <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <svg className="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">Click to upload</span> or drag and drop
+                          </p>
+                          <p className="text-xs text-gray-500">PNG, JPG, or WEBP (recommended max size: 5MB)</p>
+                        </div>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                        />
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <img
+                        src={imagePreview}
+                        alt="Recipe preview"
+                        className="w-full h-64 object-cover rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                        title="Remove image"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -565,18 +675,6 @@ export const CreateRecipe: React.FC = () => {
               </div>
             )}
 
-          {/* Step 4: Review */}
-          {currentStep === 4 && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-gray-900 pb-2 border-b border-gray-200">
-                Review Your Recipe
-              </h2>
-              <p className="text-gray-600 text-sm">
-                Preview how your recipe will look when saved. Toggle to edit mode if you need to make changes.
-              </p>
-            </div>
-          )}
-
             {/* Navigation Buttons */}
             <div className="flex items-center justify-between pt-6 border-t border-gray-200">
             <button
@@ -611,13 +709,27 @@ export const CreateRecipe: React.FC = () => {
                 </button>
               ) : (
                 <button
-                  type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors shadow-lg flex items-center space-x-2"
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={saveLoading}
+                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span>Save Recipe</span>
+                  {saveLoading ? (
+                    <>
+                      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Save Recipe</span>
+                    </>
+                  )}
                 </button>
               )}
             </div>

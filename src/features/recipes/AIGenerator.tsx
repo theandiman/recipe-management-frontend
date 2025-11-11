@@ -4,7 +4,7 @@ import { generateRecipe, generateImage, clearRecipe, clearImage } from './recipe
 import NutritionFacts from '../../components/NutritionFacts'
 import ServingsStepper from '../../components/ServingsStepper'
 import { scaleIngredient } from '../../utils/quantityUtils'
-import { formatMinutes } from '../../utils/timeUtils'
+import { formatMinutes, parseMinutes } from '../../utils/timeUtils'
 import { saveRecipe } from '../../services/recipeStorageApi'
 import type { Recipe } from '../../types/nutrition'
 import type { RootState } from '../../store'
@@ -406,12 +406,19 @@ export const AIGenerator: React.FC = () => {
 
             {/* Time and Servings */}
             <div className="flex items-center space-x-6 mb-6 text-sm text-gray-600">
-              {parsedRecipe.estimatedTimeMinutes && (
+              {(parsedRecipe.prepTime || parsedRecipe.cookTime) && (
                 <div className="flex items-center space-x-2">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>{formatMinutes(parsedRecipe.estimatedTimeMinutes)}</span>
+                  <span>
+                    {(() => {
+                      const prep = parseMinutes(parsedRecipe.prepTime) || 0
+                      const cook = parseMinutes(parsedRecipe.cookTime) || 0
+                      const total = prep + cook
+                      return formatMinutes(total)
+                    })()}
+                  </span>
                 </div>
               )}
               {parsedRecipe.servings && (

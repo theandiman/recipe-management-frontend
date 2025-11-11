@@ -3,6 +3,21 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { CreateRecipe } from './CreateRecipe'
 
+// Mock recipe storage API
+vi.mock('../../services/recipeStorageApi', () => ({
+  saveRecipe: vi.fn(() => Promise.resolve({
+    id: 'test-recipe-id',
+    title: 'Test Recipe',
+    userId: 'test-user',
+    ingredients: [],
+    instructions: [],
+    servings: 4,
+    source: 'user-created',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }))
+}))
+
 // Mock react-router-dom
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {
@@ -248,42 +263,28 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       fireEvent.click(step4Button)
     })
 
-    it('should render review section', () => {
-      expect(screen.getByText('Review Your Recipe')).toBeInTheDocument()
-    })
-
-    it('should show Edit/Preview toggle only on step 4', () => {
-      expect(screen.getByText('Edit')).toBeInTheDocument()
-      expect(screen.getByText('Preview')).toBeInTheDocument()
-    })
-
-    it('should toggle between Edit and Preview modes', () => {
-      // Should start in Edit mode
-      expect(screen.getByText('Review Your Recipe')).toBeInTheDocument()
-      
-      // Switch to Preview mode
-      const previewButton = screen.getByRole('button', { name: /Preview/i })
-      fireEvent.click(previewButton)
-      
-      // Preview mode should show "Untitled Recipe" for empty title
+    it('should render preview on step 4', () => {
+      // Step 4 should show preview with "Untitled Recipe" for empty title
       expect(screen.getByText('Untitled Recipe')).toBeInTheDocument()
-      
-      // Switch back to Edit mode
-      const editButton = screen.getByRole('button', { name: /Edit/i })
-      fireEvent.click(editButton)
-      
-      expect(screen.getByText('Review Your Recipe')).toBeInTheDocument()
     })
 
-    it('should not show Edit/Preview toggle on other steps', () => {
-      // Go back to step 1
-      const backButton = screen.getByRole('button', { name: /← Back/i })
-      fireEvent.click(backButton)
-      fireEvent.click(backButton)
-      fireEvent.click(backButton)
-      
+    it('should not show Edit/Preview toggle', () => {
+      // Toggle should not exist anymore
       expect(screen.queryByRole('button', { name: /Edit/i })).not.toBeInTheDocument()
       expect(screen.queryByRole('button', { name: /Preview/i })).not.toBeInTheDocument()
+    })
+
+    it('should show Save Recipe button on step 4', () => {
+      expect(screen.getByRole('button', { name: /Save Recipe/i })).toBeInTheDocument()
+    })
+
+    it('should show Back button on step 4', () => {
+      const backButton = screen.getByRole('button', { name: /← Back/i })
+      expect(backButton).toBeInTheDocument()
+      
+      // Should navigate back to step 3
+      fireEvent.click(backButton)
+      expect(screen.getByText(/Step 3 of 4: Instructions/i)).toBeInTheDocument()
     })
   })
 
@@ -354,4 +355,24 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       expect(step1Button.textContent).toContain('✓')
     })
   })
+
+  describe('Image Upload', () => {
+    it('should show file upload UI when no image is uploaded', () => {
+      renderWithRouter(<CreateRecipe />)
+      
+      expect(screen.getByText(/Click to upload/i)).toBeInTheDocument()
+      expect(screen.getByText(/drag and drop/i)).toBeInTheDocument()
+      expect(screen.getByText('Recipe Image')).toBeInTheDocument()
+    })
+
+    it('should have file input with correct attributes', () => {
+      const { container } = renderWithRouter(<CreateRecipe />)
+      
+      const input = container.querySelector('input[type="file"]') as HTMLInputElement
+      expect(input).toBeInTheDocument()
+      expect(input).toHaveAttribute('accept', 'image/*')
+      expect(input).toHaveClass('hidden')
+    })
+  })
 })
+

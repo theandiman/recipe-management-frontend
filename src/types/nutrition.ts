@@ -31,15 +31,10 @@ export interface Recipe {
   instructions: string[];
   prepTime?: string;
   cookTime?: string;
-  estimatedTime?: string;
-  estimatedTimeMinutes?: number;
   servings: string | number;
   imageUrl?: string;
-  imageGeneration?: {
-    status: string;
-    source: string;
-    errorMessage?: string;
-  };
   nutritionalInfo?: NutritionalInfo;
   tips?: RecipeTips;
+  source?: 'ai-generated' | 'manual';
 }
+
