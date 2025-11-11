@@ -4,6 +4,10 @@ import { useNavigate } from 'react-router-dom'
 export const CreateRecipe: React.FC = () => {
   const navigate = useNavigate()
   
+  // Multi-step state
+  const [currentStep, setCurrentStep] = useState(1)
+  const totalSteps = 4
+  
   // View mode state
   const [isPreview, setIsPreview] = useState(false)
   
@@ -83,49 +87,114 @@ export const CreateRecipe: React.FC = () => {
     navigate('/dashboard/recipes')
   }
 
+  const nextStep = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1)
+    }
+  }
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1)
+    }
+  }
+
+  const goToStep = (step: number) => {
+    setCurrentStep(step)
+  }
+
+  const steps = [
+    { number: 1, title: 'Basic Info', icon: '📝' },
+    { number: 2, title: 'Ingredients', icon: '🥕' },
+    { number: 3, title: 'Instructions', icon: '👨‍🍳' },
+    { number: 4, title: 'Review', icon: '✅' }
+  ]
+
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Recipe</h1>
-          <p className="text-gray-600">Add a new recipe to your collection</p>
+      {/* Header with Step Indicator */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Recipe</h1>
+            <p className="text-gray-600">Step {currentStep} of {totalSteps}: {steps[currentStep - 1].title}</p>
+          </div>
+          
+          {/* Edit/Preview Toggle - only show on step 4 */}
+          {currentStep === 4 && (
+            <div className="flex items-center bg-gray-100 rounded-lg p-1">
+              <button
+                type="button"
+                onClick={() => setIsPreview(false)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  !isPreview
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  <span>Edit</span>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsPreview(true)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isPreview
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <span>Preview</span>
+                </div>
+              </button>
+            </div>
+          )}
         </div>
-        
-        {/* Edit/Preview Toggle */}
-        <div className="flex items-center bg-gray-100 rounded-lg p-1">
-          <button
-            type="button"
-            onClick={() => setIsPreview(false)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              !isPreview
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <div className="flex items-center space-x-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              <span>Edit</span>
-            </div>
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsPreview(true)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              isPreview
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <div className="flex items-center space-x-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              <span>Preview</span>
-            </div>
-          </button>
+
+        {/* Step Progress Indicator */}
+        <div className="flex items-center justify-between mb-8">
+          {steps.map((step, index) => (
+            <React.Fragment key={step.number}>
+              <button
+                type="button"
+                onClick={() => goToStep(step.number)}
+                className={`flex flex-col items-center space-y-2 ${
+                  step.number === currentStep ? 'opacity-100' : step.number < currentStep ? 'opacity-100' : 'opacity-50'
+                }`}
+              >
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold transition-colors ${
+                    step.number === currentStep
+                      ? 'bg-green-600 text-white shadow-lg'
+                      : step.number < currentStep
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-gray-200 text-gray-500'
+                  }`}
+                >
+                  {step.number < currentStep ? '✓' : step.icon}
+                </div>
+                <span className={`text-sm font-medium ${
+                  step.number === currentStep ? 'text-gray-900' : 'text-gray-500'
+                }`}>
+                  {step.title}
+                </span>
+              </button>
+              {index < steps.length - 1 && (
+                <div className={`flex-1 h-1 mx-2 rounded ${
+                  step.number < currentStep ? 'bg-green-600' : 'bg-gray-200'
+                }`} />
+              )}
+            </React.Fragment>
+          ))}
         </div>
       </div>
 
@@ -255,109 +324,113 @@ export const CreateRecipe: React.FC = () => {
           </div>
         </div>
       ) : (
-        /* Edit Mode */
+        /* Edit Mode with Multi-Step */
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-        <div className="space-y-8">
-          {/* Basic Info Section */}
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 pb-2 border-b border-gray-200">
-              Basic Information
-            </h2>
+          <div className="space-y-8">
             
-            {/* Recipe Name */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Recipe Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                placeholder="e.g., Grandma's Chocolate Chip Cookies"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              />
-            </div>
+            {/* Step 1: Basic Info */}
+            {currentStep === 1 && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold text-gray-900 pb-2 border-b border-gray-200">
+                  Basic Information
+                </h2>
+                
+                {/* Recipe Name */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Recipe Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
+                    placeholder="e.g., Grandma's Chocolate Chip Cookies"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
 
-            {/* Description */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Description
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-                placeholder="Brief description of your recipe..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              />
-            </div>
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                    placeholder="Brief description of your recipe..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
 
-            {/* Time and Servings Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Prep Time (min)
-                </label>
-                <input
-                  type="number"
-                  value={prepTime}
-                  onChange={(e) => setPrepTime(e.target.value)}
-                  min="0"
-                  placeholder="15"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
+                {/* Time and Servings Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Prep Time (min)
+                    </label>
+                    <input
+                      type="number"
+                      value={prepTime}
+                      onChange={(e) => setPrepTime(e.target.value)}
+                      min="0"
+                      placeholder="15"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Cook Time (min)
+                    </label>
+                    <input
+                      type="number"
+                      value={cookTime}
+                      onChange={(e) => setCookTime(e.target.value)}
+                      min="0"
+                      placeholder="30"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Servings <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      value={servings}
+                      onChange={(e) => setServings(e.target.value)}
+                      min="1"
+                      required
+                      placeholder="4"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Cook Time (min)
-                </label>
-                <input
-                  type="number"
-                  value={cookTime}
-                  onChange={(e) => setCookTime(e.target.value)}
-                  min="0"
-                  placeholder="30"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Servings <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  value={servings}
-                  onChange={(e) => setServings(e.target.value)}
-                  min="1"
-                  required
-                  placeholder="4"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-          </div>
+            )}
 
-          {/* Ingredients Section */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Ingredients <span className="text-red-500">*</span>
-              </h2>
-              <button
-                type="button"
-                onClick={addIngredient}
-                className="px-3 py-1.5 text-sm bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors flex items-center space-x-1"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Add Ingredient</span>
-              </button>
-            </div>
-            
-            <div className="space-y-3">
-              {ingredients.map((ingredient, index) => (
+            {/* Step 2: Ingredients */}
+            {currentStep === 2 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-gray-200">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Ingredients <span className="text-red-500">*</span>
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={addIngredient}
+                    className="px-3 py-1.5 text-sm bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors flex items-center space-x-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Add Ingredient</span>
+                  </button>
+                </div>
+                
+                <div className="space-y-3">
+                  {ingredients.map((ingredient, index) => (
                 <div key={index} className="flex items-start space-x-3">
                   <span className="flex-shrink-0 w-8 h-10 flex items-center justify-center text-sm font-medium text-gray-500">
                     {index + 1}.
@@ -384,10 +457,14 @@ export const CreateRecipe: React.FC = () => {
                 </div>
               ))}
             </div>
-          </div>
+              </div>
+            )}
 
-          {/* Instructions Section */}
-          <div className="space-y-4">
+            {/* Step 3: Instructions & Tags */}
+            {currentStep === 3 && (
+              <div className="space-y-8">
+                {/* Instructions Section */}
+                <div className="space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900">
                 Instructions <span className="text-red-500">*</span>
@@ -434,76 +511,116 @@ export const CreateRecipe: React.FC = () => {
                 </div>
               ))}
             </div>
-          </div>
+                </div>
 
-          {/* Tags Section */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900 pb-2 border-b border-gray-200">
-              Tags (Optional)
-            </h2>
-            
-            <div className="flex items-center space-x-2">
-              <input
-                type="text"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addTag()
-                  }
-                }}
-                placeholder="Add tags (e.g., 'quick', 'healthy', 'vegetarian')"
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              />
-              <button
-                type="button"
-                onClick={addTag}
-                className="px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Add
-              </button>
-            </div>
-            
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-medium"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(index)}
-                      className="ml-2 text-green-600 hover:text-green-800"
+            {/* Tags Section */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold text-gray-900 pb-2 border-b border-gray-200">
+                Tags (Optional)
+              </h2>
+              
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      addTag()
+                    }
+                  }}
+                  placeholder="Add tags (e.g., 'quick', 'healthy', 'vegetarian')"
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+                <button
+                  type="button"
+                  onClick={addTag}
+                  className="px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+              
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-medium"
                     >
-                      ×
-                    </button>
-                  </span>
-                ))}
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => removeTag(index)}
+                        className="ml-2 text-green-600 hover:text-green-800"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
               </div>
             )}
-          </div>
 
-          {/* Submit Buttons */}
-          <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+          {/* Step 4: Review */}
+          {currentStep === 4 && (
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold text-gray-900 pb-2 border-b border-gray-200">
+                Review Your Recipe
+              </h2>
+              <p className="text-gray-600 text-sm">
+                Preview how your recipe will look when saved. Toggle to edit mode if you need to make changes.
+              </p>
+            </div>
+          )}
+
+            {/* Navigation Buttons */}
+            <div className="flex items-center justify-between pt-6 border-t border-gray-200">
             <button
               type="button"
-              onClick={handleCancel}
-              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              onClick={prevStep}
+              disabled={currentStep === 1}
+              className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                currentStep === 1
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
             >
-              Cancel
+              ← Back
             </button>
-            <button
-              type="submit"
-              className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors shadow-lg flex items-center space-x-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Save Recipe</span>
-            </button>
+
+            <div className="flex items-center space-x-4">
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+
+              {currentStep < totalSteps ? (
+                <button
+                  type="button"
+                  onClick={nextStep}
+                  className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Next →
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors shadow-lg flex items-center space-x-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Save Recipe</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
         </form>
