@@ -110,7 +110,7 @@ const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
     instructions: recipe.instructions,
     prepTime: parseTimeToMinutes(recipe.prepTime),
     cookTime: parseTimeToMinutes(recipe.cookTime),
-    servings: typeof recipe.servings === 'number' ? recipe.servings : parseInt(String(recipe.servings), 10),
+    servings: typeof recipe.servings === 'number' ? recipe.servings : (parseInt(String(recipe.servings), 10) || 1),
     nutrition: recipe.nutritionalInfo?.perServing,
     tips: mapTips(recipe.tips),
     imageUrl,
