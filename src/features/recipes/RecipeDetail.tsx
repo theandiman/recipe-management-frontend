@@ -33,7 +33,7 @@ export const RecipeDetail: React.FC = () => {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
         </div>
       </div>
     )
@@ -44,7 +44,7 @@ export const RecipeDetail: React.FC = () => {
       <div className="max-w-4xl mx-auto">
         <button
           onClick={() => navigate('/dashboard/recipes')}
-          className="mb-6 text-blue-600 hover:text-purple-600 flex items-center transition-colors"
+          className="mb-6 text-emerald-600 hover:text-emerald-700 flex items-center transition-colors"
         >
           <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -64,7 +64,7 @@ export const RecipeDetail: React.FC = () => {
       {/* Back button */}
       <button
         onClick={() => navigate('/dashboard/recipes')}
-        className="mb-6 text-blue-600 hover:text-purple-600 flex items-center font-medium transition-colors"
+        className="mb-6 text-emerald-600 hover:text-emerald-700 flex items-center font-medium transition-colors"
       >
         <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -95,7 +95,7 @@ export const RecipeDetail: React.FC = () => {
         <div className="flex flex-wrap gap-6 pb-6 border-b border-gray-200">
           {recipe.prepTime && (
             <div className="flex items-center text-gray-700">
-              <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div>
@@ -107,7 +107,7 @@ export const RecipeDetail: React.FC = () => {
           
           {recipe.cookTime && (
             <div className="flex items-center text-gray-700">
-              <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
               </svg>
               <div>
@@ -119,7 +119,7 @@ export const RecipeDetail: React.FC = () => {
 
           {recipe.servings && (
             <div className="flex items-center text-gray-700">
-              <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
               <div>
@@ -137,7 +137,7 @@ export const RecipeDetail: React.FC = () => {
             <ul className="space-y-2">
               {recipe.ingredients.map((ingredient, index) => (
                 <li key={index} className="flex items-start">
-                  <svg className="w-5 h-5 mr-3 mt-0.5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 mr-3 mt-0.5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span className="text-gray-700">{ingredient}</span>

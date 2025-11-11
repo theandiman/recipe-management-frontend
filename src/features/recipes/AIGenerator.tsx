@@ -164,7 +164,7 @@ export const AIGenerator: React.FC = () => {
       <div className="mb-8">
         <div className="flex items-center space-x-3 mb-2">
           <h1 className="text-3xl font-bold text-gray-900">AI Recipe Generator</h1>
-          <span className="px-3 py-1 text-xs font-semibold text-purple-600 bg-purple-100 rounded-full">
+          <span className="px-3 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100 rounded-full">
             POWERED BY AI
           </span>
         </div>
@@ -184,7 +184,7 @@ export const AIGenerator: React.FC = () => {
                 onChange={(e) => setPrompt(e.target.value)}
                 rows={2}
                 placeholder="e.g., 'a quick weeknight dinner', 'something spicy', 'healthy lunch'"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
 
@@ -205,7 +205,7 @@ export const AIGenerator: React.FC = () => {
                     }
                   }}
                   placeholder="Add ingredients..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
                 {suggestions.length > 0 && (
                   <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
@@ -256,7 +256,7 @@ export const AIGenerator: React.FC = () => {
                     onClick={() => toggleDiet(diet)}
                     className={`px-4 py-2 border rounded-full text-sm font-medium transition-colors ${
                       selectedDiets.includes(diet)
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
                         : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                     }`}
                   >
@@ -278,7 +278,7 @@ export const AIGenerator: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors shadow-lg flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors shadow-lg flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
@@ -381,7 +381,7 @@ export const AIGenerator: React.FC = () => {
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                   {imageLoading ? (
                     <div className="flex flex-col items-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mb-4" />
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mb-4" />
                       <p className="text-gray-600">Generating image...</p>
                     </div>
                   ) : (
@@ -391,7 +391,7 @@ export const AIGenerator: React.FC = () => {
                       </svg>
                       <button
                         onClick={handleGenerateImage}
-                        className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transition-colors shadow-md"
+                        className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transition-colors shadow-md"
                       >
                         Generate Recipe Image
                       </button>
@@ -443,7 +443,7 @@ export const AIGenerator: React.FC = () => {
                   const scaledIngredient = targetServings !== null ? scaleIngredient(ing, targetServings / (Number(parsedRecipe.servings) || 1)) : ing
                   return (
                     <li key={idx} className="flex items-start text-left">
-                      <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0" />
+                      <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full mt-2 mr-3 flex-shrink-0" />
                       <span className="text-gray-700 text-left">{String(scaledIngredient)}</span>
                     </li>
                   )
@@ -457,7 +457,7 @@ export const AIGenerator: React.FC = () => {
               <ol className="space-y-4">
                 {parsedRecipe.instructions?.map((instruction, idx) => (
                   <li key={idx} className="flex items-start">
-                    <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-700 font-semibold rounded-full mr-4 flex-shrink-0">
+                    <span className="inline-flex items-center justify-center w-8 h-8 bg-emerald-100 text-emerald-700 font-semibold rounded-full mr-4 flex-shrink-0">
                       {idx + 1}
                     </span>
                     <span className="text-gray-700 pt-1">{instruction}</span>
@@ -504,13 +504,13 @@ export const AIGenerator: React.FC = () => {
 
                 {/* Variations */}
                 {parsedRecipe.tips.variations && parsedRecipe.tips.variations.length > 0 && (
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
                     <div className="flex items-start space-x-3">
-                      <svg className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
                       </svg>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-purple-900 mb-2">Recipe Variations</h4>
+                        <h4 className="font-semibold text-emerald-900 mb-2">Recipe Variations</h4>
                         <ul className="space-y-1 text-sm text-purple-800">
                           {parsedRecipe.tips.variations.map((variation, idx) => (
                             <li key={idx} className="flex items-start">

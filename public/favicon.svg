@@ -1,24 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
     <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#9333ea;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#6b9080;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a4c3b2;stop-opacity:1" />
     </linearGradient>
   </defs>
   
-  <!-- Book/Recipe icon -->
-  <rect x="20" y="15" width="60" height="70" rx="4" fill="url(#grad)"/>
+  <!-- Whisk handle -->
+  <rect x="48" y="55" width="4" height="30" rx="2" fill="#4a5759"/>
   
-  <!-- Pages effect -->
-  <rect x="23" y="18" width="54" height="64" rx="2" fill="white" opacity="0.95"/>
+  <!-- Whisk wires -->
+  <path d="M 35 45 Q 40 30 50 25" stroke="#4a5759" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M 42 48 Q 45 35 50 28" stroke="#4a5759" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M 50 50 L 50 30" stroke="#4a5759" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M 58 48 Q 55 35 50 28" stroke="#4a5759" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M 65 45 Q 60 30 50 25" stroke="#4a5759" stroke-width="2.5" fill="none" stroke-linecap="round"/>
   
-  <!-- Recipe lines -->
-  <line x1="30" y1="30" x2="70" y2="30" stroke="url(#grad)" stroke-width="2" stroke-linecap="round"/>
-  <line x1="30" y1="40" x2="65" y2="40" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="30" y1="48" x2="68" y2="48" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="30" y1="56" x2="62" y2="56" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Circular badge background -->
+  <circle cx="50" cy="50" r="32" fill="url(#grad)" opacity="0.15"/>
+  <circle cx="50" cy="50" r="28" fill="none" stroke="url(#grad)" stroke-width="3"/>
   
-  <!-- Small chef hat icon -->
-  <circle cx="50" cy="68" r="8" fill="url(#grad)" opacity="0.2"/>
-  <path d="M 45 70 Q 50 65 55 70 L 54 74 L 46 74 Z" fill="url(#grad)"/>
+  <!-- Small accent dot -->
+  <circle cx="68" cy="32" r="4" fill="#f4b942"/>
 </svg>
