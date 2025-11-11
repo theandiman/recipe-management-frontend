@@ -208,8 +208,33 @@ export const getRecipe = async (id: string): Promise<RecipeResponse> => {
   return response.data
 }
 
+/**
+ * Delete a recipe by ID
+ * @param id - The recipe ID to delete
+ */
+export const deleteRecipe = async (id: string): Promise<void> => {
+  const { default: axios } = await import('axios')
+  const { auth } = await import('../config/firebase')
+  
+  const user = auth.currentUser
+  if (!user) {
+    throw new Error('User not authenticated')
+  }
+
+  const token = await user.getIdToken()
+  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}`)
+  
+  await axios.delete(url, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+}
+
 export default {
   saveRecipe,
   getRecipes,
-  getRecipe
+  getRecipe,
+  deleteRecipe
 }
