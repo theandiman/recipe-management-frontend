@@ -15,7 +15,6 @@ export const RecipeLibrary: React.FC = () => {
         setError(null)
         const data = await getRecipes()
         console.log('Fetched recipes:', data)
-        console.log('First recipe imageUrl:', data[0]?.imageUrl)
         setRecipes(data)
       } catch (err: any) {
         console.error('Failed to fetch recipes:', err)
