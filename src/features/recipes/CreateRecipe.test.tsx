@@ -3,6 +3,21 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { CreateRecipe } from './CreateRecipe'
 
+// Mock recipe storage API
+vi.mock('../../services/recipeStorageApi', () => ({
+  saveRecipe: vi.fn(() => Promise.resolve({
+    id: 'test-recipe-id',
+    title: 'Test Recipe',
+    userId: 'test-user',
+    ingredients: [],
+    instructions: [],
+    servings: 4,
+    source: 'user-created',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }))
+}))
+
 // Mock react-router-dom
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {
