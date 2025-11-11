@@ -240,7 +240,11 @@ test.describe('Create Recipe Multi-Step Wizard', () => {
   })
 
   test('should validate required fields', async ({ page }) => {
-    // Try to submit without filling required fields
+    // Fill out required fields in step 1
+    await page.getByPlaceholder(/Grandma's Chocolate Chip Cookies/i).fill('Test Recipe')
+    await page.getByPlaceholder(/Short description/i).fill('A delicious test recipe')
+    
+    // Proceed to Review step
     await page.getByRole('button', { name: 'Review' }).click()
     await page.getByRole('button', { name: /Save Recipe/i }).click()
     
