@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { getRecipes, type RecipeResponse } from '../../services/recipeStorageApi'
 
 export const RecipeLibrary: React.FC = () => {
+  const navigate = useNavigate()
   const [recipes, setRecipes] = useState<RecipeResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -12,6 +14,8 @@ export const RecipeLibrary: React.FC = () => {
         setLoading(true)
         setError(null)
         const data = await getRecipes()
+        console.log('Fetched recipes:', data)
+        console.log('First recipe imageUrl:', data[0]?.imageUrl)
         setRecipes(data)
       } catch (err: any) {
         console.error('Failed to fetch recipes:', err)
@@ -82,6 +86,7 @@ export const RecipeLibrary: React.FC = () => {
         {recipes.map((recipe) => (
           <div
             key={recipe.id}
+            onClick={() => navigate(`/dashboard/recipes/${recipe.id}`)}
             className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
           >
             {recipe.imageUrl ? (

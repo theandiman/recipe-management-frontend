@@ -1,0 +1,186 @@
+import React, { useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { getRecipe, type RecipeResponse } from '../../services/recipeStorageApi'
+
+export const RecipeDetail: React.FC = () => {
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const [recipe, setRecipe] = useState<RecipeResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchRecipe = async () => {
+      if (!id) return
+      
+      try {
+        setLoading(true)
+        setError(null)
+        const data = await getRecipe(id)
+        setRecipe(data)
+      } catch (err: any) {
+        console.error('Failed to fetch recipe:', err)
+        setError(err.response?.data?.message || err.message || 'Failed to load recipe')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchRecipe()
+  }, [id])
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !recipe) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <button
+          onClick={() => navigate('/dashboard/recipes')}
+          className="mb-6 text-green-600 hover:text-green-700 flex items-center"
+        >
+          <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Library
+        </button>
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
+          <p className="font-medium">Error loading recipe</p>
+          <p className="text-sm mt-1">{error || 'Recipe not found'}</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      {/* Back button */}
+      <button
+        onClick={() => navigate('/dashboard/recipes')}
+        className="mb-6 text-green-600 hover:text-green-700 flex items-center font-medium"
+      >
+        <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Back to Library
+      </button>
+
+      {/* Recipe image */}
+      {recipe.imageUrl && (
+        <div className="mb-8 rounded-xl overflow-hidden shadow-lg">
+          <img
+            src={recipe.imageUrl}
+            alt={recipe.title}
+            className="w-full h-96 object-cover"
+          />
+        </div>
+      )}
+
+      {/* Recipe header */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">{recipe.title}</h1>
+        
+        {recipe.description && (
+          <p className="text-lg text-gray-600 mb-6">{recipe.description}</p>
+        )}
+
+        {/* Recipe meta */}
+        <div className="flex flex-wrap gap-6 pb-6 border-b border-gray-200">
+          {recipe.prepTime && (
+            <div className="flex items-center text-gray-700">
+              <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <div className="text-sm text-gray-500">Prep Time</div>
+                <div className="font-medium">{recipe.prepTime} min</div>
+              </div>
+            </div>
+          )}
+          
+          {recipe.cookTime && (
+            <div className="flex items-center text-gray-700">
+              <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+              </svg>
+              <div>
+                <div className="text-sm text-gray-500">Cook Time</div>
+                <div className="font-medium">{recipe.cookTime} min</div>
+              </div>
+            </div>
+          )}
+
+          {recipe.servings && (
+            <div className="flex items-center text-gray-700">
+              <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              <div>
+                <div className="text-sm text-gray-500">Servings</div>
+                <div className="font-medium">{recipe.servings}</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Ingredients */}
+        {recipe.ingredients && recipe.ingredients.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Ingredients</h2>
+            <ul className="space-y-2">
+              {recipe.ingredients.map((ingredient, index) => (
+                <li key={index} className="flex items-start">
+                  <svg className="w-5 h-5 mr-3 mt-0.5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-gray-700">{ingredient}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Instructions */}
+        {recipe.instructions && recipe.instructions.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Instructions</h2>
+            <ol className="space-y-4">
+              {recipe.instructions.map((instruction, index) => (
+                <li key={index} className="flex items-start">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-green-600 text-white font-bold text-sm mr-4 flex-shrink-0 mt-0.5">
+                    {index + 1}
+                  </span>
+                  <p className="text-gray-700 pt-1">{instruction}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+
+        {/* Tags */}
+        {recipe.tags && recipe.tags.length > 0 && (
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <h3 className="text-sm font-medium text-gray-500 mb-3">Tags</h3>
+            <div className="flex flex-wrap gap-2">
+              {recipe.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-medium"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

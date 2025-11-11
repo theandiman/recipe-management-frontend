@@ -181,7 +181,35 @@ export const getRecipes = async (): Promise<RecipeResponse[]> => {
   return response.data
 }
 
+/**
+ * Fetch a single recipe by ID
+ * @param id - The recipe ID
+ * @returns The recipe
+ */
+export const getRecipe = async (id: string): Promise<RecipeResponse> => {
+  const { default: axios } = await import('axios')
+  const { auth } = await import('../config/firebase')
+  
+  const user = auth.currentUser
+  if (!user) {
+    throw new Error('User not authenticated')
+  }
+
+  const token = await user.getIdToken()
+  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}`)
+  
+  const response = await axios.get(url, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  
+  return response.data
+}
+
 export default {
   saveRecipe,
-  getRecipes
+  getRecipes,
+  getRecipe
 }
