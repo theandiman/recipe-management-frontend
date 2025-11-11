@@ -5,6 +5,8 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
   updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
   type User as FirebaseUser
 } from 'firebase/auth'
 import { auth } from '../../config/firebase'
@@ -71,6 +73,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
+  const loginWithGoogle = async () => {
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      const provider = new GoogleAuthProvider()
+      const userCredential = await signInWithPopup(auth, provider)
+      setUser(convertFirebaseUser(userCredential.user))
+    } catch (err) {
+      console.error('Google sign-in error:', err)
+      const errorMessage = getFirebaseErrorMessage(err)
+      setError(errorMessage)
+      throw new Error(errorMessage)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const register = async (data: RegisterData) => {
     setIsLoading(true)
     setError(null)
@@ -121,6 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading,
     error,
     login,
+    loginWithGoogle,
     register,
     logout,
   }
