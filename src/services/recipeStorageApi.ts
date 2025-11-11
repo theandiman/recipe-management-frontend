@@ -114,7 +114,7 @@ const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
     nutrition: recipe.nutritionalInfo?.perServing,
     tips: mapTips(recipe.tips),
     imageUrl,
-    source: 'ai-generated',
+    source: recipe.source || 'ai-generated',
     tags: [],
     dietaryRestrictions: []
   }

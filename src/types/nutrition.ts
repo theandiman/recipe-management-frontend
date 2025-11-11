@@ -42,4 +42,5 @@ export interface Recipe {
   };
   nutritionalInfo?: NutritionalInfo;
   tips?: RecipeTips;
+  source?: 'ai-generated' | 'manual';
 }
