@@ -471,8 +471,6 @@ export const AIGenerator: React.FC = () => {
               <div className="mt-8">
                 <NutritionFacts
                   nutritionalInfo={parsedRecipe.nutritionalInfo}
-                  servings={parsedRecipe.servings}
-                  targetServings={targetServings}
                 />
               </div>
             )}
