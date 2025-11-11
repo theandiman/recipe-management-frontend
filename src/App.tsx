@@ -7,7 +7,6 @@ import { RecipeLibrary } from './features/recipes/RecipeLibrary'
 import { RecipeDetail } from './features/recipes/RecipeDetail'
 import { CreateRecipe } from './features/recipes/CreateRecipe'
 import { AIGenerator } from './features/recipes/AIGenerator'
-import { Preferences } from './features/preferences/Preferences'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import './App.css'
 
@@ -31,7 +30,6 @@ function App() {
             <Route path="recipes/:id" element={<RecipeDetail />} />
             <Route path="create" element={<CreateRecipe />} />
             <Route path="generate" element={<AIGenerator />} />
-            <Route path="preferences" element={<Preferences />} />
           </Route>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
