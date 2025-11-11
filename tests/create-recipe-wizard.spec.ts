@@ -162,6 +162,10 @@ test.describe('Create Recipe Multi-Step Wizard', () => {
   })
 
   test('should add and remove tags', async ({ page }) => {
+    // Fill out basic info (step 1)
+    await page.getByPlaceholder(/Grandma's Chocolate Chip Cookies/i).fill('Test Recipe')
+    // Add any other required fields for step 1 here if needed
+    await page.getByRole('button', { name: 'Next →' }).click()
     // Navigate to instructions step (where tags are)
     await page.getByRole('button', { name: 'Instructions' }).click()
     
