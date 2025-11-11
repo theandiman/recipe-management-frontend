@@ -14,6 +14,35 @@ vi.mock('../config/firebase', () => ({
   storage: {}
 }))
 
+// Mock HTML Image and Canvas for compression tests
+// @ts-ignore - globalThis is available in test environment
+globalThis.Image = class {
+  onload: (() => void) | null = null
+  onerror: (() => void) | null = null
+  src = ''
+  width = 800
+  height = 600
+  
+  constructor() {
+    // Simulate image loading asynchronously
+    setTimeout(() => {
+      if (this.onload) this.onload()
+    }, 0)
+  }
+} as any
+
+// @ts-ignore - Mock canvas context
+globalThis.HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
+  drawImage: vi.fn(),
+  imageSmoothingEnabled: true,
+  imageSmoothingQuality: 'high'
+})) as any
+
+// @ts-ignore - Mock toDataURL
+globalThis.HTMLCanvasElement.prototype.toDataURL = vi.fn(() => 
+  'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAA8A/9k='
+) as any
+
 describe('imageStorage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
