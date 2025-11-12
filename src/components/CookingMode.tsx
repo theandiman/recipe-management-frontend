@@ -121,9 +121,23 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
         <div className="bg-gray-50 border-t border-gray-200 px-8 py-4 flex gap-4 items-center justify-center flex-shrink-0">
           <button
             onClick={() => setShowIngredients(!showIngredients)}
-            className="py-3 px-6 bg-emerald-50 text-emerald-700 rounded-lg font-medium hover:bg-emerald-100 transition-colors"
+            className="py-3 px-6 bg-emerald-50 text-emerald-700 rounded-lg font-medium hover:bg-emerald-100 transition-colors flex items-center gap-2"
           >
-            {showIngredients ? '�‍🍳 View Steps' : '�📋 View Ingredients'}
+            {showIngredients ? (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                View Steps
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                View Ingredients
+              </>
+            )}
           </button>
         </div>
       </div>
