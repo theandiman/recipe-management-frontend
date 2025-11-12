@@ -27,8 +27,7 @@ steps:
     if: "build.branch == 'main'"
     command:
       - "npm ci"
-      - "npm install playwright@1.56.1 --yes"
-      - "npx playwright install --with-deps"
+      - "'y' | npx playwright install --with-deps"
       - "npx playwright test"
     plugins:
       - docker#v3.9.0:
