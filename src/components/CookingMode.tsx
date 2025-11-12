@@ -13,21 +13,10 @@ interface CookingModeProps {
  */
 export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => {
   const [currentStep, setCurrentStep] = useState(0)
-  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set())
   const [showIngredients, setShowIngredients] = useState(false)
 
   const totalSteps = recipe.instructions.length
   const progress = ((currentStep + 1) / totalSteps) * 100
-
-  const toggleStepComplete = (stepIndex: number) => {
-    const newCompleted = new Set(completedSteps)
-    if (newCompleted.has(stepIndex)) {
-      newCompleted.delete(stepIndex)
-    } else {
-      newCompleted.add(stepIndex)
-    }
-    setCompletedSteps(newCompleted)
-  }
 
   const goToPreviousStep = () => {
     if (currentStep > 0) {
@@ -73,11 +62,11 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
           />
         </div>
 
-        {/* Main content area - scrollable */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Main content area */}
+        <div className="flex-1 overflow-y-auto flex flex-col justify-between p-8">
           {showIngredients ? (
             // Ingredients panel
-            <div className="p-8">
+            <div>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900">Ingredients</h3>
                 <button
@@ -99,75 +88,51 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
               </ul>
             </div>
           ) : (
-            // Instructions panel
-            <div className="p-8 flex flex-col">
+            // Instructions panel with side navigation
+            <div className="flex items-center justify-between gap-6">
+              {/* Previous button */}
+              <button
+                onClick={goToPreviousStep}
+                disabled={currentStep === 0}
+                className="flex-shrink-0 p-3 text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title="Previous step"
+              >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
               {/* Current instruction - large and readable */}
-              <div className="mb-8 flex-1">
-                <div className="text-6xl font-bold text-emerald-600 mb-4">{currentStep + 1}</div>
+              <div className="flex-1 text-center">
+                <div className="text-6xl font-bold text-emerald-600 mb-6">{currentStep + 1}</div>
                 <p className="text-3xl leading-relaxed text-gray-900 font-medium">
                   {currentInstruction}
                 </p>
               </div>
 
-              {/* View ingredients button */}
+              {/* Next button */}
               <button
-                onClick={() => setShowIngredients(true)}
-                className="mb-4 w-full py-3 px-4 bg-emerald-50 text-emerald-700 rounded-lg font-medium hover:bg-emerald-100 transition-colors"
+                onClick={goToNextStep}
+                disabled={isLastStep}
+                className="flex-shrink-0 p-3 text-emerald-600 hover:text-emerald-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title={isLastStep ? "You've completed the recipe!" : "Next step"}
               >
-                📋 View Ingredients
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </button>
-
-              {/* Step indicator dots */}
-              <div className="flex justify-center gap-2 mb-6 overflow-x-auto py-2">
-                {recipe.instructions.map((_: string, index: number) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentStep(index)}
-                    className={`flex-shrink-0 w-10 h-10 rounded-full font-bold text-sm transition-all ${
-                      index === currentStep
-                        ? 'bg-emerald-600 text-white scale-110'
-                        : completedSteps.has(index)
-                        ? 'bg-emerald-200 text-emerald-800 hover:bg-emerald-300'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                    title={`Go to step ${index + 1}`}
-                  >
-                    {completedSteps.has(index) ? '✓' : index + 1}
-                  </button>
-                ))}
-              </div>
             </div>
           )}
-        </div>
 
-        {/* Footer with navigation */}
-        <div className="bg-gray-50 border-t border-gray-200 p-6 flex gap-4 flex-shrink-0">
-          <button
-            onClick={goToPreviousStep}
-            disabled={currentStep === 0}
-            className="flex-1 py-3 px-4 bg-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            ← Previous
-          </button>
-
-          <button
-            onClick={() => toggleStepComplete(currentStep)}
-            className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
-              completedSteps.has(currentStep)
-                ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                : 'bg-emerald-600 text-white hover:bg-emerald-700'
-            }`}
-          >
-            {completedSteps.has(currentStep) ? '✓ Step Complete' : 'Mark Complete'}
-          </button>
-
-          <button
-            onClick={goToNextStep}
-            disabled={isLastStep}
-            className="flex-1 py-3 px-4 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLastStep ? 'Done! 🎉' : 'Next →'}
-          </button>
+          {/* Footer controls */}
+          <div className="mt-6 flex gap-4 items-center justify-center">
+            <button
+              onClick={() => setShowIngredients(true)}
+              className="py-2 px-4 bg-emerald-50 text-emerald-700 rounded-lg font-medium hover:bg-emerald-100 transition-colors text-sm"
+            >
+              📋 View Ingredients
+            </button>
+          </div>
         </div>
       </div>
     </div>
