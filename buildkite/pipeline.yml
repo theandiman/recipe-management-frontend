@@ -24,6 +24,7 @@ steps:
           image: "node:20"
 
   - label: ":playwright: E2E Tests"
+    if: "build.branch == 'main'"
     command:
       - "npm ci"
       - "npx playwright install --with-deps"
