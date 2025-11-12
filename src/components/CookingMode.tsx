@@ -103,9 +103,9 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
               </button>
 
               {/* Current instruction - large card */}
-              <div className="flex-1 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-12 text-center border-2 border-emerald-200">
-                <div className="text-7xl font-bold text-emerald-600 mb-6">{currentStep + 1}</div>
-                <p className="text-4xl leading-relaxed text-gray-900 font-medium">
+              <div className="flex-1 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-12 text-center border-2 border-emerald-200 flex flex-col items-center justify-center overflow-hidden">
+                <div className="text-5xl font-light text-emerald-300 mb-4">{currentStep + 1}</div>
+                <p className="text-3xl leading-relaxed text-gray-900 font-medium overflow-y-auto max-h-full">
                   {currentInstruction}
                 </p>
               </div>
