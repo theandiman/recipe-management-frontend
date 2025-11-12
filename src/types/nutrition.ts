@@ -24,6 +24,12 @@ export interface RecipeTips {
   variations?: string[];
 }
 
+export interface Ingredient {
+  quantity: string;
+  unit: string;
+  item: string;
+}
+
 export interface Recipe {
   recipeName: string;
   description?: string;

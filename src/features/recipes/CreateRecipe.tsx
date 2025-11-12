@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { saveRecipe } from '../../services/recipeStorageApi'
-import type { Recipe } from '../../types/nutrition'
+import { IngredientInput } from '../../components/IngredientInput'
+import type { Recipe, Ingredient } from '../../types/nutrition'
 
 export const CreateRecipe: React.FC = () => {
   const navigate = useNavigate()
@@ -20,7 +21,7 @@ export const CreateRecipe: React.FC = () => {
   const [prepTime, setPrepTime] = useState<string>('')
   const [cookTime, setCookTime] = useState<string>('')
   const [servings, setServings] = useState<string>('')
-  const [ingredients, setIngredients] = useState<string[]>([''])
+  const [ingredients, setIngredients] = useState<Ingredient[]>([{ quantity: '', unit: '', item: '' }])
   const [instructions, setInstructions] = useState<string[]>([''])
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
@@ -28,12 +29,12 @@ export const CreateRecipe: React.FC = () => {
 
   // Ingredient handlers
   const addIngredient = () => {
-    setIngredients([...ingredients, ''])
+    setIngredients([...ingredients, { quantity: '', unit: '', item: '' }])
   }
 
-  const updateIngredient = (index: number, value: string) => {
+  const updateIngredient = (index: number, field: keyof Ingredient, value: string) => {
     const newIngredients = [...ingredients]
-    newIngredients[index] = value
+    newIngredients[index] = { ...newIngredients[index], [field]: value }
     setIngredients(newIngredients)
   }
 
@@ -96,6 +97,14 @@ export const CreateRecipe: React.FC = () => {
     setSaveError(null)
     
     try {
+      // Convert structured ingredients to formatted strings
+      const ingredientStrings = ingredients
+        .filter(i => i.item.trim())
+        .map(i => {
+          const parts = [i.quantity, i.unit, i.item]
+          return parts.filter(p => p.trim()).join(' ').trim()
+        })
+
       // Convert form data to Recipe format
       const recipe: Recipe = {
         recipeName: title,
@@ -103,7 +112,7 @@ export const CreateRecipe: React.FC = () => {
         prepTime: prepTime ? `${prepTime} minutes` : undefined,
         cookTime: cookTime ? `${cookTime} minutes` : undefined,
         servings: servings ? parseInt(servings) : 1,
-        ingredients: ingredients.filter(i => i.trim()),
+        ingredients: ingredientStrings,
         instructions: instructions.filter(i => i.trim()),
         imageUrl: imagePreview || undefined,
         source: 'manual'
@@ -292,16 +301,20 @@ export const CreateRecipe: React.FC = () => {
           </div>
 
           {/* Ingredients */}
-          {ingredients.filter(i => i.trim()).length > 0 && (
+          {ingredients.filter(i => i.item.trim()).length > 0 && (
             <div className="mt-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Ingredients</h2>
               <ul className="space-y-2">
-                {ingredients.filter(i => i.trim()).map((ingredient, index) => (
+                {ingredients.filter(i => i.item.trim()).map((ingredient, index) => (
                   <li key={index} className="flex items-start">
-                    <svg className="w-5 h-5 mr-3 mt-0.5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 mr-3 mt-0.5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span className="text-gray-700">{ingredient}</span>
+                    <span className="text-gray-700">
+                      {[ingredient.quantity, ingredient.unit, ingredient.item]
+                        .filter(p => p.trim())
+                        .join(' ')}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -522,52 +535,12 @@ export const CreateRecipe: React.FC = () => {
 
             {/* Step 2: Ingredients */}
             {currentStep === 2 && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    Ingredients <span className="text-red-500">*</span>
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={addIngredient}
-                    className="px-3 py-1.5 text-sm bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors flex items-center space-x-1"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    <span>Add Ingredient</span>
-                  </button>
-                </div>
-                
-                <div className="space-y-3">
-                  {ingredients.map((ingredient, index) => (
-                <div key={index} className="flex items-start space-x-3">
-                  <span className="flex-shrink-0 w-8 h-10 flex items-center justify-center text-sm font-medium text-gray-500">
-                    {index + 1}.
-                  </span>
-                  <input
-                    type="text"
-                    value={ingredient}
-                    onChange={(e) => updateIngredient(index, e.target.value)}
-                    placeholder="e.g., 2 cups all-purpose flour"
-                    required={index === 0}
-                    className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                  {ingredients.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeIngredient(index)}
-                      className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-              </div>
+              <IngredientInput
+                ingredients={ingredients}
+                onAddIngredient={addIngredient}
+                onUpdateIngredient={updateIngredient}
+                onRemoveIngredient={removeIngredient}
+              />
             )}
 
             {/* Step 3: Instructions & Tags */}
