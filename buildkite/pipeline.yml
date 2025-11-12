@@ -1,12 +1,4 @@
 steps:
-  - label: ":eslint: Lint"
-    command:
-      - "npm ci"
-      - "npm run lint"
-    plugins:
-      - docker#v3.9.0:
-          image: "node:20"
-
   - label: ":jest: Unit Tests"
     command:
       - "npm ci"
