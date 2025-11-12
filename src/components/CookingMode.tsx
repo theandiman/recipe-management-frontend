@@ -67,15 +67,7 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
           {showIngredients ? (
             // Ingredients panel
             <div className="w-full h-full flex flex-col">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-gray-900">Ingredients</h3>
-                <button
-                  onClick={() => setShowIngredients(false)}
-                  className="text-emerald-600 hover:text-emerald-700 font-medium"
-                >
-                  Back to Steps →
-                </button>
-              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Ingredients</h3>
               <ul className="space-y-3 overflow-y-auto flex-1 pr-4">
                 {recipe.ingredients.map((ingredient: string, index: number) => (
                   <li key={index} className="flex items-start p-3 bg-emerald-50 rounded-lg">
@@ -128,10 +120,10 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
         {/* Footer controls */}
         <div className="bg-gray-50 border-t border-gray-200 px-8 py-4 flex gap-4 items-center justify-center flex-shrink-0">
           <button
-            onClick={() => setShowIngredients(true)}
+            onClick={() => setShowIngredients(!showIngredients)}
             className="py-3 px-6 bg-emerald-50 text-emerald-700 rounded-lg font-medium hover:bg-emerald-100 transition-colors"
           >
-            📋 View Ingredients
+            {showIngredients ? '�‍🍳 View Steps' : '�📋 View Ingredients'}
           </button>
         </div>
       </div>
