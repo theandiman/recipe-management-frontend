@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getRecipe, type RecipeResponse } from '../../services/recipeStorageApi'
+import { CookingMode } from '../../components/CookingMode'
 
 export const RecipeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -8,6 +9,7 @@ export const RecipeDetail: React.FC = () => {
   const [recipe, setRecipe] = useState<RecipeResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isCookingMode, setIsCookingMode] = useState(false)
 
   useEffect(() => {
     const fetchRecipe = async () => {
@@ -61,16 +63,28 @@ export const RecipeDetail: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Back button */}
-      <button
-        onClick={() => navigate('/dashboard/recipes')}
-        className="mb-6 text-emerald-600 hover:text-emerald-700 flex items-center font-medium transition-colors"
-      >
-        <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Back to Library
-      </button>
+      {/* Header with back button and cooking mode button */}
+      <div className="mb-6 flex items-center justify-between">
+        <button
+          onClick={() => navigate('/dashboard/recipes')}
+          className="text-emerald-600 hover:text-emerald-700 flex items-center font-medium transition-colors"
+        >
+          <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Library
+        </button>
+        
+        <button
+          onClick={() => setIsCookingMode(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          Start Cooking Mode
+        </button>
+      </div>
 
       {/* Recipe image */}
       {recipe.imageUrl && (
@@ -181,6 +195,11 @@ export const RecipeDetail: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Cooking Mode Modal */}
+      {isCookingMode && recipe && (
+        <CookingMode recipe={recipe} onClose={() => setIsCookingMode(false)} />
+      )}
     </div>
   )
 }
