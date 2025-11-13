@@ -130,7 +130,7 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-  # Build Job (validates build process on PRs, full build happens in deploy)
+  # Build Job
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -147,10 +147,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build for production (validation only)
+      - name: Build for production
         run: npm run build
         env:
-          # Use dummy values for build validation
+          # Use dummy values for build validation (PR builds and validation)
           VITE_FIREBASE_API_KEY: 'build-test-key'
           VITE_FIREBASE_AUTH_DOMAIN: 'build-test.firebaseapp.com'
           VITE_FIREBASE_PROJECT_ID: 'build-test-project'
