@@ -15,6 +15,10 @@ export const CreateRecipe: React.FC = () => {
   const [saveLoading, setSaveLoading] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   
+  // Validation state
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [stepsWithErrors, setStepsWithErrors] = useState<Set<number>>(new Set())
+  
   // Form state
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -27,6 +31,18 @@ export const CreateRecipe: React.FC = () => {
   const [tagInput, setTagInput] = useState('')
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
+  // Helper function to clear field errors
+  const clearFieldError = (fieldName: string, stepNumber: number) => {
+    if (fieldErrors[fieldName]) {
+      const newErrors = { ...fieldErrors }
+      delete newErrors[fieldName]
+      setFieldErrors(newErrors)
+      const newStepsWithErrors = new Set(stepsWithErrors)
+      newStepsWithErrors.delete(stepNumber)
+      setStepsWithErrors(newStepsWithErrors)
+    }
+  }
+
   // Ingredient handlers
   const addIngredient = () => {
     setIngredients([...ingredients, { quantity: '', unit: '', item: '' }])
@@ -36,11 +52,27 @@ export const CreateRecipe: React.FC = () => {
     const newIngredients = [...ingredients]
     newIngredients[index] = { ...newIngredients[index], [field]: value }
     setIngredients(newIngredients)
+    
+    // Clear ingredients error when user starts adding data
+    if (field === 'item' && value.trim()) {
+      clearFieldError('ingredients', 2)
+    }
   }
 
   const removeIngredient = (index: number) => {
     if (ingredients.length > 1) {
-      setIngredients(ingredients.filter((_, i) => i !== index))
+      const newIngredients = ingredients.filter((_, i) => i !== index)
+      setIngredients(newIngredients)
+      
+      // Re-validate ingredients after removal
+      const hasValidIngredient = newIngredients.some(ing => ing.item.trim())
+      if (!hasValidIngredient) {
+        const newErrors = { ...fieldErrors, ingredients: 'At least one ingredient is required' }
+        setFieldErrors(newErrors)
+        const newStepsWithErrors = new Set(stepsWithErrors)
+        newStepsWithErrors.add(2)
+        setStepsWithErrors(newStepsWithErrors)
+      }
     }
   }
 
@@ -53,11 +85,27 @@ export const CreateRecipe: React.FC = () => {
     const newInstructions = [...instructions]
     newInstructions[index] = value
     setInstructions(newInstructions)
+    
+    // Clear instructions error when user starts adding data
+    if (value.trim()) {
+      clearFieldError('instructions', 3)
+    }
   }
 
   const removeInstruction = (index: number) => {
     if (instructions.length > 1) {
-      setInstructions(instructions.filter((_, i) => i !== index))
+      const newInstructions = instructions.filter((_, i) => i !== index)
+      setInstructions(newInstructions)
+      
+      // Re-validate instructions after removal
+      const hasValidInstruction = newInstructions.some(inst => inst.trim())
+      if (!hasValidInstruction) {
+        const newErrors = { ...fieldErrors, instructions: 'At least one instruction is required' }
+        setFieldErrors(newErrors)
+        const newStepsWithErrors = new Set(stepsWithErrors)
+        newStepsWithErrors.add(3)
+        setStepsWithErrors(newStepsWithErrors)
+      }
     }
   }
 
@@ -90,8 +138,58 @@ export const CreateRecipe: React.FC = () => {
     setImagePreview(null)
   }
 
+  // Validation function
+  const validateForm = (): { isValid: boolean; errors: Record<string, string>; errorSteps: Set<number> } => {
+    const errors: Record<string, string> = {}
+    const errorSteps = new Set<number>()
+
+    // Step 1: Basic Info - Recipe name is required
+    if (!title.trim()) {
+      errors.title = 'Recipe name is required'
+      errorSteps.add(1)
+    }
+
+    // Step 2: Ingredients - At least one ingredient with an item is required
+    const hasValidIngredient = ingredients.some(ing => ing.item.trim())
+    if (!hasValidIngredient) {
+      errors.ingredients = 'At least one ingredient is required'
+      errorSteps.add(2)
+    }
+
+    // Step 3: Instructions - At least one instruction is required
+    const hasValidInstruction = instructions.some(inst => inst.trim())
+    if (!hasValidInstruction) {
+      errors.instructions = 'At least one instruction is required'
+      errorSteps.add(3)
+    }
+
+    return { isValid: Object.keys(errors).length === 0, errors, errorSteps }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate form before submitting
+    const validation = validateForm()
+    
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors)
+      setStepsWithErrors(validation.errorSteps)
+      
+      // Find the first step with errors and navigate to it
+      if (validation.errorSteps.size > 0) {
+        const firstErrorStep = Math.min(...Array.from(validation.errorSteps))
+        setCurrentStep(firstErrorStep)
+      }
+      // Show validation error message
+      setSaveError('Please fix the validation errors before saving.')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+    
+    // Clear any previous errors
+    setFieldErrors({})
+    setStepsWithErrors(new Set())
     
     setSaveLoading(true)
     setSaveError(null)
@@ -187,18 +285,25 @@ export const CreateRecipe: React.FC = () => {
                 }`}
               >
                 <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold transition-colors ${
+                  className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold transition-colors relative ${
                     step.number === currentStep
                       ? 'bg-green-600 text-white shadow-lg'
                       : step.number < currentStep
                       ? 'bg-green-100 text-green-700'
                       : 'bg-gray-200 text-gray-500'
+                  } ${
+                    stepsWithErrors.has(step.number) ? 'ring-2 ring-red-500 ring-offset-2' : ''
                   }`}
                 >
                   {step.number < currentStep ? '✓' : step.icon}
+                  {stepsWithErrors.has(step.number) && (
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs">!</span>
+                    </div>
+                  )}
                 </div>
                 <span className={`text-sm font-medium ${
-                  step.number === currentStep ? 'text-gray-900' : 'text-gray-500'
+                  step.number === currentStep ? 'text-gray-900' : stepsWithErrors.has(step.number) ? 'text-red-600' : 'text-gray-500'
                 }`}>
                   {step.title}
                 </span>
@@ -218,9 +323,9 @@ export const CreateRecipe: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           {/* Error message */}
           {saveError && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start" role="alert">
               <svg className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
               <div className="flex-1">
                 <h3 className="text-sm font-medium text-red-800">Error saving recipe</h3>
@@ -419,11 +524,31 @@ export const CreateRecipe: React.FC = () => {
                   <input
                     type="text"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) => {
+                      setTitle(e.target.value)
+                      // Clear error when user starts typing
+                      if (e.target.value) {
+                        clearFieldError('title', 1)
+                      }
+                    }}
                     required
                     placeholder="e.g., Grandma's Chocolate Chip Cookies"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    aria-invalid={!!fieldErrors.title}
+                    aria-describedby={fieldErrors.title ? 'title-error' : undefined}
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
+                      fieldErrors.title
+                        ? 'border-red-500 focus:ring-red-500'
+                        : 'border-gray-300 focus:ring-green-500'
+                    }`}
                   />
+                  {fieldErrors.title && (
+                    <p id="title-error" className="mt-1 text-sm text-red-600 flex items-center" role="alert">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {fieldErrors.title}
+                    </p>
+                  )}
                 </div>
 
                 {/* Description */}
@@ -535,12 +660,24 @@ export const CreateRecipe: React.FC = () => {
 
             {/* Step 2: Ingredients */}
             {currentStep === 2 && (
-              <IngredientInput
-                ingredients={ingredients}
-                onAddIngredient={addIngredient}
-                onUpdateIngredient={updateIngredient}
-                onRemoveIngredient={removeIngredient}
-              />
+              <div className="space-y-4">
+                <IngredientInput
+                  ingredients={ingredients}
+                  onAddIngredient={addIngredient}
+                  onUpdateIngredient={updateIngredient}
+                  onRemoveIngredient={removeIngredient}
+                />
+                {fieldErrors.ingredients && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
+                    <svg className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-red-800">{fieldErrors.ingredients}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Step 3: Instructions & Tags */}
@@ -594,6 +731,17 @@ export const CreateRecipe: React.FC = () => {
                 </div>
               ))}
             </div>
+            
+            {fieldErrors.instructions && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start" role="alert">
+                <svg className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-red-800">{fieldErrors.instructions}</p>
+                </div>
+              </div>
+            )}
                 </div>
 
             {/* Tags Section */}
