@@ -263,29 +263,29 @@ export const CreateRecipe: React.FC = () => {
   ]
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Header with Step Indicator */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Recipe</h1>
-            <p className="text-gray-600">Step {currentStep} of {totalSteps}: {steps[currentStep - 1].title}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Create Recipe</h1>
+            <p className="text-sm sm:text-base text-gray-600">Step {currentStep} of {totalSteps}: {steps[currentStep - 1].title}</p>
           </div>
         </div>
 
-        {/* Step Progress Indicator */}
-        <div className="flex items-center justify-between mb-8">
+        {/* Step Progress Indicator - Horizontal scroll on mobile */}
+        <div className="flex items-center justify-between gap-2 sm:gap-4 mb-6 sm:mb-8 overflow-x-auto pb-2">
           {steps.map((step, index) => (
             <React.Fragment key={step.number}>
               <button
                 type="button"
                 onClick={() => goToStep(step.number)}
-                className={`flex flex-col items-center space-y-2 ${
+                className={`flex flex-col items-center gap-1 sm:gap-2 flex-shrink-0 ${
                   step.number === currentStep ? 'opacity-100' : step.number < currentStep ? 'opacity-100' : 'opacity-50'
                 }`}
               >
                 <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold transition-colors relative ${
+                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-lg sm:text-xl font-bold transition-colors relative ${
                     step.number === currentStep
                       ? 'bg-green-600 text-white shadow-lg'
                       : step.number < currentStep
@@ -297,12 +297,12 @@ export const CreateRecipe: React.FC = () => {
                 >
                   {step.number < currentStep ? '✓' : step.icon}
                   {stepsWithErrors.has(step.number) && (
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-xs">!</span>
+                    <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-red-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-[10px] sm:text-xs">!</span>
                     </div>
                   )}
                 </div>
-                <span className={`text-sm font-medium ${
+                <span className={`text-xs sm:text-sm font-medium whitespace-nowrap ${
                   step.number === currentStep ? 'text-gray-900' : stepsWithErrors.has(step.number) ? 'text-red-600' : 'text-gray-500'
                 }`}>
                   {step.title}
