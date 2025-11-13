@@ -6,9 +6,16 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: [
-    ['html', { open: process.env.CI ? 'never' : 'on-failure' }],
-  ],
+  reporter: process.env.CI 
+    ? [
+        ['html', { open: 'never' }],
+        ['list'],
+        ['junit', { outputFile: 'test-results/junit.xml' }],
+        // Buildkite Test Engine for test analytics
+        ...(process.env.BUILDKITE ? [['buildkite-test-collector/playwright/reporter']] : [])
+      ]
+    : [['html', { open: 'on-failure' }]],
+  timeout: 30000, // 30 seconds per test
   use: {
     baseURL: 'http://localhost:5173',
     trace: 'on-first-retry',
