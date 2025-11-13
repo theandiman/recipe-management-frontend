@@ -34,11 +34,14 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'VITE_TEST_MODE=true npm run dev',
+    command: 'npm run dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 120000, // 2 minutes for server to start
     stdout: 'pipe', // Suppress server logs in CI
     stderr: 'pipe',
+    env: {
+      VITE_TEST_MODE: 'true',
+    },
   },
 });
