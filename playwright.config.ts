@@ -12,6 +12,11 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:5173',
     trace: 'on-first-retry',
+    launchOptions: {
+      headless: true, // Always run headless (especially in CI)
+    },
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
   },
 
   projects: [
@@ -25,5 +30,8 @@ export default defineConfig({
     command: 'VITE_TEST_MODE=true npm run dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
+    timeout: 120000, // 2 minutes for server to start
+    stdout: 'pipe', // Suppress server logs in CI
+    stderr: 'pipe',
   },
 });
