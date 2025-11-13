@@ -31,6 +31,18 @@ export const CreateRecipe: React.FC = () => {
   const [tagInput, setTagInput] = useState('')
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
+  // Helper function to clear field errors
+  const clearFieldError = (fieldName: string, stepNumber: number) => {
+    if (fieldErrors[fieldName]) {
+      const newErrors = { ...fieldErrors }
+      delete newErrors[fieldName]
+      setFieldErrors(newErrors)
+      const newStepsWithErrors = new Set(stepsWithErrors)
+      newStepsWithErrors.delete(stepNumber)
+      setStepsWithErrors(newStepsWithErrors)
+    }
+  }
+
   // Ingredient handlers
   const addIngredient = () => {
     setIngredients([...ingredients, { quantity: '', unit: '', item: '' }])
@@ -42,13 +54,8 @@ export const CreateRecipe: React.FC = () => {
     setIngredients(newIngredients)
     
     // Clear ingredients error when user starts adding data
-    if (fieldErrors.ingredients && field === 'item' && value.trim()) {
-      const newErrors = { ...fieldErrors }
-      delete newErrors.ingredients
-      setFieldErrors(newErrors)
-      const newStepsWithErrors = new Set(stepsWithErrors)
-      newStepsWithErrors.delete(2)
-      setStepsWithErrors(newStepsWithErrors)
+    if (field === 'item' && value.trim()) {
+      clearFieldError('ingredients', 2)
     }
   }
 
@@ -69,13 +76,8 @@ export const CreateRecipe: React.FC = () => {
     setInstructions(newInstructions)
     
     // Clear instructions error when user starts adding data
-    if (fieldErrors.instructions && value.trim()) {
-      const newErrors = { ...fieldErrors }
-      delete newErrors.instructions
-      setFieldErrors(newErrors)
-      const newStepsWithErrors = new Set(stepsWithErrors)
-      newStepsWithErrors.delete(3)
-      setStepsWithErrors(newStepsWithErrors)
+    if (value.trim()) {
+      clearFieldError('instructions', 3)
     }
   }
 
@@ -503,13 +505,8 @@ export const CreateRecipe: React.FC = () => {
                     onChange={(e) => {
                       setTitle(e.target.value)
                       // Clear error when user starts typing
-                      if (fieldErrors.title) {
-                        const newErrors = { ...fieldErrors }
-                        delete newErrors.title
-                        setFieldErrors(newErrors)
-                        const newStepsWithErrors = new Set(stepsWithErrors)
-                        newStepsWithErrors.delete(1)
-                        setStepsWithErrors(newStepsWithErrors)
+                      if (e.target.value) {
+                        clearFieldError('title', 1)
                       }
                     }}
                     required
