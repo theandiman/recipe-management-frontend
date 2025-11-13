@@ -380,5 +380,515 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       expect(input).toHaveClass('hidden')
     })
   })
+
+  describe('Form Validation', () => {
+    describe('Recipe Name Validation', () => {
+      it('should show error when trying to save without recipe name', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Navigate to step 4
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        // Try to save without recipe name
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // Should show error message
+        expect(screen.getByText('Recipe name is required')).toBeInTheDocument()
+        
+        // Should navigate back to step 1
+        expect(screen.getByText(/Step 1 of 4: Basic Info/i)).toBeInTheDocument()
+      })
+
+      it('should show red border on title field when validation fails', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Navigate to step 4 and try to save
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // Title field should have red border
+        const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+        expect(titleInput).toHaveClass('border-red-500')
+      })
+
+      it('should clear error when user starts typing recipe name', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Navigate to step 4 and trigger validation
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // Error should be visible
+        expect(screen.getByText('Recipe name is required')).toBeInTheDocument()
+        
+        // Start typing
+        const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+        fireEvent.change(titleInput, { target: { value: 'T' } })
+        
+        // Error should clear
+        expect(screen.queryByText('Recipe name is required')).not.toBeInTheDocument()
+        expect(titleInput).not.toHaveClass('border-red-500')
+      })
+
+      it('should show error indicator on step 1 in progress indicator', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Navigate to step 4 and try to save
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // Step 1 should have red ring and exclamation mark
+        const step1Button = screen.getByRole('button', { name: /Basic Info/i })
+        const step1Icon = step1Button.querySelector('div')
+        expect(step1Icon).toHaveClass('ring-2', 'ring-red-500')
+        
+        // Should have exclamation badge
+        const badge = step1Icon?.querySelector('.bg-red-500')
+        expect(badge).toBeInTheDocument()
+        expect(badge?.textContent).toBe('!')
+      })
+    })
+
+    describe('Ingredients Validation', () => {
+      it('should show error when trying to save without ingredients', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Add recipe name
+        const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+        fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+        
+        // Navigate to step 4
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        // Try to save
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // Should show error and navigate to step 2
+        expect(screen.getByText('At least one ingredient is required')).toBeInTheDocument()
+        expect(screen.getByText(/Step 2 of 4: Ingredients/i)).toBeInTheDocument()
+      })
+
+      it('should show error indicator on step 2 in progress indicator', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Add recipe name
+        const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+        fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+        
+        // Navigate to step 4 and try to save
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // Step 2 should have red ring
+        const step2Button = screen.getByRole('button', { name: /Ingredients/i })
+        const step2Icon = step2Button.querySelector('div')
+        expect(step2Icon).toHaveClass('ring-2', 'ring-red-500')
+      })
+
+      it('should clear error when user adds ingredient item', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Add recipe name
+        const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+        fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+        
+        // Navigate to step 4 and trigger validation
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // Error should be visible on step 2
+        expect(screen.getByText('At least one ingredient is required')).toBeInTheDocument()
+        
+        // Add an ingredient
+        const itemInput = screen.getAllByPlaceholderText('e.g., all-purpose flour')[0]
+        fireEvent.change(itemInput, { target: { value: 'flour' } })
+        
+        // Error should clear
+        expect(screen.queryByText('At least one ingredient is required')).not.toBeInTheDocument()
+      })
+
+      it('should accept ingredient with only item field filled', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Add recipe name
+        const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+        fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+        
+        // Add ingredient item only (no quantity/unit)
+        const nextButton = screen.getByRole('button', { name: /Next →/i })
+        fireEvent.click(nextButton)
+        
+        const itemInput = screen.getAllByPlaceholderText('e.g., all-purpose flour')[0]
+        fireEvent.change(itemInput, { target: { value: 'flour' } })
+        
+        // Add instruction
+        const step3Button = screen.getByRole('button', { name: /Instructions/i })
+        fireEvent.click(step3Button)
+        
+        const instructionInput = screen.getAllByPlaceholderText(/Describe this step in detail/i)[0]
+        fireEvent.change(instructionInput, { target: { value: 'Mix ingredients' } })
+        
+        // Navigate to step 4 and save
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // Should not show ingredients error
+        expect(screen.queryByText('At least one ingredient is required')).not.toBeInTheDocument()
+      })
+    })
+
+    describe('Instructions Validation', () => {
+      it('should show error when trying to save without instructions', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Add recipe name
+        const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+        fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+        
+        // Add ingredient
+        const nextButton = screen.getByRole('button', { name: /Next →/i })
+        fireEvent.click(nextButton)
+        
+        const itemInput = screen.getAllByPlaceholderText('e.g., all-purpose flour')[0]
+        fireEvent.change(itemInput, { target: { value: 'flour' } })
+        
+        // Navigate to step 4
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        // Try to save
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // Should show error and navigate to step 3
+        expect(screen.getByText('At least one instruction is required')).toBeInTheDocument()
+        expect(screen.getByText(/Step 3 of 4: Instructions/i)).toBeInTheDocument()
+      })
+
+      it('should show error indicator on step 3 in progress indicator', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Add recipe name and ingredient
+        const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+        fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+        
+        const nextButton = screen.getByRole('button', { name: /Next →/i })
+        fireEvent.click(nextButton)
+        
+        const itemInput = screen.getAllByPlaceholderText('e.g., all-purpose flour')[0]
+        fireEvent.change(itemInput, { target: { value: 'flour' } })
+        
+        // Navigate to step 4 and try to save
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // Step 3 should have red ring
+        const step3Button = screen.getByRole('button', { name: /Instructions/i })
+        const step3Icon = step3Button.querySelector('div')
+        expect(step3Icon).toHaveClass('ring-2', 'ring-red-500')
+      })
+
+      it('should clear error when user adds instruction', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Add recipe name and ingredient
+        const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+        fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+        
+        let nextButton = screen.getByRole('button', { name: /Next →/i })
+        fireEvent.click(nextButton)
+        
+        const itemInput = screen.getAllByPlaceholderText('e.g., all-purpose flour')[0]
+        fireEvent.change(itemInput, { target: { value: 'flour' } })
+        
+        // Navigate to step 4 and trigger validation
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // Error should be visible on step 3
+        expect(screen.getByText('At least one instruction is required')).toBeInTheDocument()
+        
+        // Add instruction
+        const instructionInput = screen.getAllByPlaceholderText(/Describe this step in detail/i)[0]
+        fireEvent.change(instructionInput, { target: { value: 'Mix ingredients' } })
+        
+        // Error should clear
+        expect(screen.queryByText('At least one instruction is required')).not.toBeInTheDocument()
+      })
+    })
+
+    describe('Multiple Validation Errors', () => {
+      it('should show all validation errors when form is completely empty', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Navigate to step 4 and try to save
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // Should navigate to first error step (step 1)
+        expect(screen.getByText(/Step 1 of 4: Basic Info/i)).toBeInTheDocument()
+        expect(screen.getByText('Recipe name is required')).toBeInTheDocument()
+        
+        // All error steps should be marked in progress indicator
+        const step1Button = screen.getByRole('button', { name: /Basic Info/i })
+        const step2Button = screen.getByRole('button', { name: /Ingredients/i })
+        const step3Button = screen.getByRole('button', { name: /Instructions/i })
+        
+        expect(step1Button.querySelector('.ring-red-500')).toBeInTheDocument()
+        expect(step2Button.querySelector('.ring-red-500')).toBeInTheDocument()
+        expect(step3Button.querySelector('.ring-red-500')).toBeInTheDocument()
+      })
+
+      it('should navigate to first error step', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Add recipe name (fix step 1)
+        const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+        fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+        
+        // Navigate to step 4 and try to save
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // Should navigate to step 2 (first error)
+        expect(screen.getByText(/Step 2 of 4: Ingredients/i)).toBeInTheDocument()
+        expect(screen.getByText('At least one ingredient is required')).toBeInTheDocument()
+      })
+
+      it('should clear error indicators as user fixes issues', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Navigate to step 4 and trigger validation
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // All steps should have errors
+        let step1Button = screen.getByRole('button', { name: /Basic Info/i })
+        let step2Button = screen.getByRole('button', { name: /Ingredients/i })
+        let step3Button = screen.getByRole('button', { name: /Instructions/i })
+        
+        expect(step1Button.querySelector('.ring-red-500')).toBeInTheDocument()
+        expect(step2Button.querySelector('.ring-red-500')).toBeInTheDocument()
+        expect(step3Button.querySelector('.ring-red-500')).toBeInTheDocument()
+        
+        // Fix step 1
+        const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+        fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+        
+        // Step 1 error indicator should clear
+        step1Button = screen.getByRole('button', { name: /Basic Info/i })
+        expect(step1Button.querySelector('.ring-red-500')).not.toBeInTheDocument()
+        
+        // Fix step 2
+        const nextButton = screen.getByRole('button', { name: /Next →/i })
+        fireEvent.click(nextButton)
+        
+        const itemInput = screen.getAllByPlaceholderText('e.g., all-purpose flour')[0]
+        fireEvent.change(itemInput, { target: { value: 'flour' } })
+        
+        // Step 2 error indicator should clear
+        step2Button = screen.getByRole('button', { name: /Ingredients/i })
+        expect(step2Button.querySelector('.ring-red-500')).not.toBeInTheDocument()
+        
+        // Step 3 should still have error
+        step3Button = screen.getByRole('button', { name: /Instructions/i })
+        expect(step3Button.querySelector('.ring-red-500')).toBeInTheDocument()
+      })
+    })
+
+    describe('Validation Error Message Display', () => {
+      it('should navigate to first error step when validation fails', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Navigate to step 4 and try to save
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // Should navigate back to step 1 (first error)
+        expect(screen.getByText(/Step 1 of 4: Basic Info/i)).toBeInTheDocument()
+        expect(screen.getByText('Recipe name is required')).toBeInTheDocument()
+      })
+
+      it('should show inline error message with icon for title field', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Navigate to step 4 and try to save
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // Check for error message with SVG icon
+        const errorText = screen.getByText('Recipe name is required')
+        expect(errorText).toHaveClass('text-red-600')
+        
+        const errorContainer = errorText.closest('p')
+        expect(errorContainer?.querySelector('svg')).toBeInTheDocument()
+      })
+
+      it('should show error box for ingredients section', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Add recipe name
+        const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+        fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+        
+        // Navigate to step 4 and try to save
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // Should be on step 2 with error message
+        const errorMessage = screen.getByText('At least one ingredient is required')
+        expect(errorMessage).toBeInTheDocument()
+        expect(errorMessage).toHaveClass('text-red-800')
+        
+        // Error should be in a red box
+        const errorContainer = errorMessage.closest('.bg-red-50')
+        expect(errorContainer).toBeInTheDocument()
+        expect(errorContainer).toHaveClass('border-red-200')
+      })
+
+      it('should show error box for instructions section', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Add recipe name and ingredient
+        const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+        fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+        
+        const nextButton = screen.getByRole('button', { name: /Next →/i })
+        fireEvent.click(nextButton)
+        
+        const itemInput = screen.getAllByPlaceholderText('e.g., all-purpose flour')[0]
+        fireEvent.change(itemInput, { target: { value: 'flour' } })
+        
+        // Navigate to step 4 and try to save
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // Should be on step 3 with error message
+        const errorMessage = screen.getByText('At least one instruction is required')
+        expect(errorMessage).toBeInTheDocument()
+        expect(errorMessage).toHaveClass('text-red-800')
+        
+        // Error should be in a red box
+        const errorContainer = errorMessage.closest('.bg-red-50')
+        expect(errorContainer).toBeInTheDocument()
+        expect(errorContainer).toHaveClass('border-red-200')
+      })
+    })
+
+    describe('Successful Validation', () => {
+      it('should allow save when all required fields are filled', async () => {
+        const { saveRecipe } = await import('../../services/recipeStorageApi')
+        renderWithRouter(<CreateRecipe />)
+        
+        // Fill required fields
+        const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+        fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+        
+        let nextButton = screen.getByRole('button', { name: /Next →/i })
+        fireEvent.click(nextButton)
+        
+        const itemInput = screen.getAllByPlaceholderText('e.g., all-purpose flour')[0]
+        fireEvent.change(itemInput, { target: { value: 'flour' } })
+        
+        nextButton = screen.getByRole('button', { name: /Next →/i })
+        fireEvent.click(nextButton)
+        
+        const instructionInput = screen.getAllByPlaceholderText(/Describe this step in detail/i)[0]
+        fireEvent.change(instructionInput, { target: { value: 'Mix ingredients' } })
+        
+        // Navigate to step 4 and save
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // Save should be called
+        expect(saveRecipe).toHaveBeenCalled()
+      })
+
+      it('should not show any validation errors when form is valid', async () => {
+        renderWithRouter(<CreateRecipe />)
+        
+        // Fill required fields
+        const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+        fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+        
+        let nextButton = screen.getByRole('button', { name: /Next →/i })
+        fireEvent.click(nextButton)
+        
+        const itemInput = screen.getAllByPlaceholderText('e.g., all-purpose flour')[0]
+        fireEvent.change(itemInput, { target: { value: 'flour' } })
+        
+        nextButton = screen.getByRole('button', { name: /Next →/i })
+        fireEvent.click(nextButton)
+        
+        const instructionInput = screen.getAllByPlaceholderText(/Describe this step in detail/i)[0]
+        fireEvent.change(instructionInput, { target: { value: 'Mix ingredients' } })
+        
+        // Navigate to step 4 and save
+        const step4Button = screen.getByRole('button', { name: /Review/i })
+        fireEvent.click(step4Button)
+        
+        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
+        fireEvent.click(saveButton)
+        
+        // No validation errors should be shown
+        expect(screen.queryByText('Recipe name is required')).not.toBeInTheDocument()
+        expect(screen.queryByText('At least one ingredient is required')).not.toBeInTheDocument()
+        expect(screen.queryByText('At least one instruction is required')).not.toBeInTheDocument()
+        expect(screen.queryByText('Please fix the validation errors before saving.')).not.toBeInTheDocument()
+      })
+    })
+  })
 })
 
