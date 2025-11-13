@@ -32,7 +32,7 @@ To add Test Engine support for unit tests, update `vitest.config.ts`:
 test: {
   reporters: [
     'default',
-    ...(process.env.BUILDKITE ? [['buildkite-test-collector/vitest/reporter']] : [])
+    ...(process.env.BUILDKITE ? ['buildkite-test-collector/vitest/reporter'] : [])
   ],
   includeTaskLocation: true, // Enable line/column capture
 }
