@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Get Firebase ID Token</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-top: 0;
+    }
+    .instructions {
+      background: #f0f9ff;
+      border-left: 4px solid #0ea5e9;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    .token-container {
+      margin-top: 20px;
+    }
+    .token {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      padding: 15px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 12px;
+      word-break: break-all;
+      margin: 10px 0;
+      position: relative;
+    }
+    button {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: #059669;
+    }
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    .status {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .status.loading {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .status.success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .status.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .command {
+      background: #1f2937;
+      color: #f9fafb;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+      margin: 10px 0;
+      overflow-x: auto;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔑 Get Firebase ID Token</h1>
+    
+    <div class="instructions">
+      <h3>Instructions:</h3>
+      <ol>
+        <li>Click the "Get Token" button below</li>
+        <li>If not logged in, you'll be prompted to sign in</li>
+        <li>Once signed in, your Firebase ID token will be displayed</li>
+        <li>Copy the token and use it with the populate script</li>
+      </ol>
+    </div>
+
+    <button id="getTokenBtn" onclick="getToken()">🔐 Get Token</button>
+    
+    <div id="status"></div>
+    
+    <div id="tokenContainer" class="token-container" style="display: none;">
+      <h3>Your Firebase ID Token:</h3>
+      <div class="token" id="tokenDisplay">
+        <button class="copy-btn" onclick="copyToken()">📋 Copy</button>
+        <div id="tokenText"></div>
+      </div>
+      
+      <h3>Use this command to populate 50 recipes:</h3>
+      <div class="command" id="commandDisplay"></div>
+      <button onclick="copyCommand()">📋 Copy Command</button>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js'
+    import { getAuth, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js'
+
+    // Load Firebase config from environment variables
+    const firebaseConfig = {
+      apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+      storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+      appId: import.meta.env.VITE_FIREBASE_APP_ID
+    }
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig)
+    const auth = getAuth(app)
+
+    // Make auth and getToken available globally
+    window.firebaseAuth = auth
+    window.getToken = async () => {
+      const statusDiv = document.getElementById('status')
+      const tokenContainer = document.getElementById('tokenContainer')
+      const tokenText = document.getElementById('tokenText')
+      const commandDisplay = document.getElementById('commandDisplay')
+      const btn = document.getElementById('getTokenBtn')
+
+      try {
+        btn.disabled = true
+        statusDiv.className = 'status loading'
+        statusDiv.textContent = '⏳ Checking authentication...'
+        statusDiv.style.display = 'block'
+
+        let user = auth.currentUser
+
+        // If not logged in, prompt for sign in
+        if (!user) {
+          statusDiv.textContent = '🔐 Please sign in with Google...'
+          const provider = new GoogleAuthProvider()
+          const result = await signInWithPopup(auth, provider)
+          user = result.user
+        }
+
+        statusDiv.textContent = '🔑 Getting ID token...'
+        const token = await user.getIdToken()
+
+        // Display token
+        tokenText.textContent = token
+        
+        // Create command
+        const command = `FIREBASE_ID_TOKEN="${token}" node scripts/populate-recipes.js 50`
+        commandDisplay.textContent = command
+
+        // Show success
+        statusDiv.className = 'status success'
+        statusDiv.textContent = `✅ Token retrieved successfully for ${user.email}`
+        tokenContainer.style.display = 'block'
+        
+        btn.textContent = '🔄 Refresh Token'
+
+      } catch (error) {
+        console.error('Error getting token:', error)
+        statusDiv.className = 'status error'
+        statusDiv.textContent = `❌ Error: ${error.message}`
+      } finally {
+        btn.disabled = false
+      }
+    }
+
+    window.copyToken = () => {
+      const tokenText = document.getElementById('tokenText').textContent
+      navigator.clipboard.writeText(tokenText).then(() => {
+        const btn = event.target
+        const originalText = btn.textContent
+        btn.textContent = '✅ Copied!'
+        setTimeout(() => {
+          btn.textContent = originalText
+        }, 2000)
+      })
+    }
+
+    window.copyCommand = () => {
+      const commandText = document.getElementById('commandDisplay').textContent
+      navigator.clipboard.writeText(commandText).then(() => {
+        const btn = event.target
+        const originalText = btn.textContent
+        btn.textContent = '✅ Copied!'
+        setTimeout(() => {
+          btn.textContent = originalText
+        }, 2000)
+      })
+    }
+  </script>
+</body>
+</html>
