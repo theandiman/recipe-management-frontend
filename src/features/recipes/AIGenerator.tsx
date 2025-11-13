@@ -104,7 +104,13 @@ export const AIGenerator: React.FC = () => {
     setSaveSuccess(false)
 
     try {
-      await saveRecipe(parsedRecipe)
+      // Merge the imageUrl from Redux state into the recipe before saving
+      const recipeToSave = {
+        ...parsedRecipe,
+        imageUrl: imageUrl || parsedRecipe.imageUrl
+      }
+      
+      await saveRecipe(recipeToSave)
       setSaveSuccess(true)
       // Clear success message after 3 seconds
       setTimeout(() => setSaveSuccess(false), 3000)
