@@ -28,7 +28,7 @@ steps:
     command:
       - "npm ci"
       - "'y' | npx playwright install --with-deps"
-      - "npx playwright test"
+      - "PLAYWRIGHT_HTML_OPEN='never' npx playwright test"
     plugins:
       - docker#v3.9.0:
           image: "node:20"
