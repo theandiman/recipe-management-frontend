@@ -1,11 +1,26 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../features/auth/AuthContext'
 
 export const DashboardLayout: React.FC = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  // Start with sidebar closed on mobile, open on desktop
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024)
+
+  // Handle window resize to auto-open/close sidebar
+  useEffect(() => {
+    const handleResize = () => {
+      // On desktop (lg breakpoint = 1024px), keep sidebar open
+      // On mobile, keep it closed unless user opens it
+      if (window.innerWidth >= 1024 && !isSidebarOpen) {
+        setIsSidebarOpen(true)
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [isSidebarOpen])
 
   const handleLogout = async () => {
     await logout()
@@ -86,6 +101,12 @@ export const DashboardLayout: React.FC = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                onClick={() => {
+                  // Close sidebar on mobile after navigation
+                  if (window.innerWidth < 1024) {
+                    setIsSidebarOpen(false)
+                  }
+                }}
                 className={({ isActive }) =>
                   `flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
                     isActive
