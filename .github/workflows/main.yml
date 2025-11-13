@@ -219,6 +219,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: [lint, type-check, unit-tests, e2e-tests, build]
+    environment: dev
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
