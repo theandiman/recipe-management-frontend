@@ -29,7 +29,9 @@ steps:
     command:
       - "npm ci"
       - "'y' | npx playwright install --with-deps"
-      - "CI='true' npx playwright test"
+      - "CI='true' BUILDKITE_ANALYTICS_TOKEN=$TEST_ANALYTICS_TOKEN npx playwright test"
     plugins:
       - docker#v3.9.0:
           image: "node:20"
+          environment:
+            - "TEST_ANALYTICS_TOKEN"
