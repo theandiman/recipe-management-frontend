@@ -61,7 +61,18 @@ export const CreateRecipe: React.FC = () => {
 
   const removeIngredient = (index: number) => {
     if (ingredients.length > 1) {
-      setIngredients(ingredients.filter((_, i) => i !== index))
+      const newIngredients = ingredients.filter((_, i) => i !== index)
+      setIngredients(newIngredients)
+      
+      // Re-validate ingredients after removal
+      const hasValidIngredient = newIngredients.some(ing => ing.item.trim())
+      if (!hasValidIngredient) {
+        const newErrors = { ...fieldErrors, ingredients: 'At least one ingredient is required' }
+        setFieldErrors(newErrors)
+        const newStepsWithErrors = new Set(stepsWithErrors)
+        newStepsWithErrors.add(2)
+        setStepsWithErrors(newStepsWithErrors)
+      }
     }
   }
 
@@ -83,7 +94,18 @@ export const CreateRecipe: React.FC = () => {
 
   const removeInstruction = (index: number) => {
     if (instructions.length > 1) {
-      setInstructions(instructions.filter((_, i) => i !== index))
+      const newInstructions = instructions.filter((_, i) => i !== index)
+      setInstructions(newInstructions)
+      
+      // Re-validate instructions after removal
+      const hasValidInstruction = newInstructions.some(inst => inst.trim())
+      if (!hasValidInstruction) {
+        const newErrors = { ...fieldErrors, instructions: 'At least one instruction is required' }
+        setFieldErrors(newErrors)
+        const newStepsWithErrors = new Set(stepsWithErrors)
+        newStepsWithErrors.add(3)
+        setStepsWithErrors(newStepsWithErrors)
+      }
     }
   }
 
