@@ -25,6 +25,7 @@ steps:
 
   - label: ":playwright: E2E Tests"
     if: "build.branch == 'main'"
+    timeout_in_minutes: 10
     command:
       - "npm ci"
       - "'y' | npx playwright install --with-deps"
