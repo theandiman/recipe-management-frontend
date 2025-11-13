@@ -153,9 +153,10 @@ export const CreateRecipe: React.FC = () => {
       setStepsWithErrors(validation.errorSteps)
       
       // Find the first step with errors and navigate to it
-      const firstErrorStep = Math.min(...Array.from(validation.errorSteps))
-      setCurrentStep(firstErrorStep)
-      
+      if (validation.errorSteps.size > 0) {
+        const firstErrorStep = Math.min(...Array.from(validation.errorSteps))
+        setCurrentStep(firstErrorStep)
+      }
       // Show validation error message
       setSaveError('Please fix the validation errors before saving.')
       window.scrollTo({ top: 0, behavior: 'smooth' })
