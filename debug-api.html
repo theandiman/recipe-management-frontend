@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Debug - Recipe Management</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; }
+        .error { background-color: #f8d7da; }
+        .info { background-color: #d1ecf1; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>API Configuration Debug</h1>
+    
+    <div class="section info">
+        <h2>Environment Variables</h2>
+        <pre id="envVars">Loading...</pre>
+    </div>
+
+    <div class="section">
+        <h2>Firebase Auth Status</h2>
+        <button onclick="checkAuth()">Check Auth</button>
+        <button onclick="signIn()">Sign In</button>
+        <pre id="authStatus">Click button to check</pre>
+    </div>
+
+    <div class="section">
+        <h2>Test API Connection</h2>
+        <button onclick="testAPI()">Test API (With Auth)</button>
+        <pre id="apiResult">Click button to test</pre>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        // Show env vars
+        const envVars = {
+            VITE_FIREBASE_API_KEY: import.meta.env.VITE_FIREBASE_API_KEY || 'NOT SET',
+            VITE_FIREBASE_AUTH_DOMAIN: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'NOT SET',
+            VITE_FIREBASE_PROJECT_ID: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'NOT SET',
+            VITE_API_URL: import.meta.env.VITE_API_URL || 'NOT SET',
+            VITE_STORAGE_API_URL: import.meta.env.VITE_STORAGE_API_URL || 'NOT SET'
+        };
+        document.getElementById('envVars').textContent = JSON.stringify(envVars, null, 2);
+
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+            authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+            projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+            storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+            messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+            appId: import.meta.env.VITE_FIREBASE_APP_ID
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        window.checkAuth = async function() {
+            const user = auth.currentUser;
+            if (user) {
+                try {
+                    const token = await user.getIdToken();
+                    document.getElementById('authStatus').textContent = JSON.stringify({
+                        email: user.email,
+                        uid: user.uid,
+                        tokenLength: token.length,
+                        tokenPreview: token.substring(0, 50) + '...'
+                    }, null, 2);
+                    document.getElementById('authStatus').parentElement.className = 'section success';
+                } catch (e) {
+                    document.getElementById('authStatus').textContent = 'Error getting token: ' + e.message;
+                    document.getElementById('authStatus').parentElement.className = 'section error';
+                }
+            } else {
+                document.getElementById('authStatus').textContent = 'Not signed in';
+                document.getElementById('authStatus').parentElement.className = 'section error';
+            }
+        };
+
+        window.signIn = async function() {
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+                checkAuth();
+            } catch (e) {
+                alert('Sign in error: ' + e.message);
+            }
+        };
+
+        window.testAPI = async function() {
+            const user = auth.currentUser;
+            if (!user) {
+                document.getElementById('apiResult').textContent = 'Please sign in first';
+                return;
+            }
+
+            try {
+                const token = await user.getIdToken();
+                const apiUrl = import.meta.env.VITE_API_URL + '/api/recipes/generate';
+                
+                document.getElementById('apiResult').textContent = 'Testing: ' + apiUrl + '\n\nSending request...';
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        prompt: 'simple pasta',
+                        pantryItems: [],
+                        units: 'metric'
+                    })
+                });
+
+                const result = {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries())
+                };
+
+                if (response.ok) {
+                    result.body = await response.json();
+                    document.getElementById('apiResult').textContent = JSON.stringify(result, null, 2);
+                    document.getElementById('apiResult').parentElement.className = 'section success';
+                } else {
+                    result.body = await response.text();
+                    document.getElementById('apiResult').textContent = JSON.stringify(result, null, 2);
+                    document.getElementById('apiResult').parentElement.className = 'section error';
+                }
+            } catch (e) {
+                document.getElementById('apiResult').textContent = 'Error: ' + e.message + '\n\nStack: ' + e.stack;
+                document.getElementById('apiResult').parentElement.className = 'section error';
+            }
+        };
+
+        // Check auth on load
+        auth.onAuthStateChanged(() => {
+            checkAuth();
+        });
+    </script>
+</body>
+</html>
