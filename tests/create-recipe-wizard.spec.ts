@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Create Recipe Multi-Step Wizard', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/dashboard/create-recipe')
+    await page.goto('/dashboard/create')
     // Wait for page to load
     await page.waitForLoadState('networkidle')
   })
@@ -31,7 +31,7 @@ test.describe('Create Recipe Multi-Step Wizard', () => {
     await page.getByRole('button', { name: 'Next →' }).click()
     await expect(page.getByText(/Step 4 of 4/i)).toBeVisible()
     
-    await expect(page.getByText('Chocolate Cake')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Chocolate Cake' })).toBeVisible()
     await expect(page.getByRole('button', { name: /Save Recipe/i })).toBeVisible()
   })
 
