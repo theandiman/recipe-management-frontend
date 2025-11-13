@@ -31,6 +31,18 @@ export const CreateRecipe: React.FC = () => {
   const [tagInput, setTagInput] = useState('')
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
+  // Helper function to clear field errors
+  const clearFieldError = (fieldName: string, stepNumber: number) => {
+    if (fieldErrors[fieldName]) {
+      const newErrors = { ...fieldErrors }
+      delete newErrors[fieldName]
+      setFieldErrors(newErrors)
+      const newStepsWithErrors = new Set(stepsWithErrors)
+      newStepsWithErrors.delete(stepNumber)
+      setStepsWithErrors(newStepsWithErrors)
+    }
+  }
+
   // Ingredient handlers
   const addIngredient = () => {
     setIngredients([...ingredients, { quantity: '', unit: '', item: '' }])
@@ -42,13 +54,8 @@ export const CreateRecipe: React.FC = () => {
     setIngredients(newIngredients)
     
     // Clear ingredients error when user starts adding data
-    if (fieldErrors.ingredients && field === 'item' && value.trim()) {
-      const newErrors = { ...fieldErrors }
-      delete newErrors.ingredients
-      setFieldErrors(newErrors)
-      const newStepsWithErrors = new Set(stepsWithErrors)
-      newStepsWithErrors.delete(2)
-      setStepsWithErrors(newStepsWithErrors)
+    if (field === 'item' && value.trim()) {
+      clearFieldError('ingredients', 2)
     }
   }
 
@@ -69,13 +76,8 @@ export const CreateRecipe: React.FC = () => {
     setInstructions(newInstructions)
     
     // Clear instructions error when user starts adding data
-    if (fieldErrors.instructions && value.trim()) {
-      const newErrors = { ...fieldErrors }
-      delete newErrors.instructions
-      setFieldErrors(newErrors)
-      const newStepsWithErrors = new Set(stepsWithErrors)
-      newStepsWithErrors.delete(3)
-      setStepsWithErrors(newStepsWithErrors)
+    if (value.trim()) {
+      clearFieldError('instructions', 3)
     }
   }
 
@@ -153,9 +155,10 @@ export const CreateRecipe: React.FC = () => {
       setStepsWithErrors(validation.errorSteps)
       
       // Find the first step with errors and navigate to it
-      const firstErrorStep = Math.min(...Array.from(validation.errorSteps))
-      setCurrentStep(firstErrorStep)
-      
+      if (validation.errorSteps.size > 0) {
+        const firstErrorStep = Math.min(...Array.from(validation.errorSteps))
+        setCurrentStep(firstErrorStep)
+      }
       // Show validation error message
       setSaveError('Please fix the validation errors before saving.')
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -298,7 +301,7 @@ export const CreateRecipe: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           {/* Error message */}
           {saveError && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start" role="alert">
               <svg className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
@@ -502,17 +505,14 @@ export const CreateRecipe: React.FC = () => {
                     onChange={(e) => {
                       setTitle(e.target.value)
                       // Clear error when user starts typing
-                      if (fieldErrors.title) {
-                        const newErrors = { ...fieldErrors }
-                        delete newErrors.title
-                        setFieldErrors(newErrors)
-                        const newStepsWithErrors = new Set(stepsWithErrors)
-                        newStepsWithErrors.delete(1)
-                        setStepsWithErrors(newStepsWithErrors)
+                      if (e.target.value) {
+                        clearFieldError('title', 1)
                       }
                     }}
                     required
                     placeholder="e.g., Grandma's Chocolate Chip Cookies"
+                    aria-invalid={!!fieldErrors.title}
+                    aria-describedby={fieldErrors.title ? 'title-error' : undefined}
                     className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
                       fieldErrors.title
                         ? 'border-red-500 focus:ring-red-500'
@@ -520,7 +520,7 @@ export const CreateRecipe: React.FC = () => {
                     }`}
                   />
                   {fieldErrors.title && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <p id="title-error" className="mt-1 text-sm text-red-600 flex items-center" role="alert">
                       <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
@@ -711,7 +711,7 @@ export const CreateRecipe: React.FC = () => {
             </div>
             
             {fieldErrors.instructions && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start" role="alert">
                 <svg className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
