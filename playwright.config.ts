@@ -11,7 +11,9 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:5173',
     trace: 'on-first-retry',
-    headless: true, // Always run headless (especially in CI)
+    launchOptions: {
+      headless: true, // Always run headless (especially in CI)
+    },
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
   },
