@@ -33,3 +33,5 @@ steps:
     plugins:
       - docker#v3.9.0:
           image: "node:20"
+          environment:
+            - "BUILDKITE_ANALYTICS_TOKEN"
