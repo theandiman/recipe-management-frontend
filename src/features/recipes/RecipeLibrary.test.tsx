@@ -188,6 +188,50 @@ describe('RecipeLibrary', () => {
       })
     })
 
+    it('should paginate when many recipes exist', async () => {
+      // Create 25 mock recipes to trigger pagination (pageSize default is 20)
+      const manyRecipes: recipeStorageApi.RecipeResponse[] = Array.from({ length: 25 }, (_, i) => ({
+        id: `${i + 1}`,
+        userId: 'user-123',
+        title: `Recipe ${i + 1}`,
+        description: `Desc ${i + 1}`,
+        prepTime: 5,
+        cookTime: 5,
+        servings: 2,
+        imageUrl: undefined,
+        ingredients: [],
+        instructions: [],
+        tags: [],
+        source: 'ai-generated',
+        createdAt: '2025-01-01T00:00:00Z',
+        updatedAt: '2025-01-01T00:00:00Z'
+      }))
+
+      vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(manyRecipes)
+
+      renderRecipeLibrary()
+
+      // Wait for first page to render
+      await waitFor(() => {
+        expect(screen.getByText('Recipe 1')).toBeInTheDocument()
+      })
+
+      // Should show last item of first page (20) and not show item from page 2
+      expect(screen.getByText('Recipe 20')).toBeInTheDocument()
+      expect(screen.queryByText('Recipe 21')).not.toBeInTheDocument()
+
+      // Click next to go to page 2
+      const next = screen.getByRole('button', { name: /Next page/i })
+      fireEvent.click(next)
+
+      await waitFor(() => {
+        expect(screen.getByText('Recipe 21')).toBeInTheDocument()
+      })
+
+      // Page 2 should show recipe 25
+      expect(screen.getByText('Recipe 25')).toBeInTheDocument()
+    })
+
     it('should show placeholder icon when no image', async () => {
       vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
 
