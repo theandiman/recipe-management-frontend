@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Routes, Route, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../features/auth/AuthContext'
+import { Dashboard } from '../Dashboard'
+import { RecipeLibrary } from '../../features/recipes/RecipeLibrary'
+import { CreateRecipe } from '../../features/recipes/CreateRecipe'
+import { AIGenerator } from '../../features/recipes/AIGenerator'
 
 export const DashboardLayout: React.FC = () => {
   const { user, logout } = useAuth()
@@ -61,15 +66,28 @@ export const DashboardLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 ease-in-out ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0`}
-      >
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.aside
+            initial={{ x: -256 }}
+            animate={{ x: 0 }}
+            exit={{ x: -256 }}
+            transition={{ 
+              duration: 0.5, 
+              ease: [0.25, 0.46, 0.45, 0.94],
+              type: "tween"
+            }}
+            className="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200"
+          >
         <div className="flex flex-col h-full">
           {/* Logo/Brand */}
           <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200">
-            <div className="flex items-center space-x-3">
+            <motion.div
+              className="flex items-center space-x-3"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.3 }}
+            >
               <div className="w-9 h-9 bg-gradient-to-br from-emerald-600 to-teal-500 rounded-lg flex items-center justify-center relative">
                 {/* Whisk icon */}
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,63 +96,101 @@ export const DashboardLayout: React.FC = () => {
                 </svg>
                 <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-amber-400 rounded-full"></div>
               </div>
-              <div>
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3, duration: 0.3 }}
+              >
                 <span className="text-xl font-bold text-gray-800">
                   CookFlow
                 </span>
                 <p className="text-xs text-gray-500 -mt-0.5">Seamlessly Organized</p>
-              </div>
-            </div>
-            <button
+              </motion.div>
+            </motion.div>
+            <motion.button
               onClick={() => setIsSidebarOpen(false)}
-              className="lg:hidden text-gray-500 hover:text-gray-700"
+              className="lg:hidden text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              whileHover={{ scale: 1.1, rotate: 90 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ duration: 0.2 }}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
-            </button>
+            </motion.button>
           </div>
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-            {navItems.map((item) => (
-              <NavLink
+            {navItems.map((item, index) => (
+              <motion.div
                 key={item.path}
-                to={item.path}
-                onClick={() => {
-                  // Close sidebar on mobile after navigation
-                  if (window.innerWidth < 1024) {
-                    setIsSidebarOpen(false)
-                  }
-                }}
-                className={({ isActive }) =>
-                  `flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
-                    isActive
-                      ? 'bg-emerald-50 text-emerald-700 font-medium'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`
-                }
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.3 }}
               >
-                <div className="flex items-center space-x-3">
-                  {item.icon}
-                  <span>{item.name}</span>
-                </div>
-                {item.badge && (
-                  <span className="px-2 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100 rounded-full">
-                    {item.badge}
-                  </span>
-                )}
-              </NavLink>
+                <NavLink
+                  to={item.path}
+                  onClick={() => {
+                    // Close sidebar on mobile after navigation
+                    if (window.innerWidth < 1024) {
+                      setIsSidebarOpen(false)
+                    }
+                  }}
+                  className={({ isActive }) =>
+                    `flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
+                      isActive
+                        ? 'bg-emerald-50 text-emerald-700 font-medium'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`
+                  }
+                >
+                  <motion.div
+                    className="flex items-center justify-between w-full"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <motion.div
+                        whileHover={{ rotate: 5 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {item.icon}
+                      </motion.div>
+                      <span>{item.name}</span>
+                    </div>
+                    {item.badge && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="px-2 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100 rounded-full"
+                      >
+                        {item.badge}
+                      </motion.span>
+                    )}
+                  </motion.div>
+                </NavLink>
+              </motion.div>
             ))}
           </nav>
 
           {/* User Profile Section */}
-          <div className="border-t border-gray-200 p-4">
+          <motion.div
+            className="border-t border-gray-200 p-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.3 }}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-teal-500 rounded-full flex items-center justify-center text-white font-semibold">
+                <motion.div
+                  className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-teal-500 rounded-full flex items-center justify-center text-white font-semibold"
+                  whileHover={{ scale: 1.1 }}
+                  transition={{ duration: 0.2 }}
+                >
                   {user?.email?.[0].toUpperCase() || 'U'}
-                </div>
+                </motion.div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
                     {user?.email || 'User'}
@@ -143,39 +199,57 @@ export const DashboardLayout: React.FC = () => {
                 </div>
               </div>
             </div>
-            <button
+            <motion.button
               onClick={handleLogout}
               className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              whileHover={{ scale: 1.02, backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.2 }}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <motion.svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                whileHover={{ x: 2 }}
+                transition={{ duration: 0.2 }}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
+              </motion.svg>
               <span>Sign out</span>
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
         </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <div className={`transition-all duration-200 ${isSidebarOpen ? 'lg:pl-64' : ''}`}>
+          </motion.aside>
+        )}
+      </AnimatePresence>      {/* Main Content Area */}
+      <div className="lg:pl-64 transition-all duration-300">
   {/* Top Bar (transparent) */}
   <header className="sticky top-0 z-60 bg-transparent border-b-0 px-4 py-1">
-          <div className="flex items-center">
-            <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="lg:hidden p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <div className="ml-3 flex-1" />
-          </div>
-        </header>
+    <div className="flex items-center">
+      <motion.button
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        className="lg:hidden p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        transition={{ duration: 0.2 }}
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </motion.button>
+      <div className="ml-3 flex-1" />
+    </div>
+  </header>
 
         {/* Page Content */}
         <main className="p-4 bg-gray-50">
-          <Outlet />
+          <Routes>
+            <Route index element={<Dashboard />} />
+            <Route path="recipes/*" element={<RecipeLibrary />} />
+            <Route path="create" element={<CreateRecipe />} />
+            <Route path="generate" element={<AIGenerator />} />
+          </Routes>
         </main>
       </div>
 

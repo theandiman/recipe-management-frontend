@@ -1,7 +1,27 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { getRecipes, deleteRecipe, type RecipeResponse } from '../../services/recipeStorageApi'
+
+// Skeleton loading component
+const SkeletonCard: React.FC = () => (
+  <motion.div 
+    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.3 }}
+  >
+    <div className="h-40 sm:h-48 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse"></div>
+    <div className="p-3 sm:p-4 space-y-3">
+      <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded animate-pulse"></div>
+      <div className="h-3 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded animate-pulse w-3/4"></div>
+      <div className="flex justify-between items-center">
+        <div className="h-3 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded w-16 animate-pulse"></div>
+        <div className="h-3 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded w-20 animate-pulse"></div>
+      </div>
+    </div>
+  </motion.div>
+)
 
 export const RecipeLibrary: React.FC = () => {
   const navigate = useNavigate()
@@ -67,8 +87,21 @@ export const RecipeLibrary: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Recipe Library</h1>
           <p className="text-gray-600">Browse and manage your recipe collection</p>
         </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ 
+                duration: 0.3, 
+                ease: "easeOut",
+                delay: index * 0.1 
+              }}
+            >
+              <SkeletonCard />
+            </motion.div>
+          ))}
         </div>
       </div>
     )
@@ -96,13 +129,40 @@ export const RecipeLibrary: React.FC = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Recipe Library</h1>
           <p className="text-sm md:text-base text-gray-600">Browse and manage your recipe collection</p>
         </div>
-        <div className="text-center py-12">
-          <svg className="mx-auto h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <motion.div 
+          className="text-center py-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
+          <motion.svg 
+            className="mx-auto h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 text-gray-400" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+          >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <h3 className="mt-4 text-base sm:text-lg font-medium text-gray-900">No recipes yet</h3>
-          <p className="mt-2 text-sm sm:text-base text-gray-600">Get started by generating your first recipe!</p>
-        </div>
+          </motion.svg>
+          <motion.h3 
+            className="mt-4 text-base sm:text-lg font-medium text-gray-900"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.4 }}
+          >
+            No recipes yet
+          </motion.h3>
+          <motion.p 
+            className="mt-2 text-sm sm:text-base text-gray-600"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.5 }}
+          >
+            Get started by generating your first recipe!
+          </motion.p>
+        </motion.div>
       </div>
     )
   }
@@ -126,20 +186,34 @@ export const RecipeLibrary: React.FC = () => {
 
         return (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {paged.map((recipe) => (
-          <motion.div
-            key={recipe.id}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative group cursor-pointer"
-            whileHover={{ 
-              scale: 1.02,
-              y: -4,
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-            }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            onClick={() => navigate(`/dashboard/recipes/${recipe.id}`)}
-          >
+            <AnimatePresence mode="wait">
+              <motion.div 
+                key={currentPage}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+              >
+                {paged.map((recipe, index) => (
+            <motion.div
+              key={recipe.id}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative group cursor-pointer"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ 
+                duration: 0.4, 
+                ease: "easeOut",
+                delay: index * 0.1 // Stagger animation by 0.1s per card
+              }}
+              whileHover={{ 
+                scale: 1.02,
+                y: -4,
+                boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+              }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate(`/dashboard/recipes/${recipe.id}`)}
+            >
             {/* Delete button - always visible on mobile (opacity 100), hover on desktop */}
             <button
               onClick={(e) => handleDeleteClick(e, recipe)}
@@ -197,7 +271,8 @@ export const RecipeLibrary: React.FC = () => {
             </div>
           </motion.div>
               ))}
-            </div>
+              </motion.div>
+            </AnimatePresence>
 
             {/* Pagination controls */}
             {recipes.length > pageSize && (
@@ -245,9 +320,22 @@ export const RecipeLibrary: React.FC = () => {
       })()}
 
       {/* Delete Confirmation Modal */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-4 sm:p-6">
+      <AnimatePresence>
+        {deleteConfirm && (
+          <motion.div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <motion.div 
+              className="bg-white rounded-lg max-w-md w-full p-4 sm:p-6"
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            >
             <div className="flex items-center mb-4">
               <div className="bg-red-100 rounded-full p-2 sm:p-3 mr-3 sm:mr-4">
                 <svg className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -290,9 +378,10 @@ export const RecipeLibrary: React.FC = () => {
                 )}
               </button>
             </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
