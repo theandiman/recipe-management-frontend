@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from './AuthContext'
 import type { RegisterData } from '../../types/auth'
 
@@ -100,25 +101,42 @@ export const Register: React.FC = () => {
         </div>
         
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+        <motion.div 
+          className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {error && (
-              <div className="rounded-lg bg-red-50 border border-red-200 p-4">
-                <div className="flex items-center">
-                  <svg className="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                  <p className="text-sm text-red-800">{error}</p>
-                </div>
-              </div>
-            )}
+            <AnimatePresence>
+              {error && (
+                <motion.div 
+                  className="rounded-lg bg-red-50 border border-red-200 p-4"
+                  initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                  animate={{ opacity: 1, height: "auto", marginBottom: 24 }}
+                  exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                >
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    <p className="text-sm text-red-800">{error}</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
             
             <div className="space-y-5">
               <div>
                 <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
                   Full name
                 </label>
-                <div className="relative">
+                <motion.div 
+                  className="relative"
+                  whileFocus={{ scale: 1.01 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -135,7 +153,7 @@ export const Register: React.FC = () => {
                     className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-150"
                     placeholder="John Doe"
                   />
-                </div>
+                </motion.div>
                 {validationErrors.name && (
                   <p className="mt-2 text-sm text-red-600 flex items-center">
                     <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -150,7 +168,11 @@ export const Register: React.FC = () => {
                 <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
                   Email address
                 </label>
-                <div className="relative">
+                <motion.div 
+                  className="relative"
+                  whileFocus={{ scale: 1.01 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
@@ -167,7 +189,7 @@ export const Register: React.FC = () => {
                     className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-150"
                     placeholder="you@example.com"
                   />
-                </div>
+                </motion.div>
                 {validationErrors.email && (
                   <p className="mt-2 text-sm text-red-600 flex items-center">
                     <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -182,7 +204,11 @@ export const Register: React.FC = () => {
                 <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
                   Password
                 </label>
-                <div className="relative">
+                <motion.div 
+                  className="relative"
+                  whileFocus={{ scale: 1.01 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -199,7 +225,7 @@ export const Register: React.FC = () => {
                     className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-150"
                     placeholder="••••••••"
                   />
-                </div>
+                </motion.div>
                 {validationErrors.password && (
                   <p className="mt-2 text-sm text-red-600 flex items-center">
                     <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -288,7 +314,7 @@ export const Register: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
+        </motion.div>
         
         {/* Footer */}
         <p className="mt-8 text-center text-xs text-gray-500">
