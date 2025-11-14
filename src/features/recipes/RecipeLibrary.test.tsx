@@ -79,9 +79,9 @@ describe('RecipeLibrary', () => {
       expect(screen.getByText('Recipe Library')).toBeInTheDocument()
       expect(screen.getByText('Browse and manage your recipe collection')).toBeInTheDocument()
       
-      // Check for loading spinner
-      const spinner = document.querySelector('.animate-spin')
-      expect(spinner).toBeInTheDocument()
+      // Check for skeleton loading cards (they have animate-pulse class)
+      const skeletonCards = document.querySelectorAll('.animate-pulse')
+      expect(skeletonCards.length).toBeGreaterThan(0)
     })
   })
 
