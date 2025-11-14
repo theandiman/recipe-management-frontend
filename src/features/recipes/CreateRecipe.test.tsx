@@ -40,15 +40,16 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
   describe('Step Navigation', () => {
     it('should render on step 1 by default', () => {
       renderWithRouter(<CreateRecipe />)
-      expect(screen.getByText(/Step 1 of 4: Basic Info/i)).toBeInTheDocument()
+      expect(screen.getByText(/Step 1 of 5: Basic Info/i)).toBeInTheDocument()
       expect(screen.getByText('Basic Information')).toBeInTheDocument()
     })
 
-    it('should show all 4 steps in progress indicator', () => {
+    it('should show all 5 steps in progress indicator', () => {
       renderWithRouter(<CreateRecipe />)
       expect(screen.getByText('Basic Info')).toBeInTheDocument()
       expect(screen.getByText('Ingredients')).toBeInTheDocument()
       expect(screen.getByText('Instructions')).toBeInTheDocument()
+      expect(screen.getByText('Additional Info')).toBeInTheDocument()
       expect(screen.getByText('Review')).toBeInTheDocument()
     })
 
@@ -58,7 +59,7 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       const nextButton = screen.getByRole('button', { name: /Next →/i })
       fireEvent.click(nextButton)
       
-      expect(screen.getByText(/Step 2 of 4: Ingredients/i)).toBeInTheDocument()
+      expect(screen.getByText(/Step 2 of 5: Ingredients/i)).toBeInTheDocument()
     })
 
     it('should navigate to previous step when Back button is clicked', () => {
@@ -72,7 +73,7 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       const backButton = screen.getByRole('button', { name: /← Back/i })
       fireEvent.click(backButton)
       
-      expect(screen.getByText(/Step 1 of 4: Basic Info/i)).toBeInTheDocument()
+      expect(screen.getByText(/Step 1 of 5: Basic Info/i)).toBeInTheDocument()
     })
 
     it('should disable Back button on step 1', () => {
@@ -89,21 +90,21 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       const step3Button = screen.getByRole('button', { name: /Instructions/i })
       fireEvent.click(step3Button)
       
-      expect(screen.getByText(/Step 3 of 4: Instructions/i)).toBeInTheDocument()
+      expect(screen.getByText(/Step 3 of 5: Instructions/i)).toBeInTheDocument()
     })
 
-    it('should show Save Recipe button only on step 4', () => {
+    it('should show Save Recipe button only on step 5', () => {
       renderWithRouter(<CreateRecipe />)
       
       // On step 1, should show Next button
       expect(screen.getByRole('button', { name: /Next →/i })).toBeInTheDocument()
       expect(screen.queryByRole('button', { name: /Save Recipe/i })).not.toBeInTheDocument()
       
-      // Navigate to step 4
-      const step4Button = screen.getByRole('button', { name: /Review/i })
-      fireEvent.click(step4Button)
+      // Navigate to step 5
+      const step5Button = screen.getByRole('button', { name: /Review/i })
+      fireEvent.click(step5Button)
       
-      // On step 4, should show Save Recipe button
+      // On step 5, should show Save Recipe button
       expect(screen.queryByRole('button', { name: /Next →/i })).not.toBeInTheDocument()
       expect(screen.getByRole('button', { name: /Save Recipe/i })).toBeInTheDocument()
     })
@@ -115,9 +116,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       
       expect(screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)).toBeInTheDocument()
       expect(screen.getByPlaceholderText(/Brief description/i)).toBeInTheDocument()
-      expect(screen.getByPlaceholderText('15')).toBeInTheDocument() // Prep time
-      expect(screen.getByPlaceholderText('30')).toBeInTheDocument() // Cook time
-      expect(screen.getByPlaceholderText('4')).toBeInTheDocument() // Servings
     })
 
     it('should update title field', () => {
@@ -132,7 +130,7 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
     it('should mark required fields', () => {
       renderWithRouter(<CreateRecipe />)
       
-      expect(screen.getAllByText('*')).toHaveLength(2) // Recipe name and servings
+      expect(screen.getAllByText('*')).toHaveLength(1) // Recipe name only
     })
   })
 
@@ -198,7 +196,7 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
     })
   })
 
-  describe('Step 3: Instructions & Tags', () => {
+  describe('Step 3: Instructions', () => {
     beforeEach(() => {
       renderWithRouter(<CreateRecipe />)
       // Navigate to step 3
@@ -222,8 +220,27 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       const instructionInputs = screen.getAllByPlaceholderText(/Describe this step in detail/i)
       expect(instructionInputs).toHaveLength(2)
     })
+  })
 
-    it('should render tags section', () => {
+  describe('Step 4: Additional Info', () => {
+    beforeEach(() => {
+      renderWithRouter(<CreateRecipe />)
+      // Navigate to step 4
+      const step4Button = screen.getByRole('button', { name: /Additional Info/i })
+      fireEvent.click(step4Button)
+    })
+
+    it('should render additional info section', () => {
+      expect(screen.getByText('Additional Information')).toBeInTheDocument()
+    })
+
+    it('should show time and servings inputs', () => {
+      expect(screen.getByPlaceholderText('15')).toBeInTheDocument() // Prep time
+      expect(screen.getByPlaceholderText('30')).toBeInTheDocument() // Cook time
+      expect(screen.getByPlaceholderText('4')).toBeInTheDocument() // Servings
+    })
+
+    it('should show tags section', () => {
       expect(screen.getByText('Tags (Optional)')).toBeInTheDocument()
     })
 
@@ -261,16 +278,16 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
     })
   })
 
-  describe('Step 4: Review & Preview', () => {
+  describe('Step 5: Review & Preview', () => {
     beforeEach(() => {
       renderWithRouter(<CreateRecipe />)
-      // Navigate to step 4
-      const step4Button = screen.getByRole('button', { name: /Review/i })
-      fireEvent.click(step4Button)
+      // Navigate to step 5
+      const step5Button = screen.getByRole('button', { name: /Review/i })
+      fireEvent.click(step5Button)
     })
 
-    it('should render preview on step 4', () => {
-      // Step 4 should show preview with "Untitled Recipe" for empty title
+    it('should render preview on step 5', () => {
+      // Step 5 should show preview with "Untitled Recipe" for empty title
       expect(screen.getByText('Untitled Recipe')).toBeInTheDocument()
     })
 
@@ -280,17 +297,17 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       expect(screen.queryByRole('button', { name: /Preview/i })).not.toBeInTheDocument()
     })
 
-    it('should show Save Recipe button on step 4', () => {
+    it('should show Save Recipe button on step 5', () => {
       expect(screen.getByRole('button', { name: /Save Recipe/i })).toBeInTheDocument()
     })
 
-    it('should show Back button on step 4', () => {
+    it('should show Back button on step 5', () => {
       const backButton = screen.getByRole('button', { name: /← Back/i })
       expect(backButton).toBeInTheDocument()
       
-      // Should navigate back to step 3
+      // Should navigate back to step 4
       fireEvent.click(backButton)
-      expect(screen.getByText(/Step 3 of 4: Instructions/i)).toBeInTheDocument()
+      expect(screen.getByText(/Step 4 of 5: Additional Info/i)).toBeInTheDocument()
     })
   })
 
@@ -398,7 +415,7 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         expect(screen.getByText('Recipe name is required')).toBeInTheDocument()
         
         // Should navigate back to step 1
-        expect(screen.getByText(/Step 1 of 4: Basic Info/i)).toBeInTheDocument()
+        expect(screen.getByText(/Step 1 of 5: Basic Info/i)).toBeInTheDocument()
       })
 
       it('should show red border on title field when validation fails', async () => {
@@ -478,7 +495,7 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         
         // Should show error and navigate to step 2
         expect(screen.getByText('At least one ingredient is required')).toBeInTheDocument()
-        expect(screen.getByText(/Step 2 of 4: Ingredients/i)).toBeInTheDocument()
+        expect(screen.getByText(/Step 2 of 5: Ingredients/i)).toBeInTheDocument()
       })
 
       it('should show error indicator on step 2 in progress indicator', async () => {
@@ -584,7 +601,7 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         
         // Should show error and navigate to step 3
         expect(screen.getByText('At least one instruction is required')).toBeInTheDocument()
-        expect(screen.getByText(/Step 3 of 4: Instructions/i)).toBeInTheDocument()
+        expect(screen.getByText(/Step 3 of 5: Instructions/i)).toBeInTheDocument()
       })
 
       it('should show error indicator on step 3 in progress indicator', async () => {
@@ -657,7 +674,7 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         fireEvent.click(saveButton)
         
         // Should navigate to first error step (step 1)
-        expect(screen.getByText(/Step 1 of 4: Basic Info/i)).toBeInTheDocument()
+        expect(screen.getByText(/Step 1 of 5: Basic Info/i)).toBeInTheDocument()
         expect(screen.getByText('Recipe name is required')).toBeInTheDocument()
         
         // All error steps should be marked in progress indicator
@@ -685,7 +702,7 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         fireEvent.click(saveButton)
         
         // Should navigate to step 2 (first error)
-        expect(screen.getByText(/Step 2 of 4: Ingredients/i)).toBeInTheDocument()
+        expect(screen.getByText(/Step 2 of 5: Ingredients/i)).toBeInTheDocument()
         expect(screen.getByText('At least one ingredient is required')).toBeInTheDocument()
       })
 
@@ -745,7 +762,7 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         fireEvent.click(saveButton)
         
         // Should navigate back to step 1 (first error)
-        expect(screen.getByText(/Step 1 of 4: Basic Info/i)).toBeInTheDocument()
+        expect(screen.getByText(/Step 1 of 5: Basic Info/i)).toBeInTheDocument()
         expect(screen.getByText('Recipe name is required')).toBeInTheDocument()
       })
 

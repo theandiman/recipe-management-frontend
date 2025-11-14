@@ -127,50 +127,6 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
             />
           </div>
 
-          {/* Time and Servings Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Prep Time (min)
-              </label>
-              <input
-                type="number"
-                value={prepTime}
-                onChange={(e) => setPrepTime(e.target.value)}
-                min="0"
-                placeholder="15"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Cook Time (min)
-              </label>
-              <input
-                type="number"
-                value={cookTime}
-                onChange={(e) => setCookTime(e.target.value)}
-                min="0"
-                placeholder="30"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Servings <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                value={servings}
-                onChange={(e) => setServings(e.target.value)}
-                min="1"
-                required
-                placeholder="4"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-
           {/* Recipe Image Upload */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -242,7 +198,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
         </div>
       )}
 
-      {/* Step 3: Instructions & Tags */}
+      {/* Step 3: Instructions */}
       {currentStep === 3 && (
         <div className="space-y-8">
           {/* Instructions Section */}
@@ -306,11 +262,64 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
             )}
           </div>
 
+        </div>
+      )}
+
+      {/* Step 4: Additional Info */}
+      {currentStep === 4 && (
+        <div className="space-y-8">
+          <h2 className="text-xl font-semibold text-gray-900 pb-2 border-b border-gray-200">
+            Additional Information
+          </h2>
+
+          {/* Time and Servings Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Prep Time (min)
+              </label>
+              <input
+                type="number"
+                value={prepTime}
+                onChange={(e) => setPrepTime(e.target.value)}
+                min="0"
+                placeholder="15"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Cook Time (min)
+              </label>
+              <input
+                type="number"
+                value={cookTime}
+                onChange={(e) => setCookTime(e.target.value)}
+                min="0"
+                placeholder="30"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Servings
+              </label>
+              <input
+                type="number"
+                value={servings}
+                onChange={(e) => setServings(e.target.value)}
+                min="1"
+                placeholder="4"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
           {/* Tags Section */}
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900 pb-2 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">
               Tags (Optional)
-            </h2>
+            </h3>
 
             <div className="flex items-center space-x-2">
               <input

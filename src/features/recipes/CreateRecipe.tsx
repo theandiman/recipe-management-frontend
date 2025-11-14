@@ -11,7 +11,7 @@ export const CreateRecipe: React.FC = () => {
   
   // Multi-step state
   const [currentStep, setCurrentStep] = useState(1)
-  const totalSteps = 4
+  const totalSteps = 5
   
   // Save state
   const [saveLoading, setSaveLoading] = useState(false)
@@ -261,7 +261,8 @@ export const CreateRecipe: React.FC = () => {
     { number: 1, title: 'Basic Info', icon: '📝' },
     { number: 2, title: 'Ingredients', icon: '🥕' },
     { number: 3, title: 'Instructions', icon: '👨‍🍳' },
-    { number: 4, title: 'Review', icon: '✅' }
+    { number: 4, title: 'Additional Info', icon: '⏱️' },
+    { number: 5, title: 'Review', icon: '✅' }
   ], [])
 
   return (
@@ -284,8 +285,8 @@ export const CreateRecipe: React.FC = () => {
         />
       </div>
 
-      {/* Step 4: Preview Mode */}
-      {currentStep === 4 ? (
+      {/* Step 5: Preview Mode */}
+      {currentStep === 5 ? (
         <RecipePreview
           saveError={saveError}
           setSaveError={setSaveError}
