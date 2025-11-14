@@ -9,18 +9,6 @@ import { saveRecipe } from '../../services/recipeStorageApi'
 import type { Recipe } from '../../types/nutrition'
 import type { RootState } from '../../store'
 
-// Common ingredients for autocomplete suggestions
-const COMMON_INGREDIENTS = [
-  'chicken breast', 'ground beef', 'salmon', 'eggs', 'tofu', 'bacon',
-  'milk', 'butter', 'cheddar cheese', 'mozzarella', 'parmesan',
-  'onion', 'garlic', 'tomatoes', 'bell pepper', 'carrots', 'broccoli', 'spinach',
-  'rice', 'pasta', 'bread', 'flour', 'oats', 'quinoa',
-  'olive oil', 'soy sauce', 'chicken broth', 'tomato paste',
-  'salt', 'black pepper', 'paprika', 'cumin', 'oregano', 'basil',
-  'ketchup', 'mustard', 'mayonnaise', 'hot sauce',
-  'lemon', 'lime', 'honey', 'sugar'
-].sort()
-
 export const AIGenerator: React.FC = () => {
   const dispatch = useAppDispatch()
   const { loading, result, error, imageUrl, imageLoading, imageError } = useAppSelector((state: RootState) => state.recipe)
@@ -28,7 +16,6 @@ export const AIGenerator: React.FC = () => {
   const [prompt, setPrompt] = useState('')
   const [pantryItems, setPantryItems] = useState<string[]>([])
   const [pantryInput, setPantryInput] = useState('')
-  const [suggestions, setSuggestions] = useState<string[]>([])
   const [selectedDiets, setSelectedDiets] = useState<string[]>([])
   const [progress, setProgress] = useState(0)
   const [targetServings, setTargetServings] = useState<number | null>(null)
@@ -52,7 +39,6 @@ export const AIGenerator: React.FC = () => {
     if (item.trim() && !pantryItems.includes(item.trim().toLowerCase())) {
       setPantryItems([...pantryItems, item.trim().toLowerCase()])
       setPantryInput('')
-      setSuggestions([])
     }
   }
 
@@ -62,14 +48,6 @@ export const AIGenerator: React.FC = () => {
 
   const handlePantryInputChange = (value: string) => {
     setPantryInput(value)
-    if (value.length > 1) {
-      const filtered = COMMON_INGREDIENTS.filter((ing) =>
-        ing.toLowerCase().includes(value.toLowerCase())
-      )
-      setSuggestions(filtered.slice(0, 5))
-    } else {
-      setSuggestions([])
-    }
   }
 
   const toggleDiet = (diet: string) => {
@@ -213,20 +191,6 @@ export const AIGenerator: React.FC = () => {
                   placeholder="Add ingredients..."
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
-                {suggestions.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
-                    {suggestions.map((sug, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => handleAddIngredient(sug)}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg"
-                      >
-                        {sug}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
               {pantryItems.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
