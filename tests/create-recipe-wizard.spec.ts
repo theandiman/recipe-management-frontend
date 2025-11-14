@@ -8,39 +8,45 @@ test.describe('Create Recipe Multi-Step Wizard', () => {
   })
 
   test('should display step 1 by default', async ({ page }) => {
-    await expect(page.getByText(/Step 1 of 4/i)).toBeVisible()
-    await expect(page.getByText('Basic Information')).toBeVisible()
+    await expect(page.getByText(/Step 1 of 5/i)).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Basic Information' })).toBeVisible()
     await expect(page.getByPlaceholder(/Grandma's Chocolate Chip Cookies/i)).toBeVisible()
   })
 
   test('should complete full wizard flow', async ({ page }) => {
+    // Step 1: Basic Info
     await page.getByPlaceholder(/Grandma's Chocolate Chip Cookies/i).fill('Chocolate Cake')
     await page.getByPlaceholder(/Brief description/i).fill('A delicious chocolate cake')
+    await page.getByRole('button', { name: 'Next →' }).click()
+    
+    // Step 2: Ingredients
+    await expect(page.getByText(/Step 2 of 5/i)).toBeVisible()
+    await page.getByRole('button', { name: 'Next →' }).click()
+    
+    // Step 3: Instructions
+    await expect(page.getByText(/Step 3 of 5/i)).toBeVisible()
+    await page.getByPlaceholder(/Describe this step in detail/i).first().fill('Mix dry ingredients')
+    await page.getByRole('button', { name: 'Next →' }).click()
+    
+    // Step 4: Additional Info
+    await expect(page.getByText(/Step 4 of 5/i)).toBeVisible()
     await page.getByPlaceholder('15').fill('20')
     await page.getByPlaceholder('30').fill('45')
     await page.getByPlaceholder('4').fill('8')
-    
     await page.getByRole('button', { name: 'Next →' }).click()
-    await expect(page.getByText(/Step 2 of 4/i)).toBeVisible()
     
-    await page.getByRole('button', { name: 'Next →' }).click()
-    await expect(page.getByText(/Step 3 of 4/i)).toBeVisible()
-    
-    await page.getByPlaceholder(/Describe this step in detail/i).first().fill('Mix dry ingredients')
-    
-    await page.getByRole('button', { name: 'Next →' }).click()
-    await expect(page.getByText(/Step 4 of 4/i)).toBeVisible()
-    
+    // Step 5: Review
+    await expect(page.getByText(/Step 5 of 5/i)).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Chocolate Cake' })).toBeVisible()
     await expect(page.getByRole('button', { name: /Save Recipe/i })).toBeVisible()
   })
 
   test('should navigate using progress indicator', async ({ page }) => {
     await page.getByRole('button', { name: 'Instructions' }).click()
-    await expect(page.getByText(/Step 3 of 4/i)).toBeVisible()
+    await expect(page.getByText(/Step 3 of 5/i)).toBeVisible()
     
     await page.getByRole('button', { name: 'Basic Info' }).click()
-    await expect(page.getByText(/Step 1 of 4/i)).toBeVisible()
+    await expect(page.getByText(/Step 1 of 5/i)).toBeVisible()
   })
 
   test('should disable back button on step 1', async ({ page }) => {
@@ -64,6 +70,8 @@ test.describe('Create Recipe Multi-Step Wizard', () => {
 
   test('should add instructions', async ({ page }) => {
     await page.getByRole('button', { name: 'Instructions' }).click()
+    await expect(page.getByText(/Step 3 of 5/i)).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Instructions' })).toBeVisible()
     const initialInputs = await page.getByPlaceholder(/Describe this step in detail/i).count()
     expect(initialInputs).toBe(1)
     await page.getByRole('button', { name: /Add Step/i }).click()
@@ -72,7 +80,7 @@ test.describe('Create Recipe Multi-Step Wizard', () => {
   })
 
   test('should add tags', async ({ page }) => {
-    await page.getByRole('button', { name: 'Instructions' }).click()
+    await page.getByRole('button', { name: 'Additional Info' }).click()
     await page.getByPlaceholder(/Add tags/i).fill('quick')
     await page.keyboard.press('Enter')
     await expect(page.locator('text=quick').first()).toBeVisible()
@@ -92,9 +100,9 @@ test.describe('Create Recipe Multi-Step Wizard', () => {
   })
 
   test('should show Cancel button on all steps', async ({ page }) => {
-    for (let step = 1; step <= 4; step++) {
+    for (let step = 1; step <= 5; step++) {
       await expect(page.getByRole('button', { name: /Cancel/i })).toBeVisible()
-      if (step < 4) {
+      if (step < 5) {
         await page.getByRole('button', { name: 'Next →' }).click()
       }
     }
@@ -109,6 +117,7 @@ test.describe('Create Recipe Multi-Step Wizard', () => {
     await expect(page.getByRole('button', { name: /Basic Info/i })).toBeVisible()
     await expect(page.getByRole('button', { name: /Ingredients/i })).toBeVisible()
     await expect(page.getByRole('button', { name: /Instructions/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Additional Info/i })).toBeVisible()
     await expect(page.getByRole('button', { name: /Review/i })).toBeVisible()
   })
 })
