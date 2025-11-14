@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { saveRecipe } from '../../services/recipeStorageApi'
 import { StepIndicator } from './components/StepIndicator'
@@ -34,7 +34,7 @@ export const CreateRecipe: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   // Helper function to clear field errors
-  const clearFieldError = (fieldName: string, stepNumber: number) => {
+  const clearFieldError = useCallback((fieldName: string, stepNumber: number) => {
     if (fieldErrors[fieldName]) {
       const newErrors = { ...fieldErrors }
       delete newErrors[fieldName]
@@ -43,14 +43,14 @@ export const CreateRecipe: React.FC = () => {
       newStepsWithErrors.delete(stepNumber)
       setStepsWithErrors(newStepsWithErrors)
     }
-  }
+  }, [fieldErrors, stepsWithErrors])
 
   // Ingredient handlers
-  const addIngredient = () => {
+  const addIngredient = useCallback(() => {
     setIngredients([...ingredients, { quantity: '', unit: '', item: '' }])
-  }
+  }, [ingredients])
 
-  const updateIngredient = (index: number, field: keyof Ingredient, value: string) => {
+  const updateIngredient = useCallback((index: number, field: keyof Ingredient, value: string) => {
     const newIngredients = [...ingredients]
     newIngredients[index] = { ...newIngredients[index], [field]: value }
     setIngredients(newIngredients)
@@ -59,9 +59,9 @@ export const CreateRecipe: React.FC = () => {
     if (field === 'item' && value.trim()) {
       clearFieldError('ingredients', 2)
     }
-  }
+  }, [ingredients, clearFieldError])
 
-  const removeIngredient = (index: number) => {
+  const removeIngredient = useCallback((index: number) => {
     if (ingredients.length > 1) {
       const newIngredients = ingredients.filter((_, i) => i !== index)
       setIngredients(newIngredients)
@@ -76,14 +76,14 @@ export const CreateRecipe: React.FC = () => {
         setStepsWithErrors(newStepsWithErrors)
       }
     }
-  }
+  }, [ingredients, fieldErrors, stepsWithErrors])
 
   // Instruction handlers
-  const addInstruction = () => {
+  const addInstruction = useCallback(() => {
     setInstructions([...instructions, ''])
-  }
+  }, [instructions])
 
-  const updateInstruction = (index: number, value: string) => {
+  const updateInstruction = useCallback((index: number, value: string) => {
     const newInstructions = [...instructions]
     newInstructions[index] = value
     setInstructions(newInstructions)
@@ -92,9 +92,9 @@ export const CreateRecipe: React.FC = () => {
     if (value.trim()) {
       clearFieldError('instructions', 3)
     }
-  }
+  }, [instructions, clearFieldError])
 
-  const removeInstruction = (index: number) => {
+  const removeInstruction = useCallback((index: number) => {
     if (instructions.length > 1) {
       const newInstructions = instructions.filter((_, i) => i !== index)
       setInstructions(newInstructions)
@@ -109,22 +109,22 @@ export const CreateRecipe: React.FC = () => {
         setStepsWithErrors(newStepsWithErrors)
       }
     }
-  }
+  }, [instructions, fieldErrors, stepsWithErrors])
 
   // Tag handlers
-  const addTag = () => {
+  const addTag = useCallback(() => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
       setTags([...tags, tagInput.trim()])
       setTagInput('')
     }
-  }
+  }, [tagInput, tags])
 
-  const removeTag = (index: number) => {
+  const removeTag = useCallback((index: number) => {
     setTags(tags.filter((_, i) => i !== index))
-  }
+  }, [tags])
 
   // Image upload handler
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       // Create preview URL
@@ -134,14 +134,14 @@ export const CreateRecipe: React.FC = () => {
       }
       reader.readAsDataURL(file)
     }
-  }
+  }, [])
 
-  const removeImage = () => {
+  const removeImage = useCallback(() => {
     setImagePreview(null)
-  }
+  }, [])
 
   // Validation function
-  const validateForm = (): { isValid: boolean; errors: Record<string, string>; errorSteps: Set<number> } => {
+  const validateForm = useCallback((): { isValid: boolean; errors: Record<string, string>; errorSteps: Set<number> } => {
     const errors: Record<string, string> = {}
     const errorSteps = new Set<number>()
 
@@ -166,7 +166,7 @@ export const CreateRecipe: React.FC = () => {
     }
 
     return { isValid: Object.keys(errors).length === 0, errors, errorSteps }
-  }
+  }, [title, ingredients, instructions])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -237,32 +237,32 @@ export const CreateRecipe: React.FC = () => {
     }
   }
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     navigate('/dashboard/recipes')
-  }
+  }, [navigate])
 
-  const nextStep = () => {
+  const nextStep = useCallback(() => {
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1)
     }
-  }
+  }, [currentStep, totalSteps])
 
-  const prevStep = () => {
+  const prevStep = useCallback(() => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1)
     }
-  }
+  }, [currentStep])
 
-  const goToStep = (step: number) => {
+  const goToStep = useCallback((step: number) => {
     setCurrentStep(step)
-  }
+  }, [])
 
-  const steps = [
+  const steps = useMemo(() => [
     { number: 1, title: 'Basic Info', icon: '📝' },
     { number: 2, title: 'Ingredients', icon: '🥕' },
     { number: 3, title: 'Instructions', icon: '👨‍🍳' },
     { number: 4, title: 'Review', icon: '✅' }
-  ]
+  ], [])
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">

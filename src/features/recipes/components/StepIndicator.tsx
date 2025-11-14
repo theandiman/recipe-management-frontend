@@ -13,7 +13,7 @@ interface StepIndicatorProps {
   onStepClick: (step: number) => void
 }
 
-export const StepIndicator: React.FC<StepIndicatorProps> = ({
+export const StepIndicator = React.memo<StepIndicatorProps>(({
   steps,
   currentStep,
   stepsWithErrors,
@@ -64,4 +64,4 @@ export const StepIndicator: React.FC<StepIndicatorProps> = ({
       ))}
     </div>
   )
-}
+})
