@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { saveRecipe } from '../../services/recipeStorageApi'
-import { IngredientInput } from '../../components/IngredientInput'
+import { StepIndicator } from './components/StepIndicator'
+import { RecipeFormSteps } from './components/RecipeFormSteps'
+import { RecipePreview } from './components/RecipePreview'
 import type { Recipe, Ingredient } from '../../types/nutrition'
 
 export const CreateRecipe: React.FC = () => {
@@ -274,530 +276,69 @@ export const CreateRecipe: React.FC = () => {
         </div>
 
         {/* Step Progress Indicator - Horizontal scroll on mobile */}
-        <div className="flex items-center justify-between gap-2 sm:gap-4 mb-6 sm:mb-8 overflow-x-auto pb-2">
-          {steps.map((step, index) => (
-            <React.Fragment key={step.number}>
-              <button
-                type="button"
-                onClick={() => goToStep(step.number)}
-                className={`flex flex-col items-center gap-1 sm:gap-2 flex-shrink-0 ${
-                  step.number === currentStep ? 'opacity-100' : step.number < currentStep ? 'opacity-100' : 'opacity-50'
-                }`}
-              >
-                <div
-                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-lg sm:text-xl font-bold transition-colors relative ${
-                    step.number === currentStep
-                      ? 'bg-green-600 text-white shadow-lg'
-                      : step.number < currentStep
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-200 text-gray-500'
-                  } ${
-                    stepsWithErrors.has(step.number) ? 'ring-2 ring-red-500 ring-offset-2' : ''
-                  }`}
-                >
-                  {step.number < currentStep ? '✓' : step.icon}
-                  {stepsWithErrors.has(step.number) && (
-                    <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-red-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-[10px] sm:text-xs">!</span>
-                    </div>
-                  )}
-                </div>
-                <span className={`text-xs sm:text-sm font-medium whitespace-nowrap ${
-                  step.number === currentStep ? 'text-gray-900' : stepsWithErrors.has(step.number) ? 'text-red-600' : 'text-gray-500'
-                }`}>
-                  {step.title}
-                </span>
-              </button>
-              {index < steps.length - 1 && (
-                <div className={`flex-1 h-1 mx-2 rounded ${
-                  step.number < currentStep ? 'bg-green-600' : 'bg-gray-200'
-                }`} />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
+        <StepIndicator
+          steps={steps}
+          currentStep={currentStep}
+          stepsWithErrors={stepsWithErrors}
+          onStepClick={goToStep}
+        />
       </div>
 
       {/* Step 4: Preview Mode */}
       {currentStep === 4 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-          {/* Error message */}
-          {saveError && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start" role="alert">
-              <svg className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              <div className="flex-1">
-                <h3 className="text-sm font-medium text-red-800">Error saving recipe</h3>
-                <p className="text-sm text-red-700 mt-1">{saveError}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSaveError(null)}
-                className="ml-3 text-red-600 hover:text-red-800 transition-colors"
-                aria-label="Dismiss"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </button>
-            </div>
-          )}
-
-          {/* Recipe header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              {title || 'Untitled Recipe'}
-            </h1>
-            
-            {description && (
-              <p className="text-lg text-gray-600 mb-6">{description}</p>
-            )}
-
-            {/* Recipe image */}
-            {imagePreview && (
-              <div className="mb-6">
-                <img
-                  src={imagePreview}
-                  alt={title || 'Recipe'}
-                  className="w-full h-96 object-cover rounded-lg shadow-md"
-                />
-              </div>
-            )}
-
-            {/* Recipe meta */}
-            <div className="flex flex-wrap gap-6 pb-6 border-b border-gray-200">
-              {prepTime && (
-                <div className="flex items-center text-gray-700">
-                  <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div>
-                    <div className="text-sm text-gray-500">Prep Time</div>
-                    <div className="font-medium">{prepTime} min</div>
-                  </div>
-                </div>
-              )}
-              
-              {cookTime && (
-                <div className="flex items-center text-gray-700">
-                  <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                  </svg>
-                  <div>
-                    <div className="text-sm text-gray-500">Cook Time</div>
-                    <div className="font-medium">{cookTime} min</div>
-                  </div>
-                </div>
-              )}
-
-              {servings && (
-                <div className="flex items-center text-gray-700">
-                  <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                  <div>
-                    <div className="text-sm text-gray-500">Servings</div>
-                    <div className="font-medium">{servings}</div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Ingredients */}
-          {ingredients.filter(i => i.item.trim()).length > 0 && (
-            <div className="mt-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Ingredients</h2>
-              <ul className="space-y-2">
-                {ingredients.filter(i => i.item.trim()).map((ingredient, index) => (
-                  <li key={index} className="flex items-start">
-                    <svg className="w-5 h-5 mr-3 mt-0.5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-gray-700">
-                      {[ingredient.quantity, ingredient.unit, ingredient.item]
-                        .filter(p => p.trim())
-                        .join(' ')}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Instructions */}
-          {instructions.filter(i => i.trim()).length > 0 && (
-            <div className="mt-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Instructions</h2>
-              <ol className="space-y-4">
-                {instructions.filter(i => i.trim()).map((instruction, index) => (
-                  <li key={index} className="flex items-start">
-                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-green-600 text-white font-bold text-sm mr-4 flex-shrink-0 mt-0.5">
-                      {index + 1}
-                    </span>
-                    <p className="text-gray-700 pt-1">{instruction}</p>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          )}
-
-          {/* Tags */}
-          {tags.length > 0 && (
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <h3 className="text-sm font-medium text-gray-500 mb-3">Tags</h3>
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-medium"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Action buttons in preview mode */}
-          <div className="flex items-center justify-between pt-8 mt-8 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={prevStep}
-              className="px-6 py-3 rounded-lg font-medium transition-colors bg-gray-200 text-gray-700 hover:bg-gray-300"
-            >
-              ← Back
-            </button>
-            <div className="flex items-center space-x-4">
-              <button
-                type="button"
-                onClick={handleCancel}
-                disabled={saveLoading}
-                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={saveLoading}
-                className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {saveLoading ? (
-                  <>
-                    <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>Saving...</span>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>Save Recipe</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
+        <RecipePreview
+          saveError={saveError}
+          setSaveError={setSaveError}
+          title={title}
+          description={description}
+          imagePreview={imagePreview}
+          prepTime={prepTime}
+          cookTime={cookTime}
+          servings={servings}
+          ingredients={ingredients}
+          instructions={instructions}
+          tags={tags}
+          prevStep={prevStep}
+          handleCancel={handleCancel}
+          handleSubmit={handleSubmit}
+          saveLoading={saveLoading}
+        />
       ) : (
-        /* Steps 1-3: Form */
         <form className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-          <div className="space-y-8">
-            
-            {/* Step 1: Basic Info */}
-            {currentStep === 1 && (
-              <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-gray-900 pb-2 border-b border-gray-200">
-                  Basic Information
-                </h2>
-                
-                {/* Recipe Name */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Recipe Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => {
-                      setTitle(e.target.value)
-                      // Clear error when user starts typing
-                      if (e.target.value) {
-                        clearFieldError('title', 1)
-                      }
-                    }}
-                    required
-                    placeholder="e.g., Grandma's Chocolate Chip Cookies"
-                    aria-invalid={!!fieldErrors.title}
-                    aria-describedby={fieldErrors.title ? 'title-error' : undefined}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
-                      fieldErrors.title
-                        ? 'border-red-500 focus:ring-red-500'
-                        : 'border-gray-300 focus:ring-green-500'
-                    }`}
-                  />
-                  {fieldErrors.title && (
-                    <p id="title-error" className="mt-1 text-sm text-red-600 flex items-center" role="alert">
-                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      {fieldErrors.title}
-                    </p>
-                  )}
-                </div>
+          <RecipeFormSteps
+            currentStep={currentStep}
+            title={title}
+            setTitle={setTitle}
+            description={description}
+            setDescription={setDescription}
+            prepTime={prepTime}
+            setPrepTime={setPrepTime}
+            cookTime={cookTime}
+            setCookTime={setCookTime}
+            servings={servings}
+            setServings={setServings}
+            imagePreview={imagePreview}
+            handleImageUpload={handleImageUpload}
+            removeImage={removeImage}
+            ingredients={ingredients}
+            addIngredient={addIngredient}
+            updateIngredient={updateIngredient}
+            removeIngredient={removeIngredient}
+            instructions={instructions}
+            addInstruction={addInstruction}
+            updateInstruction={updateInstruction}
+            removeInstruction={removeInstruction}
+            tags={tags}
+            tagInput={tagInput}
+            setTagInput={setTagInput}
+            addTag={addTag}
+            removeTag={removeTag}
+            fieldErrors={fieldErrors}
+            clearFieldError={clearFieldError}
+          />
 
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={3}
-                    placeholder="Brief description of your recipe..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-
-                {/* Time and Servings Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Prep Time (min)
-                    </label>
-                    <input
-                      type="number"
-                      value={prepTime}
-                      onChange={(e) => setPrepTime(e.target.value)}
-                      min="0"
-                      placeholder="15"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Cook Time (min)
-                    </label>
-                    <input
-                      type="number"
-                      value={cookTime}
-                      onChange={(e) => setCookTime(e.target.value)}
-                      min="0"
-                      placeholder="30"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Servings <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      value={servings}
-                      onChange={(e) => setServings(e.target.value)}
-                      min="1"
-                      required
-                      placeholder="4"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
-                {/* Recipe Image Upload */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Recipe Image
-                  </label>
-                  
-                  {!imagePreview ? (
-                    <div className="flex items-center justify-center w-full">
-                      <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <svg className="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <p className="mb-2 text-sm text-gray-500">
-                            <span className="font-semibold">Click to upload</span> or drag and drop
-                          </p>
-                          <p className="text-xs text-gray-500">PNG, JPG, or WEBP (recommended max size: 5MB)</p>
-                        </div>
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                        />
-                      </label>
-                    </div>
-                  ) : (
-                    <div className="relative">
-                      <img
-                        src={imagePreview}
-                        alt="Recipe preview"
-                        className="w-full h-64 object-cover rounded-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={removeImage}
-                        className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
-                        title="Remove image"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Step 2: Ingredients */}
-            {currentStep === 2 && (
-              <div className="space-y-4">
-                <IngredientInput
-                  ingredients={ingredients}
-                  onAddIngredient={addIngredient}
-                  onUpdateIngredient={updateIngredient}
-                  onRemoveIngredient={removeIngredient}
-                />
-                {fieldErrors.ingredients && (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
-                    <svg className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-red-800">{fieldErrors.ingredients}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Step 3: Instructions & Tags */}
-            {currentStep === 3 && (
-              <div className="space-y-8">
-                {/* Instructions Section */}
-                <div className="space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Instructions <span className="text-red-500">*</span>
-              </h2>
-              <button
-                type="button"
-                onClick={addInstruction}
-                className="px-3 py-1.5 text-sm bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors flex items-center space-x-1"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Add Step</span>
-              </button>
-            </div>
-            
-            <div className="space-y-3">
-              {instructions.map((instruction, index) => (
-                <div key={index} className="flex items-start space-x-3">
-                  <span className="flex-shrink-0 w-8 h-10 flex items-center justify-center">
-                    <span className="w-7 h-7 flex items-center justify-center rounded-full bg-green-600 text-white text-sm font-bold">
-                      {index + 1}
-                    </span>
-                  </span>
-                  <textarea
-                    value={instruction}
-                    onChange={(e) => updateInstruction(index, e.target.value)}
-                    placeholder="Describe this step in detail..."
-                    required={index === 0}
-                    rows={2}
-                    className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
-                  />
-                  {instructions.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeInstruction(index)}
-                      className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-            
-            {fieldErrors.instructions && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start" role="alert">
-                <svg className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-red-800">{fieldErrors.instructions}</p>
-                </div>
-              </div>
-            )}
-                </div>
-
-            {/* Tags Section */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-gray-900 pb-2 border-b border-gray-200">
-                Tags (Optional)
-              </h2>
-              
-              <div className="flex items-center space-x-2">
-                <input
-                  type="text"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      addTag()
-                    }
-                  }}
-                  placeholder="Add tags (e.g., 'quick', 'healthy', 'vegetarian')"
-                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-                <button
-                  type="button"
-                  onClick={addTag}
-                  className="px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  Add
-                </button>
-              </div>
-              
-              {tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-medium"
-                    >
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => removeTag(index)}
-                        className="ml-2 text-green-600 hover:text-green-800"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-              </div>
-            )}
-
-            {/* Navigation Buttons */}
-            <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+          {/* Navigation Buttons */}
+          <div className="flex items-center justify-between pt-6 border-t border-gray-200">
             <button
               type="button"
               onClick={prevStep}
@@ -855,7 +396,6 @@ export const CreateRecipe: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
         </form>
       )}
     </div>
