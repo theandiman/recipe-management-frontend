@@ -9,6 +9,10 @@ export const RecipeLibrary: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; title: string } | null>(null)
   const [deleting, setDeleting] = useState(false)
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  // Default page size chosen to not break existing tests (keeps small lists on single page)
+  const [pageSize] = useState(20)
 
   useEffect(() => {
     const fetchRecipes = async () => {
@@ -109,8 +113,19 @@ export const RecipeLibrary: React.FC = () => {
         <p className="text-sm md:text-base text-gray-600">{recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'} in your collection</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        {recipes.map((recipe) => (
+      {/* Paged recipes */}
+      {(() => {
+        const total = recipes.length
+        const totalPages = Math.max(1, Math.ceil(total / pageSize))
+        if (currentPage > totalPages) setCurrentPage(1)
+        const start = (currentPage - 1) * pageSize
+        const end = start + pageSize
+        const paged = recipes.slice(start, end)
+
+        return (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {paged.map((recipe) => (
           <div
             key={recipe.id}
             className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow relative group"
@@ -170,8 +185,53 @@ export const RecipeLibrary: React.FC = () => {
               </div>
             </div>
           </div>
-        ))}
-      </div>
+              ))}
+            </div>
+
+            {/* Pagination controls */}
+            {recipes.length > pageSize && (
+              <div className="mt-6 flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Showing {Math.min(start + 1, total)} - {Math.min(end, total)} of {total}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 bg-gray-100 rounded disabled:opacity-50"
+                    aria-label="Previous page"
+                  >
+                    Previous
+                  </button>
+
+                  {/* Simple page number buttons */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                    <button
+                      key={p}
+                      onClick={() => setCurrentPage(p)}
+                      aria-current={p === currentPage}
+                      className={`px-3 py-1 rounded ${p === currentPage ? 'bg-emerald-600 text-white' : 'bg-gray-100'}`}
+                      aria-label={`Go to page ${p}`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 bg-gray-100 rounded disabled:opacity-50"
+                    aria-label="Next page"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )
+      })()}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (

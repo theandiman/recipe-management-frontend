@@ -66,13 +66,24 @@ export interface RecipeResponse {
  */
 const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
   // Parse time strings to minutes (e.g., "30 minutes" -> 30)
-  const parseTimeToMinutes = (timeStr?: string): number | undefined => {
+  const parseTimeToMinutes = (time?: string | number | undefined): number | undefined => {
+    if (time === undefined || time === null) return undefined
+    // If it's a number, accept only positive values; treat 0 or negatives as undefined
+    if (typeof time === 'number') {
+      return time > 0 ? Math.floor(time) : undefined
+    }
+    const timeStr = String(time).trim()
     if (!timeStr) return undefined
     const match = timeStr.match(/(\d+)\s*(minute|min|hour|hr)/i)
-    if (!match) return undefined
-    const value = parseInt(match[1], 10)
-    const unit = match[2].toLowerCase()
-    return unit.startsWith('hour') || unit.startsWith('hr') ? value * 60 : value
+    if (match) {
+      const value = parseInt(match[1], 10)
+      const unit = match[2].toLowerCase()
+      return unit.startsWith('hour') || unit.startsWith('hr') ? value * 60 : value
+    }
+
+    // Fallback: try to parse a plain number string
+    const num = parseInt(timeStr, 10)
+    return isNaN(num) || num <= 0 ? undefined : num
   }
 
   // Convert tips to Map<String, List<String>> format expected by backend
