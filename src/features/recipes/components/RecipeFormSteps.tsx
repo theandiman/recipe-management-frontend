@@ -100,7 +100,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
                 fieldErrors.title
                   ? 'border-red-500 focus:ring-red-500'
-                  : 'border-gray-300 focus:ring-green-500'
+                  : 'border-gray-300 focus:ring-emerald-500'
               }`}
             />
             {fieldErrors.title && (
@@ -123,7 +123,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               placeholder="Brief description of your recipe..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             />
           </div>
 
@@ -210,7 +210,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               <button
                 type="button"
                 onClick={addInstruction}
-                className="px-3 py-1.5 text-sm bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors flex items-center space-x-1"
+                className="px-3 py-1.5 text-sm bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors flex items-center space-x-1"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -223,7 +223,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               {instructions.map((instruction, index) => (
                 <div key={index} className="flex items-start space-x-3">
                   <span className="flex-shrink-0 w-8 h-10 flex items-center justify-center">
-                    <span className="w-7 h-7 flex items-center justify-center rounded-full bg-green-600 text-white text-sm font-bold">
+                    <span className="w-7 h-7 flex items-center justify-center rounded-full bg-emerald-600 text-white text-sm font-bold">
                       {index + 1}
                     </span>
                   </span>
@@ -233,7 +233,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                     placeholder="Describe this step in detail..."
                     required={index === 0}
                     rows={2}
-                    className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                    className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
                   />
                   {instructions.length > 1 && (
                     <button
@@ -284,7 +284,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 onChange={(e) => setPrepTime(e.target.value)}
                 min="0"
                 placeholder="15"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
             <div>
@@ -297,7 +297,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 onChange={(e) => setCookTime(e.target.value)}
                 min="0"
                 placeholder="30"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
             <div>
@@ -310,7 +310,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 onChange={(e) => setServings(e.target.value)}
                 min="1"
                 placeholder="4"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -333,12 +333,12 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   }
                 }}
                 placeholder="Add tags (e.g., 'quick', 'healthy', 'vegetarian')"
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
               <button
                 type="button"
                 onClick={addTag}
-                className="px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
               >
                 Add
               </button>
@@ -349,13 +349,13 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 {tags.map((tag, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-medium"
+                    className="inline-flex items-center px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium"
                   >
                     {tag}
                     <button
                       type="button"
                       onClick={() => removeTag(index)}
-                      className="ml-2 text-green-600 hover:text-green-800"
+                      className="ml-2 text-emerald-600 hover:text-emerald-800"
                     >
                       ×
                     </button>

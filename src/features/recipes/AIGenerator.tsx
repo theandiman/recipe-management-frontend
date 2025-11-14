@@ -156,7 +156,7 @@ export const AIGenerator: React.FC = () => {
       </div>
 
       {!result && (
-        <form onSubmit={handleGenerate} className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <form onSubmit={handleGenerate} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
           <div className="space-y-6">
             {/* Description/Prompt */}
             <div>
@@ -248,7 +248,7 @@ export const AIGenerator: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors shadow-lg flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-4 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
@@ -272,7 +272,7 @@ export const AIGenerator: React.FC = () => {
       {/* Recipe Result */}
       {result && parsedRecipe && (
         <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h2 className="text-3xl font-bold text-gray-900">{parsedRecipe.recipeName}</h2>
@@ -284,7 +284,7 @@ export const AIGenerator: React.FC = () => {
                 <button
                   onClick={handleSaveRecipe}
                   disabled={saveLoading || saveSuccess}
-                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
                 >
                   {saveLoading ? (
                     <>
@@ -361,7 +361,7 @@ export const AIGenerator: React.FC = () => {
                       </svg>
                       <button
                         onClick={handleGenerateImage}
-                        className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transition-colors shadow-md"
+                        className="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-md"
                       >
                         Generate Recipe Image
                       </button>
@@ -518,14 +518,14 @@ export const AIGenerator: React.FC = () => {
                   )}
 
                   {parsedRecipe.tips.makeAhead && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
                       <div className="flex items-start space-x-3">
-                        <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <div className="flex-1">
-                          <h4 className="font-semibold text-green-900 mb-1">Make-Ahead</h4>
-                          <p className="text-sm text-green-800">{parsedRecipe.tips.makeAhead}</p>
+                          <h4 className="font-semibold text-emerald-900 mb-1">Make-Ahead</h4>
+                          <p className="text-sm text-emerald-800">{parsedRecipe.tips.makeAhead}</p>
                         </div>
                       </div>
                     </div>

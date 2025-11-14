@@ -305,7 +305,7 @@ export const CreateRecipe: React.FC = () => {
           saveLoading={saveLoading}
         />
       ) : (
-        <form className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <form className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
           <RecipeFormSteps
             currentStep={currentStep}
             title={title}
@@ -366,7 +366,7 @@ export const CreateRecipe: React.FC = () => {
                 <button
                   type="button"
                   onClick={nextStep}
-                  className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
+                  className="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors"
                 >
                   Next →
                 </button>
@@ -375,7 +375,7 @@ export const CreateRecipe: React.FC = () => {
                   type="button"
                   onClick={handleSubmit}
                   disabled={saveLoading}
-                  className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saveLoading ? (
                     <>

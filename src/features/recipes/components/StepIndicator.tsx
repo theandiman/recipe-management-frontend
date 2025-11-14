@@ -34,9 +34,9 @@ export const StepIndicator = React.memo<StepIndicatorProps>(({
             <div
               className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-lg sm:text-xl font-bold transition-colors relative ${
                 step.number === currentStep
-                  ? 'bg-green-600 text-white shadow-lg'
+                  ? 'bg-emerald-600 text-white shadow-lg'
                   : step.number < currentStep
-                  ? 'bg-green-100 text-green-700'
+                  ? 'bg-emerald-100 text-emerald-700'
                   : 'bg-gray-200 text-gray-500'
               } ${
                 stepsWithErrors.has(step.number) ? 'ring-2 ring-red-500 ring-offset-2' : ''
@@ -57,7 +57,7 @@ export const StepIndicator = React.memo<StepIndicatorProps>(({
           </button>
           {index < steps.length - 1 && (
             <div className={`flex-1 h-1 mx-2 rounded ${
-              step.number < currentStep ? 'bg-green-600' : 'bg-gray-200'
+              step.number < currentStep ? 'bg-emerald-600' : 'bg-gray-200'
             }`} />
           )}
         </React.Fragment>

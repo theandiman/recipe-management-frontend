@@ -89,7 +89,7 @@ export const RecipePreview = React.memo<RecipePreviewProps>(({
         <div className="flex flex-wrap gap-6 pb-6 border-b border-gray-200">
           {prepTime && (
             <div className="flex items-center text-gray-700">
-              <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div>
@@ -101,7 +101,7 @@ export const RecipePreview = React.memo<RecipePreviewProps>(({
 
           {cookTime && (
             <div className="flex items-center text-gray-700">
-              <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
               </svg>
               <div>
@@ -113,7 +113,7 @@ export const RecipePreview = React.memo<RecipePreviewProps>(({
 
           {servings && (
             <div className="flex items-center text-gray-700">
-              <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
               <div>
@@ -153,7 +153,7 @@ export const RecipePreview = React.memo<RecipePreviewProps>(({
           <ol className="space-y-4">
             {instructions.filter(i => i.trim()).map((instruction, index) => (
               <li key={index} className="flex items-start">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-green-600 text-white font-bold text-sm mr-4 flex-shrink-0 mt-0.5">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-600 text-white font-bold text-sm mr-4 flex-shrink-0 mt-0.5">
                   {index + 1}
                 </span>
                 <p className="text-gray-700 pt-1">{instruction}</p>
@@ -171,7 +171,7 @@ export const RecipePreview = React.memo<RecipePreviewProps>(({
             {tags.map((tag, index) => (
               <span
                 key={index}
-                className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-medium"
+                className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium"
               >
                 {tag}
               </span>
@@ -202,7 +202,7 @@ export const RecipePreview = React.memo<RecipePreviewProps>(({
             type="button"
             onClick={handleSubmit}
             disabled={saveLoading}
-            className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saveLoading ? (
               <>

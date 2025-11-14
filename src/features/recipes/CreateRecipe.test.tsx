@@ -363,7 +363,7 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       // Step 1 should be highlighted (green background)
       const step1Button = screen.getByRole('button', { name: /Basic Info/i })
       const step1Icon = step1Button.querySelector('div')
-      expect(step1Icon).toHaveClass('bg-green-600')
+      expect(step1Icon).toHaveClass('bg-emerald-600')
     })
 
     it('should show completed steps with checkmark', () => {

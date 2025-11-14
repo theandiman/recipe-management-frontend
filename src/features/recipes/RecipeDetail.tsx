@@ -98,7 +98,7 @@ export const RecipeDetail: React.FC = () => {
       )}
 
       {/* Recipe header */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">{recipe.title}</h1>
         
         {recipe.description && (
@@ -168,7 +168,7 @@ export const RecipeDetail: React.FC = () => {
             <ol className="space-y-4">
               {recipe.instructions.map((instruction, index) => (
                 <li key={index} className="flex items-start">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-green-600 text-white font-bold text-sm mr-4 flex-shrink-0 mt-0.5">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-600 text-white font-bold text-sm mr-4 flex-shrink-0 mt-0.5">
                     {index + 1}
                   </span>
                   <p className="text-gray-700 pt-1">{instruction}</p>
@@ -186,7 +186,7 @@ export const RecipeDetail: React.FC = () => {
               {recipe.tags.map((tag, index) => (
                 <span
                   key={index}
-                  className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-medium"
+                  className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium"
                 >
                   {tag}
                 </span>
