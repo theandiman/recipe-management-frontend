@@ -4,6 +4,7 @@ import { saveRecipe } from '../../services/recipeStorageApi'
 import { StepIndicator } from './components/StepIndicator'
 import { RecipeFormSteps } from './components/RecipeFormSteps'
 import { RecipePreview } from './components/RecipePreview'
+import { UI_STYLES } from '../../utils/uiStyles'
 import type { Recipe, Ingredient } from '../../types/nutrition'
 
 export const CreateRecipe: React.FC = () => {
@@ -375,7 +376,7 @@ export const CreateRecipe: React.FC = () => {
                   type="button"
                   onClick={handleSubmit}
                   disabled={saveLoading}
-                  className="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={UI_STYLES.primaryButton}
                 >
                   {saveLoading ? (
                     <>

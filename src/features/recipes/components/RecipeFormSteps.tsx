@@ -1,5 +1,6 @@
 import React from 'react'
 import { IngredientInput } from '../../../components/IngredientInput'
+import { UI_STYLES } from '../../../utils/uiStyles'
 import type { Ingredient } from '../../../types/nutrition'
 
 interface RecipeFormStepsProps {
@@ -210,7 +211,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               <button
                 type="button"
                 onClick={addInstruction}
-                className="px-3 py-1.5 text-sm bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors flex items-center space-x-1"
+                className={UI_STYLES.addButton}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -338,7 +339,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               <button
                 type="button"
                 onClick={addTag}
-                className="px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                className={UI_STYLES.secondaryButton}
               >
                 Add
               </button>
@@ -349,7 +350,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 {tags.map((tag, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium"
+                    className={`${UI_STYLES.tagWithPadding} inline-flex items-center`}
                   >
                     {tag}
                     <button

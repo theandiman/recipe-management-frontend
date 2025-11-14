@@ -1,4 +1,5 @@
 import React from 'react'
+import { UI_STYLES } from '../../../utils/uiStyles'
 
 interface RecipePreviewProps {
   title: string
@@ -202,7 +203,7 @@ export const RecipePreview = React.memo<RecipePreviewProps>(({
             type="button"
             onClick={handleSubmit}
             disabled={saveLoading}
-            className="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={UI_STYLES.primaryButton}
           >
             {saveLoading ? (
               <>
