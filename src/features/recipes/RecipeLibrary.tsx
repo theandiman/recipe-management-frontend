@@ -111,6 +111,7 @@ export const RecipeLibrary: React.FC = () => {
       <div className="mb-6 md:mb-8">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Recipe Library</h1>
         <p className="text-sm md:text-base text-gray-600">{recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'} in your collection</p>
+        
       </div>
 
       {/* Paged recipes */}
@@ -248,7 +249,7 @@ export const RecipeLibrary: React.FC = () => {
                 <p className="text-xs sm:text-sm text-gray-600 mt-1">This action cannot be undone</p>
               </div>
             </div>
-            
+
             <p className="text-sm sm:text-base text-gray-700 mb-6">
               Are you sure you want to delete <strong>"{deleteConfirm.title}"</strong>?
             </p>
