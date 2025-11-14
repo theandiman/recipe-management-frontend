@@ -9,6 +9,7 @@ export const RecipeLibrary: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; title: string } | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [filterText, setFilterText] = useState('')
 
   useEffect(() => {
     const fetchRecipes = async () => {
@@ -107,10 +108,45 @@ export const RecipeLibrary: React.FC = () => {
       <div className="mb-6 md:mb-8">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Recipe Library</h1>
         <p className="text-sm md:text-base text-gray-600">{recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'} in your collection</p>
+        <div className="mt-3">
+          <label htmlFor="recipe-filter" className="sr-only">Filter recipes</label>
+          <div className="relative max-w-md">
+            <input
+              id="recipe-filter"
+              type="search"
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              placeholder="Filter recipes by title, description or tag..."
+              className="w-full pl-3 pr-10 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            />
+            {filterText && (
+              <button
+                onClick={() => setFilterText('')}
+                aria-label="Clear filter"
+                className="absolute right-1 top-1/2 -translate-y-1/2 bg-gray-100 hover:bg-gray-200 rounded px-2 py-1 text-xs"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        {recipes.map((recipe) => (
+      {/* Filtered list (filter only affects displayed items; count above shows total in collection) */}
+      {(() => {
+        const q = filterText.trim().toLowerCase()
+        const filtered = q
+          ? recipes.filter(r => {
+              if (r.title?.toLowerCase().includes(q)) return true
+              if (r.description?.toLowerCase().includes(q)) return true
+              if (r.tags && r.tags.some(t => t.toLowerCase().includes(q))) return true
+              return false
+            })
+          : recipes
+
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {filtered.map((recipe) => (
           <div
             key={recipe.id}
             className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow relative group"
@@ -170,8 +206,10 @@ export const RecipeLibrary: React.FC = () => {
               </div>
             </div>
           </div>
-        ))}
-      </div>
+            ))}
+          </div>
+        )
+      })()}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
