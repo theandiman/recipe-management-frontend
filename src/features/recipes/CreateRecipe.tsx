@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { saveRecipe } from '../../services/recipeStorageApi'
 import { StepIndicator } from './components/StepIndicator'
 import { RecipeFormSteps } from './components/RecipeFormSteps'
@@ -286,120 +287,142 @@ export const CreateRecipe: React.FC = () => {
         />
       </div>
 
-      {/* Step 5: Preview Mode */}
+      <AnimatePresence mode="wait">
+        {/* Step 5: Preview Mode */}
       {currentStep === 5 ? (
-        <RecipePreview
-          saveError={saveError}
-          setSaveError={setSaveError}
-          title={title}
-          description={description}
-          imagePreview={imagePreview}
-          prepTime={prepTime}
-          cookTime={cookTime}
-          servings={servings}
-          ingredients={ingredients}
-          instructions={instructions}
-          tags={tags}
-          prevStep={prevStep}
-          handleCancel={handleCancel}
-          handleSubmit={handleSubmit}
-          saveLoading={saveLoading}
-        />
-      ) : (
-        <form className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
-          <RecipeFormSteps
-            currentStep={currentStep}
+        <motion.div
+          key="preview"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+        >
+          <RecipePreview
+            saveError={saveError}
+            setSaveError={setSaveError}
             title={title}
-            setTitle={setTitle}
             description={description}
-            setDescription={setDescription}
-            prepTime={prepTime}
-            setPrepTime={setPrepTime}
-            cookTime={cookTime}
-            setCookTime={setCookTime}
-            servings={servings}
-            setServings={setServings}
             imagePreview={imagePreview}
-            handleImageUpload={handleImageUpload}
-            removeImage={removeImage}
+            prepTime={prepTime}
+            cookTime={cookTime}
+            servings={servings}
             ingredients={ingredients}
-            addIngredient={addIngredient}
-            updateIngredient={updateIngredient}
-            removeIngredient={removeIngredient}
             instructions={instructions}
-            addInstruction={addInstruction}
-            updateInstruction={updateInstruction}
-            removeInstruction={removeInstruction}
             tags={tags}
-            tagInput={tagInput}
-            setTagInput={setTagInput}
-            addTag={addTag}
-            removeTag={removeTag}
-            fieldErrors={fieldErrors}
-            clearFieldError={clearFieldError}
+            prevStep={prevStep}
+            handleCancel={handleCancel}
+            handleSubmit={handleSubmit}
+            saveLoading={saveLoading}
           />
+        </motion.div>
+      ) : (
+        <motion.div
+          key={`step-${currentStep}`}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+        >
+          <form className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
+            <RecipeFormSteps
+              currentStep={currentStep}
+              title={title}
+              setTitle={setTitle}
+              description={description}
+              setDescription={setDescription}
+              prepTime={prepTime}
+              setPrepTime={setPrepTime}
+              cookTime={cookTime}
+              setCookTime={setCookTime}
+              servings={servings}
+              setServings={setServings}
+              imagePreview={imagePreview}
+              handleImageUpload={handleImageUpload}
+              removeImage={removeImage}
+              ingredients={ingredients}
+              addIngredient={addIngredient}
+              updateIngredient={updateIngredient}
+              removeIngredient={removeIngredient}
+              instructions={instructions}
+              addInstruction={addInstruction}
+              updateInstruction={updateInstruction}
+              removeInstruction={removeInstruction}
+              tags={tags}
+              tagInput={tagInput}
+              setTagInput={setTagInput}
+              addTag={addTag}
+              removeTag={removeTag}
+              fieldErrors={fieldErrors}
+              clearFieldError={clearFieldError}
+            />
 
-          {/* Navigation Buttons */}
-          <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={prevStep}
-              disabled={currentStep === 1}
-              className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                currentStep === 1
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              ← Back
-            </button>
-
-            <div className="flex items-center space-x-4">
+            {/* Navigation Buttons */}
+            <div className="flex items-center justify-between pt-6 border-t border-gray-200">
               <button
                 type="button"
-                onClick={handleCancel}
-                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                onClick={prevStep}
+                disabled={currentStep === 1}
+                className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                  currentStep === 1
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
               >
-                Cancel
+                ← Back
               </button>
 
-              {currentStep < totalSteps ? (
+              <div className="flex items-center space-x-4">
                 <button
                   type="button"
-                  onClick={nextStep}
-                  className="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors"
+                  onClick={handleCancel}
+                  className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
                 >
-                  Next →
+                  Cancel
                 </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={saveLoading}
-                  className={UI_STYLES.primaryButton}
-                >
-                  {saveLoading ? (
-                    <>
-                      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span>Save Recipe</span>
-                    </>
-                  )}
-                </button>
-              )}
+
+                {currentStep < totalSteps ? (
+                  <motion.button
+                    type="button"
+                    onClick={nextStep}
+                    className="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Next →
+                  </motion.button>
+                ) : (
+                  <motion.button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={saveLoading}
+                    className={UI_STYLES.primaryButton}
+                    whileHover={{ scale: saveLoading ? 1 : 1.02 }}
+                    whileTap={{ scale: saveLoading ? 1 : 0.98 }}
+                  >
+                    {saveLoading ? (
+                      <>
+                        <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Save Recipe</span>
+                      </>
+                    )}
+                  </motion.button>
+                )}
+              </div>
             </div>
-          </div>
-        </form>
+          </form>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   )
 }

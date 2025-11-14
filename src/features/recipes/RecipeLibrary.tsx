@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { getRecipes, deleteRecipe, type RecipeResponse } from '../../services/recipeStorageApi'
 
 export const RecipeLibrary: React.FC = () => {
@@ -127,9 +128,17 @@ export const RecipeLibrary: React.FC = () => {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {paged.map((recipe) => (
-          <div
+          <motion.div
             key={recipe.id}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow relative group"
+            className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative group cursor-pointer"
+            whileHover={{ 
+              scale: 1.02,
+              y: -4,
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+            }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onClick={() => navigate(`/dashboard/recipes/${recipe.id}`)}
           >
             {/* Delete button - always visible on mobile (opacity 100), hover on desktop */}
             <button
@@ -143,18 +152,19 @@ export const RecipeLibrary: React.FC = () => {
               </svg>
             </button>
 
-            <div
-              onClick={() => navigate(`/dashboard/recipes/${recipe.id}`)}
-              className="cursor-pointer"
-            >
+            <div className="h-full">
               {recipe.imageUrl ? (
-                <div className="h-40 sm:h-48 overflow-hidden">
+                <motion.div 
+                  className="h-40 sm:h-48 overflow-hidden"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                >
                   <img
                     src={recipe.imageUrl}
                     alt={recipe.title}
                     className="w-full h-full object-cover"
                   />
-                </div>
+                </motion.div>
               ) : (
                 <div className="h-40 sm:h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                   <svg className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,7 +195,7 @@ export const RecipeLibrary: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
               ))}
             </div>
 
