@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { generateRecipe, generateImage, clearRecipe, clearImage } from './recipeSlice'
+import { motion } from 'framer-motion'
 import NutritionFacts from '../../components/NutritionFacts'
 import ServingsStepper from '../../components/ServingsStepper'
 import { scaleIngredient } from '../../utils/quantityUtils'
@@ -245,10 +246,12 @@ export const AIGenerator: React.FC = () => {
 
             {/* Generate Button */}
             <div className="pt-6 border-t border-gray-200">
-              <button
+              <motion.button
                 type="submit"
                 disabled={loading}
                 className="w-full py-4 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                whileHover={{ scale: loading ? 1 : 1.02 }}
+                whileTap={{ scale: loading ? 1 : 0.98 }}
               >
                 {loading ? (
                   <>
@@ -263,7 +266,7 @@ export const AIGenerator: React.FC = () => {
                     <span>Generate Recipe with AI</span>
                   </>
                 )}
-              </button>
+              </motion.button>
             </div>
           </div>
         </form>
