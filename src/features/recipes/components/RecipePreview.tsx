@@ -22,7 +22,7 @@ interface RecipePreviewProps {
   saveLoading: boolean
 }
 
-export const RecipePreview: React.FC<RecipePreviewProps> = ({
+export const RecipePreview = React.memo<RecipePreviewProps>(({
   title,
   description,
   prepTime,
@@ -225,4 +225,4 @@ export const RecipePreview: React.FC<RecipePreviewProps> = ({
       </div>
     </div>
   )
-}
+})

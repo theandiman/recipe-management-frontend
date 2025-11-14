@@ -38,7 +38,7 @@ interface RecipeFormStepsProps {
   clearFieldError: (fieldName: string, stepNumber: number) => void
 }
 
-export const RecipeFormSteps: React.FC<RecipeFormStepsProps> = ({
+export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
   currentStep,
   title,
   setTitle,
@@ -359,4 +359,4 @@ export const RecipeFormSteps: React.FC<RecipeFormStepsProps> = ({
       )}
     </div>
   )
-}
+})
