@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../features/auth/AuthContext'
 import { getRecipes, type RecipeResponse } from '../services/recipeStorageApi'
+import RecipeCard from '../components/RecipeCard'
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate()
@@ -209,23 +210,14 @@ export const Dashboard: React.FC = () => {
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {recentRecipes.map((recipe, index) => (
-              <motion.div
+            {recentRecipes.map((recipe) => (
+              <RecipeCard
                 key={recipe.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.8 + index * 0.1, duration: 0.3 }}
-                whileHover={{ scale: 1.02 }}
-                onClick={() => navigate(`/dashboard/recipes/${recipe.id}`)}
-                className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow"
-              >
-                <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">{recipe.recipeName || recipe.title}</h3>
-                <p className="text-sm text-gray-600 line-clamp-2 mb-3">{recipe.description}</p>
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>{recipe.tags?.[0] || 'No tags'}</span>
-                  <span>{recipe.servings} servings</span>
-                </div>
-              </motion.div>
+                recipe={recipe}
+                onView={(id) => navigate(`/dashboard/recipes/${id}`)}
+                onDelete={() => { /* don't show delete on recent list */ }}
+                compact
+              />
             ))}
           </div>
         </motion.div>

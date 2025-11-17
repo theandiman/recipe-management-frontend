@@ -92,6 +92,7 @@ export const RecipeDetail: React.FC = () => {
           <img
             src={recipe.imageUrl}
             alt={recipe.recipeName || recipe.title}
+            loading="lazy"
             className="w-full h-96 object-cover"
           />
         </div>
