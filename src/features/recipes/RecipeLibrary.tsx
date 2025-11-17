@@ -198,7 +198,18 @@ export const RecipeLibrary: React.FC = () => {
                 {paged.map((recipe, index) => (
             <motion.div
               key={recipe.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative group cursor-pointer"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  navigate(`/dashboard/recipes/${recipe.id}`)
+                } else if (e.key === 'Delete' || e.key === 'Backspace') {
+                  e.stopPropagation()
+                  setDeleteConfirm({ id: recipe.id, title: recipe.recipeName || recipe.title })
+                }
+              }}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative group cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-400"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ 
@@ -219,7 +230,7 @@ export const RecipeLibrary: React.FC = () => {
               onClick={(e) => handleDeleteClick(e, recipe)}
               className="absolute top-3 right-3 z-10 bg-red-500 text-white p-2.5 md:p-2 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300 active:bg-red-700"
               title="Delete recipe"
-              aria-label={`Delete ${recipe.title}`}
+              aria-label={`Delete ${recipe.recipeName || recipe.title}`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -235,7 +246,7 @@ export const RecipeLibrary: React.FC = () => {
                 >
                   <img
                     src={recipe.imageUrl}
-                    alt={recipe.title}
+                    alt={recipe.recipeName || recipe.title}
                     className="w-full h-full object-cover"
                   />
                 </motion.div>
@@ -247,7 +258,7 @@ export const RecipeLibrary: React.FC = () => {
                 </div>
               )}
               <div className="p-3 sm:p-4">
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 truncate">{recipe.title}</h3>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 line-clamp-2">{recipe.recipeName || recipe.title}</h3>
                 {recipe.description && (
                   <p className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2">{recipe.description}</p>
                 )}

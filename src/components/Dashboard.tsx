@@ -219,7 +219,7 @@ export const Dashboard: React.FC = () => {
                 onClick={() => navigate(`/dashboard/recipes/${recipe.id}`)}
                 className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow"
               >
-                <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">{recipe.title}</h3>
+                <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">{recipe.recipeName || recipe.title}</h3>
                 <p className="text-sm text-gray-600 line-clamp-2 mb-3">{recipe.description}</p>
                 <div className="flex items-center justify-between text-xs text-gray-500">
                   <span>{recipe.tags?.[0] || 'No tags'}</span>
