@@ -81,6 +81,15 @@ export const RecipeLibrary: React.FC = () => {
     setDeleteConfirm(null)
   }
 
+  const tags = React.useMemo(() => Array.from(new Set(recipes.flatMap(r => r.tags || []))).filter(Boolean), [recipes])
+
+  const filtered = React.useMemo(() => recipes.filter(r => {
+    const text = searchText.trim().toLowerCase()
+    const matchesText = !text || (r.title || r.recipeName || '').toLowerCase().includes(text) || (r.description || '').toLowerCase().includes(text) || (r.tags || []).some(t => t.toLowerCase().includes(text))
+    const matchesTag = !selectedTag || (r.tags || []).includes(selectedTag)
+    return matchesText && matchesTag
+  }), [recipes, searchText, selectedTag])
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto">
@@ -122,8 +131,6 @@ export const RecipeLibrary: React.FC = () => {
       </div>
     )
   }
-
-  const tags = Array.from(new Set(recipes.flatMap(r => r.tags || []))).filter(Boolean)
 
   if (recipes.length === 0) {
     return (
@@ -170,13 +177,7 @@ export const RecipeLibrary: React.FC = () => {
     )
   }
 
-  // Filter recipes by search and tag
-  const filtered = recipes.filter(r => {
-    const text = searchText.trim().toLowerCase()
-    const matchesText = !text || (r.title || r.recipeName || '').toLowerCase().includes(text) || (r.description || '').toLowerCase().includes(text) || (r.tags || []).some(t => t.toLowerCase().includes(text))
-    const matchesTag = !selectedTag || (r.tags || []).includes(selectedTag)
-    return matchesText && matchesTag
-  })
+  // Filter recipes by search and tag - handled via `filtered` declared above to avoid duplicate declarations
 
   return (
     <div className="max-w-7xl mx-auto">
