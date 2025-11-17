@@ -254,9 +254,50 @@ export const deleteRecipe = async (id: string): Promise<void> => {
   }
 }
 
+/**
+ * Update a recipe by ID
+ * @param id - The recipe ID to update
+ * @param update - Partial update payload (fields to update)
+ * @returns The updated recipe
+ */
+export const updateRecipe = async (id: string, update: Partial<CreateRecipeRequest> & { imageUrl?: string }): Promise<RecipeResponse> => {
+  const { default: axios } = await import('axios')
+  const { auth } = await import('../config/firebase')
+
+  const user = auth.currentUser
+  if (!user) {
+    throw new Error('User not authenticated')
+  }
+
+  const token = await user.getIdToken()
+  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}`)
+
+  // If it's a base64 data URL, upload it to Firebase Storage and set imageUrl
+  if (update.imageUrl?.startsWith('data:')) {
+    try {
+      const downloadURL = await uploadRecipeImage(update.imageUrl, id)
+      update.imageUrl = downloadURL
+    } catch (error) {
+      console.warn('Failed to upload image for update, proceeding without image:', error)
+      // Remove the imageUrl field so backend doesn't try to set it
+      delete update.imageUrl
+    }
+  }
+
+  const response = await axios.put(url, update, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+
+  return response.data
+}
+
 export default {
   saveRecipe,
   getRecipes,
   getRecipe,
   deleteRecipe
+  , updateRecipe
 }
