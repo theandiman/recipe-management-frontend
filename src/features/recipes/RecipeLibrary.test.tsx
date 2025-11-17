@@ -285,7 +285,8 @@ describe('RecipeLibrary', () => {
       })
 
       // Delete buttons exist but are hidden (opacity-0)
-      const deleteButtons = screen.getAllByTitle('Delete recipe')
+      // Title now includes recipe name (e.g., "Delete Chocolate Cake"), so look for "Delete" via regex
+      const deleteButtons = screen.getAllByTitle(/Delete/i)
       expect(deleteButtons).toHaveLength(2)
     })
 
@@ -298,7 +299,7 @@ describe('RecipeLibrary', () => {
         expect(screen.getByText('Chocolate Cake')).toBeInTheDocument()
       })
 
-      const deleteButtons = screen.getAllByTitle('Delete recipe')
+      const deleteButtons = screen.getAllByTitle(/Delete/i)
       fireEvent.click(deleteButtons[0])
 
       // Modal should appear
@@ -317,7 +318,7 @@ describe('RecipeLibrary', () => {
       })
 
       // Open modal
-      const deleteButtons = screen.getAllByTitle('Delete recipe')
+      const deleteButtons = screen.getAllByTitle(/Delete/i)
       fireEvent.click(deleteButtons[0])
 
       // Click cancel
@@ -341,7 +342,7 @@ describe('RecipeLibrary', () => {
       })
 
       // Open modal
-      const deleteButtons = screen.getAllByTitle('Delete recipe')
+      const deleteButtons = screen.getAllByTitle(/Delete/i)
       fireEvent.click(deleteButtons[0])
 
       // Click delete
@@ -374,7 +375,7 @@ describe('RecipeLibrary', () => {
       })
 
       // Open modal
-      const deleteButtons = screen.getAllByTitle('Delete recipe')
+      const deleteButtons = screen.getAllByTitle(/Delete/i)
       fireEvent.click(deleteButtons[0])
 
       // Click delete
@@ -403,7 +404,7 @@ describe('RecipeLibrary', () => {
       })
 
       // Open modal and delete
-      const deleteButtons = screen.getAllByTitle('Delete recipe')
+      const deleteButtons = screen.getAllByTitle(/Delete/i)
       fireEvent.click(deleteButtons[0])
       
       const deleteButton = screen.getByRole('button', { name: /^Delete$/i })
@@ -424,7 +425,7 @@ describe('RecipeLibrary', () => {
         expect(screen.getByText('Chocolate Cake')).toBeInTheDocument()
       })
 
-      const deleteButtons = screen.getAllByTitle('Delete recipe')
+      const deleteButtons = screen.getAllByTitle(/Delete/i)
       fireEvent.click(deleteButtons[0])
 
       // Should NOT navigate
