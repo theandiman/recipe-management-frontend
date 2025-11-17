@@ -143,7 +143,45 @@ describe('RecipeLibrary', () => {
       })
 
       expect(screen.getByText('Pasta Carbonara')).toBeInTheDocument()
-      expect(screen.getByText('2 recipes in your collection')).toBeInTheDocument()
+      expect(screen.getByText(/Showing\s*2\s*of\s*2\s*recipes?/i)).toBeInTheDocument()
+    })
+
+    it('should filter recipes by search', async () => {
+      vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
+
+      renderRecipeLibrary()
+
+      await waitFor(() => {
+        expect(screen.getByText('Chocolate Cake')).toBeInTheDocument()
+      })
+
+      const searchInput = screen.getByPlaceholderText('Search by title, description or tag...')
+      fireEvent.change(searchInput, { target: { value: 'Pasta' } })
+
+      await waitFor(() => {
+        expect(screen.queryByText('Chocolate Cake')).not.toBeInTheDocument()
+      })
+
+      expect(screen.getByText('Pasta Carbonara')).toBeInTheDocument()
+    })
+
+    it('should filter recipes by tag', async () => {
+      vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
+
+      renderRecipeLibrary()
+
+      await waitFor(() => {
+        expect(screen.getByText('Chocolate Cake')).toBeInTheDocument()
+      })
+
+      const select = screen.getByLabelText('Filter by tag')
+      fireEvent.change(select, { target: { value: 'pasta' } })
+
+      await waitFor(() => {
+        expect(screen.queryByText('Chocolate Cake')).not.toBeInTheDocument()
+      })
+
+      expect(screen.getByText('Pasta Carbonara')).toBeInTheDocument()
     })
 
     it('should display recipe metadata correctly', async () => {
@@ -252,7 +290,7 @@ describe('RecipeLibrary', () => {
       renderRecipeLibrary()
 
       await waitFor(() => {
-        expect(screen.getByText('1 recipe in your collection')).toBeInTheDocument()
+        expect(screen.getByText(/Showing\s*1\s*of\s*1\s*recipe/i)).toBeInTheDocument()
       })
     })
   })
