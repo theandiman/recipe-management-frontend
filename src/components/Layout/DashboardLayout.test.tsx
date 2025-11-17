@@ -1,55 +1,47 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
-import { DashboardLayout } from './DashboardLayout'
 import { RecipeDetail } from '../../features/recipes/RecipeDetail'
 import * as recipeStorageApi from '../../services/recipeStorageApi'
 
 // Mock the API
-vi.mock('../../features/recipes/recipeStorageApi', () => ({
+vi.mock('../../services/recipeStorageApi', () => ({
   getRecipes: vi.fn(),
   getRecipe: vi.fn(),
   deleteRecipe: vi.fn()
 }))
 
-// Mock useAuth to provide a dummy user
-vi.mock('../../features/auth/AuthContext', async () => {
-  const actual = await vi.importActual('../../features/auth/AuthContext')
-  return {
-    ...actual,
-    useAuth: () => ({
-      user: { email: 'test@example.com', uid: 'test-user' },
-      isAuthenticated: true,
-      isLoading: false,
-      error: null,
-      login: async () => {},
-      loginWithGoogle: async () => {},
-      register: async () => {},
-      logout: async () => {}
-    })
-  }
-})
+// Mock useAuth to provide a dummy user without importing the real module
+vi.mock('../../features/auth/AuthContext', () => ({
+  useAuth: () => ({
+    user: { email: 'test@example.com', uid: 'test-user' },
+    isAuthenticated: true,
+    isLoading: false,
+    error: null,
+    login: async () => {},
+    loginWithGoogle: async () => {},
+    register: async () => {},
+    logout: async () => {}
+  }),
+  AuthProvider: ({ children }: any) => children
+}))
 
 // Mock child components that are not under test
-vi.mock('../../components/Dashboard', async () => {
-  const React = await vi.importActual('react')
-  return { Dashboard: () => <div>DashboardStub</div> }
-})
+vi.mock('../../components/Dashboard', async () => ({
+  Dashboard: () => <div>DashboardStub</div>
+}))
 
-vi.mock('../../features/recipes/RecipeLibrary', async () => {
-  const React = await vi.importActual('react')
-  return { RecipeLibrary: () => <div>RecipeLibraryStub</div> }
-})
+vi.mock('../../features/recipes/RecipeLibrary', async () => ({
+  RecipeLibrary: () => <div>RecipeLibraryStub</div>
+}))
 
-vi.mock('../../features/recipes/CreateRecipe', async () => {
-  const React = await vi.importActual('react')
-  return { CreateRecipe: () => <div>CreateRecipeStub</div> }
-})
+vi.mock('../../features/recipes/CreateRecipe', async () => ({
+  CreateRecipe: () => <div>CreateRecipeStub</div>
+}))
 
-vi.mock('../../features/recipes/AIGenerator', async () => {
-  const React = await vi.importActual('react')
-  return { AIGenerator: () => <div>AIGeneratorStub</div> }
-})
+vi.mock('../../features/recipes/AIGenerator', async () => ({
+  AIGenerator: () => <div>AIGeneratorStub</div>
+}))
 
 const mockRecipe: recipeStorageApi.RecipeResponse = {
   id: '1',
