@@ -54,7 +54,7 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
         {/* Header with close and recipe title */}
         <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-8 py-4 flex items-center justify-between flex-shrink-0">
           <div>
-            <h2 className="text-2xl font-bold">{recipe.title}</h2>
+            <h2 className="text-2xl font-bold">{recipe.recipeName || recipe.title}</h2>
             <p className="text-emerald-100 text-sm mt-1">Step {currentStep + 1} of {totalSteps}</p>
           </div>
           <motion.button

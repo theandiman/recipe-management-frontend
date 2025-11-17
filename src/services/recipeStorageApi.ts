@@ -37,6 +37,7 @@ export interface CreateRecipeRequest {
 export interface RecipeResponse {
   id: string
   userId: string
+  recipeName?: string
   title: string
   description?: string
   ingredients: string[]

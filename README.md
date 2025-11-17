@@ -74,6 +74,24 @@ npm run dev
 
 The app will be available at `http://localhost:5174`
 
+### Local AI / Backend integration (developer tips)
+
+If you want the frontend to call a locally running AI service (the AI service runs on port 8080 by default), set the API base and start both services locally:
+
+- Start the AI service (with security disabled for local testing):
+   - From `recipe-management-ai-service` run:
+      - `export SPRING_PROFILES_ACTIVE=local` # optional, disables Firebase auth for easier local testing
+      - `mvn -DskipTests spring-boot:run`
+
+- Run the frontend dev server and point the app to your local backend:
+   - Copy `.env.local.example` to `.env.local` and edit `VITE_API_URL` to `http://localhost:8080` (or set it in your shell before starting the frontend):
+      - `export VITE_API_URL=http://localhost:8080`
+      - `npm run dev`
+
+The dev server includes a Vite proxy that forwards `/api` -> `http://localhost:8080` so local calls are proxied and CORS is avoided.
+
+If you want to test with Firebase authentication enabled, make sure to sign-in via the UI in the frontend before trying to generate recipes (the AI backend expects a Firebase ID token when security is enabled).
+
 ### Build
 
 Build for production:

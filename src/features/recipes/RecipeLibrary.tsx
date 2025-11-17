@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getRecipes, deleteRecipe, type RecipeResponse } from '../../services/recipeStorageApi'
+import RecipeCard from '../../components/RecipeCard'
 
 // Skeleton loading component
 const SkeletonCard: React.FC = () => (
@@ -54,10 +55,7 @@ export const RecipeLibrary: React.FC = () => {
     fetchRecipes()
   }, [])
 
-  const handleDeleteClick = (e: React.MouseEvent, recipe: RecipeResponse) => {
-    e.stopPropagation() // Prevent card click navigation
-    setDeleteConfirm({ id: recipe.id, title: recipe.title })
-  }
+  // Delete is handled via onDelete prop from RecipeCard
 
   const handleDeleteConfirm = async () => {
     if (!deleteConfirm) return
@@ -195,82 +193,14 @@ export const RecipeLibrary: React.FC = () => {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3, ease: "easeInOut" }}
               >
-                {paged.map((recipe, index) => (
-            <motion.div
-              key={recipe.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative group cursor-pointer"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ 
-                duration: 0.4, 
-                ease: "easeOut",
-                delay: index * 0.1 // Stagger animation by 0.1s per card
-              }}
-              whileHover={{ 
-                scale: 1.02,
-                y: -4,
-                boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-              }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => navigate(`/dashboard/recipes/${recipe.id}`)}
-            >
-            {/* Delete button - always visible on mobile (opacity 100), hover on desktop */}
-            <button
-              onClick={(e) => handleDeleteClick(e, recipe)}
-              className="absolute top-3 right-3 z-10 bg-red-500 text-white p-2.5 md:p-2 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300 active:bg-red-700"
-              title="Delete recipe"
-              aria-label={`Delete ${recipe.title}`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-
-            <div className="h-full">
-              {recipe.imageUrl ? (
-                <motion.div 
-                  className="h-40 sm:h-48 overflow-hidden"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                >
-                  <img
-                    src={recipe.imageUrl}
-                    alt={recipe.title}
-                    className="w-full h-full object-cover"
+                {paged.map((recipe) => (
+                  <RecipeCard
+                    key={recipe.id}
+                    recipe={recipe}
+                    onView={(id) => navigate(`/dashboard/recipes/${id}`)}
+                    onDelete={(r) => setDeleteConfirm({ id: r.id, title: r.recipeName || r.title })}
                   />
-                </motion.div>
-              ) : (
-                <div className="h-40 sm:h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                  <svg className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              )}
-              <div className="p-3 sm:p-4">
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 truncate">{recipe.title}</h3>
-                {recipe.description && (
-                  <p className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2">{recipe.description}</p>
-                )}
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  {(recipe.prepTime || recipe.cookTime) && (
-                    <span className="flex items-center">
-                      <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {(recipe.prepTime || 0) + (recipe.cookTime || 0)} min
-                    </span>
-                  )}
-                  <span className="flex items-center">
-                    <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    {recipe.servings} servings
-                  </span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-              ))}
+                ))}
               </motion.div>
             </AnimatePresence>
 
