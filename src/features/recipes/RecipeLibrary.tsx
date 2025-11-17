@@ -27,6 +27,9 @@ const SkeletonCard: React.FC = () => (
 export const RecipeLibrary: React.FC = () => {
   const navigate = useNavigate()
   const [recipes, setRecipes] = useState<RecipeResponse[]>([])
+  // Search & filter
+  const [searchText, setSearchText] = useState('')
+  const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; title: string } | null>(null)
@@ -77,6 +80,15 @@ export const RecipeLibrary: React.FC = () => {
   const handleDeleteCancel = () => {
     setDeleteConfirm(null)
   }
+
+  const tags = React.useMemo(() => Array.from(new Set(recipes.flatMap(r => r.tags || []))).filter(Boolean), [recipes])
+
+  const filtered = React.useMemo(() => recipes.filter(r => {
+    const text = searchText.trim().toLowerCase()
+    const matchesText = !text || (r.title || r.recipeName || '').toLowerCase().includes(text) || (r.description || '').toLowerCase().includes(text) || (r.tags || []).some(t => t.toLowerCase().includes(text))
+    const matchesTag = !selectedTag || (r.tags || []).includes(selectedTag)
+    return matchesText && matchesTag
+  }), [recipes, searchText, selectedTag])
 
   if (loading) {
     return (
@@ -165,22 +177,46 @@ export const RecipeLibrary: React.FC = () => {
     )
   }
 
+  // Filter recipes by search and tag - handled via `filtered` declared above to avoid duplicate declarations
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-6 md:mb-8">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Recipe Library</h1>
-        <p className="text-sm md:text-base text-gray-600">{recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'} in your collection</p>
-        
+        <p className="text-sm md:text-base text-gray-600">Showing {filtered.length} of {recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'} in your collection</p>
+        <div className="mt-4 flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center">
+          <label htmlFor="search" className="sr-only">Search recipes</label>
+          <input
+            id="search"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            placeholder="Search by title, description or tag..."
+            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-300"
+          />
+
+          <label htmlFor="tag-filter" className="sr-only">Filter by tag</label>
+          <select
+            id="tag-filter"
+            value={selectedTag || ''}
+            onChange={(e) => setSelectedTag(e.target.value || null)}
+            className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-300"
+          >
+            <option value="">All tags</option>
+            {tags.map(tag => (
+              <option key={tag} value={tag}>{tag}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Paged recipes */}
       {(() => {
-        const total = recipes.length
+        const total = filtered.length
         const totalPages = Math.max(1, Math.ceil(total / pageSize))
         if (currentPage > totalPages) setCurrentPage(1)
         const start = (currentPage - 1) * pageSize
         const end = start + pageSize
-        const paged = recipes.slice(start, end)
+        const paged = filtered.slice(start, end)
 
         return (
           <>
@@ -204,8 +240,13 @@ export const RecipeLibrary: React.FC = () => {
               </motion.div>
             </AnimatePresence>
 
+              {/* Empty filtered state */}
+              {filtered.length === 0 && (
+                <div className="mt-6 text-center text-gray-600">No recipes match your search or selected tag.</div>
+              )}
+
             {/* Pagination controls */}
-            {recipes.length > pageSize && (
+            {filtered.length > pageSize && (
               <div className="mt-6 flex items-center justify-between">
                 <div className="text-sm text-gray-600">
                   Showing {Math.min(start + 1, total)} - {Math.min(end, total)} of {total}
