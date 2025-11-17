@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../features/auth/AuthContext'
 import { Dashboard } from '../Dashboard'
 import { RecipeLibrary } from '../../features/recipes/RecipeLibrary'
+import { RecipeDetail } from '../../features/recipes/RecipeDetail'
 import { CreateRecipe } from '../../features/recipes/CreateRecipe'
 import { AIGenerator } from '../../features/recipes/AIGenerator'
 
@@ -257,6 +258,7 @@ export const DashboardLayout: React.FC = () => {
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="recipes/*" element={<RecipeLibrary />} />
+            <Route path="recipes/:id" element={<RecipeDetail />} />
             <Route path="create" element={<CreateRecipe />} />
             <Route path="generate" element={<AIGenerator />} />
           </Routes>
