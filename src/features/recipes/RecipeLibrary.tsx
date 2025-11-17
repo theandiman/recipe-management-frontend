@@ -239,6 +239,11 @@ export const RecipeLibrary: React.FC = () => {
               </motion.div>
             </AnimatePresence>
 
+              {/* Empty filtered state */}
+              {filtered.length === 0 && (
+                <div className="mt-6 text-center text-gray-600">No recipes match your search or selected tag.</div>
+              )}
+
             {/* Pagination controls */}
             {filtered.length > pageSize && (
               <div className="mt-6 flex items-center justify-between">
