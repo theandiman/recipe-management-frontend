@@ -4,6 +4,7 @@ import { uploadRecipeImage, deleteRecipeImage } from '../utils/imageStorage'
 import type { Recipe, RecipeTips } from '../types/nutrition'
 
 const STORAGE_API_BASE = import.meta.env.VITE_STORAGE_API_URL || ''
+const IS_TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
 
 /**
  * Request DTO for creating a recipe in the storage service
@@ -163,8 +164,20 @@ export const saveRecipe = async (recipe: Recipe): Promise<RecipeResponse> => {
     }
   }
   
-  const response = await postWithAuth(url, request)
-  return response.data
+  if (IS_TEST_MODE) {
+    // In test mode, use direct axios call without authentication
+    const { default: axios } = await import('axios')
+    const response = await axios.post(url, request, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    return response.data
+  } else {
+    // Normal mode with authentication
+    const response = await postWithAuth(url, request)
+    return response.data
+  }
 }
 
 /**
@@ -172,25 +185,38 @@ export const saveRecipe = async (recipe: Recipe): Promise<RecipeResponse> => {
  * @returns List of recipes
  */
 export const getRecipes = async (): Promise<RecipeResponse[]> => {
-  const { default: axios } = await import('axios')
-  const { auth } = await import('../config/firebase')
-  
-  const user = auth.currentUser
-  if (!user) {
-    throw new Error('User not authenticated')
-  }
-
-  const token = await user.getIdToken()
   const url = buildApiUrl(STORAGE_API_BASE, '/api/recipes')
   
-  const response = await axios.get(url, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
+  if (IS_TEST_MODE) {
+    // In test mode, use direct axios call without authentication
+    const { default: axios } = await import('axios')
+    const response = await axios.get(url, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    return response.data
+  } else {
+    // Normal mode with authentication
+    const { default: axios } = await import('axios')
+    const { auth } = await import('../config/firebase')
+    
+    const user = auth.currentUser
+    if (!user) {
+      throw new Error('User not authenticated')
     }
-  })
-  
-  return response.data
+
+    const token = await user.getIdToken()
+    
+    const response = await axios.get(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    return response.data
+  }
 }
 
 /**
