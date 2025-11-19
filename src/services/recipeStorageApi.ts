@@ -186,37 +186,25 @@ export const saveRecipe = async (recipe: Recipe): Promise<RecipeResponse> => {
  */
 export const getRecipes = async (): Promise<RecipeResponse[]> => {
   const url = buildApiUrl(STORAGE_API_BASE, '/api/recipes')
-  
-  if (IS_TEST_MODE) {
-    // In test mode, use direct axios call without authentication
-    const { default: axios } = await import('axios')
-    const response = await axios.get(url, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
-    return response.data
-  } else {
-    // Normal mode with authentication
-    const { default: axios } = await import('axios')
+  const { default: axios } = await import('axios')
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  if (!IS_TEST_MODE) {
     const { auth } = await import('../config/firebase')
-    
     const user = auth.currentUser
     if (!user) {
       throw new Error('User not authenticated')
     }
-
     const token = await user.getIdToken()
-    
-    const response = await axios.get(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    })
-    
-    return response.data
+    headers.Authorization = `Bearer ${token}`
   }
+
+  const response = await axios.get(url, { headers })
+
+  return response.data
 }
 
 /**
