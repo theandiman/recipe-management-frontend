@@ -5,21 +5,63 @@ import { useAuth } from '../features/auth/AuthContext'
 import { getRecipes, type RecipeResponse } from '../services/recipeStorageApi'
 import RecipeCard from '../components/RecipeCard'
 
+const StatsSkeleton: React.FC = () => (
+  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="flex items-center justify-between">
+      <div className="space-y-2">
+        <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded animate-pulse w-20"></div>
+        <div className="h-8 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded animate-pulse w-12"></div>
+      </div>
+      <div className="p-3 rounded-full bg-gray-50">
+        <div className="w-5 h-5 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded animate-pulse"></div>
+      </div>
+    </div>
+  </div>
+)
+
+const RecentRecipesSkeleton: React.FC = () => (
+  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="flex items-center justify-between mb-4">
+      <div className="h-6 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded animate-pulse w-32"></div>
+      <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded animate-pulse w-16"></div>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="h-32 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse"></div>
+          <div className="p-3 space-y-3">
+            <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded animate-pulse"></div>
+            <div className="h-3 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded animate-pulse w-3/4"></div>
+            <div className="flex justify-between items-center">
+              <div className="h-3 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded w-16 animate-pulse"></div>
+              <div className="h-3 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded w-20 animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)
+
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [recipes, setRecipes] = useState<RecipeResponse[]>([])
   const [recentRecipes, setRecentRecipes] = useState<RecipeResponse[]>([])
+  const [loading, setLoading] = useState(true)
 
   // Fetch recipes on component mount
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
+        setLoading(true)
         const data = await getRecipes()
         setRecipes(data)
       } catch (err) {
         console.error('Failed to fetch recipes:', err)
         setRecipes([])
+      } finally {
+        setLoading(false)
       }
     }
 
@@ -137,25 +179,38 @@ export const Dashboard: React.FC = () => {
         transition={{ delay: 0.3, duration: 0.5 }}
         className="grid grid-cols-1 md:grid-cols-3 gap-6"
       >
-        {stats.map((stat, index) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.4 + index * 0.1, duration: 0.3 }}
-            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+        {loading ? (
+          Array.from({ length: 3 }).map((_, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4 + index * 0.1, duration: 0.3 }}
+            >
+              <StatsSkeleton />
+            </motion.div>
+          ))
+        ) : (
+          stats.map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4 + index * 0.1, duration: 0.3 }}
+              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">{stat.label}</p>
+                  <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                </div>
+                <div className={`p-3 rounded-full bg-gray-50 ${stat.color}`}>
+                  {stat.icon}
+                </div>
               </div>
-              <div className={`p-3 rounded-full bg-gray-50 ${stat.color}`}>
-                {stat.icon}
-              </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          ))
+        )}
       </motion.div>
 
       {/* Quick Actions */}
@@ -193,7 +248,15 @@ export const Dashboard: React.FC = () => {
       </motion.div>
 
       {/* Recent Recipes */}
-      {recentRecipes.length > 0 && (
+      {loading ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7, duration: 0.5 }}
+        >
+          <RecentRecipesSkeleton />
+        </motion.div>
+      ) : recentRecipes.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
