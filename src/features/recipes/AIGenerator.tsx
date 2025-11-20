@@ -93,9 +93,13 @@ export const AIGenerator: React.FC = () => {
       setSaveSuccess(true)
       // Clear success message after 3 seconds
       setTimeout(() => setSaveSuccess(false), 3000)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to save recipe:', err)
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to save recipe. Please try again.'
+      const errorMessage = err instanceof Error && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data && typeof err.response.data === 'object' && 'message' in err.response.data && typeof err.response.data.message === 'string'
+        ? err.response.data.message
+        : err instanceof Error 
+          ? err.message 
+          : 'Failed to save recipe. Please try again.'
       setSaveError(errorMessage)
     } finally {
       setSaveLoading(false)
@@ -104,7 +108,7 @@ export const AIGenerator: React.FC = () => {
 
   const handleGenerateImage = useCallback(() => {
     if (!parsedRecipe) return
-
+    
     dispatch(generateImage({
       recipe: parsedRecipe
     }))
@@ -283,38 +287,48 @@ export const AIGenerator: React.FC = () => {
                   <p className="mt-2 text-gray-600">{parsedRecipe.description}</p>
                 )}
               </div>
-              <div className="flex items-center space-x-3">
+            </div>
+
+            {/* Action Buttons - Prominently positioned below header */}
+            <div className="mb-8 p-6 bg-gradient-to-r from-emerald-50 to-blue-50 rounded-xl border border-emerald-100">
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
                 <button
                   onClick={handleSaveRecipe}
                   disabled={saveLoading || saveSuccess}
-                className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                  className="flex-1 sm:flex-none px-8 py-4 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 transform hover:scale-105"
                 >
                   {saveLoading ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                      <span>Saving...</span>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                      <span>Saving Recipe...</span>
                     </>
                   ) : saveSuccess ? (
                     <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      <span>Saved!</span>
+                      <span>Recipe Saved!</span>
                     </>
                   ) : (
                     <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                       </svg>
-                      <span>Save Recipe</span>
+                      <span>Save to Library</span>
                     </>
                   )}
                 </button>
+                
+                <div className="hidden sm:block w-px h-8 bg-gray-300"></div>
+                
                 <button
                   onClick={handleClear}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="flex-1 sm:flex-none px-8 py-4 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center space-x-3 transform hover:scale-105"
                 >
-                  Generate New
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span>Generate New Recipe</span>
                 </button>
               </div>
             </div>
@@ -329,33 +343,35 @@ export const AIGenerator: React.FC = () => {
             {/* Recipe Image Section */}
             <div className="mb-6">
               {imageUrl ? (
-                <div className="relative">
+                <div className="space-y-3">
                   <img
+                    key={imageUrl}
                     src={imageUrl}
                     alt={parsedRecipe.recipeName}
-                    className="w-full h-64 object-cover rounded-lg"
+                    className="w-full h-64 object-cover rounded-lg shadow-md"
                   />
-                  <button
-                    onClick={() => {
-                      handleClearImage()
-                      // Trigger regeneration after clearing
-                      setTimeout(() => handleGenerateImage(), 100)
-                    }}
-                    className="absolute top-2 right-2 px-3 py-2 bg-white/90 rounded-lg hover:bg-white transition-colors shadow-lg flex items-center space-x-2"
-                    title="Regenerate image"
-                  >
-                    <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    <span className="text-sm font-medium text-gray-700">Regenerate</span>
-                  </button>
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => {
+                        handleClearImage()
+                        // Trigger regeneration after clearing
+                        setTimeout(() => handleGenerateImage(), 100)
+                      }}
+                      className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      <span>Regenerate Image</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
                   {imageLoading ? (
                     <div className="flex flex-col items-center">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mb-4" />
-                      <p className="text-gray-600">Generating image...</p>
+                      <p className="text-gray-600 font-medium">Generating recipe image...</p>
                     </div>
                   ) : (
                     <>
@@ -364,12 +380,15 @@ export const AIGenerator: React.FC = () => {
                       </svg>
                       <button
                         onClick={handleGenerateImage}
-                        className="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-md"
+                        className="px-8 py-4 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3 transform hover:scale-105"
                       >
-                        Generate Recipe Image
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <span>Generate Recipe Image</span>
                       </button>
                       {imageError && (
-                        <p className="mt-3 text-sm text-red-600">{imageError}</p>
+                        <p className="mt-4 text-sm text-red-600 bg-red-50 px-4 py-2 rounded-lg inline-block">{imageError}</p>
                       )}
                     </>
                   )}
