@@ -93,9 +93,13 @@ export const AIGenerator: React.FC = () => {
       setSaveSuccess(true)
       // Clear success message after 3 seconds
       setTimeout(() => setSaveSuccess(false), 3000)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to save recipe:', err)
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to save recipe. Please try again.'
+      const errorMessage = err instanceof Error && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data && typeof err.response.data === 'object' && 'message' in err.response.data && typeof err.response.data.message === 'string'
+        ? err.response.data.message
+        : err instanceof Error 
+          ? err.message 
+          : 'Failed to save recipe. Please try again.'
       setSaveError(errorMessage)
     } finally {
       setSaveLoading(false)
