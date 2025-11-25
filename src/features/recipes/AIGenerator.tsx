@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { generateRecipe, generateImage, clearRecipe, clearImage } from './recipeSlice'
+import { generateRecipe, generateImage, clearImage } from './recipeSlice'
 import { motion } from 'framer-motion'
 import NutritionFacts from '../../components/NutritionFacts'
 import ServingsStepper from '../../components/ServingsStepper'
@@ -71,13 +71,6 @@ export const AIGenerator: React.FC = () => {
   const handleGenerate = (e: React.FormEvent) => {
     e.preventDefault()
     runRecipeGeneration()
-  }
-
-  const handleClear = () => {
-    dispatch(clearRecipe())
-    setTargetServings(null)
-    setSaveSuccess(false)
-    setSaveError(null)
   }
 
   const handleSaveRecipe = async () => {
