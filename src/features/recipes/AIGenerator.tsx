@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { generateRecipe, generateImage, clearRecipe, clearImage } from './recipeSlice'
+import { generateRecipe, generateImage, clearImage } from './recipeSlice'
 import { motion } from 'framer-motion'
 import NutritionFacts from '../../components/NutritionFacts'
 import ServingsStepper from '../../components/ServingsStepper'
@@ -59,8 +59,8 @@ export const AIGenerator: React.FC = () => {
     }
   }
 
-  const handleGenerate = (e: React.FormEvent) => {
-    e.preventDefault()
+
+  const runRecipeGeneration = () => {
     dispatch(generateRecipe({
       prompt,
       pantryItems,
@@ -68,11 +68,9 @@ export const AIGenerator: React.FC = () => {
     }))
   }
 
-  const handleClear = () => {
-    dispatch(clearRecipe())
-    setTargetServings(null)
-    setSaveSuccess(false)
-    setSaveError(null)
+  const handleGenerate = (e: React.FormEvent) => {
+    e.preventDefault()
+    runRecipeGeneration()
   }
 
   const handleSaveRecipe = async () => {
@@ -322,13 +320,13 @@ export const AIGenerator: React.FC = () => {
                 <div className="hidden sm:block w-px h-8 bg-gray-300"></div>
                 
                 <button
-                  onClick={handleClear}
+                  onClick={runRecipeGeneration}
                   className="flex-1 sm:flex-none px-8 py-4 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center space-x-3 transform hover:scale-105"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
-                  <span>Generate New Recipe</span>
+                  <span>Regenerate Recipe</span>
                 </button>
               </div>
             </div>
