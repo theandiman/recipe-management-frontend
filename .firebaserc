@@ -1,7 +1,5 @@
-dist
-.vscode
-.github
-node_modules
-*.log
-.env*
-!.env.example
+{
+  "projects": {
+    "default": "recipe-mgmt-dev"
+  }
+}
