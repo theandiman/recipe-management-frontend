@@ -10,7 +10,7 @@ if ! command -v firebase >/dev/null 2>&1; then
 fi
 
 if ! command -v jq >/dev/null 2>&1; then
-  echo "jq not found. Install it first: brew install jq" >&2
+  echo "jq not found. Please install it. See https://stedolan.github.io/jq/download/" >&2
   exit 1
 fi
 
