@@ -10,20 +10,22 @@ const IS_TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
  * Request DTO for creating a recipe in the storage service
  */
 export interface CreateRecipeRequest {
-  title: string
+  recipeName: string
   description?: string
   ingredients: string[]
   instructions: string[]
-  prepTime?: number
-  cookTime?: number
+  prepTimeMinutes?: number
+  cookTimeMinutes?: number
   servings: number
-  nutrition?: {
-    calories: number
-    protein: number
-    carbohydrates: number
-    fat: number
-    fiber: number
-    sodium: number
+  nutritionalInfo?: {
+    perServing?: {
+      calories: number
+      protein: number
+      carbohydrates: number
+      fat: number
+      fiber: number
+      sodium: number
+    }
   }
   tips?: Record<string, string | string[]> // Backend expects strings for makeAhead/storage/reheating, arrays for substitutions/variations
   imageUrl?: string
@@ -117,19 +119,19 @@ const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
   const imageUrl = recipe.imageUrl?.startsWith('data:') ? undefined : recipe.imageUrl
 
   return {
-    title: recipe.recipeName,
+    recipeName: recipe.recipeName,
     description: recipe.description,
     ingredients: recipe.ingredients,
     instructions: recipe.instructions,
-    prepTime: parseTimeToMinutes(recipe.prepTime),
-    cookTime: parseTimeToMinutes(recipe.cookTime),
+    prepTimeMinutes: parseTimeToMinutes(recipe.prepTime),
+    cookTimeMinutes: parseTimeToMinutes(recipe.cookTime),
     servings: typeof recipe.servings === 'number' ? recipe.servings : (parseInt(String(recipe.servings), 10) || 1),
-    nutrition: recipe.nutritionalInfo?.perServing,
+    nutritionalInfo: recipe.nutritionalInfo ? { perServing: recipe.nutritionalInfo.perServing } : undefined,
     tips: mapTips(recipe.tips),
     imageUrl,
     source: recipe.source || 'ai-generated',
-    tags: [],
-    dietaryRestrictions: []
+    tags: recipe.tags || [],
+    dietaryRestrictions: recipe.dietaryRestrictions || []
   }
 }
 
