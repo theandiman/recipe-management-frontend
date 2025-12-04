@@ -25,7 +25,7 @@ export interface CreateRecipeRequest {
     fiber: number
     sodium: number
   }
-  tips?: Record<string, string[]> // Backend expects Map<String, List<String>>
+  tips?: Record<string, string | string[]> // Backend expects strings for makeAhead/storage/reheating, arrays for substitutions/variations
   imageUrl?: string
   source: string
   tags?: string[]
