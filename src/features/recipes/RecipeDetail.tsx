@@ -63,7 +63,7 @@ export const RecipeDetail: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Header with back button and cooking mode button */}
+      {/* Header with back button and action buttons */}
       <div className="mb-6 flex items-center justify-between">
         <button
           onClick={() => navigate('/dashboard/recipes')}
@@ -75,15 +75,27 @@ export const RecipeDetail: React.FC = () => {
           Back to Library
         </button>
         
-        <button
-          onClick={() => setIsCookingMode(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          Start Cooking Mode
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => navigate(`/dashboard/recipes/edit/${id}`)}
+            className="flex items-center gap-2 px-4 py-2 bg-white text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 font-medium transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Edit Recipe
+          </button>
+          
+          <button
+            onClick={() => setIsCookingMode(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Start Cooking Mode
+          </button>
+        </div>
       </div>
 
       {/* Recipe image */}
