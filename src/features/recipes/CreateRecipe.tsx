@@ -217,7 +217,9 @@ export const CreateRecipe: React.FC = () => {
         ingredients: ingredientStrings,
         instructions: instructions.filter(i => i.trim()),
         imageUrl: imagePreview || undefined,
-        source: 'manual'
+        source: 'manual',
+        tags: tags.length > 0 ? tags : undefined,
+        dietaryRestrictions: undefined
       }
       
       // Save with user-created source
