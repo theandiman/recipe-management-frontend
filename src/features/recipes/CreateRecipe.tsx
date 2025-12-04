@@ -218,7 +218,8 @@ export const CreateRecipe: React.FC = () => {
         instructions: instructions.filter(i => i.trim()),
         imageUrl: imagePreview || undefined,
         source: 'manual',
-        tags: tags.length > 0 ? tags : undefined
+        tags: tags.length > 0 ? tags : undefined,
+        dietaryRestrictions: undefined
       }
       
       // Save with user-created source
