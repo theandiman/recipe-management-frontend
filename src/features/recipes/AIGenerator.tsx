@@ -287,47 +287,44 @@ export const AIGenerator: React.FC = () => {
               </div>
             </div>
 
-            {/* Action Buttons - Prominently positioned below header */}
-            <div className="mb-8 p-6 bg-gradient-to-r from-emerald-50 to-blue-50 rounded-xl border border-emerald-100">
-              <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+            {/* Action Buttons - compact icon buttons */}
+            <div className="mb-8 p-4 bg-gradient-to-r from-emerald-50 to-blue-50 rounded-xl border border-emerald-100">
+              <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={handleSaveRecipe}
                   disabled={saveLoading || saveSuccess}
-                  className="flex-1 sm:flex-none px-8 py-4 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 transform hover:scale-105"
+                  aria-label="Save to library"
+                  title="Save to library"
+                  className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-600 text-white shadow hover:shadow-md transition-transform disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
                 >
                   {saveLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
-                      <span>Saving Recipe...</span>
-                    </>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
                   ) : saveSuccess ? (
-                    <>
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span>Recipe Saved!</span>
-                    </>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
                   ) : (
-                    <>
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                      </svg>
-                      <span>Save to Library</span>
-                    </>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
                   )}
                 </button>
-                
-                <div className="hidden sm:block w-px h-8 bg-gray-300"></div>
-                
+
                 <button
                   onClick={runRecipeGeneration}
-                  className="flex-1 sm:flex-none px-8 py-4 bg-white text-gray-700 font-semibold rounded-xl border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center space-x-3 transform hover:scale-105"
+                  aria-label="Regenerate recipe"
+                  title="Regenerate recipe"
+                  className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-50 transition-transform transform hover:scale-105"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
-                  <span>Regenerate Recipe</span>
                 </button>
+
+                {/* optional small status text */}
+                {saveSuccess && (
+                  <span className="text-sm text-emerald-700 font-medium">Saved</span>
+                )}
               </div>
             </div>
 
