@@ -25,7 +25,7 @@ export interface CreateRecipeRequest {
     fiber: number
     sodium: number
   }
-  tips?: Record<string, string[]> // Backend expects Map<String, List<String>>
+  tips?: Record<string, string | string[]> // Backend expects strings for makeAhead/storage/reheating, arrays for substitutions/variations
   imageUrl?: string
   source: string
   tags?: string[]
@@ -89,22 +89,22 @@ const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
   }
 
   // Convert tips to Map<String, List<String>> format expected by backend
-  const mapTips = (tips?: RecipeTips): Record<string, string[]> | undefined => {
+  const mapTips = (tips?: RecipeTips): Record<string, string | string[]> | undefined => {
     if (!tips) return undefined
     
-    const result: Record<string, string[]> = {}
+    const result: Record<string, string | string[]> = {}
     
     if (tips.substitutions) {
       result.substitutions = tips.substitutions
     }
     if (tips.makeAhead) {
-      result.makeAhead = [tips.makeAhead] // Convert string to array
+      result.makeAhead = tips.makeAhead // Keep as string
     }
     if (tips.storage) {
-      result.storage = [tips.storage] // Convert string to array
+      result.storage = tips.storage // Keep as string
     }
     if (tips.reheating) {
-      result.reheating = [tips.reheating] // Convert string to array
+      result.reheating = tips.reheating // Keep as string
     }
     if (tips.variations) {
       result.variations = tips.variations
@@ -235,6 +235,54 @@ export const getRecipe = async (id: string): Promise<RecipeResponse> => {
 }
 
 /**
+ * Update an existing recipe
+ * @param id - The recipe ID to update
+ * @param recipe - The updated recipe data
+ * @returns The updated recipe
+ */
+export const updateRecipe = async (id: string, recipe: Recipe): Promise<RecipeResponse> => {
+  const { default: axios } = await import('axios')
+  const { auth } = await import('../config/firebase')
+  
+  const user = auth.currentUser
+  if (!user) {
+    throw new Error('User not authenticated')
+  }
+
+  const token = await user.getIdToken()
+  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}`)
+  
+  let request = mapRecipeToCreateRequest(recipe)
+  
+  // If there's a base64 image, upload it to Firebase Storage first
+  if (recipe.imageUrl?.startsWith('data:')) {
+    try {
+      const downloadURL = await uploadRecipeImage(recipe.imageUrl, id)
+      request = {
+        ...request,
+        imageUrl: downloadURL
+      }
+    } catch (error) {
+      console.error('Failed to upload image, updating recipe without new image:', error)
+      // Continue with existing image
+      request = {
+        ...request,
+        imageUrl: undefined
+      }
+    }
+  }
+  
+  const response = await axios.put(url, request, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  
+  return response.data
+}
+
+/**
  * Delete a recipe by ID
  * @param id - The recipe ID to delete
  */
@@ -272,5 +320,6 @@ export default {
   saveRecipe,
   getRecipes,
   getRecipe,
+  updateRecipe,
   deleteRecipe
 }
