@@ -278,89 +278,106 @@ export const AIGenerator: React.FC = () => {
       {result && parsedRecipe && (
         <div className="space-y-6">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900">{parsedRecipe.recipeName}</h2>
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-6">
+              <div className="flex-1">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">{parsedRecipe.recipeName}</h2>
                 {parsedRecipe.description && (
                   <p className="mt-2 text-gray-600">{parsedRecipe.description}</p>
                 )}
+                {saveSuccess && (
+                  <span className="inline-block mt-2 text-sm text-emerald-700 font-medium">✓ Saved to library</span>
+                )}
+                {saveError && (
+                  <span className="inline-block mt-2 text-sm text-red-600 font-medium">✗ {saveError}</span>
+                )}
               </div>
-            </div>
-
-            {/* Action Buttons - compact icon buttons */}
-            <div className="mb-8 p-4 bg-gradient-to-r from-emerald-50 to-blue-50 rounded-xl border border-emerald-100">
-              <div className="flex items-center justify-center gap-4">
+              
+              {/* Action buttons in top-right */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
                   onClick={handleSaveRecipe}
                   disabled={saveLoading || saveSuccess}
                   aria-label="Save to library"
                   title="Save to library"
-                  className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-600 text-white shadow hover:shadow-md transition-transform disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 >
                   {saveLoading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                      <span>Saving...</span>
+                    </>
                   ) : saveSuccess ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Saved</span>
+                    </>
                   ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                    </svg>
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                      </svg>
+                      <span>Save</span>
+                    </>
                   )}
                 </button>
 
                 <button
                   onClick={runRecipeGeneration}
+                  disabled={loading}
                   aria-label="Regenerate recipe"
                   title="Regenerate recipe"
-                  className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-50 transition-transform transform hover:scale-105"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700" />
+                      <span>Generating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      <span>Regenerate</span>
+                    </>
+                  )}
                 </button>
-
-                {/* optional small status text */}
-                {saveSuccess && (
-                  <span className="text-sm text-emerald-700 font-medium">Saved</span>
-                )}
               </div>
             </div>
-
-            {/* Save Error Message */}
-            {saveError && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-                {saveError}
-              </div>
-            )}
 
             {/* Recipe Image Section */}
             <div className="mb-6">
               {imageUrl ? (
-                <div className="space-y-3">
+                <figure className="relative" aria-label={`${parsedRecipe.recipeName} image with regenerate option`}>
                   <img
                     key={imageUrl}
                     src={imageUrl}
                     alt={parsedRecipe.recipeName}
                     className="w-full h-64 object-cover rounded-lg shadow-md"
                   />
-                  <div className="flex justify-center">
-                    <button
-                      onClick={() => {
-                        handleClearImage()
-                        // Trigger regeneration after clearing
-                        setTimeout(() => handleGenerateImage(), 100)
-                      }}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <button
+                    onClick={() => {
+                      handleClearImage()
+                      // Trigger regeneration after clearing
+                      setTimeout(() => handleGenerateImage(), 100)
+                    }}
+                    disabled={imageLoading}
+                    aria-label="Regenerate image"
+                    title="Regenerate image"
+                    className="absolute top-3 right-3 inline-flex items-center gap-1 px-2 h-10 rounded-lg bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors disabled:opacity-50"
+                  >
+                    {imageLoading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                       </svg>
-                      <span>Regenerate Image</span>
-                    </button>
-                  </div>
-                </div>
+                    )}
+                    <span className="sr-only sm:not-sr-only text-xs">Regenerate</span>
+                  </button>
+                </figure>
               ) : (
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
                   {imageLoading ? (
