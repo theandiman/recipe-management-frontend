@@ -402,21 +402,37 @@ jobs:
           fi
 
       - name: OWASP ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.12.0
-        with:
-          target: 'https://recipe-mgmt-dev.web.app/'
-          rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a'
-          allow_issue_writing: false
-          fail_action: false
-          artifact_name: 'zap-scan'
+        run: |
+          echo "Running OWASP ZAP baseline scan..."
+          docker pull ghcr.io/zaproxy/zaproxy:stable
+          
+          # Create report files with proper permissions
+          touch zap_report.html zap_report.json zap_report.md
+          chmod 666 zap_report.html zap_report.json zap_report.md
+          
+          # Run ZAP baseline scan
+          docker run -v ${{ github.workspace }}:/zap/wrk/:rw \
+            --network=host \
+            -t ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py \
+            -t https://recipe-mgmt-dev.web.app/ \
+            -r zap_report.html \
+            -J zap_report.json \
+            -w zap_report.md \
+            -a \
+            -c .zap/rules.tsv || true
+          
+          echo "✅ ZAP scan completed"
 
       - name: Upload ZAP Scan Report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: zap-scan-report
-          path: report_html.html
+          path: |
+            zap_report.html
+            zap_report.json
+            zap_report.md
           retention-days: 30
 
       - name: Post-deployment summary
