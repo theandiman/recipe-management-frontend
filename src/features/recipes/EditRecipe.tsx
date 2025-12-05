@@ -223,7 +223,7 @@ export const EditRecipe: React.FC = () => {
       instructions: validInstructions,
       prepTime: prepTime ? `${prepTime} minutes` : undefined,
       cookTime: cookTime ? `${cookTime} minutes` : undefined,
-      servings: servings || '1',
+      servings: parseInt(servings) || 1,
       imageUrl: imagePreview || undefined,
       source: 'manual' as const
     }

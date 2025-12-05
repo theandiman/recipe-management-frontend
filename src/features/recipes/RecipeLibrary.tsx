@@ -86,7 +86,7 @@ export const RecipeLibrary: React.FC = () => {
 
   const filtered = React.useMemo(() => recipes.filter(r => {
     const text = searchText.trim().toLowerCase()
-    const matchesText = !text || (r.recipeName || '').toLowerCase().includes(text) || (r.description || '').toLowerCase().includes(text) || (r.tags || []).some(t => t.toLowerCase().includes(text))
+    const matchesText = !text || (r.recipeName || '').toLowerCase().includes(text) || (r.description || '').toLowerCase().includes(text) || (r.tags || []).some((t: string) => t.toLowerCase().includes(text))
     const matchesTag = !selectedTag || (r.tags || []).includes(selectedTag)
     return matchesText && matchesTag
   }), [recipes, searchText, selectedTag])

@@ -92,7 +92,7 @@ export const Dashboard: React.FC = () => {
     {
       label: 'This Week',
       value: recipes.filter(recipe =>
-        new Date(recipe.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        recipe.createdAt && new Date(recipe.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
       ).length,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

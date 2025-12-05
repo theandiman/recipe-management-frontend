@@ -163,7 +163,7 @@ export const RecipeDetail: React.FC = () => {
           <div className="mt-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Ingredients</h2>
             <ul className="space-y-2">
-              {recipe.ingredients.map((ingredient, index) => (
+              {recipe.ingredients.map((ingredient: string, index: number) => (
                 <li key={index} className="flex items-start">
                   <svg className="w-5 h-5 mr-3 mt-0.5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -180,7 +180,7 @@ export const RecipeDetail: React.FC = () => {
           <div className="mt-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Instructions</h2>
             <ol className="space-y-4">
-              {recipe.instructions.map((instruction, index) => (
+              {recipe.instructions.map((instruction: string, index: number) => (
                 <li key={index} className="flex items-start">
                   <span className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-600 text-white font-bold text-sm mr-4 flex-shrink-0 mt-0.5">
                     {index + 1}
@@ -197,7 +197,7 @@ export const RecipeDetail: React.FC = () => {
           <div className="mt-8 pt-6 border-t border-gray-200">
             <h3 className="text-sm font-medium text-gray-500 mb-3">Tags</h3>
             <div className="flex flex-wrap gap-2">
-              {recipe.tags.map((tag, index) => (
+              {recipe.tags.map((tag: string, index: number) => (
                 <span
                   key={index}
                   className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium"

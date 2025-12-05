@@ -1,4 +1,4 @@
-import { Recipe, NutritionalInfo, RecipeTips, NutritionValues } from '@theandiman/recipe-management-shared';
+import type { Recipe, NutritionalInfo, RecipeTips, NutritionValues } from '@theandiman/recipe-management-shared/dist/types/recipe';
 
 export type { Recipe, NutritionalInfo, RecipeTips, NutritionValues };
 
