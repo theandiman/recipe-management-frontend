@@ -48,9 +48,11 @@ export const RecipeLibrary: React.FC = () => {
         const data = await getRecipes()
         console.log('Fetched recipes:', data)
         setRecipes(data)
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Failed to fetch recipes:', err)
-        setError(err.response?.data?.message || err.message || 'Failed to load recipes')
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load recipes'
+        const apiError = err as { response?: { data?: { message?: string } } }
+        setError(apiError.response?.data?.message || errorMessage)
       } finally {
         setLoading(false)
       }
@@ -70,9 +72,11 @@ export const RecipeLibrary: React.FC = () => {
       // Remove from local state
       setRecipes(recipes.filter(r => r.id !== deleteConfirm.id))
       setDeleteConfirm(null)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to delete recipe:', err)
-      setError(err.response?.data?.message || err.message || 'Failed to delete recipe')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete recipe'
+      const apiError = err as { response?: { data?: { message?: string } } }
+      setError(apiError.response?.data?.message || errorMessage)
     } finally {
       setDeleting(false)
     }

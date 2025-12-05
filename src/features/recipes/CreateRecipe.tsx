@@ -229,10 +229,11 @@ export const CreateRecipe: React.FC = () => {
       
       // Navigate back to recipe library on success
       navigate('/dashboard/recipes')
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to save recipe:', err)
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to save recipe. Please try again.'
-      setSaveError(errorMessage)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save recipe. Please try again.'
+      const apiError = err as { response?: { data?: { message?: string } } }
+      setSaveError(apiError.response?.data?.message || errorMessage)
       
       // Scroll to top to show error
       window.scrollTo({ top: 0, behavior: 'smooth' })

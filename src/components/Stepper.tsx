@@ -3,12 +3,6 @@ import { useState, useRef, useEffect } from 'react'
 type Step = { id: number; label: string }
 
 export default function Stepper({ steps, active, onSelectStep }: { steps: Step[]; active: number; onSelectStep?: (n: number) => void }) {
-  if (!steps || steps.length === 0) return null
-
-  const total = steps.length
-  const current = Math.max(1, Math.min(active, total))
-  const pct = Math.round((current / total) * 100)
-
   const [open, setOpen] = useState(false)
   const btnRef = useRef<HTMLButtonElement | null>(null)
   const panelRef = useRef<HTMLDivElement | null>(null)
@@ -33,6 +27,12 @@ export default function Stepper({ steps, active, onSelectStep }: { steps: Step[]
       document.removeEventListener('keydown', onKey)
     }
   }, [open])
+
+  if (!steps || steps.length === 0) return null
+
+  const total = steps.length
+  const current = Math.max(1, Math.min(active, total))
+  const pct = Math.round((current / total) * 100)
 
   const toggle = () => setOpen(o => !o)
 

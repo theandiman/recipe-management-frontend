@@ -21,9 +21,11 @@ export const RecipeDetail: React.FC = () => {
         setError(null)
         const data = await getRecipe(id)
         setRecipe(data)
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Failed to fetch recipe:', err)
-        setError(err.response?.data?.message || err.message || 'Failed to load recipe')
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load recipe'
+        const apiError = err as { response?: { data?: { message?: string } } }
+        setError(apiError.response?.data?.message || errorMessage)
       } finally {
         setLoading(false)
       }

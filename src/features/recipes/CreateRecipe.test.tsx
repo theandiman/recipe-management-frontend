@@ -637,7 +637,7 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
         fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
         
-        let nextButton = screen.getByRole('button', { name: /Next →/i })
+        const nextButton = screen.getByRole('button', { name: /Next →/i })
         fireEvent.click(nextButton)
         
         const itemInput = screen.getAllByPlaceholderText('e.g., all-purpose flour')[0]
