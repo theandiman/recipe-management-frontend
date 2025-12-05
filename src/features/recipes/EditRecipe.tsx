@@ -50,7 +50,7 @@ export const EditRecipe: React.FC = () => {
         const data = await getRecipe(id)
         
         // Populate form fields
-        setTitle(data.recipeName || data.title || '')
+        setTitle(data.recipeName || '')
         setDescription(data.description || '')
         setPrepTime(data.prepTime?.toString() || '')
         setCookTime(data.cookTime?.toString() || '')
@@ -70,9 +70,11 @@ export const EditRecipe: React.FC = () => {
         
         setInstructions(data.instructions && data.instructions.length > 0 ? data.instructions : [''])
         setImagePreview(data.imageUrl || null)
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Failed to fetch recipe:', err)
-        setLoadError(err.response?.data?.message || err.message || 'Failed to load recipe')
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load recipe'
+        const apiError = err as { response?: { data?: { message?: string } } }
+        setLoadError(apiError.response?.data?.message || errorMessage)
       } finally {
         setLoading(false)
       }
@@ -223,7 +225,7 @@ export const EditRecipe: React.FC = () => {
       instructions: validInstructions,
       prepTime: prepTime ? `${prepTime} minutes` : undefined,
       cookTime: cookTime ? `${cookTime} minutes` : undefined,
-      servings: servings || '1',
+      servings: parseInt(servings) || 1,
       imageUrl: imagePreview || undefined,
       source: 'manual' as const
     }
@@ -251,10 +253,11 @@ export const EditRecipe: React.FC = () => {
       const recipe = buildRecipeObject()
       await updateRecipe(id, recipe)
       navigate(`/dashboard/recipes/${id}`)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to update recipe:', err)
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to update recipe. Please try again.'
-      setSaveError(errorMessage)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update recipe. Please try again.'
+      const apiError = err as { response?: { data?: { message?: string } } }
+      setSaveError(apiError.response?.data?.message || errorMessage)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } finally {
       setSaveLoading(false)

@@ -2,16 +2,17 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../features/auth/AuthContext'
-import { getRecipes, type RecipeResponse } from '../services/recipeStorageApi'
+import { getRecipes } from '../services/recipeStorageApi'
 import RecipeCard from '../components/RecipeCard'
 import { StatsSkeleton } from '../components/skeletons/StatsSkeleton'
 import { RecentRecipesSkeleton } from '../components/skeletons/RecentRecipesSkeleton'
+import type { Recipe } from '../types/nutrition'
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [recipes, setRecipes] = useState<RecipeResponse[]>([])
-  const [recentRecipes, setRecentRecipes] = useState<RecipeResponse[]>([])
+  const [recipes, setRecipes] = useState<Recipe[]>([])
+  const [recentRecipes, setRecentRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
 
   // Fetch recipes on component mount
@@ -91,7 +92,7 @@ export const Dashboard: React.FC = () => {
     {
       label: 'This Week',
       value: recipes.filter(recipe =>
-        new Date(recipe.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        recipe.createdAt && new Date(recipe.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
       ).length,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

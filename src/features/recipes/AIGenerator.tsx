@@ -450,7 +450,7 @@ export const AIGenerator: React.FC = () => {
             <div className="mb-8">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Ingredients</h3>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-left">
-                {parsedRecipe.ingredients?.map((ing, idx) => {
+                {parsedRecipe.ingredients?.map((ing: string, idx: number) => {
                   const scaledIngredient = targetServings !== null ? scaleIngredient(ing, targetServings / (Number(parsedRecipe.servings) || 1)) : ing
                   return (
                     <li key={idx} className="flex items-start text-left">
@@ -466,7 +466,7 @@ export const AIGenerator: React.FC = () => {
             <div className="mb-8">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Instructions</h3>
               <ol className="space-y-4">
-                {parsedRecipe.instructions?.map((instruction, idx) => (
+                {parsedRecipe.instructions?.map((instruction: string, idx: number) => (
                   <li key={idx} className="flex items-start">
                     <span className="inline-flex items-center justify-center w-8 h-8 bg-emerald-100 text-emerald-700 font-semibold rounded-full mr-4 flex-shrink-0">
                       {idx + 1}
@@ -501,7 +501,7 @@ export const AIGenerator: React.FC = () => {
                       <div className="flex-1">
                         <h4 className="font-semibold text-amber-900 mb-2">Ingredient Substitutions</h4>
                         <ul className="space-y-1 text-sm text-amber-800">
-                          {parsedRecipe.tips.substitutions.map((sub, idx) => (
+                          {parsedRecipe.tips.substitutions.map((sub: string, idx: number) => (
                             <li key={idx} className="flex items-start">
                               <span className="mr-2">•</span>
                               <span>{sub}</span>
@@ -523,7 +523,7 @@ export const AIGenerator: React.FC = () => {
                       <div className="flex-1">
                         <h4 className="font-semibold text-emerald-900 mb-2">Recipe Variations</h4>
                         <ul className="space-y-1 text-sm text-purple-800">
-                          {parsedRecipe.tips.variations.map((variation, idx) => (
+                          {parsedRecipe.tips.variations.map((variation: string, idx: number) => (
                             <li key={idx} className="flex items-start">
                               <span className="mr-2">•</span>
                               <span>{variation}</span>

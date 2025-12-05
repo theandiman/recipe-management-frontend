@@ -1,48 +1,12 @@
-/**
- * Nutritional information interfaces for recipe generation
- */
+import type { Recipe, NutritionalInfo, RecipeTips, NutritionValues } from '@theandiman/recipe-management-shared/dist/types/recipe';
 
-export interface NutritionalValues {
-  calories: number;
-  protein: number;
-  carbohydrates: number;
-  fat: number;
-  fiber: number;
-  sodium: number;
-}
+export type { Recipe, NutritionalInfo, RecipeTips, NutritionValues };
 
-export interface NutritionalInfo {
-  perServing: NutritionalValues;
-  total: NutritionalValues;
-}
-
-export interface RecipeTips {
-  substitutions?: string[];
-  makeAhead?: string;
-  storage?: string;
-  reheating?: string;
-  variations?: string[];
-}
+// Alias for backward compatibility if needed, though better to update usage
+export type NutritionalValues = NutritionValues;
 
 export interface Ingredient {
   quantity: string;
   unit: string;
   item: string;
 }
-
-export interface Recipe {
-  recipeName: string;
-  description?: string;
-  ingredients: string[];
-  instructions: string[];
-  prepTime?: string;
-  cookTime?: string;
-  servings: string | number;
-  imageUrl?: string;
-  nutritionalInfo?: NutritionalInfo;
-  tips?: RecipeTips;
-  source?: 'ai-generated' | 'manual';
-  tags?: string[];
-  dietaryRestrictions?: string[];
-}
-
