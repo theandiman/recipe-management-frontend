@@ -74,6 +74,27 @@ npm run dev
 
 The app will be available at `http://localhost:5174`
 
+### Using the Makefile
+
+A Makefile is provided for common development tasks:
+
+```bash
+# Bootstrap environment from Firebase CLI config
+make bootstrap-env
+
+# Start dev server (bootstraps env first)
+make dev
+
+# Run smoke tests against dev environment
+make test-smoke
+
+# Run smoke tests against local dev server
+make test-smoke-local
+
+# Show all available targets
+make help
+```
+
 ### Local AI / Backend integration (developer tips)
 
 If you want the frontend to call a locally running AI service (the AI service runs on port 8080 by default), set the API base and start both services locally:
