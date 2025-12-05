@@ -85,14 +85,11 @@ jobs:
           scope: '@theandiman'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          rm -rf node_modules
+          npm install
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
-
-      - name: Fix optional dependencies (npm ci bug workaround)
-        run: |
-          npm install --no-save --force @rollup/rollup-linux-x64-gnu lightningcss-linux-x64-gnu
-          npm rebuild lightningcss
 
       - name: Run unit tests
         run: npm test -- --run --coverage
@@ -123,14 +120,11 @@ jobs:
           scope: '@theandiman'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          rm -rf node_modules
+          npm install
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
-
-      - name: Fix optional dependencies (npm ci bug workaround)
-        run: |
-          npm install --no-save --force @rollup/rollup-linux-x64-gnu lightningcss-linux-x64-gnu
-          npm rebuild lightningcss
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
@@ -173,14 +167,11 @@ jobs:
           scope: '@theandiman'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          rm -rf node_modules
+          npm install
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
-
-      - name: Fix optional dependencies (npm ci bug workaround)
-        run: |
-          npm install --no-save --force @rollup/rollup-linux-x64-gnu lightningcss-linux-x64-gnu
-          npm rebuild lightningcss
 
       - name: Build for production
         run: npm run build
