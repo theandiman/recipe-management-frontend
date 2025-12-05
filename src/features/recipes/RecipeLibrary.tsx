@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { getRecipes, deleteRecipe, type RecipeResponse } from '../../services/recipeStorageApi'
+import { getRecipes, deleteRecipe } from '../../services/recipeStorageApi'
 import RecipeCard from '../../components/RecipeCard'
+import type { Recipe } from '../../types/nutrition'
 
 // Skeleton loading component
 const SkeletonCard: React.FC = () => (
@@ -26,7 +27,7 @@ const SkeletonCard: React.FC = () => (
 
 export const RecipeLibrary: React.FC = () => {
   const navigate = useNavigate()
-  const [recipes, setRecipes] = useState<RecipeResponse[]>([])
+  const [recipes, setRecipes] = useState<Recipe[]>([])
   // Search & filter
   const [searchText, setSearchText] = useState('')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
@@ -85,7 +86,7 @@ export const RecipeLibrary: React.FC = () => {
 
   const filtered = React.useMemo(() => recipes.filter(r => {
     const text = searchText.trim().toLowerCase()
-    const matchesText = !text || (r.title || r.recipeName || '').toLowerCase().includes(text) || (r.description || '').toLowerCase().includes(text) || (r.tags || []).some(t => t.toLowerCase().includes(text))
+    const matchesText = !text || (r.recipeName || '').toLowerCase().includes(text) || (r.description || '').toLowerCase().includes(text) || (r.tags || []).some(t => t.toLowerCase().includes(text))
     const matchesTag = !selectedTag || (r.tags || []).includes(selectedTag)
     return matchesText && matchesTag
   }), [recipes, searchText, selectedTag])
@@ -234,7 +235,7 @@ export const RecipeLibrary: React.FC = () => {
                     key={recipe.id}
                     recipe={recipe}
                     onView={(id) => navigate(`/dashboard/recipes/${id}`)}
-                    onDelete={(r) => setDeleteConfirm({ id: r.id, title: r.recipeName || r.title })}
+                    onDelete={(r) => r.id && setDeleteConfirm({ id: r.id, title: r.recipeName })}
                   />
                 ))}
               </motion.div>

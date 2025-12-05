@@ -3,6 +3,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { RecipeLibrary } from './RecipeLibrary'
 import * as recipeStorageApi from '../../services/recipeStorageApi'
+import type { Recipe } from '../../types/nutrition'
 
 // Mock the API
 vi.mock('../../services/recipeStorageApi', () => ({
@@ -20,14 +21,14 @@ vi.mock('react-router-dom', async () => {
   }
 })
 
-const mockRecipes: recipeStorageApi.RecipeResponse[] = [
+const mockRecipes: Recipe[] = [
   {
     id: '1',
     userId: 'user-123',
-    title: 'Chocolate Cake',
+    recipeName: 'Chocolate Cake',
     description: 'Delicious chocolate cake',
-    prepTime: 20,
-    cookTime: 40,
+    prepTimeMinutes: 20,
+    cookTimeMinutes: 40,
     servings: 8,
     imageUrl: 'https://example.com/cake.jpg',
     ingredients: ['2 cups flour', '1 cup sugar'],
@@ -40,10 +41,10 @@ const mockRecipes: recipeStorageApi.RecipeResponse[] = [
   {
     id: '2',
     userId: 'user-123',
-    title: 'Pasta Carbonara',
+    recipeName: 'Pasta Carbonara',
     description: 'Classic Italian pasta',
-    prepTime: 10,
-    cookTime: 15,
+    prepTimeMinutes: 10,
+    cookTimeMinutes: 15,
     servings: 4,
     imageUrl: undefined,
     ingredients: ['pasta', 'eggs', 'bacon'],
@@ -228,13 +229,13 @@ describe('RecipeLibrary', () => {
 
     it('should paginate when many recipes exist', async () => {
       // Create 25 mock recipes to trigger pagination (pageSize default is 20)
-      const manyRecipes: recipeStorageApi.RecipeResponse[] = Array.from({ length: 25 }, (_, i) => ({
+      const manyRecipes: Recipe[] = Array.from({ length: 25 }, (_, i) => ({
         id: `${i + 1}`,
         userId: 'user-123',
-        title: `Recipe ${i + 1}`,
+        recipeName: `Recipe ${i + 1}`,
         description: `Desc ${i + 1}`,
-        prepTime: 5,
-        cookTime: 5,
+        prepTimeMinutes: 5,
+        cookTimeMinutes: 5,
         servings: 2,
         imageUrl: undefined,
         ingredients: [],

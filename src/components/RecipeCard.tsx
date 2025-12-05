@@ -1,16 +1,23 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import type { RecipeResponse } from '../services/recipeStorageApi'
+import type { Recipe } from '../types/nutrition'
 
 interface RecipeCardProps {
-  recipe: RecipeResponse
+  recipe: Recipe
   onView?: (id: string) => void
-  onDelete?: (recipe: RecipeResponse) => void
+  onDelete?: (recipe: Recipe) => void
   compact?: boolean
 }
 
 export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete, compact }) => {
-  const title = recipe.recipeName || recipe.title
+  const title = recipe.recipeName
+  // Calculate total time safely
+  const totalTime = recipe.totalTimeMinutes ||
+    ((recipe.prepTimeMinutes || 0) + (recipe.cookTimeMinutes || 0)) ||
+    // Fallback to parsing strings if numbers are missing (though shared type suggests they might be optional)
+    // For now, let's just display what we have or skip
+    undefined
+
   return (
     <motion.div
       role="button"
@@ -18,10 +25,10 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
-          onView?.(recipe.id)
+          if (recipe.id) onView?.(recipe.id)
         }
       }}
-      onClick={() => onView?.(recipe.id)}
+      onClick={() => { if (recipe.id) onView?.(recipe.id) }}
       className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative group cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-400 ${compact ? 'p-0' : ''}`}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -62,14 +69,21 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 line-clamp-2">{title}</h3>
           {recipe.description && <p className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2">{recipe.description}</p>}
           <div className="flex items-center justify-between text-xs text-gray-500">
-            {(recipe.prepTime || recipe.cookTime) && (
+            {(totalTime !== undefined && totalTime > 0) ? (
               <span className="flex items-center">
                 <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                {(recipe.prepTime || 0) + (recipe.cookTime || 0)} min
+                {totalTime} min
               </span>
-            )}
+            ) : (recipe.prepTime || recipe.cookTime) ? (
+               <span className="flex items-center">
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                 {recipe.prepTime} {recipe.cookTime}
+              </span>
+            ) : null}
             <span className="flex items-center">
               <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
