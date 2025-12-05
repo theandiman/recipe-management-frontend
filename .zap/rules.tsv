@@ -1,0 +1,13 @@
+# ZAP Scanning Rules
+# This file is used to configure the OWASP ZAP baseline scan
+# Format: <rule_id> <threshold> [<name>]
+# threshold values: IGNORE, INFO, WARN, FAIL
+#
+# Common rules to ignore for Firebase Hosting:
+# 10035 - Strict-Transport-Security Header (Firebase manages this)
+# 10096 - Timestamp Disclosure (acceptable in development)
+# 10109 - Modern Web Application (informational)
+
+10035	WARN	Strict-Transport-Security Header
+10096	IGNORE	Timestamp Disclosure
+10109	IGNORE	Modern Web Application

@@ -401,6 +401,23 @@ jobs:
             echo "✅ HTTPS connection established"
           fi
 
+      - name: OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'https://recipe-mgmt-dev.web.app/'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+          allow_issue_writing: false
+          fail_action: false
+
+      - name: Upload ZAP Scan Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-scan-report
+          path: report_html.html
+          retention-days: 30
+
       - name: Post-deployment summary
         if: always()
         run: |
@@ -410,7 +427,10 @@ jobs:
           echo "**URL:** https://recipe-mgmt-dev.web.app/"
           echo "**Commit:** ${{ github.sha }}"
           echo ""
-          echo "All basic smoke tests completed. Check individual steps for details."
+          echo "✅ Smoke tests completed"
+          echo "🔒 OWASP ZAP security scan completed (report available in artifacts)"
+          echo ""
+          echo "Check individual steps for details."
 
   # Summary Job - provides clear status
   pr-summary:
