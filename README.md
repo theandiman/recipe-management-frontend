@@ -1,7 +1,7 @@
 # Recipe Management App - Frontend
 
 [![CI/CD](https://github.com/theandiman/recipe-management-frontend/actions/workflows/main.yml/badge.svg)](https://github.com/theandiman/recipe-management-frontend/actions/workflows/main.yml)
-[![PR Checks](https://github.com/theandiman/recipe-management-frontend/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/theandiman/recipe-management-frontend/actions/workflows/pr-checks.yml)
+[![PR Checks](https://github.com/theandiman/recipe-management-frontend/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/theandiman/recipe-management-frontend/actions/workflows/pr-checks.yml) [![Known Vulnerabilities](https://snyk.io/test/github/theandiman/recipe-management-frontend/badge.svg)](https://snyk.io/test/github/theandiman/recipe-management-frontend) 
 
 A modern recipe management application frontend built with React, TypeScript, Vite, and Tailwind CSS.
 
