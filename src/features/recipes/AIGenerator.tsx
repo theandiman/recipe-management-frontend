@@ -336,14 +336,13 @@ export const AIGenerator: React.FC = () => {
             {/* Recipe Image Section */}
             <div className="mb-6">
               {imageUrl ? (
-                <div className="relative">
+                <figure className="relative" aria-label={`${parsedRecipe.recipeName} image with regenerate option`}>
                   <img
                     key={imageUrl}
                     src={imageUrl}
                     alt={parsedRecipe.recipeName}
                     className="w-full h-64 object-cover rounded-lg shadow-md"
                   />
-                  {/* Regenerate icon in corner */}
                   <button
                     onClick={() => {
                       handleClearImage()
@@ -363,7 +362,7 @@ export const AIGenerator: React.FC = () => {
                       </svg>
                     )}
                   </button>
-                </div>
+                </figure>
               ) : (
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
                   {imageLoading ? (
