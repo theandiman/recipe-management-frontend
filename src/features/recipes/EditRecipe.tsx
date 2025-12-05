@@ -50,7 +50,7 @@ export const EditRecipe: React.FC = () => {
         const data = await getRecipe(id)
         
         // Populate form fields
-        setTitle(data.recipeName || data.title || '')
+        setTitle(data.recipeName || '')
         setDescription(data.description || '')
         setPrepTime(data.prepTime?.toString() || '')
         setCookTime(data.cookTime?.toString() || '')

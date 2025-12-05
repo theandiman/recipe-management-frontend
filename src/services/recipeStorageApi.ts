@@ -2,6 +2,7 @@ import { postWithAuth } from '../utils/authApi'
 import { buildApiUrl } from '../utils/apiUtils'
 import { uploadRecipeImage, deleteRecipeImage } from '../utils/imageStorage'
 import type { Recipe, RecipeTips } from '../types/nutrition'
+import { RecipeUtils } from '@theandiman/recipe-management-shared'
 
 const STORAGE_API_BASE = import.meta.env.VITE_STORAGE_API_URL || ''
 const IS_TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
@@ -19,12 +20,12 @@ export interface CreateRecipeRequest {
   servings: number
   nutritionalInfo?: {
     perServing?: {
-      calories: number
-      protein: number
-      carbohydrates: number
-      fat: number
-      fiber: number
-      sodium: number
+      calories?: number
+      protein?: number
+      carbohydrates?: number
+      fat?: number
+      fiber?: number
+      sodium?: number
     }
   }
   tips?: Record<string, string | string[]> // Backend expects strings for makeAhead/storage/reheating, arrays for substitutions/variations
@@ -32,37 +33,6 @@ export interface CreateRecipeRequest {
   source: string
   tags?: string[]
   dietaryRestrictions?: string[]
-}
-
-/**
- * Response DTO from the storage service
- */
-export interface RecipeResponse {
-  id: string
-  userId: string
-  recipeName?: string
-  title: string
-  description?: string
-  ingredients: string[]
-  instructions: string[]
-  prepTime?: number
-  cookTime?: number
-  servings: number
-  nutrition?: {
-    calories: number
-    protein: number
-    carbohydrates: number
-    fat: number
-    fiber: number
-    sodium: number
-  }
-  tips?: Record<string, string[]> // Backend returns Map<String, List<String>>
-  imageUrl?: string
-  source: string
-  tags?: string[]
-  dietaryRestrictions?: string[]
-  createdAt: string
-  updatedAt: string
 }
 
 /**
@@ -123,9 +93,9 @@ const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
     description: recipe.description,
     ingredients: recipe.ingredients,
     instructions: recipe.instructions,
-    prepTimeMinutes: parseTimeToMinutes(recipe.prepTime),
-    cookTimeMinutes: parseTimeToMinutes(recipe.cookTime),
-    servings: typeof recipe.servings === 'number' ? recipe.servings : (parseInt(String(recipe.servings), 10) || 1),
+    prepTimeMinutes: recipe.prepTimeMinutes ?? parseTimeToMinutes(recipe.prepTime),
+    cookTimeMinutes: recipe.cookTimeMinutes ?? parseTimeToMinutes(recipe.cookTime),
+    servings: RecipeUtils.getServingsAsNumber(recipe.servings),
     nutritionalInfo: recipe.nutritionalInfo ? { perServing: recipe.nutritionalInfo.perServing } : undefined,
     tips: mapTips(recipe.tips),
     imageUrl,
@@ -140,7 +110,7 @@ const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
  * @param recipe - The AI-generated recipe to save
  * @returns The saved recipe with ID and metadata
  */
-export const saveRecipe = async (recipe: Recipe): Promise<RecipeResponse> => {
+export const saveRecipe = async (recipe: Recipe): Promise<Recipe> => {
   const url = buildApiUrl(STORAGE_API_BASE, '/api/recipes')
   let request = mapRecipeToCreateRequest(recipe)
   
@@ -186,7 +156,7 @@ export const saveRecipe = async (recipe: Recipe): Promise<RecipeResponse> => {
  * Fetch all recipes for the current user
  * @returns List of recipes
  */
-export const getRecipes = async (): Promise<RecipeResponse[]> => {
+export const getRecipes = async (): Promise<Recipe[]> => {
   const url = buildApiUrl(STORAGE_API_BASE, '/api/recipes')
   const { default: axios } = await import('axios')
 
@@ -214,7 +184,7 @@ export const getRecipes = async (): Promise<RecipeResponse[]> => {
  * @param id - The recipe ID
  * @returns The recipe
  */
-export const getRecipe = async (id: string): Promise<RecipeResponse> => {
+export const getRecipe = async (id: string): Promise<Recipe> => {
   const { default: axios } = await import('axios')
   const { auth } = await import('../config/firebase')
   
@@ -242,7 +212,7 @@ export const getRecipe = async (id: string): Promise<RecipeResponse> => {
  * @param recipe - The updated recipe data
  * @returns The updated recipe
  */
-export const updateRecipe = async (id: string, recipe: Recipe): Promise<RecipeResponse> => {
+export const updateRecipe = async (id: string, recipe: Recipe): Promise<Recipe> => {
   const { default: axios } = await import('axios')
   const { auth } = await import('../config/firebase')
   

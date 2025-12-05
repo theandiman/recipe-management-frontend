@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { RecipeDetail } from '../../features/recipes/RecipeDetail'
 import * as recipeStorageApi from '../../services/recipeStorageApi'
+import type { Recipe } from '../../types/nutrition'
 
 // Mock the API
 vi.mock('../../services/recipeStorageApi', () => ({
@@ -43,13 +44,13 @@ vi.mock('../../features/recipes/AIGenerator', async () => ({
   AIGenerator: () => <div>AIGeneratorStub</div>
 }))
 
-const mockRecipe: recipeStorageApi.RecipeResponse = {
+const mockRecipe: Recipe = {
   id: '1',
   userId: 'user-123',
-  title: 'Chocolate Cake',
+  recipeName: 'Chocolate Cake',
   description: 'Delicious chocolate cake',
-  prepTime: 20,
-  cookTime: 40,
+  prepTimeMinutes: 20,
+  cookTimeMinutes: 40,
   servings: 8,
   imageUrl: 'https://example.com/cake.jpg',
   ingredients: ['2 cups flour', '1 cup sugar'],

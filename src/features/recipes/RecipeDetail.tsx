@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getRecipe, type RecipeResponse } from '../../services/recipeStorageApi'
+import { getRecipe } from '../../services/recipeStorageApi'
 import { CookingMode } from '../../components/CookingMode'
+import type { Recipe } from '../../types/nutrition'
 
 export const RecipeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [recipe, setRecipe] = useState<RecipeResponse | null>(null)
+  const [recipe, setRecipe] = useState<Recipe | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isCookingMode, setIsCookingMode] = useState(false)
@@ -103,7 +104,7 @@ export const RecipeDetail: React.FC = () => {
         <div className="mb-8 rounded-xl overflow-hidden shadow-lg">
           <img
             src={recipe.imageUrl}
-            alt={recipe.recipeName || recipe.title}
+            alt={recipe.recipeName}
             loading="lazy"
             className="w-full h-96 object-cover"
           />
@@ -112,7 +113,7 @@ export const RecipeDetail: React.FC = () => {
 
       {/* Recipe header */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">{recipe.recipeName || recipe.title}</h1>
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">{recipe.recipeName}</h1>
         
         {recipe.description && (
           <p className="text-lg text-gray-600 mb-6">{recipe.description}</p>
@@ -120,26 +121,26 @@ export const RecipeDetail: React.FC = () => {
 
         {/* Recipe meta */}
         <div className="flex flex-wrap gap-6 pb-6 border-b border-gray-200">
-          {recipe.prepTime && (
+          {(recipe.prepTimeMinutes || recipe.prepTime) && (
             <div className="flex items-center text-gray-700">
               <svg className="w-5 h-5 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div>
                 <div className="text-sm text-gray-500">Prep Time</div>
-                <div className="font-medium">{recipe.prepTime} min</div>
+                <div className="font-medium">{recipe.prepTimeMinutes ? `${recipe.prepTimeMinutes} min` : recipe.prepTime}</div>
               </div>
             </div>
           )}
           
-          {recipe.cookTime && (
+          {(recipe.cookTimeMinutes || recipe.cookTime) && (
             <div className="flex items-center text-gray-700">
               <svg className="w-5 h-5 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
               </svg>
               <div>
                 <div className="text-sm text-gray-500">Cook Time</div>
-                <div className="font-medium">{recipe.cookTime} min</div>
+                <div className="font-medium">{recipe.cookTimeMinutes ? `${recipe.cookTimeMinutes} min` : recipe.cookTime}</div>
               </div>
             </div>
           )}
