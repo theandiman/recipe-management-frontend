@@ -336,7 +336,7 @@ export const AIGenerator: React.FC = () => {
             {/* Recipe Image Section */}
             <div className="mb-6">
               {imageUrl ? (
-                <figure className="relative" role="group" aria-label={`${parsedRecipe.recipeName} image with regenerate option`}>
+                <figure className="relative" aria-label={`${parsedRecipe.recipeName} image with regenerate option`}>
                   <img
                     key={imageUrl}
                     src={imageUrl}
