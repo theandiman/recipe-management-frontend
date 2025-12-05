@@ -290,7 +290,7 @@ export const AIGenerator: React.FC = () => {
                       disabled={saveLoading || saveSuccess}
                       aria-label="Save to library"
                       title="Save to library"
-                      className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-1 px-2 h-8 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {saveLoading ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-600" />
@@ -303,6 +303,7 @@ export const AIGenerator: React.FC = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                         </svg>
                       )}
+                      <span className="sr-only sm:not-sr-only text-xs">Save</span>
                     </button>
 
                     <button
@@ -310,7 +311,7 @@ export const AIGenerator: React.FC = () => {
                       disabled={loading}
                       aria-label="Regenerate recipe"
                       title="Regenerate recipe"
-                      className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-1 px-2 h-8 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {loading ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
@@ -319,6 +320,8 @@ export const AIGenerator: React.FC = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                       )}
+                      <span className="sr-only sm:not-sr-only text-xs">Regenerate</span>
+                    </button>
                   </div>
                 </div>
                 {parsedRecipe.description && (
@@ -353,7 +356,7 @@ export const AIGenerator: React.FC = () => {
                     disabled={imageLoading}
                     aria-label="Regenerate image"
                     title="Regenerate image"
-                    className="absolute top-3 right-3 inline-flex items-center justify-center w-10 h-10 rounded-lg bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors disabled:opacity-50"
+                    className="absolute top-3 right-3 inline-flex items-center gap-1 px-2 h-10 rounded-lg bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors disabled:opacity-50"
                   >
                     {imageLoading ? (
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
@@ -362,6 +365,7 @@ export const AIGenerator: React.FC = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                       </svg>
                     )}
+                    <span className="sr-only sm:not-sr-only text-xs">Regenerate</span>
                   </button>
                 </div>
               ) : (
