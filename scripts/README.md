@@ -48,6 +48,50 @@ FIREBASE_ID_TOKEN="token" node scripts/populate-recipes.js [count]
 **Arguments:**
 - `count` - Number of recipes to generate (default: 50)
 
+### `smoke-test.sh`
+
+A comprehensive smoke testing script that validates the deployed application's basic functionality.
+
+**Usage:**
+```bash
+# Test dev environment (default)
+./scripts/smoke-test.sh
+
+# Test a specific environment
+./scripts/smoke-test.sh https://recipe-mgmt-prod.web.app
+
+# Test localhost
+./scripts/smoke-test.sh http://localhost:5173
+```
+
+**What it tests:**
+
+1. **Homepage Accessibility** - Verifies the homepage returns HTTP 200
+2. **Static Assets** - Checks that JavaScript bundles and CSS are properly referenced
+3. **Firebase Configuration** - Validates Firebase SDK is loaded
+4. **Performance** - Measures page load time (warns if >5s)
+5. **Security Headers** - Checks for security headers (X-Frame-Options, CSP)
+6. **Common Routes** - Tests accessibility of key application routes
+
+**Exit codes:**
+- `0` - All tests passed
+- `1` - One or more tests failed
+
+**CI Integration:**
+
+This script is automatically run as part of the CI/CD pipeline after deployment to the dev environment. See `.github/workflows/main.yml` for the `post-deploy-tests` job.
+
+**Local testing:**
+```bash
+# After deploying to dev
+./scripts/smoke-test.sh https://recipe-mgmt-dev.web.app
+
+# Test your local dev server
+npm run dev &
+sleep 5
+./scripts/smoke-test.sh http://localhost:5173
+```
+
 **Environment Variables:**
 - `FIREBASE_ID_TOKEN` - **Required** - Your Firebase authentication token
 - `VITE_API_URL` - API base URL (default: http://localhost:8080)
