@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { RecipeResponse } from '../services/recipeStorageApi'
+import type { Recipe } from '../types/nutrition'
 
 interface CookingModeProps {
-  recipe: RecipeResponse
+  recipe: Recipe
   onClose: () => void
 }
 
