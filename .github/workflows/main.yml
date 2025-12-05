@@ -283,6 +283,133 @@ jobs:
         env:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
 
+  # Post-deployment testing (main branch only, after deploy)
+  post-deploy-tests:
+    name: Post-Deployment Tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [deploy]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Wait for deployment to be ready
+        run: |
+          echo "Waiting 30 seconds for deployment to propagate..."
+          sleep 30
+
+      - name: Test homepage accessibility
+        run: |
+          echo "Testing homepage..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://recipe-mgmt-dev.web.app/)
+          if [ "$response" -ne 200 ]; then
+            echo "❌ Homepage returned status code: $response"
+            exit 1
+          fi
+          echo "✅ Homepage is accessible (HTTP $response)"
+
+      - name: Test static assets
+        run: |
+          echo "Testing static assets..."
+          # Check if main JS bundle loads
+          homepage=$(curl -s https://recipe-mgmt-dev.web.app/)
+          if echo "$homepage" | grep -q "src=\"/assets/index-"; then
+            echo "✅ Main JS bundle reference found"
+          else
+            echo "❌ Main JS bundle not found in homepage"
+            exit 1
+          fi
+          
+          # Check if CSS loads
+          if echo "$homepage" | grep -q "rel=\"stylesheet\""; then
+            echo "✅ Stylesheet reference found"
+          else
+            echo "❌ Stylesheet not found in homepage"
+            exit 1
+          fi
+
+      - name: Test API endpoints health
+        run: |
+          echo "Testing API health..."
+          # Test AI service health (if available)
+          if [ -n "${{ secrets.VITE_API_URL }}" ]; then
+            api_url="${{ secrets.VITE_API_URL }}"
+            echo "Checking AI service at: $api_url"
+            
+            # Try health endpoint
+            response=$(curl -s -o /dev/null -w "%{http_code}" "$api_url/actuator/health" || echo "000")
+            if [ "$response" = "200" ]; then
+              echo "✅ AI service health check passed"
+            else
+              echo "⚠️  AI service health check returned: $response (may be expected if service is down)"
+            fi
+          else
+            echo "ℹ️  API URL not configured, skipping API health check"
+          fi
+
+      - name: Test Firebase configuration
+        run: |
+          echo "Validating Firebase configuration in deployed app..."
+          homepage=$(curl -s https://recipe-mgmt-dev.web.app/)
+          
+          # Check if Firebase is initialized (look for Firebase SDK)
+          if echo "$homepage" | grep -q "firebase"; then
+            echo "✅ Firebase SDK detected"
+          else
+            echo "⚠️  Firebase SDK not detected in initial HTML"
+          fi
+
+      - name: Performance check
+        run: |
+          echo "Checking page load performance..."
+          start_time=$(date +%s%N)
+          curl -s -o /dev/null https://recipe-mgmt-dev.web.app/
+          end_time=$(date +%s%N)
+          
+          duration=$(( (end_time - start_time) / 1000000 ))
+          echo "Homepage load time: ${duration}ms"
+          
+          if [ "$duration" -gt 5000 ]; then
+            echo "⚠️  Homepage took longer than 5s to load"
+          else
+            echo "✅ Homepage load time is acceptable"
+          fi
+
+      - name: Test security headers
+        run: |
+          echo "Checking security headers..."
+          headers=$(curl -s -I https://recipe-mgmt-dev.web.app/)
+          
+          # Check for important security headers
+          if echo "$headers" | grep -iq "x-frame-options\|content-security-policy"; then
+            echo "✅ Security headers present"
+          else
+            echo "ℹ️  Consider adding security headers (X-Frame-Options, CSP)"
+          fi
+          
+          # Check for HTTPS
+          if echo "$headers" | grep -q "HTTP/2 200"; then
+            echo "✅ Using HTTP/2"
+          elif echo "$headers" | grep -q "HTTP/1.1 200"; then
+            echo "✅ HTTPS connection established"
+          fi
+
+      - name: Post-deployment summary
+        if: always()
+        run: |
+          echo "## 🚀 Post-Deployment Test Summary"
+          echo ""
+          echo "**Environment:** Dev"
+          echo "**URL:** https://recipe-mgmt-dev.web.app/"
+          echo "**Commit:** ${{ github.sha }}"
+          echo ""
+          echo "All basic smoke tests completed. Check individual steps for details."
+
   # Summary Job - provides clear status
   pr-summary:
     name: PR Summary
