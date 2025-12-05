@@ -90,7 +90,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install optional dependencies (npm ci bug workaround)
-        run: npm install --no-save --ignore-scripts @rollup/rollup-linux-x64-gnu lightningcss-linux-x64-gnu
+        run: npm install --no-save @rollup/rollup-linux-x64-gnu lightningcss-linux-x64-gnu
 
       - name: Run unit tests
         run: npm test -- --run --coverage
@@ -126,7 +126,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install optional dependencies (npm ci bug workaround)
-        run: npm install --no-save --ignore-scripts @rollup/rollup-linux-x64-gnu lightningcss-linux-x64-gnu
+        run: npm install --no-save @rollup/rollup-linux-x64-gnu lightningcss-linux-x64-gnu
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
@@ -174,7 +174,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install optional dependencies (npm ci bug workaround)
-        run: npm install --no-save --ignore-scripts @rollup/rollup-linux-x64-gnu lightningcss-linux-x64-gnu
+        run: npm install --no-save @rollup/rollup-linux-x64-gnu lightningcss-linux-x64-gnu
 
       - name: Build for production
         run: npm run build
