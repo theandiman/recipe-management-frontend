@@ -174,24 +174,3 @@ This project uses GitHub Actions for CI/CD:
 
 All checks must pass before merging PRs.
 
-## Development Guidelines
-
-- Follow the existing folder structure for consistency
-- Use TypeScript for type safety
-- Leverage Tailwind CSS utility classes for styling
-- Create reusable components in the `components/` directory
-- Organize feature-specific code in `features/` subdirectories
-
-## Next Steps
-
-This is a skeleton frontend ready for development. You can now:
-
-1. Add feature modules in the `features/` directory
-2. Create reusable components
-3. Set up API integration utilities
-4. Configure routing with React Router
-5. Add state management (if needed)
-
-## License
-
-Private - Recipe Management App
