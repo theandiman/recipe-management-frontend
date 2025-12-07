@@ -401,6 +401,34 @@ jobs:
             echo "✅ HTTPS connection established"
           fi
 
+      - name: Post-deployment summary
+        if: always()
+        run: |
+          echo "## 🚀 Post-Deployment Test Summary"
+          echo ""
+          echo "**Environment:** Dev"
+          echo "**URL:** https://recipe-mgmt-dev.web.app/"
+          echo "**Commit:** ${{ github.sha }}"
+          echo ""
+          echo "✅ Functional smoke tests completed"
+          echo ""
+          echo "Check individual steps for details."
+
+  # OWASP Security Scan (main branch only, after deploy, parallel to post-deploy-tests)
+  owasp-security-scan:
+    name: OWASP Security Scan
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [deploy]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for deployment to be ready
+        run: |
+          echo "Waiting 30 seconds for deployment to propagate..."
+          sleep 30
+
       - name: OWASP ZAP Baseline Scan
         run: |
           echo "Running OWASP ZAP baseline scan..."
@@ -435,19 +463,19 @@ jobs:
             zap_report.md
           retention-days: 30
 
-      - name: Post-deployment summary
+      - name: OWASP scan summary
         if: always()
         run: |
-          echo "## 🚀 Post-Deployment Test Summary"
+          echo "## 🔒 OWASP ZAP Security Scan Summary"
           echo ""
-          echo "**Environment:** Dev"
-          echo "**URL:** https://recipe-mgmt-dev.web.app/"
+          echo "**Target:** https://recipe-mgmt-dev.web.app/"
+          echo "**Scan Type:** Baseline"
           echo "**Commit:** ${{ github.sha }}"
           echo ""
-          echo "✅ Smoke tests completed"
-          echo "🔒 OWASP ZAP security scan completed (report available in artifacts)"
+          echo "✅ Security scan completed"
+          echo "📊 Reports available in artifacts (zap-scan-report)"
           echo ""
-          echo "Check individual steps for details."
+          echo "Check the ZAP scan report artifact for detailed findings."
 
   # Summary Job - provides clear status
   pr-summary:
