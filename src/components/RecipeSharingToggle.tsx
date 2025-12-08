@@ -7,6 +7,23 @@ interface RecipeSharingToggleProps {
   onToggle?: (isPublic: boolean) => void
 }
 
+interface ApiErrorResponse {
+  response?: {
+    data?: {
+      message?: string
+      errors?: unknown
+    }
+  }
+}
+
+function isApiError(error: unknown): error is ApiErrorResponse {
+  return (
+    error !== null &&
+    typeof error === 'object' &&
+    'response' in error
+  )
+}
+
 export const RecipeSharingToggle: React.FC<RecipeSharingToggleProps> = ({
   recipeId,
   initialIsPublic,
@@ -17,26 +34,31 @@ export const RecipeSharingToggle: React.FC<RecipeSharingToggleProps> = ({
   const [error, setError] = useState<string | null>(null)
 
   const handleToggle = async () => {
+    const originalIsPublic = isPublic
     const newValue = !isPublic
-    setLoading(true)
-    setError(null)
     
-    // Optimistic update
+    // Optimistically update UI
     setIsPublic(newValue)
     onToggle?.(newValue)
+    setLoading(true)
+    setError(null)
 
     try {
       await updateRecipeSharing(recipeId, newValue)
     } catch (err) {
-      // Revert on error
-      setIsPublic(!newValue)
-      onToggle?.(!newValue)
-      
+      // Revert state on error
+      setIsPublic(originalIsPublic)
+      onToggle?.(originalIsPublic)
+
       console.error('Share toggle error:', err)
-      const apiError = err as { response?: { data?: { message?: string; errors?: any } } }
-      const errorMsg = apiError.response?.data?.message || 
-                       (apiError.response?.data?.errors && JSON.stringify(apiError.response?.data?.errors)) || 
-                       'Failed to update sharing status'
+      let errorMsg = 'Failed to update sharing status'
+      
+      if (isApiError(err)) {
+        const data = err.response?.data
+        errorMsg = data?.message || (data?.errors ? JSON.stringify(data?.errors) : errorMsg) || errorMsg
+      } else if (err instanceof Error) {
+        errorMsg = err.message
+      }
       setError(errorMsg)
     } finally {
       setLoading(false)
