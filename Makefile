@@ -29,7 +29,7 @@ install:
 	@echo "Ensuring GitHub token has read:packages scope..."
 	gh auth refresh -s read:packages
 	@echo "Setting GITHUB_TOKEN and running npm install..."
-	@export GITHUB_TOKEN=$$(gh auth token) && npm install
+	@GITHUB_TOKEN=$$(gh auth token) npm install
 
 # Default dev target: ensure env exists then run dev server
 dev: bootstrap-env
