@@ -19,7 +19,7 @@ install:
 	@echo "Installing npm dependencies with GitHub authentication..."
 	@if ! command -v gh &> /dev/null; then \
 		echo "Error: GitHub CLI (gh) is not installed."; \
-		echo "Install it with: brew install gh"; \
+		echo "Please install it from: https://cli.github.com/"; \
 		exit 1; \
 	fi
 	@if ! gh auth status &> /dev/null; then \
