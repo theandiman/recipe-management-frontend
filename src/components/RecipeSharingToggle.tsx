@@ -55,7 +55,7 @@ export const RecipeSharingToggle: React.FC<RecipeSharingToggleProps> = ({
       
       if (isApiError(err)) {
         const data = err.response?.data
-        errorMsg = data?.message || (data?.errors && JSON.stringify(data?.errors)) || errorMsg
+        errorMsg = data?.message || (data?.errors ? JSON.stringify(data?.errors) : errorMsg) || errorMsg
       } else if (err instanceof Error) {
         errorMsg = err.message
       }
