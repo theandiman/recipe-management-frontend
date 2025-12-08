@@ -2,11 +2,14 @@ import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getRecipe } from '../../services/recipeStorageApi'
 import { CookingMode } from '../../components/CookingMode'
+import { RecipeSharingToggle } from '../../components/RecipeSharingToggle'
+import { useAuth } from '../auth/AuthContext'
 import type { Recipe } from '../../types/nutrition'
 
 export const RecipeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [recipe, setRecipe] = useState<Recipe | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -78,7 +81,18 @@ export const RecipeDetail: React.FC = () => {
           Back to Library
         </button>
         
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
+          {/* Share toggle - only show for recipe owner */}
+          {user && recipe.userId === user.uid && id && (
+            <RecipeSharingToggle
+              recipeId={id}
+              initialIsPublic={recipe.isPublic ?? false}
+              onToggle={(isPublic) => {
+                setRecipe(prev => prev ? { ...prev, isPublic } : null)
+              }}
+            />
+          )}
+          
           <button
             onClick={() => navigate(`/dashboard/recipes/edit/${id}`)}
             className="flex items-center gap-2 px-4 py-2 bg-white text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 font-medium transition-colors"

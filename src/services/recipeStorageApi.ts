@@ -11,28 +11,27 @@ const IS_TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
  * Request DTO for creating a recipe in the storage service
  */
 export interface CreateRecipeRequest {
-  recipeName: string
+  title: string
   description?: string
   ingredients: string[]
   instructions: string[]
-  prepTimeMinutes?: number
-  cookTimeMinutes?: number
+  prepTime?: number
+  cookTime?: number
   servings: number
-  nutritionalInfo?: {
-    perServing?: {
-      calories?: number
-      protein?: number
-      carbohydrates?: number
-      fat?: number
-      fiber?: number
-      sodium?: number
-    }
+  nutrition?: {
+    calories?: number
+    protein?: number
+    carbohydrates?: number
+    fat?: number
+    fiber?: number
+    sodium?: number
   }
-  tips?: Record<string, string | string[]> // Backend expects strings for makeAhead/storage/reheating, arrays for substitutions/variations
+  tips?: Record<string, string[]>
   imageUrl?: string
   source: string
   tags?: string[]
   dietaryRestrictions?: string[]
+  isPublic?: boolean
 }
 
 /**
@@ -61,22 +60,22 @@ const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
   }
 
   // Convert tips to Map<String, List<String>> format expected by backend
-  const mapTips = (tips?: RecipeTips): Record<string, string | string[]> | undefined => {
+  const mapTips = (tips?: RecipeTips): Record<string, string[]> | undefined => {
     if (!tips) return undefined
     
-    const result: Record<string, string | string[]> = {}
+    const result: Record<string, string[]> = {}
     
     if (tips.substitutions) {
       result.substitutions = tips.substitutions
     }
     if (tips.makeAhead) {
-      result.makeAhead = tips.makeAhead // Keep as string
+      result.makeAhead = [tips.makeAhead]
     }
     if (tips.storage) {
-      result.storage = tips.storage // Keep as string
+      result.storage = [tips.storage]
     }
     if (tips.reheating) {
-      result.reheating = tips.reheating // Keep as string
+      result.reheating = [tips.reheating]
     }
     if (tips.variations) {
       result.variations = tips.variations
@@ -89,19 +88,20 @@ const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
   const imageUrl = recipe.imageUrl?.startsWith('data:') ? undefined : recipe.imageUrl
 
   return {
-    recipeName: recipe.recipeName,
+    title: recipe.recipeName,
     description: recipe.description,
     ingredients: recipe.ingredients,
     instructions: recipe.instructions,
-    prepTimeMinutes: recipe.prepTimeMinutes ?? parseTimeToMinutes(recipe.prepTime),
-    cookTimeMinutes: recipe.cookTimeMinutes ?? parseTimeToMinutes(recipe.cookTime),
+    prepTime: recipe.prepTimeMinutes ?? parseTimeToMinutes(recipe.prepTime),
+    cookTime: recipe.cookTimeMinutes ?? parseTimeToMinutes(recipe.cookTime),
     servings: RecipeUtils.getServingsAsNumber(recipe.servings),
-    nutritionalInfo: recipe.nutritionalInfo ? { perServing: recipe.nutritionalInfo.perServing } : undefined,
+    nutrition: recipe.nutritionalInfo?.perServing,
     tips: mapTips(recipe.tips),
     imageUrl,
     source: recipe.source || 'ai-generated',
     tags: recipe.tags || [],
-    dietaryRestrictions: recipe.dietaryRestrictions || []
+    dietaryRestrictions: recipe.dietaryRestrictions || [],
+    isPublic: recipe.isPublic ?? false
   }
 }
 
@@ -288,10 +288,45 @@ export const deleteRecipe = async (id: string): Promise<void> => {
   }
 }
 
+/**
+ * Toggle recipe sharing status (public/private)
+ * @param id - The recipe ID
+ * @param isPublic - Whether the recipe should be public
+ * @returns The updated recipe
+ */
+/**
+ * Update the sharing status of a recipe
+ * @param id - The recipe ID
+ * @param isPublic - Whether the recipe should be public
+ * @returns The updated recipe
+ */
+export const updateRecipeSharing = async (id: string, isPublic: boolean): Promise<Recipe> => {
+  const { default: axios } = await import('axios')
+  const { auth } = await import('../config/firebase')
+  
+  const user = auth.currentUser
+  if (!user) {
+    throw new Error('User not authenticated')
+  }
+
+  const token = await user.getIdToken()
+  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}/sharing`)
+  
+  const response = await axios.patch(url, isPublic, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  
+  return response.data
+}
+
 export default {
   saveRecipe,
   getRecipes,
   getRecipe,
   updateRecipe,
-  deleteRecipe
+  deleteRecipe,
+  updateRecipeSharing
 }
