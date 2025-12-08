@@ -28,8 +28,7 @@ export const RecipeSharingToggle: React.FC<RecipeSharingToggleProps> = ({
     } catch (err) {
       console.error('Share toggle error:', err)
       const apiError = err as { response?: { data?: { message?: string; errors?: any } } }
-      const errorMsg = apiError.response?.data?.message || 
-                       JSON.stringify(apiError.response?.data?.errors) || 
+      const errorMsg = apiError.response?.data?.message ||
                        'Failed to update sharing status'
       setError(errorMsg)
     } finally {
