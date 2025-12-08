@@ -1,6 +1,11 @@
-import type { Recipe, NutritionalInfo, RecipeTips, NutritionValues } from '@theandiman/recipe-management-shared/dist/types/recipe';
+import type { Recipe as SharedRecipe, NutritionalInfo, RecipeTips, NutritionValues } from '@theandiman/recipe-management-shared/dist/types/recipe';
 
-export type { Recipe, NutritionalInfo, RecipeTips, NutritionValues };
+// Extend the shared Recipe type to include isPublic property
+export interface Recipe extends SharedRecipe {
+  isPublic?: boolean;
+}
+
+export type { NutritionalInfo, RecipeTips, NutritionValues };
 
 // Alias for backward compatibility if needed, though better to update usage
 export type NutritionalValues = NutritionValues;

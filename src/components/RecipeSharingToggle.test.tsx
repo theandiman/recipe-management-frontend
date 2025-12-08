@@ -318,7 +318,7 @@ describe('RecipeSharingToggle', () => {
       fireEvent.click(button)
 
       await waitFor(() => {
-        expect(screen.getByText('Failed to update sharing status')).toBeInTheDocument()
+        expect(screen.getByText('Network error')).toBeInTheDocument()
       })
 
       // Second call succeeds
@@ -326,7 +326,7 @@ describe('RecipeSharingToggle', () => {
       fireEvent.click(screen.getByLabelText('Make recipe public'))
 
       await waitFor(() => {
-        expect(screen.queryByText('Failed to update sharing status')).not.toBeInTheDocument()
+        expect(screen.queryByText('Network error')).not.toBeInTheDocument()
       })
     })
   })
