@@ -289,12 +289,6 @@ export const deleteRecipe = async (id: string): Promise<void> => {
 }
 
 /**
- * Toggle recipe sharing status (public/private)
- * @param id - The recipe ID
- * @param isPublic - Whether the recipe should be public
- * @returns The updated recipe
- */
-/**
  * Update the sharing status of a recipe
  * @param id - The recipe ID
  * @param isPublic - Whether the recipe should be public
