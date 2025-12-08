@@ -289,12 +289,6 @@ export const deleteRecipe = async (id: string): Promise<void> => {
 }
 
 /**
- * Toggle recipe sharing status (public/private)
- * @param id - The recipe ID
- * @param isPublic - Whether the recipe should be public
- * @returns The updated recipe
- */
-/**
  * Update the sharing status of a recipe
  * @param id - The recipe ID
  * @param isPublic - Whether the recipe should be public
@@ -312,7 +306,7 @@ export const updateRecipeSharing = async (id: string, isPublic: boolean): Promis
   const token = await user.getIdToken()
   const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}/sharing`)
   
-  const response = await axios.patch(url, isPublic, {
+  const response = await axios.patch(url, { isPublic }, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
