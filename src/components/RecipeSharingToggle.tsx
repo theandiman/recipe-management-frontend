@@ -20,15 +20,22 @@ export const RecipeSharingToggle: React.FC<RecipeSharingToggleProps> = ({
     const newValue = !isPublic
     setLoading(true)
     setError(null)
+    
+    // Optimistic update
+    setIsPublic(newValue)
+    onToggle?.(newValue)
 
     try {
       await updateRecipeSharing(recipeId, newValue)
-      setIsPublic(newValue)
-      onToggle?.(newValue)
     } catch (err) {
+      // Revert on error
+      setIsPublic(!newValue)
+      onToggle?.(!newValue)
+      
       console.error('Share toggle error:', err)
       const apiError = err as { response?: { data?: { message?: string; errors?: any } } }
-      const errorMsg = apiError.response?.data?.message ||
+      const errorMsg = apiError.response?.data?.message || 
+                       (apiError.response?.data?.errors && JSON.stringify(apiError.response?.data?.errors)) || 
                        'Failed to update sharing status'
       setError(errorMsg)
     } finally {
