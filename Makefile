@@ -27,7 +27,7 @@ install:
 		gh auth login; \
 	fi
 	@echo "Ensuring GitHub token has read:packages scope..."
-	@gh auth refresh -s read:packages
+	gh auth refresh -s read:packages
 	@echo "Setting GITHUB_TOKEN and running npm install..."
 	@export GITHUB_TOKEN=$$(gh auth token) && npm install
 
