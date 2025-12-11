@@ -13,9 +13,10 @@ describe('apiUtils', () => {
       expect(buildApiUrl('https://api.example.com/', '/users')).toBe('https://api.example.com/users')
     })
 
-    it('should handle multiple trailing slashes', () => {
-      // The regex only removes one trailing slash, so this is expected behavior
-      expect(buildApiUrl('http://localhost:8080///', '/api/recipes')).toBe('http://localhost:8080//api/recipes')
+    it('should remove only one trailing slash', () => {
+      // The regex /\/$/ removes the last slash: /// -> //
+      // Then adding /api/recipes gives: // + /api/recipes = ///api/recipes  
+      expect(buildApiUrl('http://localhost:8080///', '/api/recipes')).toBe('http://localhost:8080///api/recipes')
     })
 
     it('should return endpoint as-is when base URL is undefined', () => {
