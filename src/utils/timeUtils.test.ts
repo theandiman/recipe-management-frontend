@@ -32,13 +32,15 @@ describe('timeUtils', () => {
       expect(parseMinutes('2 Hours 15 Mins')).toBe(135)
     })
 
-    it('should return null for invalid inputs', () => {
-      expect(parseMinutes(null)).toBeNull()
-      expect(parseMinutes(undefined)).toBeNull()
-      expect(parseMinutes('')).toBeNull()
-      expect(parseMinutes('abc')).toBeNull()
-      expect(parseMinutes(123)).toBeNull()
-      expect(parseMinutes({})).toBeNull()
+    it.each([
+      null,
+      undefined,
+      '',
+      'abc',
+      123,
+      {},
+    ])('should return null for invalid input: %p', (input) => {
+      expect(parseMinutes(input)).toBeNull()
     })
 
     it('should return null for strings with no numbers', () => {

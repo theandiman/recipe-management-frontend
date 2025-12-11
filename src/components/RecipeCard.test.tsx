@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { RecipeCard } from './RecipeCard'
+import RecipeCard from './RecipeCard'
 import type { Recipe } from '../types/nutrition'
 
 describe('RecipeCard', () => {
@@ -172,7 +172,9 @@ describe('RecipeCard', () => {
 
   it('should render in compact mode', () => {
     const { container } = render(<RecipeCard recipe={mockRecipe} compact />)
-    
-    expect(container.querySelector('.p-0')).toBeInTheDocument()
+    // Select the main card container (assumed to be [role="button"][tabindex="0"])
+    const card = container.querySelector('[role="button"][tabindex="0"]')
+    expect(card).toBeInTheDocument()
+    expect(card?.classList.contains('p-0')).toBe(true)
   })
 })
