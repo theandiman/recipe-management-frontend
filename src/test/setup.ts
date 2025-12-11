@@ -54,6 +54,8 @@ vi.mock('framer-motion', () => {
       path: makeMock('path'),
       h3: makeMock('h3'),
       p: makeMock('p'),
+      ul: makeMock('ul'),
+      li: makeMock('li'),
     },
     AnimatePresence: ({ children }: any) => React.createElement(React.Fragment, null, children),
   }
