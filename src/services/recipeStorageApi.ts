@@ -11,27 +11,28 @@ const IS_TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
  * Request DTO for creating a recipe in the storage service
  */
 export interface CreateRecipeRequest {
-  title: string
+  recipeName: string
   description?: string
   ingredients: string[]
   instructions: string[]
-  prepTime?: number
-  cookTime?: number
+  prepTimeMinutes?: number
+  cookTimeMinutes?: number
   servings: number
-  nutrition?: {
-    calories?: number
-    protein?: number
-    carbohydrates?: number
-    fat?: number
-    fiber?: number
-    sodium?: number
+  nutritionalInfo?: {
+    perServing?: {
+      calories?: number
+      protein?: number
+      carbohydrates?: number
+      fat?: number
+      fiber?: number
+      sodium?: number
+    }
   }
-  tips?: Record<string, string[]>
+  tips?: Record<string, string | string[]> // Backend expects strings for makeAhead/storage/reheating, arrays for substitutions/variations
   imageUrl?: string
   source: string
   tags?: string[]
   dietaryRestrictions?: string[]
-  isPublic?: boolean
 }
 
 /**
@@ -60,22 +61,22 @@ const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
   }
 
   // Convert tips to Map<String, List<String>> format expected by backend
-  const mapTips = (tips?: RecipeTips): Record<string, string[]> | undefined => {
+  const mapTips = (tips?: RecipeTips): Record<string, string | string[]> | undefined => {
     if (!tips) return undefined
     
-    const result: Record<string, string[]> = {}
+    const result: Record<string, string | string[]> = {}
     
     if (tips.substitutions) {
       result.substitutions = tips.substitutions
     }
     if (tips.makeAhead) {
-      result.makeAhead = [tips.makeAhead]
+      result.makeAhead = tips.makeAhead // Keep as string
     }
     if (tips.storage) {
-      result.storage = [tips.storage]
+      result.storage = tips.storage // Keep as string
     }
     if (tips.reheating) {
-      result.reheating = [tips.reheating]
+      result.reheating = tips.reheating // Keep as string
     }
     if (tips.variations) {
       result.variations = tips.variations
@@ -88,20 +89,19 @@ const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
   const imageUrl = recipe.imageUrl?.startsWith('data:') ? undefined : recipe.imageUrl
 
   return {
-    title: recipe.recipeName,
+    recipeName: recipe.recipeName,
     description: recipe.description,
     ingredients: recipe.ingredients,
     instructions: recipe.instructions,
-    prepTime: recipe.prepTimeMinutes ?? parseTimeToMinutes(recipe.prepTime),
-    cookTime: recipe.cookTimeMinutes ?? parseTimeToMinutes(recipe.cookTime),
+    prepTimeMinutes: recipe.prepTimeMinutes ?? parseTimeToMinutes(recipe.prepTime),
+    cookTimeMinutes: recipe.cookTimeMinutes ?? parseTimeToMinutes(recipe.cookTime),
     servings: RecipeUtils.getServingsAsNumber(recipe.servings),
-    nutrition: recipe.nutritionalInfo?.perServing,
+    nutritionalInfo: recipe.nutritionalInfo ? { perServing: recipe.nutritionalInfo.perServing } : undefined,
     tips: mapTips(recipe.tips),
     imageUrl,
     source: recipe.source || 'ai-generated',
     tags: recipe.tags || [],
-    dietaryRestrictions: recipe.dietaryRestrictions || [],
-    isPublic: recipe.isPublic ?? false
+    dietaryRestrictions: recipe.dietaryRestrictions || []
   }
 }
 
@@ -288,39 +288,10 @@ export const deleteRecipe = async (id: string): Promise<void> => {
   }
 }
 
-/**
- * Update the sharing status of a recipe
- * @param id - The recipe ID
- * @param isPublic - Whether the recipe should be public
- * @returns The updated recipe
- */
-export const updateRecipeSharing = async (id: string, isPublic: boolean): Promise<Recipe> => {
-  const { default: axios } = await import('axios')
-  const { auth } = await import('../config/firebase')
-  
-  const user = auth.currentUser
-  if (!user) {
-    throw new Error('User not authenticated')
-  }
-
-  const token = await user.getIdToken()
-  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}/sharing`)
-  
-  const response = await axios.patch(url, { isPublic }, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-  })
-  
-  return response.data
-}
-
 export default {
   saveRecipe,
   getRecipes,
   getRecipe,
   updateRecipe,
-  deleteRecipe,
-  updateRecipeSharing
+  deleteRecipe
 }
