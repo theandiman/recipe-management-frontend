@@ -23,9 +23,11 @@ describe('NutritionFacts', () => {
     expect(screen.getByText(/500kcal/)).toBeInTheDocument()
 
     // Check for macronutrients
+    expect(screen.getByText('Energy')).toBeInTheDocument()
     expect(screen.getByText('Fat')).toBeInTheDocument()
-    expect(screen.getByText('Protein')).toBeInTheDocument()
-    expect(screen.getByText('Carbs')).toBeInTheDocument()
+    expect(screen.getByText('Saturates')).toBeInTheDocument()
+    expect(screen.getByText('Sugars')).toBeInTheDocument()
+    expect(screen.getByText('Salt')).toBeInTheDocument()
   })
 
   it('should return null when nutritionalInfo is missing', () => {
