@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { deleteRecipe, saveRecipe, getRecipes, getRecipe, updateRecipe } from './recipeStorageApi'
 import type { Recipe } from '../types/nutrition'
+import type { AxiosResponse } from 'axios'
 
 // Mock dependencies using factory functions
 vi.mock('../utils/imageStorage', () => ({
@@ -57,11 +58,19 @@ describe('recipeStorageApi', () => {
     ...overrides
   })
 
+  const createAxiosResponse = <T>(data: T): AxiosResponse<T> => ({
+    data,
+    status: 200,
+    statusText: 'OK',
+    headers: {},
+    config: {} as any
+  })
+
   describe('saveRecipe', () => {
     it('should save recipe with authentication in normal mode', async () => {
       const { postWithAuth } = await import('../utils/authApi')
       const mockRecipe = createMockRecipe()
-      const mockResponse = { data: { ...mockRecipe, id: 'saved-123' } }
+      const mockResponse = createAxiosResponse({ ...mockRecipe, id: 'saved-123' })
 
       vi.mocked(postWithAuth).mockResolvedValue(mockResponse)
 
@@ -84,7 +93,7 @@ describe('recipeStorageApi', () => {
         prepTime: '30 minutes',
         cookTime: '1 hour'
       })
-      const mockResponse = { data: { ...mockRecipe, id: 'saved-123' } }
+      const mockResponse = createAxiosResponse({ ...mockRecipe, id: 'saved-123' })
 
       vi.mocked(postWithAuth).mockResolvedValue(mockResponse)
 
@@ -110,7 +119,7 @@ describe('recipeStorageApi', () => {
           variations: ['var 1']
         }
       })
-      const mockResponse = { data: { ...mockRecipe, id: 'saved-123' } }
+      const mockResponse = createAxiosResponse({ ...mockRecipe, id: 'saved-123' })
 
       vi.mocked(postWithAuth).mockResolvedValue(mockResponse)
 
@@ -138,7 +147,7 @@ describe('recipeStorageApi', () => {
         imageUrl: 'data:image/png;base64,iVBORw0KGgoAAAANS...'
       })
       const mockStorageUrl = 'https://storage.googleapis.com/recipe-image.png'
-      const mockResponse = { data: { ...mockRecipe, id: 'saved-123', imageUrl: mockStorageUrl } }
+      const mockResponse = createAxiosResponse({ ...mockRecipe, id: 'saved-123', imageUrl: mockStorageUrl })
 
       vi.mocked(uploadRecipeImage).mockResolvedValue(mockStorageUrl)
       vi.mocked(postWithAuth).mockResolvedValue(mockResponse)
@@ -164,7 +173,7 @@ describe('recipeStorageApi', () => {
       const mockRecipe = createMockRecipe({
         imageUrl: 'data:image/png;base64,iVBORw0KGgoAAAANS...'
       })
-      const mockResponse = { data: { ...mockRecipe, id: 'saved-123' } }
+      const mockResponse = createAxiosResponse({ ...mockRecipe, id: 'saved-123' })
 
       vi.mocked(uploadRecipeImage).mockRejectedValue(new Error('Upload failed'))
       vi.mocked(postWithAuth).mockResolvedValue(mockResponse)
@@ -193,7 +202,7 @@ describe('recipeStorageApi', () => {
       const axios = (await import('axios')).default
       const mockRecipes = [createMockRecipe(), createMockRecipe({ id: 'recipe-2' })]
       
-      vi.mocked(axios.get).mockResolvedValue({ data: mockRecipes })
+      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse(mockRecipes))
 
       const result = await getRecipes()
 
@@ -214,7 +223,7 @@ describe('recipeStorageApi', () => {
       const axios = (await import('axios')).default
       const mockRecipe = createMockRecipe()
       
-      vi.mocked(axios.get).mockResolvedValue({ data: mockRecipe })
+      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse(mockRecipe))
 
       const result = await getRecipe('test-recipe-id')
 
@@ -235,7 +244,7 @@ describe('recipeStorageApi', () => {
       const axios = (await import('axios')).default
       const mockRecipe = createMockRecipe()
       
-      vi.mocked(axios.put).mockResolvedValue({ data: mockRecipe })
+      vi.mocked(axios.put).mockResolvedValue(createAxiosResponse(mockRecipe))
 
       const result = await updateRecipe('test-recipe-id', mockRecipe)
 
@@ -263,7 +272,7 @@ describe('recipeStorageApi', () => {
       const mockStorageUrl = 'https://storage.googleapis.com/recipe-image.png'
 
       vi.mocked(uploadRecipeImage).mockResolvedValue(mockStorageUrl)
-      vi.mocked(axios.put).mockResolvedValue({ data: mockRecipe })
+      vi.mocked(axios.put).mockResolvedValue(createAxiosResponse(mockRecipe))
 
       await updateRecipe('recipe-123', mockRecipe)
 
@@ -289,7 +298,7 @@ describe('recipeStorageApi', () => {
       })
 
       vi.mocked(uploadRecipeImage).mockRejectedValue(new Error('Upload failed'))
-      vi.mocked(axios.put).mockResolvedValue({ data: mockRecipe })
+      vi.mocked(axios.put).mockResolvedValue(createAxiosResponse(mockRecipe))
 
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
