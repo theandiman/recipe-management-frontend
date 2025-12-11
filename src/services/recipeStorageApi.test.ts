@@ -1,30 +1,323 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { deleteRecipe } from './recipeStorageApi'
+import { deleteRecipe, saveRecipe, getRecipes, getRecipe, updateRecipe } from './recipeStorageApi'
+import type { Recipe } from '../types/nutrition'
+import type { AxiosResponse } from 'axios'
 
 // Mock dependencies using factory functions
 vi.mock('../utils/imageStorage', () => ({
-  deleteRecipeImage: vi.fn()
+  deleteRecipeImage: vi.fn(),
+  uploadRecipeImage: vi.fn()
 }))
 
 vi.mock('axios', () => ({
   default: {
-    delete: vi.fn()
+    delete: vi.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn()
   }
 }))
 
-vi.mock('../config/firebase', () => ({
-  auth: {
-    get currentUser() {
-      return {
-        getIdToken: vi.fn().mockResolvedValue('mock-token')
+vi.mock('../config/firebase', () => {
+  const mockGetIdToken = vi.fn().mockResolvedValue('mock-token')
+  return {
+    auth: {
+      get currentUser() {
+        return {
+          getIdToken: mockGetIdToken
+        }
       }
     }
   }
+})
+
+vi.mock('../utils/authApi', () => ({
+  postWithAuth: vi.fn()
 }))
 
-describe('recipeStorageApi - deleteRecipe', () => {
+vi.mock('../utils/apiUtils', () => ({
+  buildApiUrl: vi.fn((base: string, path: string) => `${base}${path}`)
+}))
+
+describe('recipeStorageApi', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  const createMockRecipe = (overrides?: Partial<Recipe>): Recipe => ({
+    id: 'test-recipe-id',
+    userId: 'test-user-id',
+    recipeName: 'Test Recipe',
+    description: 'A test recipe',
+    ingredients: ['ingredient 1', 'ingredient 2'],
+    instructions: ['step 1', 'step 2'],
+    servings: 4,
+    source: 'ai-generated',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+    ...overrides
+  })
+
+  const createAxiosResponse = <T>(data: T): AxiosResponse<T> => ({
+    data,
+    status: 200,
+    statusText: 'OK',
+    headers: {},
+    config: {} as any
+  })
+
+  describe('saveRecipe', () => {
+    it('should save recipe with authentication in normal mode', async () => {
+      const { postWithAuth } = await import('../utils/authApi')
+      const mockRecipe = createMockRecipe()
+      const mockResponse = createAxiosResponse({ ...mockRecipe, id: 'saved-123' })
+
+      vi.mocked(postWithAuth).mockResolvedValue(mockResponse)
+
+      const result = await saveRecipe(mockRecipe)
+
+      expect(postWithAuth).toHaveBeenCalledWith(
+        expect.stringContaining('/api/recipes'),
+        expect.objectContaining({
+          recipeName: 'Test Recipe',
+          ingredients: mockRecipe.ingredients,
+          instructions: mockRecipe.instructions
+        })
+      )
+      expect(result).toEqual(mockResponse.data)
+    })
+
+    it('should handle recipe with prepTime and cookTime strings', async () => {
+      const { postWithAuth } = await import('../utils/authApi')
+      const mockRecipe = createMockRecipe({
+        prepTime: '30 minutes',
+        cookTime: '1 hour'
+      })
+      const mockResponse = createAxiosResponse({ ...mockRecipe, id: 'saved-123' })
+
+      vi.mocked(postWithAuth).mockResolvedValue(mockResponse)
+
+      await saveRecipe(mockRecipe)
+
+      expect(postWithAuth).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          prepTimeMinutes: 30,
+          cookTimeMinutes: 60
+        })
+      )
+    })
+
+    it('should handle recipe with tips', async () => {
+      const { postWithAuth } = await import('../utils/authApi')
+      const mockRecipe = createMockRecipe({
+        tips: {
+          substitutions: ['sub 1', 'sub 2'],
+          makeAhead: 'Can be made ahead',
+          storage: 'Store in fridge',
+          reheating: 'Reheat in oven',
+          variations: ['var 1']
+        }
+      })
+      const mockResponse = createAxiosResponse({ ...mockRecipe, id: 'saved-123' })
+
+      vi.mocked(postWithAuth).mockResolvedValue(mockResponse)
+
+      await saveRecipe(mockRecipe)
+
+      expect(postWithAuth).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          tips: {
+            substitutions: ['sub 1', 'sub 2'],
+            makeAhead: 'Can be made ahead',
+            storage: 'Store in fridge',
+            reheating: 'Reheat in oven',
+            variations: ['var 1']
+          }
+        })
+      )
+    })
+
+    it('should upload base64 image to Firebase Storage before saving', async () => {
+      const { postWithAuth } = await import('../utils/authApi')
+      const { uploadRecipeImage } = await import('../utils/imageStorage')
+      
+      const mockRecipe = createMockRecipe({
+        imageUrl: 'data:image/png;base64,iVBORw0KGgoAAAANS...'
+      })
+      const mockStorageUrl = 'https://storage.googleapis.com/recipe-image.png'
+      const mockResponse = createAxiosResponse({ ...mockRecipe, id: 'saved-123', imageUrl: mockStorageUrl })
+
+      vi.mocked(uploadRecipeImage).mockResolvedValue(mockStorageUrl)
+      vi.mocked(postWithAuth).mockResolvedValue(mockResponse)
+
+      await saveRecipe(mockRecipe)
+
+      expect(uploadRecipeImage).toHaveBeenCalledWith(
+        mockRecipe.imageUrl,
+        expect.stringContaining('temp-')
+      )
+      expect(postWithAuth).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          imageUrl: mockStorageUrl
+        })
+      )
+    })
+
+    it('should handle image upload failure gracefully', async () => {
+      const { postWithAuth } = await import('../utils/authApi')
+      const { uploadRecipeImage } = await import('../utils/imageStorage')
+      
+      const mockRecipe = createMockRecipe({
+        imageUrl: 'data:image/png;base64,iVBORw0KGgoAAAANS...'
+      })
+      const mockResponse = createAxiosResponse({ ...mockRecipe, id: 'saved-123' })
+
+      vi.mocked(uploadRecipeImage).mockRejectedValue(new Error('Upload failed'))
+      vi.mocked(postWithAuth).mockResolvedValue(mockResponse)
+
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      await saveRecipe(mockRecipe)
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Failed to upload image, saving recipe without image:',
+        expect.any(Error)
+      )
+      expect(postWithAuth).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          imageUrl: undefined
+        })
+      )
+
+      consoleErrorSpy.mockRestore()
+    })
+  })
+
+  describe('getRecipes', () => {
+    it('should fetch all recipes with authentication', async () => {
+      const axios = (await import('axios')).default
+      const mockRecipes = [createMockRecipe(), createMockRecipe({ id: 'recipe-2' })]
+      
+      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse(mockRecipes))
+
+      const result = await getRecipes()
+
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('/api/recipes'),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'Authorization': 'Bearer mock-token'
+          })
+        })
+      )
+      expect(result).toEqual(mockRecipes)
+    })
+  })
+
+  describe('getRecipe', () => {
+    it('should fetch a single recipe by ID', async () => {
+      const axios = (await import('axios')).default
+      const mockRecipe = createMockRecipe()
+      
+      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse(mockRecipe))
+
+      const result = await getRecipe('test-recipe-id')
+
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('/api/recipes/test-recipe-id'),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'Authorization': 'Bearer mock-token'
+          })
+        })
+      )
+      expect(result).toEqual(mockRecipe)
+    })
+  })
+
+  describe('updateRecipe', () => {
+    it('should update recipe with authentication', async () => {
+      const axios = (await import('axios')).default
+      const mockRecipe = createMockRecipe()
+      
+      vi.mocked(axios.put).mockResolvedValue(createAxiosResponse(mockRecipe))
+
+      const result = await updateRecipe('test-recipe-id', mockRecipe)
+
+      expect(axios.put).toHaveBeenCalledWith(
+        expect.stringContaining('/api/recipes/test-recipe-id'),
+        expect.objectContaining({
+          recipeName: 'Test Recipe'
+        }),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'Authorization': 'Bearer mock-token'
+          })
+        })
+      )
+      expect(result).toEqual(mockRecipe)
+    })
+
+    it('should upload base64 image using recipe ID before updating', async () => {
+      const axios = (await import('axios')).default
+      const { uploadRecipeImage } = await import('../utils/imageStorage')
+      
+      const mockRecipe = createMockRecipe({
+        imageUrl: 'data:image/png;base64,iVBORw0KGgoAAAANS...'
+      })
+      const mockStorageUrl = 'https://storage.googleapis.com/recipe-image.png'
+
+      vi.mocked(uploadRecipeImage).mockResolvedValue(mockStorageUrl)
+      vi.mocked(axios.put).mockResolvedValue(createAxiosResponse(mockRecipe))
+
+      await updateRecipe('recipe-123', mockRecipe)
+
+      expect(uploadRecipeImage).toHaveBeenCalledWith(
+        mockRecipe.imageUrl,
+        'recipe-123'
+      )
+      expect(axios.put).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          imageUrl: mockStorageUrl
+        }),
+        expect.any(Object)
+      )
+    })
+
+    it('should handle image upload failure during update gracefully', async () => {
+      const axios = (await import('axios')).default
+      const { uploadRecipeImage } = await import('../utils/imageStorage')
+      
+      const mockRecipe = createMockRecipe({
+        imageUrl: 'data:image/png;base64,iVBORw0KGgoAAAANS...'
+      })
+
+      vi.mocked(uploadRecipeImage).mockRejectedValue(new Error('Upload failed'))
+      vi.mocked(axios.put).mockResolvedValue(createAxiosResponse(mockRecipe))
+
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      await updateRecipe('recipe-123', mockRecipe)
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Failed to upload image, updating recipe without new image:',
+        expect.any(Error)
+      )
+      expect(axios.put).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          imageUrl: undefined
+        }),
+        expect.any(Object)
+      )
+
+      consoleErrorSpy.mockRestore()
+    })
   })
 
   describe('deleteRecipe', () => {
