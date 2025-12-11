@@ -2,6 +2,34 @@ import '@testing-library/jest-dom'
 import React from 'react'
 import { vi } from 'vitest'
 
+// Mock Firebase to prevent initialization errors in CI/CD
+vi.mock('../config/firebase', () => ({
+  auth: {},
+  storage: {},
+  db: {}
+}))
+
+// Mock Firebase Auth
+vi.mock('firebase/auth', () => ({
+  getAuth: vi.fn(() => ({})),
+  onAuthStateChanged: vi.fn(),
+  signInWithEmailAndPassword: vi.fn(),
+  createUserWithEmailAndPassword: vi.fn(),
+  signOut: vi.fn(),
+  updateProfile: vi.fn(),
+  GoogleAuthProvider: vi.fn(),
+  signInWithPopup: vi.fn()
+}))
+
+// Mock Firebase Storage
+vi.mock('firebase/storage', () => ({
+  getStorage: vi.fn(() => ({})),
+  ref: vi.fn(),
+  uploadBytes: vi.fn(),
+  getDownloadURL: vi.fn(),
+  deleteObject: vi.fn()
+}))
+
 // Mock Framer Motion to prevent animations from interfering with tests
 vi.mock('framer-motion', () => {
   const omitMotionProps = (props: any) => {
