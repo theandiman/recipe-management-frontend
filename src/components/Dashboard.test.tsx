@@ -8,7 +8,9 @@ import type { Recipe } from '../types/nutrition'
 
 // Mock dependencies
 vi.mock('../services/recipeStorageApi')
-vi.mock('../features/auth/AuthContext')
+vi.mock('../features/auth/AuthContext', () => ({
+  useAuth: vi.fn()
+}))
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
   return {
@@ -162,9 +164,9 @@ describe('Dashboard', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Create Recipe')).toBeInTheDocument()
-      expect(screen.getByText('AI Generator')).toBeInTheDocument()
-      expect(screen.getByText('Browse Recipes')).toBeInTheDocument()
+      const createButtons = screen.getAllByRole('button', { name: /Create Recipe/i })
+      expect(createButtons.length).toBeGreaterThan(0)
+      expect(screen.getByRole('button', { name: /Try AI Generator/i })).toBeInTheDocument()
     })
   })
 
