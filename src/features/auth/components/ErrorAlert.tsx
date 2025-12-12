@@ -2,7 +2,7 @@ import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface ErrorAlertProps {
-  error: string | null | undefined
+  error?: string | null
 }
 
 export const ErrorAlert: React.FC<ErrorAlertProps> = ({ error }) => {
