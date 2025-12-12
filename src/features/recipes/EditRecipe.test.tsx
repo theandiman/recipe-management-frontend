@@ -11,15 +11,6 @@ vi.mock('../../config/firebase', () => ({
   storage: {}
 }))
 
-// Mock framer-motion
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    button: ({ children, ...props }: any) => <button {...props}>{children}</button>
-  },
-  AnimatePresence: ({ children }: any) => <>{children}</>
-}))
-
 // Mock useNavigate
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {
@@ -297,8 +288,10 @@ describe('EditRecipe', () => {
       await user.click(addButton)
       
       // Check that there are now 3 ingredient rows (2 original + 1 new)
-      const removeButtons = screen.getAllByTitle('Remove ingredient')
-      expect(removeButtons).toHaveLength(3)
+      await waitFor(() => {
+        const removeButtons = screen.getAllByTitle('Remove ingredient')
+        expect(removeButtons).toHaveLength(3)
+      })
     })
 
     it('updates ingredient field when value changes', async () => {
@@ -438,8 +431,10 @@ describe('EditRecipe', () => {
       const addButton = screen.getByText('Add Step')
       await user.click(addButton)
       
-      const instructionInputs = screen.getAllByPlaceholderText(/Describe this step/)
-      expect(instructionInputs.length).toBe(3) // 2 original + 1 new
+      await waitFor(() => {
+        const instructionInputs = screen.getAllByPlaceholderText(/Describe this step/)
+        expect(instructionInputs.length).toBe(3) // 2 original + 1 new
+      })
     })
 
     it('updates instruction when value changes', async () => {
@@ -523,10 +518,8 @@ describe('EditRecipe', () => {
       
       const addButtons = screen.getAllByText('Add')
       const addTagButton = addButtons.find(btn => btn.closest('button'))
-      if (addTagButton) {
-        await user.click(addTagButton)
-        expect(screen.getByText('dinner')).toBeInTheDocument()
-      }
+      await user.click(addTagButton!)
+      expect(screen.getByText('dinner')).toBeInTheDocument()
     })
   })
 
@@ -549,7 +542,9 @@ describe('EditRecipe', () => {
       const nextButton = screen.getByText('Next →')
       await user.click(nextButton)
       
-      expect(screen.getByText(/Step 2 of 5/)).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByText(/Step 2 of 5/)).toBeInTheDocument()
+      })
     })
 
     it('navigates to previous step when Back clicked', async () => {
@@ -573,7 +568,9 @@ describe('EditRecipe', () => {
       const backButton = screen.getByText('← Back')
       await user.click(backButton)
       
-      expect(screen.getByText(/Step 1 of 5/)).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByText(/Step 1 of 5/)).toBeInTheDocument()
+      })
     })
 
     it('disables Back button on first step', async () => {
@@ -880,4 +877,3 @@ describe('EditRecipe', () => {
     })
   })
 })
-
