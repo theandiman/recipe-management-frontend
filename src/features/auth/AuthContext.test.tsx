@@ -255,10 +255,10 @@ describe('AuthContext', () => {
       vi.mocked(firebaseAuth.signInWithPopup).mockRejectedValue(error)
 
       // Component to capture auth context
-      let authContext!: ReturnType<typeof useAuth>
+      const authContextRef: { current: ReturnType<typeof useAuth> | null } = { current: null }
       const TestComponentCapture = () => {
-        authContext = useAuth()
-        return <div data-testid="error">{authContext.error || 'null'}</div>
+        authContextRef.current = useAuth()
+        return <div data-testid="error">{authContextRef.current.error || 'null'}</div>
       }
 
       render(
@@ -267,8 +267,11 @@ describe('AuthContext', () => {
         </AuthProvider>
       )
 
+      // Ensure component has rendered and auth context is available
+      expect(authContextRef.current).not.toBeNull()
+      
       // Verify that loginWithGoogle rejects with an error
-      await expect(authContext!.loginWithGoogle()).rejects.toThrow('Google login failed')
+      await expect(authContextRef.current!.loginWithGoogle()).rejects.toThrow('Google login failed')
 
       // Also verify error state is set in the context
       await waitFor(() => {
