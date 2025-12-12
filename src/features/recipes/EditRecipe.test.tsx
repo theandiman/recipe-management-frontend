@@ -691,7 +691,7 @@ describe('EditRecipe', () => {
 
   describe('Save Operation', () => {
     it('calls updateRecipe with correct data on submit', async () => {
-      vi.mocked(recipeStorageApi.updateRecipe).mockResolvedValue(undefined)
+      vi.mocked(recipeStorageApi.updateRecipe).mockResolvedValue(mockRecipe)
       const user = userEvent.setup()
       
       render(
@@ -730,7 +730,7 @@ describe('EditRecipe', () => {
     })
 
     it('navigates to recipe detail after successful save', async () => {
-      vi.mocked(recipeStorageApi.updateRecipe).mockResolvedValue(undefined)
+      vi.mocked(recipeStorageApi.updateRecipe).mockResolvedValue(mockRecipe)
       const user = userEvent.setup()
       
       render(
