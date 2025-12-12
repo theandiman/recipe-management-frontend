@@ -187,7 +187,10 @@ describe('AuthContext', () => {
       const loginButton = screen.getByText('Login')
       await act(async () => {
         loginButton.click()
-        await vi.waitFor(() => {}, { timeout: 100 })
+      })
+
+      await waitFor(() => {
+        expect(screen.getByTestId('user')).toHaveTextContent('test@example.com')
       })
 
       // Check that no error was set
