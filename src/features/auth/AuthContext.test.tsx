@@ -300,7 +300,9 @@ describe('AuthContext', () => {
       const registerButton = screen.getByText('Register')
       await act(async () => {
         registerButton.click()
-        await vi.waitFor(() => {}, { timeout: 100 })
+      })
+      await waitFor(() => {
+        expect(firebaseAuth.updateProfile).toHaveBeenCalled()
       })
 
       // Check that no error was set and updateProfile was called
