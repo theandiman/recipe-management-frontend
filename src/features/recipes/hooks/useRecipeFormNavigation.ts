@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 
 const TOTAL_STEPS = 5
 
@@ -20,16 +20,12 @@ export function useRecipeFormNavigation() {
   const [currentStep, setCurrentStep] = useState(1)
 
   const goToNextStep = useCallback(() => {
-    if (currentStep < TOTAL_STEPS) {
-      setCurrentStep(currentStep + 1)
-    }
-  }, [currentStep])
+    setCurrentStep(prev => (prev < TOTAL_STEPS ? prev + 1 : prev))
+  }, [])
 
   const goToPreviousStep = useCallback(() => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
-    }
-  }, [currentStep])
+    setCurrentStep(prev => (prev > 1 ? prev - 1 : prev))
+  }, [])
 
   const goToStep = useCallback((step: number) => {
     if (step >= 1 && step <= TOTAL_STEPS) {
@@ -40,7 +36,7 @@ export function useRecipeFormNavigation() {
   const isFirstStep = currentStep === 1
   const isLastStep = currentStep === TOTAL_STEPS
 
-  return {
+  return useMemo(() => ({
     currentStep,
     totalSteps: TOTAL_STEPS,
     steps: RECIPE_FORM_STEPS,
@@ -49,5 +45,5 @@ export function useRecipeFormNavigation() {
     goToStep,
     isFirstStep,
     isLastStep
-  }
+  }), [currentStep, goToNextStep, goToPreviousStep, goToStep, isFirstStep, isLastStep])
 }

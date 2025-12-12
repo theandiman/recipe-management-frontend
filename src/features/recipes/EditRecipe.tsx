@@ -65,7 +65,7 @@ export const EditRecipe: React.FC = () => {
     }
 
     fetchRecipe()
-  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id, form.setTitle, form.setDescription, form.setPrepTime, form.setCookTime, form.setServings, form.setIngredients, form.setInstructions, form.setTags, form.setImagePreview])
 
   // Save handler
   const handleSubmit = useCallback(async () => {

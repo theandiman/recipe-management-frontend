@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import type { Ingredient } from '../../../types/nutrition'
 import type { Recipe } from '../../../types/nutrition'
 
@@ -56,20 +56,20 @@ export function useRecipeValidation() {
 
     return {
       recipeName: title.trim(),
-      description: description.trim(),
+      description: description.trim() || undefined,
       ingredients: ingredientStrings,
       instructions: validInstructions,
-      prepTime: prepTime || undefined,
-      cookTime: cookTime || undefined,
-      servings: servings ? parseInt(servings, 10) : 0,
+      prepTime: prepTime ? `${prepTime} minutes` : undefined,
+      cookTime: cookTime ? `${cookTime} minutes` : undefined,
+      servings: servings ? parseInt(servings, 10) : 1,
       tags: tags.length > 0 ? tags : undefined,
       imageUrl: imagePreview || undefined,
       source: 'manual' as const
     }
   }, [])
 
-  return {
+  return useMemo(() => ({
     validateForm,
     buildRecipeObject
-  }
+  }), [validateForm, buildRecipeObject])
 }

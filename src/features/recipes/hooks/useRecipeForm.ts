@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import type { Ingredient } from '../../../types/nutrition'
 
 interface RecipeFormState {
@@ -178,14 +178,12 @@ export function useRecipeForm(initialState?: Partial<RecipeFormState>): RecipeFo
 
   // Tag handlers
   const addTag = useCallback(() => {
-    setTags(prev => {
-      if (tagInput.trim() && !prev.includes(tagInput.trim())) {
-        setTagInput('')
-        return [...prev, tagInput.trim()]
-      }
-      return prev
-    })
-  }, [tagInput])
+    const trimmedTag = tagInput.trim()
+    if (trimmedTag && !tags.includes(trimmedTag)) {
+      setTags(prev => [...prev, trimmedTag])
+      setTagInput('')
+    }
+  }, [tagInput, tags])
 
   const removeTag = useCallback((index: number) => {
     setTags(prev => prev.filter((_, i) => i !== index))
@@ -207,7 +205,7 @@ export function useRecipeForm(initialState?: Partial<RecipeFormState>): RecipeFo
     setImagePreview(null)
   }, [])
 
-  return {
+  return useMemo(() => ({
     // State
     title,
     description,
@@ -252,5 +250,8 @@ export function useRecipeForm(initialState?: Partial<RecipeFormState>): RecipeFo
     handleImageUpload,
     removeImage,
     clearFieldError
-  }
+  }), [
+    title, description, prepTime, cookTime, servings, ingredients, instructions, tags, tagInput, imagePreview, fieldErrors, stepsWithErrors, saveLoading, saveError,
+    addIngredient, updateIngredient, removeIngredient, addInstruction, updateInstruction, removeInstruction, addTag, removeTag, handleImageUpload, removeImage, clearFieldError
+  ])
 }
