@@ -23,10 +23,10 @@ describe('useGoogleSignIn', () => {
       user: null,
       isLoading: false,
       error: null,
+      isAuthenticated: false,
       login: vi.fn(),
       register: vi.fn(),
-      logout: vi.fn(),
-      updateProfile: vi.fn()
+      logout: vi.fn()
     })
 
     const { result } = renderHook(() => useGoogleSignIn(), {
@@ -48,10 +48,10 @@ describe('useGoogleSignIn', () => {
       user: null,
       isLoading: false,
       error: null,
+      isAuthenticated: false,
       login: vi.fn(),
       register: vi.fn(),
-      logout: vi.fn(),
-      updateProfile: vi.fn()
+      logout: vi.fn()
     })
 
     const { result } = renderHook(() => useGoogleSignIn(), {
