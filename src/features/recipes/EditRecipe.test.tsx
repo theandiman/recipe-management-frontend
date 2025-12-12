@@ -298,7 +298,7 @@ describe('EditRecipe', () => {
       
       // Check that there are now 3 ingredient rows (2 original + 1 new)
       const removeButtons = screen.getAllByTitle('Remove ingredient')
-      expect(removeButtons.length).toBeGreaterThanOrEqual(2)
+      expect(removeButtons).toHaveLength(3)
     })
 
     it('updates ingredient field when value changes', async () => {
