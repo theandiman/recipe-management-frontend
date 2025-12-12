@@ -22,11 +22,13 @@ describe('AuthDivider', () => {
   })
 
   it('should apply correct styling to text', () => {
-    const { container } = render(<AuthDivider text="or" />)
+    render(<AuthDivider text="or" />)
     const text = screen.getByText('or')
     expect(text.className).toContain('text-gray-500')
-    // Check parent div has text-sm
-    const textSm = container.querySelector('.text-sm')
-    expect(textSm).toBeDefined()
+    // Check that the text element or its parent has text-sm
+    const hasTextSm =
+      text.className.includes('text-sm') ||
+      (text.parentElement && text.parentElement.className.includes('text-sm'))
+    expect(hasTextSm).toBe(true)
   })
 })
