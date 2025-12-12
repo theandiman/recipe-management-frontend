@@ -254,21 +254,23 @@ describe('AuthContext', () => {
       
       vi.mocked(firebaseAuth.signInWithPopup).mockRejectedValue(error)
 
+      // Component to capture auth context
+      let authContext: any
+      const TestComponentCapture = () => {
+        authContext = useAuth()
+        return <div data-testid="error">{authContext.error || 'null'}</div>
+      }
+
       render(
         <AuthProvider>
-          <TestComponentWithActions />
+          <TestComponentCapture />
         </AuthProvider>
       )
 
-      const googleButton = screen.getByText('Login with Google')
-      await act(async () => {
-        try {
-          googleButton.click()
-        } catch {
-          // Expected error
-        }
-      })
+      // Verify that loginWithGoogle rejects with an error
+      await expect(authContext.loginWithGoogle()).rejects.toThrow('Google login failed')
 
+      // Also verify error state is set in the context
       await waitFor(() => {
         expect(screen.getByTestId('error')).toHaveTextContent('Google login failed')
       })
