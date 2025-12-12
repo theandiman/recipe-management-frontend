@@ -6,7 +6,7 @@ describe('AuthDivider', () => {
   it('should render divider with provided text', () => {
     render(<AuthDivider text="or" />)
     const text = screen.getByText('or')
-    expect(text).toBeDefined()
+    expect(text).toBeInTheDocument()
   })
 
   it('should render divider with custom text', () => {
