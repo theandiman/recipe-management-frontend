@@ -145,7 +145,13 @@ describe('recipeSlice', () => {
   describe('generateRecipe async thunk', () => {
     it('should successfully generate recipe', async () => {
       const mockRecipe = { recipeName: 'Pasta Carbonara', ingredients: ['pasta', 'eggs'] }
-      vi.mocked(authApi.postWithAuth).mockResolvedValue({ data: mockRecipe })
+      vi.mocked(authApi.postWithAuth).mockResolvedValue({ 
+        data: mockRecipe,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any
+      })
 
       const store = configureStore({ reducer: { recipe: recipeReducer } })
       const payload = {
@@ -257,7 +263,13 @@ describe('recipeSlice', () => {
   describe('generateImage async thunk', () => {
     it('should successfully generate image with prompt', async () => {
       const mockImageData = { imageUrl: 'https://example.com/generated-image.jpg' }
-      vi.mocked(authApi.postWithAuth).mockResolvedValue({ data: mockImageData })
+      vi.mocked(authApi.postWithAuth).mockResolvedValue({ 
+        data: mockImageData,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any
+      })
 
       const store = configureStore({ reducer: { recipe: recipeReducer } })
       const payload = { prompt: 'delicious pasta dish' }
@@ -278,7 +290,13 @@ describe('recipeSlice', () => {
     it('should successfully generate image with recipe object', async () => {
       const mockImageData = { image: 'https://example.com/recipe-photo.png' }
       const recipe = { recipeName: 'Test Recipe', ingredients: [] } as any
-      vi.mocked(authApi.postWithAuth).mockResolvedValue({ data: mockImageData })
+      vi.mocked(authApi.postWithAuth).mockResolvedValue({ 
+        data: mockImageData,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any
+      })
 
       const store = configureStore({ reducer: { recipe: recipeReducer } })
       await store.dispatch(generateImage({ recipe }))
