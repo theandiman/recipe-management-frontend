@@ -10,7 +10,7 @@ describe('ErrorAlert', () => {
   it('should render error message when error is provided', () => {
     render(<ErrorAlert error="Something went wrong" />)
     const error = screen.getByText('Something went wrong')
-    expect(error).toBeDefined()
+    expect(error).toBeInTheDocument()
   })
 
   it('should not render when error is null', () => {
