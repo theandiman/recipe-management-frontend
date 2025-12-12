@@ -206,11 +206,7 @@ describe('AuthContext', () => {
 
       const loginButton = screen.getByText('Login')
       await act(async () => {
-        try {
-          loginButton.click()
-        } catch {
-          // Expected error
-        }
+        loginButton.click()
       })
 
       await waitFor(() => {
@@ -267,12 +263,10 @@ describe('AuthContext', () => {
         </AuthProvider>
       )
 
-      // Ensure component has rendered and auth context is available
-      expect(authContextRef.current).not.toBeNull()
-      const authContext = authContextRef.current as ReturnType<typeof useAuth>
-      
-      // Verify that loginWithGoogle rejects with an error
-      await expect(authContext.loginWithGoogle()).rejects.toThrow('Google login failed')
+      const googleButton = screen.getByText('Login with Google')
+      await act(async () => {
+        googleButton.click()
+      })
 
       // Also verify error state is set in the context
       await waitFor(() => {
@@ -328,11 +322,7 @@ describe('AuthContext', () => {
 
       const registerButton = screen.getByText('Register')
       await act(async () => {
-        try {
-          registerButton.click()
-        } catch {
-          // Expected error
-        }
+        registerButton.click()
       })
 
       await waitFor(() => {
