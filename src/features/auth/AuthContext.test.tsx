@@ -258,25 +258,25 @@ describe('AuthContext', () => {
       
       vi.mocked(firebaseAuth.signInWithPopup).mockRejectedValue(error)
 
-      // Component to capture auth context
-      const authContextRef: { current: ReturnType<typeof useAuth> | null } = { current: null }
-      const TestComponentCapture = () => {
-        authContextRef.current = useAuth()
-        return <div data-testid="error">{authContextRef.current.error || 'null'}</div>
+      let authContext: ReturnType<typeof useAuth> | null = null
+      const TestComponentWithRef = () => {
+        authContext = useAuth()
+        return <TestComponentWithActions />
       }
 
       render(
         <AuthProvider>
-          <TestComponentCapture />
+          <TestComponentWithRef />
         </AuthProvider>
       )
 
-      const googleButton = screen.getByText('Login with Google')
-      await act(async () => {
-        googleButton.click()
-      })
+      // Verify that loginWithGoogle throws an error
+      expect(authContext).not.toBeNull()
+      await expect(
+        authContext!.loginWithGoogle()
+      ).rejects.toThrow('Google login failed')
 
-      // Also verify error state is set in the context
+      // Verify that the error state is set
       await waitFor(() => {
         expect(screen.getByTestId('error')).toHaveTextContent('Google login failed')
       })
@@ -322,17 +322,25 @@ describe('AuthContext', () => {
       const error = new Error('Email already in use')
       vi.mocked(firebaseAuth.createUserWithEmailAndPassword).mockRejectedValue(error)
 
+      let authContext: ReturnType<typeof useAuth> | null = null
+      const TestComponentWithRef = () => {
+        authContext = useAuth()
+        return <TestComponentWithActions />
+      }
+
       render(
         <AuthProvider>
-          <TestComponentWithActions />
+          <TestComponentWithRef />
         </AuthProvider>
       )
 
-      const registerButton = screen.getByText('Register')
-      await act(async () => {
-        registerButton.click()
-      })
+      // Verify that register throws an error
+      expect(authContext).not.toBeNull()
+      await expect(
+        authContext!.register({ name: 'Test', email: 'test@example.com', password: 'password' })
+      ).rejects.toThrow('Email already in use')
 
+      // Verify that the error state is set
       await waitFor(() => {
         expect(screen.getByTestId('error')).toHaveTextContent('Email already in use')
       })
