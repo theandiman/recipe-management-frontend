@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from './AuthContext'
@@ -10,6 +10,7 @@ import { GoogleSignInButton } from './components/GoogleSignInButton'
 import { AuthDivider } from './components/AuthDivider'
 import { useAuthValidation } from './hooks/useAuthValidation'
 import { useGoogleSignIn } from './hooks/useGoogleSignIn'
+import { useAuthForm } from './hooks/useAuthForm'
 
 export const Register: React.FC = () => {
   const navigate = useNavigate()
@@ -17,40 +18,18 @@ export const Register: React.FC = () => {
   const { validateRegisterForm } = useAuthValidation()
   const { handleGoogleSignIn } = useGoogleSignIn()
   
-  const [formData, setFormData] = useState<RegisterData>({
-    email: '',
-    password: '',
-    name: '',
-  })
-  
-  const [validationErrors, setValidationErrors] = useState<Partial<RegisterData>>({})
-
-  const validate = (): boolean => {
-    const errors = validateRegisterForm(formData.email, formData.password, formData.name)
-    setValidationErrors(errors)
-    return Object.keys(errors).length === 0
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!validate()) return
-    
-    try {
-      await register(formData)
+  const form = useAuthForm<RegisterData>({
+    initialValues: {
+      email: '',
+      password: '',
+      name: '',
+    },
+    validate: (values) => validateRegisterForm(values.email, values.password, values.name),
+    onSubmit: async (values) => {
+      await register(values)
       navigate('/dashboard')
-    } catch (err) {
-      console.error('Registration failed:', err)
     }
-  }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-    if (validationErrors[name as keyof RegisterData]) {
-      setValidationErrors(prev => ({ ...prev, [name]: undefined }))
-    }
-  }
+  })
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-teal-50 px-4 py-12">
@@ -66,7 +45,7 @@ export const Register: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-6" onSubmit={form.handleSubmit}>
             <ErrorAlert error={error} />
             
             <div className="space-y-5">
@@ -76,9 +55,9 @@ export const Register: React.FC = () => {
                 type="text"
                 label="Full name"
                 placeholder="John Doe"
-                value={formData.name}
-                onChange={handleChange}
-                error={validationErrors.name}
+                value={form.values.name}
+                onChange={form.handleChange}
+                error={form.errors.name}
                 autoComplete="name"
                 required
                 icon={
@@ -94,9 +73,9 @@ export const Register: React.FC = () => {
                 type="email"
                 label="Email address"
                 placeholder="you@example.com"
-                value={formData.email}
-                onChange={handleChange}
-                error={validationErrors.email}
+                value={form.values.email}
+                onChange={form.handleChange}
+                error={form.errors.email}
                 autoComplete="email"
                 required
                 icon={
@@ -112,9 +91,9 @@ export const Register: React.FC = () => {
                 type="password"
                 label="Password"
                 placeholder="••••••••"
-                value={formData.password}
-                onChange={handleChange}
-                error={validationErrors.password}
+                value={form.values.password}
+                onChange={form.handleChange}
+                error={form.errors.password}
                 autoComplete="new-password"
                 required
                 icon={
@@ -128,10 +107,10 @@ export const Register: React.FC = () => {
             <div>
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || form.isSubmitting}
                 className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 transform hover:scale-[1.02]"
               >
-                {isLoading ? (
+                {isLoading || form.isSubmitting ? (
                   <>
                     <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

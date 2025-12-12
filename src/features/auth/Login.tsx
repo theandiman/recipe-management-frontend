@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from './AuthContext'
@@ -10,6 +10,7 @@ import { GoogleSignInButton } from './components/GoogleSignInButton'
 import { AuthDivider } from './components/AuthDivider'
 import { useAuthValidation } from './hooks/useAuthValidation'
 import { useGoogleSignIn } from './hooks/useGoogleSignIn'
+import { useAuthForm } from './hooks/useAuthForm'
 
 export const Login: React.FC = () => {
   const navigate = useNavigate()
@@ -17,39 +18,17 @@ export const Login: React.FC = () => {
   const { validateLoginForm } = useAuthValidation()
   const { handleGoogleSignIn } = useGoogleSignIn()
   
-  const [credentials, setCredentials] = useState<LoginCredentials>({
-    email: '',
-    password: '',
-  })
-  
-  const [validationErrors, setValidationErrors] = useState<Partial<LoginCredentials>>({})
-
-  const validate = (): boolean => {
-    const errors = validateLoginForm(credentials.email, credentials.password)
-    setValidationErrors(errors)
-    return Object.keys(errors).length === 0
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!validate()) return
-    
-    try {
-      await login(credentials)
+  const form = useAuthForm<LoginCredentials>({
+    initialValues: {
+      email: '',
+      password: '',
+    },
+    validate: (values) => validateLoginForm(values.email, values.password),
+    onSubmit: async (values) => {
+      await login(values)
       navigate('/dashboard')
-    } catch (err) {
-      console.error('Login failed:', err)
     }
-  }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setCredentials(prev => ({ ...prev, [name]: value }))
-    if (validationErrors[name as keyof LoginCredentials]) {
-      setValidationErrors(prev => ({ ...prev, [name]: undefined }))
-    }
-  }
+  })
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-teal-50 px-4 py-12">
@@ -70,7 +49,7 @@ export const Login: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.8 }}
         >
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-6" onSubmit={form.handleSubmit}>
             <ErrorAlert error={error} />
             
             <div className="space-y-5">
@@ -80,9 +59,9 @@ export const Login: React.FC = () => {
                 type="email"
                 label="Email address"
                 placeholder="you@example.com"
-                value={credentials.email}
-                onChange={handleChange}
-                error={validationErrors.email}
+                value={form.values.email}
+                onChange={form.handleChange}
+                error={form.errors.email}
                 autoComplete="email"
                 required
                 icon={
@@ -98,9 +77,9 @@ export const Login: React.FC = () => {
                 type="password"
                 label="Password"
                 placeholder="••••••••"
-                value={credentials.password}
-                onChange={handleChange}
-                error={validationErrors.password}
+                value={form.values.password}
+                onChange={form.handleChange}
+                error={form.errors.password}
                 autoComplete="current-password"
                 required
                 icon={
@@ -114,10 +93,10 @@ export const Login: React.FC = () => {
             <div>
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || form.isSubmitting}
                 className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 transform hover:scale-[1.02]"
               >
-                {isLoading ? (
+                {isLoading || form.isSubmitting ? (
                   <>
                     <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
