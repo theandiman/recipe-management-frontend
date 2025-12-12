@@ -255,7 +255,7 @@ describe('AuthContext', () => {
       vi.mocked(firebaseAuth.signInWithPopup).mockRejectedValue(error)
 
       // Component to capture auth context
-      let authContext: any
+      let authContext: ReturnType<typeof useAuth>
       const TestComponentCapture = () => {
         authContext = useAuth()
         return <div data-testid="error">{authContext.error || 'null'}</div>
