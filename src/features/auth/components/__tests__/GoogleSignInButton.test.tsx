@@ -7,7 +7,7 @@ describe('GoogleSignInButton', () => {
   it('should render Google sign-in button text', () => {
     render(<GoogleSignInButton onClick={vi.fn()} label="Continue with Google" />)
     const button = screen.getByText('Continue with Google')
-    expect(button).toBeDefined()
+    expect(button).toBeInTheDocument()
   })
 
   it('should call onClick when clicked', async () => {
