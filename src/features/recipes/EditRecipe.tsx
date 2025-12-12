@@ -121,8 +121,7 @@ export const EditRecipe: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <RecipeFormLayout
+    <RecipeFormLayout
         mode="edit"
         currentStep={navigation.currentStep}
         totalSteps={navigation.totalSteps}
@@ -167,6 +166,5 @@ export const EditRecipe: React.FC = () => {
         handleSubmit={handleSubmit}
         handleCancel={handleCancel}
       />
-    </div>
   )
 }

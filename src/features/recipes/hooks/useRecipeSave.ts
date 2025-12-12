@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { saveRecipe, updateRecipe } from '../../../services/recipeStorageApi'
-import type { Ingredient } from '../../../types/nutrition'
+import type { Ingredient, Recipe } from '../../../types/nutrition'
 
 interface UseRecipeSaveOptions {
   recipeId?: string
@@ -33,7 +33,7 @@ interface UseRecipeSaveOptions {
     instructions: string[],
     tags: string[],
     imagePreview: string | null
-  ) => any
+  ) => Recipe
   goToStep: (step: number) => void
 }
 
@@ -114,13 +114,10 @@ export function useRecipeSave({
         navigate('/dashboard/recipes')
       }
     } catch (err: unknown) {
-      console.error(recipeId ? 'Failed to update recipe:' : 'Failed to save recipe:', err)
+      console.error('Failed to save recipe:', err)
       const errorMessage = err instanceof Error ? err.message : `Failed to ${recipeId ? 'update' : 'save'} recipe. Please try again.`
-      const apiError = err as { response?: { data?: { message?: string } } }
-      setSaveError(apiError.response?.data?.message || errorMessage)
-      
-      // Scroll to top to show error
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      const apiMessage = (err as any)?.response?.data?.message
+      setSaveError(typeof apiMessage === 'string' ? apiMessage : errorMessage)
     } finally {
       setSaveLoading(false)
     }
