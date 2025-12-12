@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor, act } from '@testing-library/react'
 import { AuthProvider, useAuth } from './AuthContext'
 import * as firebaseAuth from 'firebase/auth'
-import React from 'react'
 
 // Mock Firebase
 vi.mock('../../config/firebase', () => ({
