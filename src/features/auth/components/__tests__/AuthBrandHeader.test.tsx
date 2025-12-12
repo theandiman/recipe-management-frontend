@@ -22,7 +22,7 @@ describe('AuthBrandHeader', () => {
   it('should render the icon/logo SVG', () => {
     const { container } = render(<AuthBrandHeader title="Welcome Back" subtitle="Sign in to access your recipes" />)
     const svg = container.querySelector('svg')
-    expect(svg).toBeDefined()
+    expect(svg).not.toBeNull()
     expect(svg?.classList.contains('w-10')).toBe(true)
     expect(svg?.classList.contains('h-10')).toBe(true)
   })
@@ -32,11 +32,11 @@ describe('AuthBrandHeader', () => {
     
     // Check for the gradient background icon container
     const iconContainer = container.querySelector('.bg-gradient-to-br')
-    expect(iconContainer).toBeDefined()
+    expect(iconContainer).not.toBeNull()
     
     // Check for the amber notification dot
     const notificationDot = container.querySelector('.bg-amber-400')
-    expect(notificationDot).toBeDefined()
+    expect(notificationDot).not.toBeNull()
   })
 
   it('should render with different title and subtitle props', () => {
