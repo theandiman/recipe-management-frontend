@@ -206,11 +206,7 @@ describe('AuthContext', () => {
 
       const loginButton = screen.getByText('Login')
       await act(async () => {
-        try {
-          loginButton.click()
-        } catch {
-          // Expected error
-        }
+        loginButton.click()
       })
 
       await waitFor(() => {
@@ -262,11 +258,7 @@ describe('AuthContext', () => {
 
       const googleButton = screen.getByText('Login with Google')
       await act(async () => {
-        try {
-          googleButton.click()
-        } catch {
-          // Expected error
-        }
+        googleButton.click()
       })
 
       await waitFor(() => {
@@ -322,11 +314,7 @@ describe('AuthContext', () => {
 
       const registerButton = screen.getByText('Register')
       await act(async () => {
-        try {
-          registerButton.click()
-        } catch {
-          // Expected error
-        }
+        registerButton.click()
       })
 
       await waitFor(() => {
