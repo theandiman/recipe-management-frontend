@@ -24,9 +24,10 @@ describe('ErrorAlert', () => {
   })
 
   it('should apply correct error styling', () => {
-    const { container } = render(<ErrorAlert error="Error occurred" />)
-    const alert = container.querySelector('.bg-red-50')
-    expect(alert).toBeDefined()
+    render(<ErrorAlert error="Error occurred" />)
+    const alert = screen.getByText('Error occurred')
+    expect(alert).toBeInTheDocument()
+    expect(alert.className).toContain('bg-red-50')
   })
 
   it('should display error text in red', () => {
