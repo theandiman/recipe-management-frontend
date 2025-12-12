@@ -1,13 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { getRecipe, updateRecipe } from '../../services/recipeStorageApi'
-import { StepIndicator } from './components/StepIndicator'
-import { RecipeFormSteps } from './components/RecipeFormSteps'
-import { RecipePreview } from './components/RecipePreview'
+import { getRecipe } from '../../services/recipeStorageApi'
+import { RecipeFormLayout } from './components/RecipeFormLayout'
 import { useRecipeForm } from './hooks/useRecipeForm'
 import { useRecipeValidation } from './hooks/useRecipeValidation'
 import { useRecipeFormNavigation } from './hooks/useRecipeFormNavigation'
+import { useRecipeSave } from './hooks/useRecipeSave'
 
 export const EditRecipe: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -21,6 +19,27 @@ export const EditRecipe: React.FC = () => {
   const navigation = useRecipeFormNavigation()
   const form = useRecipeForm()
   const { validateForm, buildRecipeObject } = useRecipeValidation()
+  
+  // Use shared save logic with recipeId for edit mode
+  const { handleSubmit } = useRecipeSave({
+    recipeId: id,
+    title: form.title,
+    description: form.description,
+    prepTime: form.prepTime,
+    cookTime: form.cookTime,
+    servings: form.servings,
+    ingredients: form.ingredients,
+    instructions: form.instructions,
+    tags: form.tags,
+    imagePreview: form.imagePreview,
+    setFieldErrors: form.setFieldErrors,
+    setStepsWithErrors: form.setStepsWithErrors,
+    setSaveLoading: form.setSaveLoading,
+    setSaveError: form.setSaveError,
+    validateForm,
+    buildRecipeObject,
+    goToStep: navigation.goToStep
+  })
 
   // Load recipe data
   useEffect(() => {
@@ -67,49 +86,6 @@ export const EditRecipe: React.FC = () => {
     fetchRecipe()
   }, [id, form.setTitle, form.setDescription, form.setPrepTime, form.setCookTime, form.setServings, form.setIngredients, form.setInstructions, form.setTags, form.setImagePreview])
 
-  // Save handler
-  const handleSubmit = useCallback(async () => {
-    if (!id) return
-    
-    const validation = validateForm(form.title, form.ingredients, form.instructions)
-    
-    if (!validation.isValid) {
-      form.setFieldErrors(validation.errors)
-      form.setStepsWithErrors(validation.errorSteps)
-      navigation.goToStep(Math.min(...Array.from(validation.errorSteps)))
-      form.setSaveError('Please fix the errors before updating')
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      return
-    }
-
-    form.setSaveLoading(true)
-    form.setSaveError(null)
-
-    try {
-      const recipe = buildRecipeObject(
-        form.title,
-        form.description,
-        form.prepTime,
-        form.cookTime,
-        form.servings,
-        form.ingredients,
-        form.instructions,
-        form.tags,
-        form.imagePreview
-      )
-      await updateRecipe(id, recipe)
-      navigate(`/dashboard/recipes/${id}`)
-    } catch (err: unknown) {
-      console.error('Failed to update recipe:', err)
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update recipe. Please try again.'
-      const apiError = err as { response?: { data?: { message?: string } } }
-      form.setSaveError(apiError.response?.data?.message || errorMessage)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    } finally {
-      form.setSaveLoading(false)
-    }
-  }, [id, validateForm, buildRecipeObject, navigate, form, navigation])
-
   const handleCancel = useCallback(() => {
     navigate(`/dashboard/recipes/${id}`)
   }, [navigate, id])
@@ -146,132 +122,51 @@ export const EditRecipe: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      {/* Header with Step Indicator */}
-      <div className="mb-6 sm:mb-8">
-        <div className="flex items-center justify-between mb-4 sm:mb-6">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Edit Recipe</h1>
-            <p className="text-sm sm:text-base text-gray-600">Step {navigation.currentStep} of {navigation.totalSteps}: {navigation.steps[navigation.currentStep - 1].title}</p>
-          </div>
-        </div>
-
-        {/* Step Progress Indicator */}
-        <StepIndicator
-          steps={navigation.steps}
-          currentStep={navigation.currentStep}
-          stepsWithErrors={form.stepsWithErrors}
-          onStepClick={navigation.goToStep}
-        />
-      </div>
-
-      {/* Step 5: Preview Mode */}
-      <AnimatePresence mode="wait">
-        {navigation.currentStep === 5 ? (
-          <motion.div
-            key="preview"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-          >
-            <RecipePreview
-              saveError={form.saveError}
-              setSaveError={form.setSaveError}
-              title={form.title}
-              description={form.description}
-              imagePreview={form.imagePreview}
-              prepTime={form.prepTime}
-              cookTime={form.cookTime}
-              servings={form.servings}
-              ingredients={form.ingredients}
-              instructions={form.instructions}
-              tags={form.tags}
-              prevStep={navigation.goToPreviousStep}
-              handleCancel={handleCancel}
-              handleSubmit={handleSubmit}
-              saveLoading={form.saveLoading}
-            />
-          </motion.div>
-        ) : (
-          <motion.div
-            key={`step-${navigation.currentStep}`}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-          >
-            <form className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
-              <RecipeFormSteps
-                currentStep={navigation.currentStep}
-                title={form.title}
-                setTitle={form.setTitle}
-                description={form.description}
-                setDescription={form.setDescription}
-                prepTime={form.prepTime}
-                setPrepTime={form.setPrepTime}
-                cookTime={form.cookTime}
-                setCookTime={form.setCookTime}
-                servings={form.servings}
-                setServings={form.setServings}
-                imagePreview={form.imagePreview}
-                handleImageUpload={form.handleImageUpload}
-                removeImage={form.removeImage}
-                ingredients={form.ingredients}
-                addIngredient={form.addIngredient}
-                updateIngredient={form.updateIngredient}
-                removeIngredient={form.removeIngredient}
-                instructions={form.instructions}
-                addInstruction={form.addInstruction}
-                updateInstruction={form.updateInstruction}
-                removeInstruction={form.removeInstruction}
-                tags={form.tags}
-                tagInput={form.tagInput}
-                setTagInput={form.setTagInput}
-                addTag={form.addTag}
-                removeTag={form.removeTag}
-                fieldErrors={form.fieldErrors}
-                clearFieldError={form.clearFieldError}
-              />
-
-              {/* Navigation Buttons */}
-              <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={navigation.goToPreviousStep}
-                  disabled={navigation.isFirstStep}
-                  className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                    navigation.isFirstStep
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  ← Back
-                </button>
-
-                <div className="flex items-center space-x-4">
-                  <button
-                    type="button"
-                    onClick={handleCancel}
-                    className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-
-                  <motion.button
-                    type="button"
-                    onClick={navigation.goToNextStep}
-                    className="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Next →
-                  </motion.button>
-                </div>
-              </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <RecipeFormLayout
+        mode="edit"
+        currentStep={navigation.currentStep}
+        totalSteps={navigation.totalSteps}
+        steps={navigation.steps}
+        goToStep={navigation.goToStep}
+        goToNextStep={navigation.goToNextStep}
+        goToPreviousStep={navigation.goToPreviousStep}
+        canGoNext={navigation.canGoNext}
+        canGoPrevious={navigation.canGoPrevious}
+        stepsWithErrors={form.stepsWithErrors}
+        title={form.title}
+        setTitle={form.setTitle}
+        description={form.description}
+        setDescription={form.setDescription}
+        prepTime={form.prepTime}
+        setPrepTime={form.setPrepTime}
+        cookTime={form.cookTime}
+        setCookTime={form.setCookTime}
+        servings={form.servings}
+        setServings={form.setServings}
+        imagePreview={form.imagePreview}
+        handleImageUpload={form.handleImageUpload}
+        removeImage={form.removeImage}
+        ingredients={form.ingredients}
+        addIngredient={form.addIngredient}
+        updateIngredient={form.updateIngredient}
+        removeIngredient={form.removeIngredient}
+        instructions={form.instructions}
+        addInstruction={form.addInstruction}
+        updateInstruction={form.updateInstruction}
+        removeInstruction={form.removeInstruction}
+        tags={form.tags}
+        tagInput={form.tagInput}
+        setTagInput={form.setTagInput}
+        addTag={form.addTag}
+        removeTag={form.removeTag}
+        fieldErrors={form.fieldErrors}
+        clearFieldError={form.clearFieldError}
+        saveLoading={form.saveLoading}
+        saveError={form.saveError}
+        setSaveError={form.setSaveError}
+        handleSubmit={handleSubmit}
+        handleCancel={handleCancel}
+      />
     </div>
   )
 }
