@@ -12,7 +12,7 @@ describe('AuthDivider', () => {
   it('should render divider with custom text', () => {
     render(<AuthDivider text="and" />)
     const text = screen.getByText('and')
-    expect(text).toBeDefined()
+    expect(text).toBeInTheDocument()
   })
 
   it('should render horizontal line', () => {
