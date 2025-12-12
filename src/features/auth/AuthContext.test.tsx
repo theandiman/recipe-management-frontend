@@ -239,9 +239,9 @@ describe('AuthContext', () => {
       )
 
       const googleButton = screen.getByText('Login with Google')
-      await act(async () => {
-        googleButton.click()
-        await vi.waitFor(() => {}, { timeout: 100 })
+      googleButton.click()
+      await waitFor(() => {
+        expect(screen.getByTestId('error')).toHaveTextContent('null')
       })
 
       // Check that no error was set
