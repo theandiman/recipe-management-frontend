@@ -198,17 +198,25 @@ describe('AuthContext', () => {
       const error = new Error('Invalid credentials')
       vi.mocked(firebaseAuth.signInWithEmailAndPassword).mockRejectedValue(error)
 
+      let authContext: ReturnType<typeof useAuth> | null = null
+      const TestComponentWithRef = () => {
+        authContext = useAuth()
+        return <TestComponentWithActions />
+      }
+
       render(
         <AuthProvider>
-          <TestComponentWithActions />
+          <TestComponentWithRef />
         </AuthProvider>
       )
 
-      const loginButton = screen.getByText('Login')
-      await act(async () => {
-        loginButton.click()
-      })
+      // Verify that login throws an error
+      expect(authContext).not.toBeNull()
+      await expect(
+        authContext!.login({ email: 'test@example.com', password: 'password' })
+      ).rejects.toThrow('Invalid credentials')
 
+      // Verify that the error state is set
       await waitFor(() => {
         expect(screen.getByTestId('error')).toHaveTextContent('Invalid credentials')
       })
