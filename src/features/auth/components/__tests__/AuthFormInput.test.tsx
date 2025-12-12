@@ -21,7 +21,7 @@ describe('AuthFormInput', () => {
     render(<AuthFormInput {...defaultProps} />)
 
     const input = screen.getByPlaceholderText('Email')
-    expect(input).toBeDefined()
+    expect(input).toBeInTheDocument()
     expect(input.getAttribute('type')).toBe('email')
     expect(input.getAttribute('name')).toBe('email')
   })
@@ -29,14 +29,14 @@ describe('AuthFormInput', () => {
   it('should render label text', () => {
     render(<AuthFormInput {...defaultProps} />)
     const label = screen.getByText('Email Address')
-    expect(label).toBeDefined()
+    expect(label).toBeInTheDocument()
   })
 
   it('should display error message when error prop is provided', () => {
     render(<AuthFormInput {...defaultProps} error="Email is required" />)
 
     const error = screen.getByText('Email is required')
-    expect(error).toBeDefined()
+    expect(error).toBeInTheDocument()
   })
 
   it('should call onChange when input value changes', async () => {
@@ -55,7 +55,7 @@ describe('AuthFormInput', () => {
     render(<AuthFormInput {...defaultProps} />)
 
     const icon = screen.getByTestId('test-icon')
-    expect(icon).toBeDefined()
+    expect(icon).toBeInTheDocument()
   })
 
   it('should render with required attribute when required is true', () => {
