@@ -518,6 +518,7 @@ describe('EditRecipe', () => {
       
       const addButtons = screen.getAllByText('Add')
       const addTagButton = addButtons.find(btn => btn.closest('button'))
+      expect(addTagButton).toBeDefined()
       await user.click(addTagButton!)
       expect(screen.getByText('dinner')).toBeInTheDocument()
     })
