@@ -219,6 +219,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+      - name: Upload coverage report as artifact
+        uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: sonar-coverage-report
+          path: |
+            coverage/
+            .scannerwork/
+          retention-days: 30
+
   # Security Jobs (PR only)
   security-scan:
     name: Security Scan
