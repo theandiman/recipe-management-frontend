@@ -69,6 +69,7 @@ export const EditRecipe: React.FC = () => {
         }
         
         setInstructions(data.instructions && data.instructions.length > 0 ? data.instructions : [''])
+        setTags(data.tags || [])
         setImagePreview(data.imageUrl || null)
       } catch (err: unknown) {
         console.error('Failed to fetch recipe:', err)
