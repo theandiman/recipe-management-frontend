@@ -19,7 +19,7 @@ describe('ErrorAlert', () => {
   })
 
   it('should not render when error is undefined', () => {
-    const { container } = render(<ErrorAlert error={null} />)
+    const { container } = render(<ErrorAlert error={undefined} />)
     expect(container.firstChild).toBeNull()
   })
 
