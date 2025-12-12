@@ -47,8 +47,8 @@ export const CreateRecipe: React.FC = () => {
       goToStep={navigation.goToStep}
       goToNextStep={navigation.goToNextStep}
       goToPreviousStep={navigation.goToPreviousStep}
-      canGoNext={navigation.canGoNext}
-      canGoPrevious={navigation.canGoPrevious}
+      canGoNext={!navigation.isLastStep}
+      canGoPrevious={!navigation.isFirstStep}
       stepsWithErrors={form.stepsWithErrors}
       title={form.title}
       setTitle={form.setTitle}

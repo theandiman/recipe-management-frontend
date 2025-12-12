@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { StepIndicator } from './StepIndicator'
 import { RecipeFormSteps } from './RecipeFormSteps'
 import { RecipePreview } from './RecipePreview'
-import { UI_STYLES } from '../../../utils/uiStyles'
 import type { Ingredient } from '../../../types/nutrition'
 
 interface RecipeFormLayoutProps {
@@ -13,7 +12,7 @@ interface RecipeFormLayoutProps {
   // Navigation
   currentStep: number
   totalSteps: number
-  steps: Array<{ title: string; icon: string }>
+  steps: { number: number; title: string; icon: string }[]
   goToStep: (step: number) => void
   goToNextStep: () => void
   goToPreviousStep: () => void
@@ -211,19 +210,29 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >
-                  ← Previous
+                  ← Back
                 </button>
 
-                <button
-                  type="button"
-                  onClick={goToNextStep}
-                  disabled={!canGoNext}
-                  className={`px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors ${
-                    !canGoNext ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  {currentStep === totalSteps - 1 ? 'Review →' : 'Next →'}
-                </button>
+                <div className="flex items-center space-x-4">
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={goToNextStep}
+                    disabled={!canGoNext}
+                    className={`px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors ${
+                      !canGoNext ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    {currentStep === totalSteps - 1 ? 'Review →' : 'Next →'}
+                  </button>
+                </div>
               </div>
             </form>
           </motion.div>
