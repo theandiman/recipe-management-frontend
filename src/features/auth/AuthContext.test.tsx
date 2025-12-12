@@ -211,6 +211,7 @@ describe('AuthContext', () => {
       )
 
       // Verify that login throws an error
+      expect(authContext).not.toBeNull()
       await expect(
         authContext!.login({ email: 'test@example.com', password: 'password' })
       ).rejects.toThrow('Invalid credentials')
