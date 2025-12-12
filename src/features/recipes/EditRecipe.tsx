@@ -8,7 +8,6 @@ import { RecipePreview } from './components/RecipePreview'
 import { useRecipeForm } from './hooks/useRecipeForm'
 import { useRecipeValidation } from './hooks/useRecipeValidation'
 import { useRecipeFormNavigation } from './hooks/useRecipeFormNavigation'
-import type { Ingredient } from '../../types/nutrition'
 
 export const EditRecipe: React.FC = () => {
   const { id } = useParams<{ id: string }>()

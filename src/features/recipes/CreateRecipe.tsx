@@ -9,7 +9,6 @@ import { UI_STYLES } from '../../utils/uiStyles'
 import { useRecipeForm } from './hooks/useRecipeForm'
 import { useRecipeValidation } from './hooks/useRecipeValidation'
 import { useRecipeFormNavigation } from './hooks/useRecipeFormNavigation'
-import type { Recipe } from '../../types/nutrition'
 
 export const CreateRecipe: React.FC = () => {
   const navigate = useNavigate()
