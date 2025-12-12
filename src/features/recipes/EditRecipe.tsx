@@ -5,7 +5,9 @@ import { getRecipe, updateRecipe } from '../../services/recipeStorageApi'
 import { StepIndicator } from './components/StepIndicator'
 import { RecipeFormSteps } from './components/RecipeFormSteps'
 import { RecipePreview } from './components/RecipePreview'
-import type { Recipe, Ingredient } from '../../types/nutrition'
+import { useRecipeForm } from './hooks/useRecipeForm'
+import { useRecipeValidation } from './hooks/useRecipeValidation'
+import { useRecipeFormNavigation } from './hooks/useRecipeFormNavigation'
 
 export const EditRecipe: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -15,29 +17,10 @@ export const EditRecipe: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   
-  // Multi-step state
-  const [currentStep, setCurrentStep] = useState(1)
-  const totalSteps = 5
-  
-  // Save state
-  const [saveLoading, setSaveLoading] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
-  
-  // Validation state
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-  const [stepsWithErrors, setStepsWithErrors] = useState<Set<number>>(new Set())
-  
-  // Form state
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [prepTime, setPrepTime] = useState<string>('')
-  const [cookTime, setCookTime] = useState<string>('')
-  const [servings, setServings] = useState<string>('')
-  const [ingredients, setIngredients] = useState<Ingredient[]>([{ quantity: '', unit: '', item: '' }])
-  const [instructions, setInstructions] = useState<string[]>([''])
-  const [tags, setTags] = useState<string[]>([])
-  const [tagInput, setTagInput] = useState('')
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  // Use custom hooks
+  const navigation = useRecipeFormNavigation()
+  const form = useRecipeForm()
+  const { validateForm, buildRecipeObject } = useRecipeValidation()
 
   // Load recipe data
   useEffect(() => {
@@ -50,11 +33,11 @@ export const EditRecipe: React.FC = () => {
         const data = await getRecipe(id)
         
         // Populate form fields
-        setTitle(data.recipeName || '')
-        setDescription(data.description || '')
-        setPrepTime(data.prepTime?.toString() || '')
-        setCookTime(data.cookTime?.toString() || '')
-        setServings(data.servings?.toString() || '')
+        form.setTitle(data.recipeName || '')
+        form.setDescription(data.description || '')
+        form.setPrepTime(data.prepTime?.toString() || '')
+        form.setCookTime(data.cookTime?.toString() || '')
+        form.setServings(data.servings?.toString() || '')
         
         // Convert ingredients to Ingredient[] format
         if (data.ingredients && data.ingredients.length > 0) {
@@ -65,12 +48,12 @@ export const EditRecipe: React.FC = () => {
             const item = parts.slice(2).join(' ') || ing
             return { quantity, unit, item }
           })
-          setIngredients(parsedIngredients.length > 0 ? parsedIngredients : [{ quantity: '', unit: '', item: '' }])
+          form.setIngredients(parsedIngredients.length > 0 ? parsedIngredients : [{ quantity: '', unit: '', item: '' }])
         }
         
-        setInstructions(data.instructions && data.instructions.length > 0 ? data.instructions : [''])
-        setTags(data.tags || [])
-        setImagePreview(data.imageUrl || null)
+        form.setInstructions(data.instructions && data.instructions.length > 0 ? data.instructions : [''])
+        form.setTags(data.tags || [])
+        form.setImagePreview(data.imageUrl || null)
       } catch (err: unknown) {
         console.error('Failed to fetch recipe:', err)
         const errorMessage = err instanceof Error ? err.message : 'Failed to load recipe'
@@ -82,216 +65,54 @@ export const EditRecipe: React.FC = () => {
     }
 
     fetchRecipe()
-  }, [id])
-
-  // Helper function to clear field errors
-  const clearFieldError = useCallback((fieldName: string, stepNumber: number) => {
-    if (fieldErrors[fieldName]) {
-      const newErrors = { ...fieldErrors }
-      delete newErrors[fieldName]
-      setFieldErrors(newErrors)
-      const newStepsWithErrors = new Set(stepsWithErrors)
-      newStepsWithErrors.delete(stepNumber)
-      setStepsWithErrors(newStepsWithErrors)
-    }
-  }, [fieldErrors, stepsWithErrors])
-
-  // Ingredient handlers
-  const addIngredient = useCallback(() => {
-    setIngredients([...ingredients, { quantity: '', unit: '', item: '' }])
-  }, [ingredients])
-
-  const updateIngredient = useCallback((index: number, field: keyof Ingredient, value: string) => {
-    const newIngredients = [...ingredients]
-    newIngredients[index] = { ...newIngredients[index], [field]: value }
-    setIngredients(newIngredients)
-    
-    if (field === 'item' && value.trim()) {
-      clearFieldError('ingredients', 2)
-    }
-  }, [ingredients, clearFieldError])
-
-  const removeIngredient = useCallback((index: number) => {
-    if (ingredients.length > 1) {
-      const newIngredients = ingredients.filter((_, i) => i !== index)
-      setIngredients(newIngredients)
-      
-      const hasValidIngredient = newIngredients.some(ing => ing.item.trim())
-      if (!hasValidIngredient) {
-        const newErrors = { ...fieldErrors, ingredients: 'At least one ingredient is required' }
-        setFieldErrors(newErrors)
-        const newStepsWithErrors = new Set(stepsWithErrors)
-        newStepsWithErrors.add(2)
-        setStepsWithErrors(newStepsWithErrors)
-      }
-    }
-  }, [ingredients, fieldErrors, stepsWithErrors])
-
-  // Instruction handlers
-  const addInstruction = useCallback(() => {
-    setInstructions([...instructions, ''])
-  }, [instructions])
-
-  const updateInstruction = useCallback((index: number, value: string) => {
-    const newInstructions = [...instructions]
-    newInstructions[index] = value
-    setInstructions(newInstructions)
-    
-    if (value.trim()) {
-      clearFieldError('instructions', 3)
-    }
-  }, [instructions, clearFieldError])
-
-  const removeInstruction = useCallback((index: number) => {
-    if (instructions.length > 1) {
-      const newInstructions = instructions.filter((_, i) => i !== index)
-      setInstructions(newInstructions)
-      
-      const hasValidInstruction = newInstructions.some(inst => inst.trim())
-      if (!hasValidInstruction) {
-        const newErrors = { ...fieldErrors, instructions: 'At least one instruction is required' }
-        setFieldErrors(newErrors)
-        const newStepsWithErrors = new Set(stepsWithErrors)
-        newStepsWithErrors.add(3)
-        setStepsWithErrors(newStepsWithErrors)
-      }
-    }
-  }, [instructions, fieldErrors, stepsWithErrors])
-
-  // Tag handlers
-  const addTag = useCallback(() => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim()])
-      setTagInput('')
-    }
-  }, [tagInput, tags])
-
-  const removeTag = useCallback((index: number) => {
-    setTags(tags.filter((_, i) => i !== index))
-  }, [tags])
-
-  // Image upload handler
-  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
-  }, [])
-
-  const removeImage = useCallback(() => {
-    setImagePreview(null)
-  }, [])
-
-  // Validation function
-  const validateForm = useCallback((): { isValid: boolean; errors: Record<string, string>; errorSteps: Set<number> } => {
-    const errors: Record<string, string> = {}
-    const errorSteps = new Set<number>()
-
-    if (!title.trim()) {
-      errors.title = 'Recipe name is required'
-      errorSteps.add(1)
-    }
-
-    const hasValidIngredient = ingredients.some(ing => ing.item.trim())
-    if (!hasValidIngredient) {
-      errors.ingredients = 'At least one ingredient is required'
-      errorSteps.add(2)
-    }
-
-    const hasValidInstruction = instructions.some(inst => inst.trim())
-    if (!hasValidInstruction) {
-      errors.instructions = 'At least one instruction is required'
-      errorSteps.add(3)
-    }
-
-    return { isValid: Object.keys(errors).length === 0, errors, errorSteps }
-  }, [title, ingredients, instructions])
-
-  // Build recipe object
-  const buildRecipeObject = useCallback((): Recipe => {
-    const ingredientStrings = ingredients
-      .filter(ing => ing.item.trim())
-      .map(ing => `${ing.quantity} ${ing.unit} ${ing.item}`.trim())
-
-    const validInstructions = instructions.filter(inst => inst.trim())
-
-    return {
-      recipeName: title.trim(),
-      description: description.trim() || undefined,
-      ingredients: ingredientStrings,
-      instructions: validInstructions,
-      prepTime: prepTime ? `${prepTime} minutes` : undefined,
-      cookTime: cookTime ? `${cookTime} minutes` : undefined,
-      servings: parseInt(servings) || 1,
-      imageUrl: imagePreview || undefined,
-      source: 'manual' as const
-    }
-  }, [title, description, ingredients, instructions, prepTime, cookTime, servings, imagePreview])
+  }, [id, form.setTitle, form.setDescription, form.setPrepTime, form.setCookTime, form.setServings, form.setIngredients, form.setInstructions, form.setTags, form.setImagePreview])
 
   // Save handler
   const handleSubmit = useCallback(async () => {
     if (!id) return
     
-    const validation = validateForm()
+    const validation = validateForm(form.title, form.ingredients, form.instructions)
     
     if (!validation.isValid) {
-      setFieldErrors(validation.errors)
-      setStepsWithErrors(validation.errorSteps)
-      setCurrentStep(Math.min(...Array.from(validation.errorSteps)))
-      setSaveError('Please fix the errors before updating')
+      form.setFieldErrors(validation.errors)
+      form.setStepsWithErrors(validation.errorSteps)
+      navigation.goToStep(Math.min(...Array.from(validation.errorSteps)))
+      form.setSaveError('Please fix the errors before updating')
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
 
-    setSaveLoading(true)
-    setSaveError(null)
+    form.setSaveLoading(true)
+    form.setSaveError(null)
 
     try {
-      const recipe = buildRecipeObject()
+      const recipe = buildRecipeObject(
+        form.title,
+        form.description,
+        form.prepTime,
+        form.cookTime,
+        form.servings,
+        form.ingredients,
+        form.instructions,
+        form.tags,
+        form.imagePreview
+      )
       await updateRecipe(id, recipe)
       navigate(`/dashboard/recipes/${id}`)
     } catch (err: unknown) {
       console.error('Failed to update recipe:', err)
       const errorMessage = err instanceof Error ? err.message : 'Failed to update recipe. Please try again.'
       const apiError = err as { response?: { data?: { message?: string } } }
-      setSaveError(apiError.response?.data?.message || errorMessage)
+      form.setSaveError(apiError.response?.data?.message || errorMessage)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } finally {
-      setSaveLoading(false)
+      form.setSaveLoading(false)
     }
-  }, [id, validateForm, buildRecipeObject, navigate])
+  }, [id, validateForm, buildRecipeObject, navigate, form, navigation])
 
   const handleCancel = useCallback(() => {
     navigate(`/dashboard/recipes/${id}`)
   }, [navigate, id])
-
-  const nextStep = useCallback(() => {
-    if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1)
-    }
-  }, [currentStep])
-
-  const prevStep = useCallback(() => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
-    }
-  }, [currentStep])
-
-  const goToStep = useCallback((step: number) => {
-    setCurrentStep(step)
-  }, [])
-
-  const steps = [
-    { number: 1, title: 'Basic Info', icon: '📝' },
-    { number: 2, title: 'Ingredients', icon: '🥕' },
-    { number: 3, title: 'Instructions', icon: '👨‍🍳' },
-    { number: 4, title: 'Additional Info', icon: '⏱️' },
-    { number: 5, title: 'Review', icon: '✅' }
-  ]
 
   if (loading) {
     return (
@@ -330,22 +151,22 @@ export const EditRecipe: React.FC = () => {
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Edit Recipe</h1>
-            <p className="text-sm sm:text-base text-gray-600">Step {currentStep} of {totalSteps}: {steps[currentStep - 1].title}</p>
+            <p className="text-sm sm:text-base text-gray-600">Step {navigation.currentStep} of {navigation.totalSteps}: {navigation.steps[navigation.currentStep - 1].title}</p>
           </div>
         </div>
 
         {/* Step Progress Indicator */}
         <StepIndicator
-          steps={steps}
-          currentStep={currentStep}
-          stepsWithErrors={stepsWithErrors}
-          onStepClick={goToStep}
+          steps={navigation.steps}
+          currentStep={navigation.currentStep}
+          stepsWithErrors={form.stepsWithErrors}
+          onStepClick={navigation.goToStep}
         />
       </div>
 
       {/* Step 5: Preview Mode */}
       <AnimatePresence mode="wait">
-        {currentStep === 5 ? (
+        {navigation.currentStep === 5 ? (
           <motion.div
             key="preview"
             initial={{ opacity: 0, x: 20 }}
@@ -354,26 +175,26 @@ export const EditRecipe: React.FC = () => {
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
             <RecipePreview
-              saveError={saveError}
-              setSaveError={setSaveError}
-              title={title}
-              description={description}
-              imagePreview={imagePreview}
-              prepTime={prepTime}
-              cookTime={cookTime}
-              servings={servings}
-              ingredients={ingredients}
-              instructions={instructions}
-              tags={tags}
-              prevStep={prevStep}
+              saveError={form.saveError}
+              setSaveError={form.setSaveError}
+              title={form.title}
+              description={form.description}
+              imagePreview={form.imagePreview}
+              prepTime={form.prepTime}
+              cookTime={form.cookTime}
+              servings={form.servings}
+              ingredients={form.ingredients}
+              instructions={form.instructions}
+              tags={form.tags}
+              prevStep={navigation.goToPreviousStep}
               handleCancel={handleCancel}
               handleSubmit={handleSubmit}
-              saveLoading={saveLoading}
+              saveLoading={form.saveLoading}
             />
           </motion.div>
         ) : (
           <motion.div
-            key={`step-${currentStep}`}
+            key={`step-${navigation.currentStep}`}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
@@ -381,45 +202,45 @@ export const EditRecipe: React.FC = () => {
           >
             <form className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
               <RecipeFormSteps
-                currentStep={currentStep}
-                title={title}
-                setTitle={setTitle}
-                description={description}
-                setDescription={setDescription}
-                prepTime={prepTime}
-                setPrepTime={setPrepTime}
-                cookTime={cookTime}
-                setCookTime={setCookTime}
-                servings={servings}
-                setServings={setServings}
-                imagePreview={imagePreview}
-                handleImageUpload={handleImageUpload}
-                removeImage={removeImage}
-                ingredients={ingredients}
-                addIngredient={addIngredient}
-                updateIngredient={updateIngredient}
-                removeIngredient={removeIngredient}
-                instructions={instructions}
-                addInstruction={addInstruction}
-                updateInstruction={updateInstruction}
-                removeInstruction={removeInstruction}
-                tags={tags}
-                tagInput={tagInput}
-                setTagInput={setTagInput}
-                addTag={addTag}
-                removeTag={removeTag}
-                fieldErrors={fieldErrors}
-                clearFieldError={clearFieldError}
+                currentStep={navigation.currentStep}
+                title={form.title}
+                setTitle={form.setTitle}
+                description={form.description}
+                setDescription={form.setDescription}
+                prepTime={form.prepTime}
+                setPrepTime={form.setPrepTime}
+                cookTime={form.cookTime}
+                setCookTime={form.setCookTime}
+                servings={form.servings}
+                setServings={form.setServings}
+                imagePreview={form.imagePreview}
+                handleImageUpload={form.handleImageUpload}
+                removeImage={form.removeImage}
+                ingredients={form.ingredients}
+                addIngredient={form.addIngredient}
+                updateIngredient={form.updateIngredient}
+                removeIngredient={form.removeIngredient}
+                instructions={form.instructions}
+                addInstruction={form.addInstruction}
+                updateInstruction={form.updateInstruction}
+                removeInstruction={form.removeInstruction}
+                tags={form.tags}
+                tagInput={form.tagInput}
+                setTagInput={form.setTagInput}
+                addTag={form.addTag}
+                removeTag={form.removeTag}
+                fieldErrors={form.fieldErrors}
+                clearFieldError={form.clearFieldError}
               />
 
               {/* Navigation Buttons */}
               <div className="flex items-center justify-between pt-6 border-t border-gray-200">
                 <button
                   type="button"
-                  onClick={prevStep}
-                  disabled={currentStep === 1}
+                  onClick={navigation.goToPreviousStep}
+                  disabled={navigation.isFirstStep}
                   className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                    currentStep === 1
+                    navigation.isFirstStep
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
@@ -438,7 +259,7 @@ export const EditRecipe: React.FC = () => {
 
                   <motion.button
                     type="button"
-                    onClick={nextStep}
+                    onClick={navigation.goToNextStep}
                     className="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
