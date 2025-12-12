@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { EditRecipe } from './EditRecipe'
 import * as recipeStorageApi from '../../services/recipeStorageApi'
+import type { Recipe } from '../../types/nutrition'
 
 vi.mock('../../services/recipeStorageApi')
 vi.mock('../../config/firebase', () => ({
@@ -22,18 +23,19 @@ vi.mock('react-router-dom', async () => {
   }
 })
 
-const mockRecipe = {
+const mockRecipe: Recipe = {
   id: 'test-recipe-123',
   recipeName: 'Test Recipe',
   description: 'A test recipe',
   ingredients: ['1 cup flour', '2 eggs'],
   instructions: ['Mix ingredients', 'Bake'],
-  prepTime: '10 minutes',
-  cookTime: '20 minutes',
+  prepTimeMinutes: 10,
+  cookTimeMinutes: 20,
   servings: 4,
   imageUrl: 'https://example.com/image.jpg',
   tags: ['breakfast', 'easy'],
-  source: 'manual' as const
+  updatedAt: new Date(),
+  source: 'user'
 }
 
 describe('EditRecipe', () => {
