@@ -137,8 +137,8 @@ describe('AuthFormLayout', () => {
     it('should display loading spinner when submitting', () => {
       render(<AuthFormLayout {...defaultProps} isSubmitting={true} />)
       
-      const spinner = document.querySelector('.animate-spin')
-      expect(spinner).toBeInTheDocument()
+      const submitButton = screen.getByRole('button', { name: /submitting/i })
+      expect(submitButton.querySelector('svg')).toBeInTheDocument()
     })
 
     it('should display arrow icon when not submitting', () => {
