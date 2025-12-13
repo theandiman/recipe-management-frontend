@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { AuthFormLayout } from '../AuthFormLayout'
 
 // Mock child components to isolate AuthFormLayout testing
@@ -73,12 +74,13 @@ describe('AuthFormLayout', () => {
     expect(screen.getByText('Custom Form Content')).toBeInTheDocument()
   })
 
-  it('should call onSubmit when form is submitted', () => {
+  it('should call onSubmit when form is submitted', async () => {
+    const user = userEvent.setup()
     const onSubmit = vi.fn((e) => e.preventDefault())
     render(<AuthFormLayout {...defaultProps} onSubmit={onSubmit} />)
     
-    const form = screen.getByRole('button', { name: /submit/i }).closest('form')!
-    fireEvent.submit(form)
+    const submitButton = screen.getByRole('button', { name: /submit/i })
+    await user.click(submitButton)
     
     expect(onSubmit).toHaveBeenCalledTimes(1)
   })
@@ -124,12 +126,13 @@ describe('AuthFormLayout', () => {
   })
 
   describe('Google Sign-In', () => {
-    it('should call onGoogleSignIn when Google button is clicked', () => {
+    it('should call onGoogleSignIn when Google button is clicked', async () => {
+      const user = userEvent.setup()
       const onGoogleSignIn = vi.fn()
       render(<AuthFormLayout {...defaultProps} onGoogleSignIn={onGoogleSignIn} />)
       
       const googleButton = screen.getByText('Sign in with Google')
-      fireEvent.click(googleButton)
+      await user.click(googleButton)
       
       expect(onGoogleSignIn).toHaveBeenCalledTimes(1)
     })
@@ -149,12 +152,13 @@ describe('AuthFormLayout', () => {
   })
 
   describe('Bottom Navigation', () => {
-    it('should call bottomButtonAction when bottom button is clicked', () => {
+    it('should call bottomButtonAction when bottom button is clicked', async () => {
+      const user = userEvent.setup()
       const bottomButtonAction = vi.fn()
       render(<AuthFormLayout {...defaultProps} bottomButtonAction={bottomButtonAction} />)
       
       const bottomButton = screen.getByText('Bottom Action')
-      fireEvent.click(bottomButton)
+      await user.click(bottomButton)
       
       expect(bottomButtonAction).toHaveBeenCalledTimes(1)
     })
@@ -182,7 +186,8 @@ describe('AuthFormLayout', () => {
   })
 
   describe('Integration', () => {
-    it('should handle complete form submission flow', () => {
+    it('should handle complete form submission flow', async () => {
+      const user = userEvent.setup()
       const onSubmit = vi.fn((e) => e.preventDefault())
       render(
         <AuthFormLayout {...defaultProps} onSubmit={onSubmit}>
@@ -190,8 +195,8 @@ describe('AuthFormLayout', () => {
         </AuthFormLayout>
       )
       
-      const form = screen.getByRole('button', { name: /submit/i }).closest('form')!
-      fireEvent.submit(form)
+      const submitButton = screen.getByRole('button', { name: /submit/i })
+      await user.click(submitButton)
       
       expect(onSubmit).toHaveBeenCalled()
     })
