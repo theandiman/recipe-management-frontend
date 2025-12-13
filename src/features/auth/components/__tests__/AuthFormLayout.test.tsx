@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { AuthFormLayout } from './AuthFormLayout'
+import { AuthFormLayout } from '../AuthFormLayout'
 
 // Mock child components to isolate AuthFormLayout testing
-vi.mock('./AuthBrandHeader', () => ({
+vi.mock('../AuthBrandHeader', () => ({
   AuthBrandHeader: ({ title, subtitle }: { title: string; subtitle: string }) => (
     <div data-testid="auth-brand-header">
       <h1>{title}</h1>
@@ -12,13 +12,13 @@ vi.mock('./AuthBrandHeader', () => ({
   ),
 }))
 
-vi.mock('./ErrorAlert', () => ({
+vi.mock('../ErrorAlert', () => ({
   ErrorAlert: ({ error }: { error: string | null }) => (
     error ? <div role="alert" data-testid="error-alert">{error}</div> : null
   ),
 }))
 
-vi.mock('./GoogleSignInButton', () => ({
+vi.mock('../GoogleSignInButton', () => ({
   GoogleSignInButton: ({ onClick, disabled, label }: { onClick: () => void; disabled?: boolean; label: string }) => (
     <button onClick={onClick} disabled={disabled} data-testid="google-signin-button">
       {label}
@@ -26,7 +26,7 @@ vi.mock('./GoogleSignInButton', () => ({
   ),
 }))
 
-vi.mock('./AuthDivider', () => ({
+vi.mock('../AuthDivider', () => ({
   AuthDivider: ({ text }: { text: string }) => (
     <div data-testid="auth-divider">{text}</div>
   ),
