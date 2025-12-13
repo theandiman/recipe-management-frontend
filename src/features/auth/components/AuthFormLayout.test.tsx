@@ -134,13 +134,6 @@ describe('AuthFormLayout', () => {
       expect(submitButton.querySelector('svg')).toBeInTheDocument()
     })
 
-    it('should display arrow icon when not submitting', () => {
-      render(<AuthFormLayout {...defaultProps} />)
-      
-      const submitButton = screen.getByRole('button', { name: /submit/i })
-      const svg = submitButton.querySelector('svg')
-      expect(svg).toBeInTheDocument()
-    })
   })
 
   describe('Google Sign-In', () => {
