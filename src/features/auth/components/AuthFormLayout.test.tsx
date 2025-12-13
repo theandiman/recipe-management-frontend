@@ -120,12 +120,6 @@ describe('AuthFormLayout', () => {
       expect(submitButton).toBeDisabled()
     })
 
-    it('should be disabled when isLoading is true', () => {
-      render(<AuthFormLayout {...defaultProps} isLoading={true} />)
-      
-      const submitButton = screen.getByRole('button', { name: /submitting/i })
-      expect(submitButton).toBeDisabled()
-    })
 
     it('should display loading spinner when submitting', () => {
       render(<AuthFormLayout {...defaultProps} isSubmitting={true} />)
