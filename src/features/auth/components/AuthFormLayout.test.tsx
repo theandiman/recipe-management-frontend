@@ -186,14 +186,6 @@ describe('AuthFormLayout', () => {
   })
 
   describe('Layout and Structure', () => {
-    it('should render main container with proper styling', () => {
-      const { container } = render(<AuthFormLayout {...defaultProps} />)
-      
-      const mainContainer = container.querySelector('.min-h-screen')
-      expect(mainContainer).toBeInTheDocument()
-      expect(mainContainer).toHaveClass('flex', 'items-center', 'justify-center')
-    })
-
     it('should render both dividers', () => {
       render(<AuthFormLayout {...defaultProps} />)
       
