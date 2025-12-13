@@ -143,7 +143,7 @@ jobs:
           VITE_STORAGE_API_URL: http://localhost:8081
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: playwright-report
@@ -220,7 +220,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Upload coverage report as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: sonar-coverage-report
@@ -496,7 +496,7 @@ jobs:
           echo "✅ ZAP scan completed"
 
       - name: Upload ZAP Scan Report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: zap-scan-report
