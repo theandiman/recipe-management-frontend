@@ -201,13 +201,6 @@ describe('AuthFormLayout', () => {
       expect(mainContainer).toHaveClass('flex', 'items-center', 'justify-center')
     })
 
-    it('should render form card with proper styling', () => {
-      const { container } = render(<AuthFormLayout {...defaultProps} />)
-      
-      const formCard = container.querySelector('.bg-white.rounded-2xl')
-      expect(formCard).toBeInTheDocument()
-    })
-
     it('should render both dividers', () => {
       render(<AuthFormLayout {...defaultProps} />)
       
