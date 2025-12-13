@@ -215,7 +215,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                   !canGoNext ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
-                {currentStep === totalSteps - 1 ? 'Review →' : 'Next →'}
+                Next →
               </button>
             </div>
           </div>
