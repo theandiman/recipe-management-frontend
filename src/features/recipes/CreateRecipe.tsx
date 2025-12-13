@@ -41,46 +41,10 @@ export const CreateRecipe: React.FC = () => {
   return (
     <RecipeFormLayout
       mode="create"
-      currentStep={navigation.currentStep}
-      totalSteps={navigation.totalSteps}
-      steps={navigation.steps}
-      goToStep={navigation.goToStep}
-      goToNextStep={navigation.goToNextStep}
-      goToPreviousStep={navigation.goToPreviousStep}
+      {...navigation}
       canGoNext={!navigation.isLastStep}
       canGoPrevious={!navigation.isFirstStep}
-      stepsWithErrors={form.stepsWithErrors}
-      title={form.title}
-      setTitle={form.setTitle}
-      description={form.description}
-      setDescription={form.setDescription}
-      prepTime={form.prepTime}
-      setPrepTime={form.setPrepTime}
-      cookTime={form.cookTime}
-      setCookTime={form.setCookTime}
-      servings={form.servings}
-      setServings={form.setServings}
-      imagePreview={form.imagePreview}
-      handleImageUpload={form.handleImageUpload}
-      removeImage={form.removeImage}
-      ingredients={form.ingredients}
-      addIngredient={form.addIngredient}
-      updateIngredient={form.updateIngredient}
-      removeIngredient={form.removeIngredient}
-      instructions={form.instructions}
-      addInstruction={form.addInstruction}
-      updateInstruction={form.updateInstruction}
-      removeInstruction={form.removeInstruction}
-      tags={form.tags}
-      tagInput={form.tagInput}
-      setTagInput={form.setTagInput}
-      addTag={form.addTag}
-      removeTag={form.removeTag}
-      fieldErrors={form.fieldErrors}
-      clearFieldError={form.clearFieldError}
-      saveLoading={form.saveLoading}
-      saveError={form.saveError}
-      setSaveError={form.setSaveError}
+      {...form}
       handleSubmit={handleSubmit}
       handleCancel={handleCancel}
     />

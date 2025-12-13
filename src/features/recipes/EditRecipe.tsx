@@ -122,49 +122,13 @@ export const EditRecipe: React.FC = () => {
 
   return (
     <RecipeFormLayout
-        mode="edit"
-        currentStep={navigation.currentStep}
-        totalSteps={navigation.totalSteps}
-        steps={navigation.steps}
-        goToStep={navigation.goToStep}
-        goToNextStep={navigation.goToNextStep}
-        goToPreviousStep={navigation.goToPreviousStep}
-        canGoNext={!navigation.isLastStep}
-        canGoPrevious={!navigation.isFirstStep}
-        stepsWithErrors={form.stepsWithErrors}
-        title={form.title}
-        setTitle={form.setTitle}
-        description={form.description}
-        setDescription={form.setDescription}
-        prepTime={form.prepTime}
-        setPrepTime={form.setPrepTime}
-        cookTime={form.cookTime}
-        setCookTime={form.setCookTime}
-        servings={form.servings}
-        setServings={form.setServings}
-        imagePreview={form.imagePreview}
-        handleImageUpload={form.handleImageUpload}
-        removeImage={form.removeImage}
-        ingredients={form.ingredients}
-        addIngredient={form.addIngredient}
-        updateIngredient={form.updateIngredient}
-        removeIngredient={form.removeIngredient}
-        instructions={form.instructions}
-        addInstruction={form.addInstruction}
-        updateInstruction={form.updateInstruction}
-        removeInstruction={form.removeInstruction}
-        tags={form.tags}
-        tagInput={form.tagInput}
-        setTagInput={form.setTagInput}
-        addTag={form.addTag}
-        removeTag={form.removeTag}
-        fieldErrors={form.fieldErrors}
-        clearFieldError={form.clearFieldError}
-        saveLoading={form.saveLoading}
-        saveError={form.saveError}
-        setSaveError={form.setSaveError}
-        handleSubmit={handleSubmit}
-        handleCancel={handleCancel}
-      />
+      mode="edit"
+      {...navigation}
+      canGoNext={!navigation.isLastStep}
+      canGoPrevious={!navigation.isFirstStep}
+      {...form}
+      handleSubmit={handleSubmit}
+      handleCancel={handleCancel}
+    />
   )
 }
