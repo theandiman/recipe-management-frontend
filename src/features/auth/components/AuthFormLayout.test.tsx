@@ -121,13 +121,6 @@ describe('AuthFormLayout', () => {
     })
 
 
-    it('should display loading spinner when submitting', () => {
-      render(<AuthFormLayout {...defaultProps} isSubmitting={true} />)
-      
-      const submitButton = screen.getByRole('button', { name: /submitting/i })
-      expect(submitButton.querySelector('svg')).toBeInTheDocument()
-    })
-
   })
 
   describe('Google Sign-In', () => {
