@@ -325,4 +325,138 @@ describe('RecipeDetail', () => {
       })
     })
   })
+
+  describe('Recipe Sharing', () => {
+    it('should toggle sharing from private to public', async () => {
+      const privateRecipe = { ...mockRecipe, isPublic: false }
+      const publicRecipe = { ...mockRecipe, isPublic: true }
+      
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(privateRecipe)
+      vi.mocked(recipeStorageApi.updateRecipeSharing).mockResolvedValue(publicRecipe)
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      // Initially should show "Share" button
+      const shareButton = screen.getByRole('button', { name: /share/i })
+      expect(shareButton).toHaveAttribute('title', 'Share recipe publicly')
+
+      // Click to share
+      await userEvent.click(shareButton)
+
+      await waitFor(() => {
+        expect(recipeStorageApi.updateRecipeSharing).toHaveBeenCalledWith('recipe-1', true)
+      })
+
+      // Button should now show "Make Private"
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /make private/i })).toBeInTheDocument()
+      })
+    })
+
+    it('should toggle sharing from public to private', async () => {
+      const publicRecipe = { ...mockRecipe, isPublic: true }
+      const privateRecipe = { ...mockRecipe, isPublic: false }
+      
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(publicRecipe)
+      vi.mocked(recipeStorageApi.updateRecipeSharing).mockResolvedValue(privateRecipe)
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      // Initially should show "Make Private" button
+      const makePrivateButton = screen.getByRole('button', { name: /make private/i })
+      expect(makePrivateButton).toHaveAttribute('title', 'Make recipe private')
+
+      // Click to make private
+      await userEvent.click(makePrivateButton)
+
+      await waitFor(() => {
+        expect(recipeStorageApi.updateRecipeSharing).toHaveBeenCalledWith('recipe-1', false)
+      })
+
+      // Button should now show "Share"
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /share/i })).toBeInTheDocument()
+      })
+    })
+
+    it('should handle API errors during sharing toggle', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const privateRecipe = { ...mockRecipe, isPublic: false }
+      
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(privateRecipe)
+      vi.mocked(recipeStorageApi.updateRecipeSharing).mockRejectedValue(new Error('Network error'))
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      const shareButton = screen.getByRole('button', { name: /share/i })
+      await userEvent.click(shareButton)
+
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          'Failed to update recipe sharing:',
+          expect.any(Error)
+        )
+      })
+
+      // Button should still show "Share" (state not updated due to error)
+      expect(screen.getByRole('button', { name: /share/i })).toBeInTheDocument()
+
+      consoleErrorSpy.mockRestore()
+    })
+
+    it('should disable sharing button during API call', async () => {
+      const privateRecipe = { ...mockRecipe, isPublic: false }
+      const publicRecipe = { ...mockRecipe, isPublic: true }
+      
+      let resolveUpdate: (value: Recipe) => void
+      const updatePromise = new Promise<Recipe>((resolve) => {
+        resolveUpdate = resolve
+      })
+      
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(privateRecipe)
+      vi.mocked(recipeStorageApi.updateRecipeSharing).mockReturnValue(updatePromise)
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      const shareButton = screen.getByRole('button', { name: /share/i })
+      expect(shareButton).not.toBeDisabled()
+
+      // Click to initiate sharing
+      await userEvent.click(shareButton)
+
+      // Button should be disabled during API call
+      await waitFor(() => {
+        expect(shareButton).toBeDisabled()
+      })
+
+      // Should show loading spinner
+      const spinner = shareButton.querySelector('.animate-spin')
+      expect(spinner).toBeInTheDocument()
+
+      // Resolve the API call
+      resolveUpdate!(publicRecipe)
+
+      // Button should be enabled again
+      await waitFor(() => {
+        const updatedButton = screen.getByRole('button', { name: /make private/i })
+        expect(updatedButton).not.toBeDisabled()
+      })
+    })
+  })
 })
