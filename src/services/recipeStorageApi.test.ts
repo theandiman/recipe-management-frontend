@@ -424,20 +424,23 @@ describe('recipeStorageApi', () => {
     })
 
     it('should throw error when user is not authenticated', async () => {
-      // Mock the firebase auth to return null user
-      vi.doMock('../config/firebase', () => ({
-        auth: {
-          get currentUser() {
-            return null
-          }
-        }
-      }))
+      // Temporarily mock firebase auth to return null user
+      const { auth } = await import('../config/firebase')
+      const originalCurrentUser = auth.currentUser
+      
+      Object.defineProperty(auth, 'currentUser', {
+        get: () => null,
+        configurable: true
+      })
 
-      // Re-import to get the mocked version
-      const { updateRecipeSharing: updateRecipeSharingWithNoAuth } = await import('./recipeStorageApi?t=' + Date.now())
-
-      await expect(updateRecipeSharingWithNoAuth('test-id', true))
+      await expect(updateRecipeSharing('test-id', true))
         .rejects.toThrow('User not authenticated')
+      
+      // Restore original mock
+      Object.defineProperty(auth, 'currentUser', {
+        get: () => originalCurrentUser,
+        configurable: true
+      })
     })
 
     it('should handle API errors properly', async () => {
