@@ -420,7 +420,7 @@ describe('RecipeDetail', () => {
       const privateRecipe = { ...mockRecipe, isPublic: false }
       const publicRecipe = { ...mockRecipe, isPublic: true }
       
-      let resolveUpdate: (value: Recipe) => void
+      let resolveUpdate: ((value: Recipe) => void) | undefined
       const updatePromise = new Promise<Recipe>((resolve) => {
         resolveUpdate = resolve
       })
@@ -450,7 +450,9 @@ describe('RecipeDetail', () => {
       expect(spinner).toBeInTheDocument()
 
       // Resolve the API call
-      resolveUpdate!(publicRecipe)
+      if (resolveUpdate) {
+        resolveUpdate(publicRecipe)
+      }
 
       // Button should be enabled again
       await waitFor(() => {

@@ -45,7 +45,7 @@ export const RecipeDetail: React.FC = () => {
       setRecipe(updatedRecipe)
     } catch (err) {
       console.error('Failed to update recipe sharing:', err)
-      // Optionally show an error message to the user
+      // Error is logged; recipe state remains unchanged
     } finally {
       setIsTogglingShare(false)
     }
