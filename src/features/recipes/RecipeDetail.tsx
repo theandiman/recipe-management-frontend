@@ -48,6 +48,14 @@ export const RecipeDetail: React.FC = () => {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update sharing status'
       const apiError = err as { response?: { data?: { message?: string } } }
       setError(apiError.response?.data?.message || errorMessage)
+      
+      // Refetch recipe to ensure UI reflects actual server state
+      try {
+        const freshRecipe = await getRecipe(id)
+        setRecipe(freshRecipe)
+      } catch (refetchErr) {
+        console.error('Failed to refetch recipe after sharing error:', refetchErr)
+      }
     } finally {
       setIsTogglingShare(false)
     }
