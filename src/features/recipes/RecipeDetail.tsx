@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getRecipe } from '../../services/recipeStorageApi'
+import { getRecipe, updateRecipeSharing } from '../../services/recipeStorageApi'
 import { CookingMode } from '../../components/CookingMode'
 import type { Recipe } from '../../types/nutrition'
 
@@ -11,6 +11,7 @@ export const RecipeDetail: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isCookingMode, setIsCookingMode] = useState(false)
+  const [isTogglingShare, setIsTogglingShare] = useState(false)
 
   useEffect(() => {
     const fetchRecipe = async () => {
@@ -33,6 +34,22 @@ export const RecipeDetail: React.FC = () => {
 
     fetchRecipe()
   }, [id])
+
+  const handleToggleSharing = async () => {
+    if (!id || !recipe) return
+    
+    try {
+      setIsTogglingShare(true)
+      const newIsPublic = !recipe.isPublic
+      const updatedRecipe = await updateRecipeSharing(id, newIsPublic)
+      setRecipe(updatedRecipe)
+    } catch (err) {
+      console.error('Failed to update recipe sharing:', err)
+      // Optionally show an error message to the user
+    } finally {
+      setIsTogglingShare(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -87,6 +104,26 @@ export const RecipeDetail: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
             Edit Recipe
+          </button>
+          
+          <button
+            onClick={handleToggleSharing}
+            disabled={isTogglingShare}
+            className="flex items-center gap-2 px-4 py-2 bg-white text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title={recipe.isPublic ? 'Make recipe private' : 'Share recipe publicly'}
+          >
+            {isTogglingShare ? (
+              <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+            ) : recipe.isPublic ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )}
+            {recipe.isPublic ? 'Make Private' : 'Share'}
           </button>
           
           <button
