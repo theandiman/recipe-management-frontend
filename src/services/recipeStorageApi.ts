@@ -288,10 +288,39 @@ export const deleteRecipe = async (id: string): Promise<void> => {
   }
 }
 
+/**
+ * Update recipe sharing status (public/private)
+ * @param id - The recipe ID
+ * @param isPublic - Whether the recipe should be public
+ * @returns The updated recipe
+ */
+export const updateRecipeSharing = async (id: string, isPublic: boolean): Promise<Recipe> => {
+  const { default: axios } = await import('axios')
+  const { auth } = await import('../config/firebase')
+  
+  const user = auth.currentUser
+  if (!user) {
+    throw new Error('User not authenticated')
+  }
+
+  const token = await user.getIdToken()
+  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}/sharing`)
+  
+  const response = await axios.patch(url, { isPublic }, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  
+  return response.data
+}
+
 export default {
   saveRecipe,
   getRecipes,
   getRecipe,
   updateRecipe,
-  deleteRecipe
+  deleteRecipe,
+  updateRecipeSharing
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { deleteRecipe, saveRecipe, getRecipes, getRecipe, updateRecipe } from './recipeStorageApi'
+import { deleteRecipe, saveRecipe, getRecipes, getRecipe, updateRecipe, updateRecipeSharing } from './recipeStorageApi'
 import type { Recipe } from '../types/nutrition'
 import type { AxiosResponse } from 'axios'
 
@@ -14,7 +14,8 @@ vi.mock('axios', () => ({
     delete: vi.fn(),
     get: vi.fn(),
     post: vi.fn(),
-    put: vi.fn()
+    put: vi.fn(),
+    patch: vi.fn()
   }
 }))
 
@@ -376,6 +377,95 @@ describe('recipeStorageApi', () => {
 
       // Verify order: backend first, then storage
       expect(callOrder).toEqual(['backend', 'storage'])
+    })
+  })
+
+  describe('updateRecipeSharing', () => {
+    it('should update recipe sharing status with authentication', async () => {
+      const axios = (await import('axios')).default
+      const mockRecipe = createMockRecipe({ isPublic: true })
+      
+      vi.mocked(axios.patch).mockResolvedValue(createAxiosResponse(mockRecipe))
+
+      const result = await updateRecipeSharing('test-recipe-id', true)
+
+      expect(axios.patch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/recipes/test-recipe-id/sharing'),
+        { isPublic: true },
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'Authorization': 'Bearer mock-token',
+            'Content-Type': 'application/json'
+          })
+        })
+      )
+      expect(result).toEqual(mockRecipe)
+    })
+
+    it('should update recipe sharing to private', async () => {
+      const axios = (await import('axios')).default
+      const mockRecipe = createMockRecipe({ isPublic: false })
+      
+      vi.mocked(axios.patch).mockResolvedValue(createAxiosResponse(mockRecipe))
+
+      const result = await updateRecipeSharing('recipe-456', false)
+
+      expect(axios.patch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/recipes/recipe-456/sharing'),
+        { isPublic: false },
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'Authorization': 'Bearer mock-token',
+            'Content-Type': 'application/json'
+          })
+        })
+      )
+      expect(result).toEqual(mockRecipe)
+    })
+
+    it('should throw error when user is not authenticated', async () => {
+      // Temporarily mock firebase auth to return null user
+      const { auth } = await import('../config/firebase')
+      const originalCurrentUser = auth.currentUser
+      
+      Object.defineProperty(auth, 'currentUser', {
+        get: () => null,
+        configurable: true
+      })
+
+      await expect(updateRecipeSharing('test-id', true))
+        .rejects.toThrow('User not authenticated')
+      
+      // Restore original mock
+      Object.defineProperty(auth, 'currentUser', {
+        get: () => originalCurrentUser,
+        configurable: true
+      })
+    })
+
+    it('should handle API errors properly', async () => {
+      const axios = (await import('axios')).default
+      const mockError = {
+        response: {
+          status: 403,
+          data: { message: 'Forbidden: You do not have permission to update this recipe' }
+        }
+      }
+      
+      vi.mocked(axios.patch).mockRejectedValue(mockError)
+
+      await expect(updateRecipeSharing('test-recipe-id', true))
+        .rejects.toEqual(mockError)
+    })
+
+    it('should handle network errors', async () => {
+      const axios = (await import('axios')).default
+      const networkError = new Error('Network Error')
+      
+      vi.mocked(axios.patch).mockRejectedValue(networkError)
+
+      await expect(updateRecipeSharing('test-recipe-id', false))
+        .rejects.toThrow('Network Error')
     })
   })
 })
