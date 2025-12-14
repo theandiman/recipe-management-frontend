@@ -402,19 +402,25 @@ describe('recipeStorageApi', () => {
       expect(result).toEqual(mockRecipe)
     })
 
-    it('should construct proper API endpoint for sharing update', async () => {
+    it('should update recipe sharing to private', async () => {
       const axios = (await import('axios')).default
       const mockRecipe = createMockRecipe({ isPublic: false })
       
       vi.mocked(axios.patch).mockResolvedValue(createAxiosResponse(mockRecipe))
 
-      await updateRecipeSharing('recipe-456', false)
+      const result = await updateRecipeSharing('recipe-456', false)
 
       expect(axios.patch).toHaveBeenCalledWith(
         expect.stringContaining('/api/recipes/recipe-456/sharing'),
         { isPublic: false },
-        expect.any(Object)
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'Authorization': 'Bearer mock-token',
+            'Content-Type': 'application/json'
+          })
+        })
       )
+      expect(result).toEqual(mockRecipe)
     })
 
     it('should throw error when user is not authenticated', async () => {
@@ -457,38 +463,6 @@ describe('recipeStorageApi', () => {
 
       await expect(updateRecipeSharing('test-recipe-id', false))
         .rejects.toThrow('Network Error')
-    })
-
-    it('should update sharing to public', async () => {
-      const axios = (await import('axios')).default
-      const mockRecipe = createMockRecipe({ isPublic: true })
-      
-      vi.mocked(axios.patch).mockResolvedValue(createAxiosResponse(mockRecipe))
-
-      const result = await updateRecipeSharing('recipe-789', true)
-
-      expect(axios.patch).toHaveBeenCalledWith(
-        expect.any(String),
-        { isPublic: true },
-        expect.any(Object)
-      )
-      expect(result.isPublic).toBe(true)
-    })
-
-    it('should update sharing to private', async () => {
-      const axios = (await import('axios')).default
-      const mockRecipe = createMockRecipe({ isPublic: false })
-      
-      vi.mocked(axios.patch).mockResolvedValue(createAxiosResponse(mockRecipe))
-
-      const result = await updateRecipeSharing('recipe-999', false)
-
-      expect(axios.patch).toHaveBeenCalledWith(
-        expect.any(String),
-        { isPublic: false },
-        expect.any(Object)
-      )
-      expect(result.isPublic).toBe(false)
     })
   })
 })
