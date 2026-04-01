@@ -19,14 +19,14 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const labels = context.payload.pull_request.labels.map(l => l.name);
-            const isMajor = labels.includes('type: major');
+            const body = context.payload.pull_request.body || '';
+            const isMajor = /Update type:\s*major/i.test(body);
             if (isMajor) {
               core.setOutput('should-automerge', 'false');
-              console.log('Major update detected — skipping auto-approve.');
+              console.log('Major update detected from PR body — skipping auto-approve.');
             } else {
               core.setOutput('should-automerge', 'true');
-              console.log('Minor/patch update detected — proceeding with auto-approve.');
+              console.log('Non-major update detected — proceeding with auto-approve.');
             }
 
       - name: Auto-approve PR
