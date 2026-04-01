@@ -4,6 +4,7 @@
     "github>theandiman/recipe-management"
   ],
   "platformAutomerge": true,
+  "rebaseWhen": "behind-base-branch",
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch"],
