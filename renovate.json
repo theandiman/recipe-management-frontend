@@ -8,7 +8,12 @@
     {
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true,
-      "automergeType": "pr"
+      "automergeType": "pr",
+      "addLabels": ["type: minor", "type: patch"]
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "addLabels": ["type: major"]
     }
   ]
 }
