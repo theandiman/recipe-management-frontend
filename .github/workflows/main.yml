@@ -10,6 +10,7 @@ on:
 # Required permissions for the workflow
 permissions:
   contents: read
+  packages: read
   pull-requests: write
   issues: write
   checks: write
@@ -41,7 +42,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run ESLint
         run: npm run lint
@@ -67,7 +68,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run TypeScript type check
         run: npx tsc --noEmit
@@ -95,7 +96,7 @@ jobs:
           rm -rf node_modules package-lock.json
           npm install
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run unit tests
         run: npm test -- --run --coverage
@@ -132,7 +133,7 @@ jobs:
           rm -rf node_modules package-lock.json
           npm install
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
@@ -181,7 +182,7 @@ jobs:
           rm -rf node_modules package-lock.json
           npm install
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build for production
         run: npm run build
@@ -220,7 +221,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run tests with coverage
         run: npm test -- --run --coverage
@@ -265,7 +266,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run npm audit
         run: npm audit --audit-level=moderate
@@ -320,7 +321,7 @@ jobs:
           rm -rf node_modules package-lock.json
           npm install
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build for production with environment secrets
         run: npm run build
