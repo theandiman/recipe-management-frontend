@@ -36,6 +36,8 @@ jobs:
           cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@theandiman'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
         run: npm ci
@@ -60,6 +62,8 @@ jobs:
           cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@theandiman'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
         run: npm ci
@@ -84,6 +88,8 @@ jobs:
           cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@theandiman'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
         run: |
@@ -119,6 +125,8 @@ jobs:
           cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@theandiman'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
         run: |
@@ -166,6 +174,8 @@ jobs:
           cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@theandiman'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
         run: |
@@ -199,12 +209,14 @@ jobs:
           fetch-depth: 0  # Full history for better analysis
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@theandiman'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
         run: npm ci
@@ -248,6 +260,8 @@ jobs:
           cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@theandiman'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
         run: npm ci
@@ -299,6 +313,8 @@ jobs:
           cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@theandiman'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
         run: |
