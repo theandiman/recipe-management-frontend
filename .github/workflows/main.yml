@@ -10,6 +10,7 @@ on:
 # Required permissions for the workflow
 permissions:
   contents: read
+  packages: read
   pull-requests: write
   issues: write
   checks: write
@@ -35,11 +36,13 @@ jobs:
           cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@theandiman'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
         run: npm ci
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run ESLint
         run: npm run lint
@@ -59,11 +62,13 @@ jobs:
           cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@theandiman'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
         run: npm ci
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run TypeScript type check
         run: npx tsc --noEmit
@@ -83,13 +88,15 @@ jobs:
           cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@theandiman'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
         run: |
           rm -rf node_modules package-lock.json
           npm install
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run unit tests
         run: npm test -- --run --coverage
@@ -118,13 +125,15 @@ jobs:
           cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@theandiman'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
         run: |
           rm -rf node_modules package-lock.json
           npm install
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
@@ -143,7 +152,7 @@ jobs:
           VITE_STORAGE_API_URL: http://localhost:8081
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report
@@ -165,13 +174,15 @@ jobs:
           cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@theandiman'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
         run: |
           rm -rf node_modules package-lock.json
           npm install
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build for production
         run: npm run build
@@ -193,34 +204,36 @@ jobs:
     needs: [build, unit-tests]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Full history for better analysis
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@theandiman'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
         run: npm ci
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run tests with coverage
         run: npm test -- --run --coverage
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v3.1.0
+        uses: SonarSource/sonarcloud-github-action@v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Upload coverage report as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: sonar-coverage-report
@@ -247,11 +260,13 @@ jobs:
           cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@theandiman'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
         run: npm ci
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run npm audit
         run: npm audit --audit-level=moderate
@@ -298,13 +313,15 @@ jobs:
           cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@theandiman'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
         run: |
           rm -rf node_modules package-lock.json
           npm install
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build for production with environment secrets
         run: npm run build
@@ -496,7 +513,7 @@ jobs:
           echo "✅ ZAP scan completed"
 
       - name: Upload ZAP Scan Report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: zap-scan-report
