@@ -47,20 +47,24 @@ jobs:
               pull_number: context.payload.pull_request.number,
             }).catch((error) => { console.log('Branch update skipped:', error.message); });
 
-            await github.graphql(`
-              mutation EnableAutoMerge($pullRequestId: ID!) {
-                enablePullRequestAutoMerge(input: {
-                  pullRequestId: $pullRequestId,
-                  mergeMethod: SQUASH
-                }) {
-                  pullRequest {
-                    autoMergeRequest {
-                      enabledAt
+            try {
+              await github.graphql(`
+                mutation EnableAutoMerge($pullRequestId: ID!) {
+                  enablePullRequestAutoMerge(input: {
+                    pullRequestId: $pullRequestId,
+                    mergeMethod: SQUASH
+                  }) {
+                    pullRequest {
+                      autoMergeRequest {
+                        enabledAt
+                      }
                     }
                   }
                 }
-              }
-            `, {
-              pullRequestId: context.payload.pull_request.node_id,
-            });
-            console.log('Auto-merge enabled on PR #' + context.payload.pull_request.number);
+              `, {
+                pullRequestId: context.payload.pull_request.node_id,
+              });
+              console.log('Auto-merge enabled on PR #' + context.payload.pull_request.number);
+            } catch (error) {
+              console.log('Auto-merge enable skipped:', error.message);
+            }
