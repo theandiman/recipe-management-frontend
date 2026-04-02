@@ -174,6 +174,7 @@ describe('RecipeCard', () => {
     const publicRecipe = { ...mockRecipe, isPublic: true }
     render(<RecipeCard recipe={publicRecipe} />)
 
+    expect(screen.getByTestId('public-badge')).toBeInTheDocument()
     expect(screen.getByText('Public')).toBeInTheDocument()
   })
 
@@ -181,6 +182,7 @@ describe('RecipeCard', () => {
     const privateRecipe = { ...mockRecipe, isPublic: false }
     render(<RecipeCard recipe={privateRecipe} />)
 
+    expect(screen.queryByTestId('public-badge')).not.toBeInTheDocument()
     expect(screen.queryByText('Public')).not.toBeInTheDocument()
   })
 
@@ -188,6 +190,7 @@ describe('RecipeCard', () => {
     const recipeWithoutPublicFlag = { ...mockRecipe, isPublic: undefined }
     render(<RecipeCard recipe={recipeWithoutPublicFlag} />)
 
+    expect(screen.queryByTestId('public-badge')).not.toBeInTheDocument()
     expect(screen.queryByText('Public')).not.toBeInTheDocument()
   })
 

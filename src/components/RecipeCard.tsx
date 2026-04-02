@@ -38,6 +38,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
     >
       {recipe.isPublic && (
         <div
+          data-testid="public-badge"
           className="absolute top-3 left-3 z-10 flex items-center gap-1 bg-emerald-500 text-white text-xs font-medium px-2 py-0.5 rounded-full pointer-events-none"
         >
           <GlobeIcon className="w-3 h-3" />
