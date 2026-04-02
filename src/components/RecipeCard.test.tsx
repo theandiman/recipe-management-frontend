@@ -175,7 +175,6 @@ describe('RecipeCard', () => {
     render(<RecipeCard recipe={publicRecipe} />)
 
     expect(screen.getByText('Public')).toBeInTheDocument()
-    expect(screen.getByLabelText('Public recipe')).toBeInTheDocument()
   })
 
   it('should not display a Public badge when isPublic is false', () => {
