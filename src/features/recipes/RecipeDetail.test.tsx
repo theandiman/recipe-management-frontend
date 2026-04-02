@@ -454,32 +454,35 @@ describe('RecipeDetail', () => {
     it('should auto-dismiss the sharing error after 5 seconds', async () => {
       vi.useFakeTimers()
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      const privateRecipe = { ...mockRecipe, isPublic: false }
 
-      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(privateRecipe)
-      vi.mocked(recipeStorageApi.updateRecipeSharing).mockRejectedValue(new Error('Network error'))
+      try {
+        const privateRecipe = { ...mockRecipe, isPublic: false }
 
-      renderWithRouter()
+        vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(privateRecipe)
+        vi.mocked(recipeStorageApi.updateRecipeSharing).mockRejectedValue(new Error('Network error'))
 
-      await waitFor(() => {
-        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
-      })
+        renderWithRouter()
 
-      await userEvent.click(screen.getByRole('button', { name: /share/i }))
+        await waitFor(() => {
+          expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+        })
 
-      await waitFor(() => {
-        expect(screen.getByRole('alert')).toBeInTheDocument()
-      })
+        await userEvent.click(screen.getByRole('button', { name: /share/i }))
 
-      // Advance time by 5 seconds to trigger auto-dismiss
-      vi.advanceTimersByTime(5000)
+        await waitFor(() => {
+          expect(screen.getByRole('alert')).toBeInTheDocument()
+        })
 
-      await waitFor(() => {
-        expect(screen.queryByRole('alert')).not.toBeInTheDocument()
-      })
+        // Advance time by 5 seconds to trigger auto-dismiss
+        await vi.advanceTimersByTimeAsync(5000)
 
-      consoleErrorSpy.mockRestore()
-      vi.useRealTimers()
+        await waitFor(() => {
+          expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+        })
+      } finally {
+        consoleErrorSpy.mockRestore()
+        vi.useRealTimers()
+      }
     })
 
     it('should disable sharing button during API call', async () => {
