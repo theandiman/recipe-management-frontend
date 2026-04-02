@@ -50,6 +50,7 @@ export const RecipeDetail: React.FC = () => {
     if (navigator.clipboard) {
       try {
         await navigator.clipboard.writeText(url)
+        setFallbackUrl(null)
         setIsCopied(true)
         if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
         copyTimerRef.current = setTimeout(() => setIsCopied(false), 2000)
