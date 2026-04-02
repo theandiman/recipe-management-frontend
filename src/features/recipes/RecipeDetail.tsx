@@ -154,7 +154,7 @@ export const RecipeDetail: React.FC = () => {
         </div>
       )}
 
-      {/* Recipe header */}
+      {/* Recipe details */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
         {recipe.description && (
           <p className="text-lg text-gray-600 mb-6">{recipe.description}</p>
