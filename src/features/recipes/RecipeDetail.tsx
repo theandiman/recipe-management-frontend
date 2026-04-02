@@ -47,6 +47,7 @@ export const RecipeDetail: React.FC = () => {
     
     try {
       setIsTogglingShare(true)
+      setSharingError(null)
       const newIsPublic = !recipe.isPublic
       const updatedRecipe = await updateRecipeSharing(id, newIsPublic)
       setRecipe(updatedRecipe)

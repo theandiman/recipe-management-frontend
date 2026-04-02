@@ -485,6 +485,41 @@ describe('RecipeDetail', () => {
       }
     })
 
+    it('should clear the sharing error when a subsequent toggle succeeds', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const privateRecipe = { ...mockRecipe, isPublic: false }
+      const publicRecipe = { ...mockRecipe, isPublic: true }
+
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(privateRecipe)
+      // First call fails, second call succeeds
+      vi.mocked(recipeStorageApi.updateRecipeSharing)
+        .mockRejectedValueOnce(new Error('Network error'))
+        .mockResolvedValueOnce(publicRecipe)
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      // First click → error banner appears
+      await userEvent.click(screen.getByRole('button', { name: /share/i }))
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument()
+      })
+
+      // Second click → success; banner should be gone immediately
+      await userEvent.click(screen.getByRole('button', { name: /share/i }))
+
+      await waitFor(() => {
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /make private/i })).toBeInTheDocument()
+      })
+
+      consoleErrorSpy.mockRestore()
+    })
+
     it('should disable sharing button during API call', async () => {
       const privateRecipe = { ...mockRecipe, isPublic: false }
       const publicRecipe = { ...mockRecipe, isPublic: true }
