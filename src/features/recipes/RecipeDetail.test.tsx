@@ -527,36 +527,39 @@ describe('RecipeDetail', () => {
 
     it('should show "Copied!" feedback for ~2 seconds after click', async () => {
       vi.useFakeTimers()
-      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
-      const publicRecipe = { ...mockRecipe, isPublic: true }
-      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(publicRecipe)
 
-      const writeTextMock = vi.fn().mockResolvedValue(undefined)
-      Object.defineProperty(navigator, 'clipboard', {
-        value: { writeText: writeTextMock },
-        configurable: true,
-      })
+      try {
+        const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+        const publicRecipe = { ...mockRecipe, isPublic: true }
+        vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(publicRecipe)
 
-      renderWithRouter()
+        const writeTextMock = vi.fn().mockResolvedValue(undefined)
+        Object.defineProperty(navigator, 'clipboard', {
+          value: { writeText: writeTextMock },
+          configurable: true,
+        })
 
-      await waitFor(() => {
-        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
-      })
+        renderWithRouter()
 
-      const copyButton = screen.getByRole('button', { name: /copy link/i })
-      await user.click(copyButton)
+        await waitFor(() => {
+          expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+        })
 
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /copied!/i })).toBeInTheDocument()
-      })
+        const copyButton = screen.getByRole('button', { name: /copy link/i })
+        await user.click(copyButton)
 
-      vi.advanceTimersByTime(2000)
+        await waitFor(() => {
+          expect(screen.getByRole('button', { name: /copied!/i })).toBeInTheDocument()
+        })
 
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /copy link/i })).toBeInTheDocument()
-      })
+        vi.advanceTimersByTime(2000)
 
-      vi.useRealTimers()
+        await waitFor(() => {
+          expect(screen.getByRole('button', { name: /copy link/i })).toBeInTheDocument()
+        })
+      } finally {
+        vi.useRealTimers()
+      }
     })
 
     it('should show fallback notification when navigator.clipboard is unavailable', async () => {
