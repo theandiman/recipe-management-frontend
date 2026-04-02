@@ -48,7 +48,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
       <div className="h-full">
         {recipe.imageUrl ? (
           <motion.div className="relative h-40 sm:h-48 overflow-hidden" whileHover={{ scale: 1.03 }} transition={{ duration: 0.2 }}>
-                <img src={recipe.imageUrl} alt={title} loading="lazy" className="w-full h-full object-cover" />
+                <img src={recipe.imageUrl} alt="" aria-hidden="true" loading="lazy" className="w-full h-full object-cover" />
             {/* Title overlay at bottom of image */}
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 pt-6 pb-3">
               <h3 className="text-white font-semibold text-sm sm:text-base line-clamp-2">{title}</h3>
