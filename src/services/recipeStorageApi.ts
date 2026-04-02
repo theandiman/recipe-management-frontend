@@ -289,6 +289,23 @@ export const deleteRecipe = async (id: string): Promise<void> => {
 }
 
 /**
+ * Fetch all public recipes from all users (no authentication required)
+ * @returns List of public recipes
+ */
+export const getPublicRecipes = async (): Promise<Recipe[]> => {
+  const { default: axios } = await import('axios')
+  const url = buildApiUrl(STORAGE_API_BASE, '/api/recipes/public')
+
+  const response = await axios.get(url, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+
+  return response.data
+}
+
+/**
  * Update recipe sharing status (public/private)
  * @param id - The recipe ID
  * @param isPublic - Whether the recipe should be public
@@ -319,6 +336,7 @@ export const updateRecipeSharing = async (id: string, isPublic: boolean): Promis
 export default {
   saveRecipe,
   getRecipes,
+  getPublicRecipes,
   getRecipe,
   updateRecipe,
   deleteRecipe,
