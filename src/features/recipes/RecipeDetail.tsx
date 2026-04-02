@@ -48,17 +48,29 @@ export const RecipeDetail: React.FC = () => {
     if (!id) return
     const url = `${window.location.origin}/dashboard/recipes/${id}`
     if (navigator.clipboard) {
+    const showFallback = () => {
+      if (copyTimerRef.current) {
+        clearTimeout(copyTimerRef.current)
+        copyTimerRef.current = null
+      }
+      setIsCopied(false)
+      setFallbackUrl(url)
+    }
+
+    if (navigator.clipboard) {
       try {
         await navigator.clipboard.writeText(url)
-        setFallbackUrl(null)
         setIsCopied(true)
-        if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
+        if (copyTimerRef.current) {
+          clearTimeout(copyTimerRef.current)
+          copyTimerRef.current = null
+        }
         copyTimerRef.current = setTimeout(() => setIsCopied(false), 2000)
       } catch {
-        setFallbackUrl(url)
+        showFallback()
       }
     } else {
-      setFallbackUrl(url)
+      showFallback()
     }
   }
 
