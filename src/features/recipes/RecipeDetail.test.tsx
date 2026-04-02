@@ -463,6 +463,24 @@ describe('RecipeDetail', () => {
   })
 
   describe('Copy Link', () => {
+    let originalClipboardDescriptor: PropertyDescriptor | undefined
+
+    beforeEach(() => {
+      originalClipboardDescriptor = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
+    })
+
+    afterEach(() => {
+      if (originalClipboardDescriptor !== undefined) {
+        Object.defineProperty(navigator, 'clipboard', originalClipboardDescriptor)
+      } else {
+        Object.defineProperty(navigator, 'clipboard', {
+          value: undefined,
+          configurable: true,
+          writable: true,
+        })
+      }
+    })
+
     it('should render Copy Link button when recipe is public', async () => {
       const publicRecipe = { ...mockRecipe, isPublic: true }
       vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(publicRecipe)

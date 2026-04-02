@@ -47,7 +47,6 @@ export const RecipeDetail: React.FC = () => {
   const handleCopyLink = async () => {
     if (!id) return
     const url = `${window.location.origin}/dashboard/recipes/${id}`
-    if (navigator.clipboard) {
     const showFallback = () => {
       if (copyTimerRef.current) {
         clearTimeout(copyTimerRef.current)
@@ -60,6 +59,7 @@ export const RecipeDetail: React.FC = () => {
     if (navigator.clipboard) {
       try {
         await navigator.clipboard.writeText(url)
+        setFallbackUrl(null)
         setIsCopied(true)
         if (copyTimerRef.current) {
           clearTimeout(copyTimerRef.current)
