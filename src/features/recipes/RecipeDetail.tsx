@@ -170,6 +170,9 @@ export const RecipeDetail: React.FC = () => {
         </div>
       )}
 
+      {/* Recipe title */}
+      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">{recipe.recipeName}</h1>
+
       {/* Recipe image */}
       {recipe.imageUrl && (
         <div className="mb-8 rounded-xl overflow-hidden shadow-lg">
@@ -182,10 +185,8 @@ export const RecipeDetail: React.FC = () => {
         </div>
       )}
 
-      {/* Recipe header */}
+      {/* Recipe details */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">{recipe.recipeName}</h1>
-        
         {recipe.description && (
           <p className="text-lg text-gray-600 mb-6">{recipe.description}</p>
         )}
