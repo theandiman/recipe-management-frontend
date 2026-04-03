@@ -9,6 +9,25 @@ import type { Recipe } from '../../types/nutrition'
 // Mock the services
 vi.mock('../../services/recipeStorageApi')
 
+// Mock BookmarkButton to avoid AuthContext and SavedRecipesContext dependencies
+vi.mock('../../components/BookmarkButton', () => ({
+  default: () => null,
+  BookmarkButton: () => null,
+}))
+
+// Mock SavedRecipesContext to avoid needing SavedRecipesProvider
+vi.mock('../../features/recipes/SavedRecipesContext', () => ({
+  useSavedRecipes: () => ({
+    savedIds: new Set<string>(),
+    savedRecipes: [],
+    isSaved: () => false,
+    toggleSave: vi.fn().mockResolvedValue(undefined),
+    isLoading: false,
+    reload: vi.fn().mockResolvedValue(undefined)
+  }),
+  SavedRecipesProvider: ({ children }: { children: unknown }) => children
+}))
+
 // Mock CookingMode component
 vi.mock('../../components/CookingMode', () => ({
   CookingMode: ({ recipe, onClose }: { recipe: Recipe; onClose: () => void }) => (

@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getRecipe, updateRecipeSharing } from '../../services/recipeStorageApi'
 import { CookingMode } from '../../components/CookingMode'
 import GlobeIcon from '../../components/GlobeIcon'
+import BookmarkButton from '../../components/BookmarkButton'
 import type { Recipe } from '../../types/nutrition'
 
 export const RecipeDetail: React.FC = () => {
@@ -153,6 +154,13 @@ export const RecipeDetail: React.FC = () => {
             </svg>
             Edit Recipe
           </button>
+
+          {recipe && (
+            <BookmarkButton
+              recipe={recipe}
+              className="px-4 py-2 bg-white border border-emerald-600 rounded-lg hover:bg-emerald-50 font-medium"
+            />
+          )}
           
           <button
             onClick={handleToggleSharing}

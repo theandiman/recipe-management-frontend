@@ -11,6 +11,12 @@ vi.mock('../../services/recipeStorageApi', () => ({
   deleteRecipe: vi.fn()
 }))
 
+// Mock BookmarkButton to avoid AuthContext and SavedRecipesContext dependencies
+vi.mock('../../components/BookmarkButton', () => ({
+  default: () => null,
+  BookmarkButton: () => null,
+}))
+
 // Mock useNavigate
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {

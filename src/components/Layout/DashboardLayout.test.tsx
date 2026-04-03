@@ -12,6 +12,19 @@ vi.mock('../../services/recipeStorageApi', () => ({
   deleteRecipe: vi.fn()
 }))
 
+// Mock SavedRecipesContext
+vi.mock('../../features/recipes/SavedRecipesContext', () => ({
+  useSavedRecipes: () => ({
+    savedIds: new Set<string>(),
+    savedRecipes: [],
+    isSaved: () => false,
+    toggleSave: vi.fn().mockResolvedValue(undefined),
+    isLoading: false,
+    reload: vi.fn().mockResolvedValue(undefined)
+  }),
+  SavedRecipesProvider: ({ children }: { children: unknown }) => children
+}))
+
 // Mock useAuth to provide a dummy user without importing the real module
 vi.mock('../../features/auth/AuthContext', () => ({
   useAuth: () => ({

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import type { Recipe } from '../types/nutrition'
 import GlobeIcon from './GlobeIcon'
+import BookmarkButton from './BookmarkButton'
 
 interface RecipeCardProps {
   recipe: Recipe
@@ -11,9 +12,10 @@ interface RecipeCardProps {
   compact?: boolean
   authorUid?: string
   authorName?: string
+  showBookmark?: boolean
 }
 
-export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete, compact, authorUid, authorName }) => {
+export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete, compact, authorUid, authorName, showBookmark = false }) => {
   const title = recipe.recipeName
   // Calculate total time safely
   const totalTime = recipe.totalTimeMinutes ||
@@ -59,6 +61,14 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
         </button>
+      )}
+      {showBookmark && (
+        <div className="absolute top-3 right-3 z-10">
+          <BookmarkButton
+            recipe={recipe}
+            className="bg-white/90 shadow-sm hover:bg-white"
+          />
+        </div>
       )}
       <div className="h-full">
         {recipe.imageUrl ? (

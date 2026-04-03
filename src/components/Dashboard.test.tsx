@@ -18,6 +18,11 @@ vi.mock('react-router-dom', async () => {
     useNavigate: () => vi.fn()
   }
 })
+// Mock BookmarkButton to avoid SavedRecipesContext dependencies
+vi.mock('../components/BookmarkButton', () => ({
+  default: () => null,
+  BookmarkButton: () => null,
+}))
 
 describe('Dashboard', () => {
   const mockUser = {
