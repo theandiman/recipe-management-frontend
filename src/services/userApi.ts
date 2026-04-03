@@ -3,6 +3,7 @@ import { buildApiUrl } from '../utils/apiUtils'
 import type { Recipe } from '../types/nutrition'
 
 const USER_API_BASE = import.meta.env.VITE_STORAGE_API_URL || ''
+const IS_TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
 
 export interface UserProfile {
   uid: string
@@ -15,6 +16,20 @@ export interface UserProfile {
 
 export async function getUserProfile(uid: string): Promise<UserProfile> {
   const url = buildApiUrl(USER_API_BASE, `/api/users/${uid}/profile`)
-  const response = await axios.get<UserProfile>(url)
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  if (!IS_TEST_MODE) {
+    const { auth } = await import('../config/firebase')
+    const user = auth.currentUser
+    if (user) {
+      const token = await user.getIdToken()
+      headers.Authorization = `Bearer ${token}`
+    }
+  }
+
+  const response = await axios.get<UserProfile>(url, { headers })
   return response.data
 }
