@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { render } from '@testing-library/react'
 import { StatsSkeleton } from './StatsSkeleton'
 import { RecentRecipesSkeleton } from './RecentRecipesSkeleton'
+import { RecipeCardSkeleton } from './RecipeCardSkeleton'
 
 describe('Skeleton Components', () => {
   describe('StatsSkeleton', () => {
@@ -34,6 +35,21 @@ describe('Skeleton Components', () => {
       const { container } = render(<RecentRecipesSkeleton />)
       
       // Verify structure exists
+      expect(container.firstChild).toBeInTheDocument()
+    })
+  })
+
+  describe('RecipeCardSkeleton', () => {
+    it('should render loading skeleton for a recipe card', () => {
+      const { container } = render(<RecipeCardSkeleton />)
+
+      const skeletons = container.querySelectorAll('.animate-pulse')
+      expect(skeletons.length).toBeGreaterThan(0)
+    })
+
+    it('should render the card structure', () => {
+      const { container } = render(<RecipeCardSkeleton />)
+
       expect(container.firstChild).toBeInTheDocument()
     })
   })
