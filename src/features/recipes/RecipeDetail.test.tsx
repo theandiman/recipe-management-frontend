@@ -470,6 +470,7 @@ describe('RecipeDetail', () => {
     })
 
     afterEach(() => {
+      vi.useRealTimers()
       if (originalClipboardDescriptor !== undefined) {
         Object.defineProperty(navigator, 'clipboard', originalClipboardDescriptor)
       } else {
@@ -562,22 +563,18 @@ describe('RecipeDetail', () => {
       vi.useFakeTimers()
       const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
 
-      try {
-        const copyButton = screen.getByRole('button', { name: /copy link/i })
-        await user.click(copyButton)
+      const copyButton = screen.getByRole('button', { name: /copy link/i })
+      await user.click(copyButton)
 
-        await waitFor(() => {
-          expect(screen.getByRole('button', { name: /copied!/i })).toBeInTheDocument()
-        })
+      // Flush pending microtasks (clipboard.writeText resolution + React re-render)
+      await vi.advanceTimersByTimeAsync(0)
 
-        vi.advanceTimersByTime(2000)
+      expect(screen.getByRole('button', { name: /copied!/i })).toBeInTheDocument()
 
-        await waitFor(() => {
-          expect(screen.getByRole('button', { name: /copy link/i })).toBeInTheDocument()
-        })
-      } finally {
-        vi.useRealTimers()
-      }
+      // Advance 2 seconds for the reset timer to fire
+      await vi.advanceTimersByTimeAsync(2000)
+
+      expect(screen.getByRole('button', { name: /copy link/i })).toBeInTheDocument()
     })
 
     it('should show fallback notification when navigator.clipboard is unavailable', async () => {
