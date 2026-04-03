@@ -116,6 +116,11 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
           <Link
             to={`/user/${authorUid}`}
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.stopPropagation()
+              }
+            }}
             className="flex items-center gap-2 text-xs text-gray-500 hover:text-emerald-600 transition-colors"
             aria-label={authorName ? `View ${authorName}'s profile` : 'View author profile'}
           >
