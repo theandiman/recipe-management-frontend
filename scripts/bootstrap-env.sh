@@ -70,10 +70,10 @@ if [ -z "$API_URL" ]; then
 fi
 
 # Get Storage service URL
-STORAGE_API_URL=$(gcloud run services describe recipe-storage-service --region=europe-west2 --project="$PROJECT_ID" --format='value(status.url)' 2>/dev/null || echo "")
+STORAGE_API_URL=$(gcloud run services describe recipe-management-service --region=europe-west2 --project="$PROJECT_ID" --format='value(status.url)' 2>/dev/null || echo "")
 
 if [ -z "$STORAGE_API_URL" ]; then
-  echo "Failed to find recipe-storage-service in Cloud Run (europe-west2). Check service name and region." >&2
+  echo "Failed to find recipe-management-service in Cloud Run (europe-west2). Check service name and region." >&2
   exit 1
 fi
 
