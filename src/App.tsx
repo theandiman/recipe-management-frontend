@@ -5,6 +5,7 @@ import { Login } from './features/auth/Login'
 import { Register } from './features/auth/Register'
 import { DashboardLayout } from './components/Layout/DashboardLayout'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { UserProfilePage } from './features/users/UserProfilePage'
 import './App.css'
 
 function AnimatedRoutes() {
@@ -46,6 +47,20 @@ function AnimatedRoutes() {
           >
             <ProtectedRoute>
               <DashboardLayout />
+            </ProtectedRoute>
+          </motion.div>
+        }
+      />
+      <Route
+        path="/user/:uid"
+        element={
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ProtectedRoute>
+              <UserProfilePage />
             </ProtectedRoute>
           </motion.div>
         }

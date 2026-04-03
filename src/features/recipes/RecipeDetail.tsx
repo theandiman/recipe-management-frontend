@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getRecipe, updateRecipeSharing } from '../../services/recipeStorageApi'
 import { CookingMode } from '../../components/CookingMode'
 import GlobeIcon from '../../components/GlobeIcon'
@@ -232,7 +232,22 @@ export const RecipeDetail: React.FC = () => {
       )}
 
       {/* Recipe title */}
-      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">{recipe.recipeName}</h1>
+      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">{recipe.recipeName}</h1>
+
+      {/* Author link */}
+      {recipe.userId ? (
+        <Link
+          to={`/user/${recipe.userId}`}
+          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-emerald-600 transition-colors mb-6"
+        >
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-semibold">
+            {(recipe.userId[0] || '?').toUpperCase()}
+          </div>
+          <span>View author profile</span>
+        </Link>
+      ) : (
+        <div className="mb-4" />
+      )}
 
       {/* Recipe image */}
       {recipe.imageUrl && (

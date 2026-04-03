@@ -1,8 +1,12 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import RecipeCard from './RecipeCard'
 import type { Recipe } from '../types/nutrition'
+
+const renderWithRouter = (ui: React.ReactElement) =>
+  render(<MemoryRouter>{ui}</MemoryRouter>)
 
 describe('RecipeCard', () => {
   const mockRecipe: Recipe = {
@@ -202,5 +206,79 @@ describe('RecipeCard', () => {
     const card = container.querySelector('[role="button"][tabindex="0"]')
     expect(card).toBeInTheDocument()
     expect(card?.classList.contains('p-0')).toBe(true)
+  })
+
+  describe('author chip', () => {
+    it('should not render author chip when authorUid is not provided', () => {
+      renderWithRouter(<RecipeCard recipe={mockRecipe} />)
+      expect(screen.queryByRole('link', { name: /profile/i })).not.toBeInTheDocument()
+    })
+
+    it('should render author chip with authorName when authorUid and authorName are provided', () => {
+      renderWithRouter(
+        <RecipeCard recipe={mockRecipe} authorUid="user123" authorName="Jane Chef" />
+      )
+      const link = screen.getByRole('link', { name: "View Jane Chef's profile" })
+      expect(link).toBeInTheDocument()
+      expect(link).toHaveAttribute('href', '/user/user123')
+      expect(screen.getByText('Jane Chef')).toBeInTheDocument()
+    })
+
+    it('should render author chip with fallback label when only authorUid is provided', () => {
+      renderWithRouter(<RecipeCard recipe={mockRecipe} authorUid="user123" />)
+      const link = screen.getByRole('link', { name: 'View author profile' })
+      expect(link).toBeInTheDocument()
+      expect(link).toHaveAttribute('href', '/user/user123')
+    })
+
+    it('clicking the author chip does not call onView', async () => {
+      const user = userEvent.setup()
+      const onView = vi.fn()
+      renderWithRouter(
+        <RecipeCard
+          recipe={mockRecipe}
+          onView={onView}
+          authorUid="user123"
+          authorName="Jane Chef"
+        />
+      )
+      const link = screen.getByRole('link', { name: "View Jane Chef's profile" })
+      await user.click(link)
+      expect(onView).not.toHaveBeenCalled()
+    })
+
+    it('pressing Enter on the author chip does not call onView', async () => {
+      const user = userEvent.setup()
+      const onView = vi.fn()
+      renderWithRouter(
+        <RecipeCard
+          recipe={mockRecipe}
+          onView={onView}
+          authorUid="user123"
+          authorName="Jane Chef"
+        />
+      )
+      const link = screen.getByRole('link', { name: "View Jane Chef's profile" })
+      link.focus()
+      await user.keyboard('{Enter}')
+      expect(onView).not.toHaveBeenCalled()
+    })
+
+    it('pressing Space on the author chip does not call onView', async () => {
+      const user = userEvent.setup()
+      const onView = vi.fn()
+      renderWithRouter(
+        <RecipeCard
+          recipe={mockRecipe}
+          onView={onView}
+          authorUid="user123"
+          authorName="Jane Chef"
+        />
+      )
+      const link = screen.getByRole('link', { name: "View Jane Chef's profile" })
+      link.focus()
+      await user.keyboard(' ')
+      expect(onView).not.toHaveBeenCalled()
+    })
   })
 })
