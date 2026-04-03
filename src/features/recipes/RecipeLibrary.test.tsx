@@ -221,9 +221,9 @@ describe('RecipeLibrary', () => {
       renderRecipeLibrary()
 
       await waitFor(() => {
-        const images = screen.getAllByRole('img')
-        const cakeImage = images.find(img => img.getAttribute('alt') === 'Chocolate Cake')
-        expect(cakeImage).toHaveAttribute('src', 'https://example.com/cake.jpg')
+        // Images are decorative (aria-hidden) because the title is shown as visible text overlay
+        const cakeImage = document.querySelector('img[src="https://example.com/cake.jpg"]')
+        expect(cakeImage).toBeInTheDocument()
       })
     })
 

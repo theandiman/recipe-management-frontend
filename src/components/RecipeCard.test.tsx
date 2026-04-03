@@ -42,9 +42,11 @@ describe('RecipeCard', () => {
   it('should display recipe image', () => {
     render(<RecipeCard recipe={mockRecipe} />)
     
-    const img = screen.getByAltText('Test Recipe')
+    // Image is decorative (alt="") because the title is conveyed via visible text overlay
+    const img = document.querySelector('img')
     expect(img).toBeInTheDocument()
     expect(img).toHaveAttribute('src', 'https://example.com/recipe.jpg')
+    expect(img).toHaveAttribute('alt', '')
   })
 
   it('should show placeholder when no image', () => {
@@ -168,6 +170,30 @@ describe('RecipeCard', () => {
     await user.click(card!)
     
     expect(onView).not.toHaveBeenCalled()
+  })
+
+  it('should display a Public badge when isPublic is true', () => {
+    const publicRecipe = { ...mockRecipe, isPublic: true }
+    render(<RecipeCard recipe={publicRecipe} />)
+
+    expect(screen.getByTestId('public-badge')).toBeInTheDocument()
+    expect(screen.getByText('Public')).toBeInTheDocument()
+  })
+
+  it('should not display a Public badge when isPublic is false', () => {
+    const privateRecipe = { ...mockRecipe, isPublic: false }
+    render(<RecipeCard recipe={privateRecipe} />)
+
+    expect(screen.queryByTestId('public-badge')).not.toBeInTheDocument()
+    expect(screen.queryByText('Public')).not.toBeInTheDocument()
+  })
+
+  it('should not display a Public badge when isPublic is undefined', () => {
+    const recipeWithoutPublicFlag = { ...mockRecipe, isPublic: undefined }
+    render(<RecipeCard recipe={recipeWithoutPublicFlag} />)
+
+    expect(screen.queryByTestId('public-badge')).not.toBeInTheDocument()
+    expect(screen.queryByText('Public')).not.toBeInTheDocument()
   })
 
   it('should render in compact mode', () => {
