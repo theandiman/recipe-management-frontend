@@ -221,6 +221,7 @@ export const RecipeLibrary: React.FC = () => {
                     recipe={recipe}
                     onView={(id) => navigate(`/dashboard/recipes/${id}`)}
                     onDelete={(r) => r.id && setDeleteConfirm({ id: r.id, title: r.recipeName })}
+                    showBookmark
                   />
                 ))}
               </motion.div>

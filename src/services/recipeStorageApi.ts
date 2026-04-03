@@ -306,6 +306,80 @@ export const getPublicRecipes = async (): Promise<Recipe[]> => {
 }
 
 /**
+ * Save (bookmark) a recipe for the current user
+ * @param id - The recipe ID to save
+ */
+export const bookmarkRecipe = async (id: string): Promise<void> => {
+  const { default: axios } = await import('axios')
+  const { auth } = await import('../config/firebase')
+
+  const user = auth.currentUser
+  if (!user) {
+    throw new Error('User not authenticated')
+  }
+
+  const token = await user.getIdToken()
+  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}/save`)
+
+  await axios.post(url, null, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+}
+
+/**
+ * Remove (un-bookmark) a saved recipe for the current user
+ * @param id - The recipe ID to unsave
+ */
+export const unbookmarkRecipe = async (id: string): Promise<void> => {
+  const { default: axios } = await import('axios')
+  const { auth } = await import('../config/firebase')
+
+  const user = auth.currentUser
+  if (!user) {
+    throw new Error('User not authenticated')
+  }
+
+  const token = await user.getIdToken()
+  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}/save`)
+
+  await axios.delete(url, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+}
+
+/**
+ * Fetch all saved (bookmarked) recipes for the current user
+ * @returns List of saved recipes
+ */
+export const getSavedRecipes = async (): Promise<Recipe[]> => {
+  const { default: axios } = await import('axios')
+  const { auth } = await import('../config/firebase')
+
+  const user = auth.currentUser
+  if (!user) {
+    throw new Error('User not authenticated')
+  }
+
+  const token = await user.getIdToken()
+  const url = buildApiUrl(STORAGE_API_BASE, '/api/recipes/saved')
+
+  const response = await axios.get(url, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+
+  return response.data
+}
+
+/**
  * Update recipe sharing status (public/private)
  * @param id - The recipe ID
  * @param isPublic - Whether the recipe should be public
@@ -340,5 +414,8 @@ export default {
   getRecipe,
   updateRecipe,
   deleteRecipe,
-  updateRecipeSharing
+  updateRecipeSharing,
+  bookmarkRecipe,
+  unbookmarkRecipe,
+  getSavedRecipes
 }

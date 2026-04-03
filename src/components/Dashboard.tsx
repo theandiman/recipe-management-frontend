@@ -246,6 +246,7 @@ export const Dashboard: React.FC = () => {
                 onView={(id) => navigate(`/dashboard/recipes/${id}`)}
                 onDelete={() => { /* don't show delete on recent list */ }}
                 compact
+                showBookmark
               />
             ))}
           </div>

@@ -11,6 +11,12 @@ vi.mock('../../services/recipeStorageApi', () => ({
   getPublicRecipes: vi.fn(),
 }))
 
+// Mock BookmarkButton to avoid AuthContext and SavedRecipesContext dependencies
+vi.mock('../../components/BookmarkButton', () => ({
+  default: () => null,
+  BookmarkButton: () => null,
+}))
+
 const mockRecipes = [
   { id: '1', recipeName: 'Spaghetti Carbonara', description: 'Classic Italian pasta dish', servings: 4 },
   { id: '2', recipeName: 'Chicken Tikka Masala', description: 'Creamy Indian curry', servings: 6 },

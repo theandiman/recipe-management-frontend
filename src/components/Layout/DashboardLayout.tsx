@@ -10,6 +10,8 @@ import { EditRecipe } from '../../features/recipes/EditRecipe'
 import { AIGenerator } from '../../features/recipes/AIGenerator'
 import { HelpPage } from '../../features/help/HelpPage'
 import { CommunityPage } from '../../features/community/CommunityPage'
+import { SavedRecipesPage } from '../../features/recipes/SavedRecipesPage'
+import { SavedRecipesProvider } from '../../features/recipes/SavedRecipesContext'
 
 export const DashboardLayout: React.FC = () => {
   const { user, logout } = useAuth()
@@ -57,6 +59,15 @@ export const DashboardLayout: React.FC = () => {
       ),
     },
     {
+      name: 'Saved Recipes',
+      path: '/dashboard/saved',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+        </svg>
+      ),
+    },
+    {
       name: 'Community',
       path: '/dashboard/community',
       icon: (
@@ -96,6 +107,7 @@ export const DashboardLayout: React.FC = () => {
   ]
 
   return (
+    <SavedRecipesProvider>
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
       <AnimatePresence>
@@ -285,6 +297,7 @@ export const DashboardLayout: React.FC = () => {
             <Route path="generate" element={<AIGenerator />} />
             <Route path="community" element={<CommunityPage />} />
             <Route path="help" element={<HelpPage />} />
+            <Route path="saved" element={<SavedRecipesPage />} />
           </Routes>
         </main>
       </div>
@@ -297,5 +310,6 @@ export const DashboardLayout: React.FC = () => {
         />
       )}
     </div>
+    </SavedRecipesProvider>
   )
 }
