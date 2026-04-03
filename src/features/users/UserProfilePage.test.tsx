@@ -9,6 +9,13 @@ import type { Recipe } from '../../types/nutrition'
 
 vi.mock('../../services/userApi', () => ({
   getUserProfile: vi.fn(),
+  followUser: vi.fn(),
+  unfollowUser: vi.fn(),
+}))
+
+const mockUseAuth = vi.fn()
+vi.mock('../../features/auth/AuthContext', () => ({
+  useAuth: () => mockUseAuth(),
 }))
 
 const mockRecipe: Recipe = {
@@ -37,6 +44,7 @@ const renderAtUid = (uid = 'uid-123') =>
       <Routes>
         <Route path="/user/:uid" element={<UserProfilePage />} />
         <Route path="/dashboard/recipes/:id" element={<div>Recipe detail</div>} />
+        <Route path="/login" element={<div>Sign in page</div>} />
       </Routes>
     </MemoryRouter>
   )
@@ -44,6 +52,10 @@ const renderAtUid = (uid = 'uid-123') =>
 describe('UserProfilePage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUseAuth.mockReturnValue({
+      user: { uid: 'current-user', email: 'current@example.com' },
+      isAuthenticated: true,
+    })
   })
 
   it('shows loading spinner while fetching profile', () => {
@@ -122,7 +134,7 @@ describe('UserProfilePage', () => {
     expect(screen.getByText('Server error')).toBeInTheDocument()
   })
 
-  it('renders Follow button', async () => {
+  it('renders Follow button on another user\'s profile', async () => {
     vi.spyOn(userApi, 'getUserProfile').mockResolvedValue(mockProfile)
     renderAtUid()
 
@@ -131,8 +143,86 @@ describe('UserProfilePage', () => {
     })
   })
 
-  it('Follow button is a no-op (does not throw)', async () => {
+  it('hides Follow button when viewing own profile', async () => {
+    mockUseAuth.mockReturnValue({
+      user: { uid: 'uid-123', email: 'jane@example.com' },
+      isAuthenticated: true,
+    })
+    vi.spyOn(userApi, 'getUserProfile').mockResolvedValue(mockProfile)
+    renderAtUid('uid-123')
+
+    await waitFor(() => {
+      expect(screen.getByText('Jane Chef')).toBeInTheDocument()
+    })
+    expect(screen.queryByRole('button', { name: /follow/i })).not.toBeInTheDocument()
+  })
+
+  it('shows "Following" when isFollowedByCurrentUser is true', async () => {
+    vi.spyOn(userApi, 'getUserProfile').mockResolvedValue({
+      ...mockProfile,
+      isFollowedByCurrentUser: true,
+    })
+    renderAtUid()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Following' })).toBeInTheDocument()
+    })
+  })
+
+  it('shows "Follow" when isFollowedByCurrentUser is false', async () => {
+    vi.spyOn(userApi, 'getUserProfile').mockResolvedValue({
+      ...mockProfile,
+      isFollowedByCurrentUser: false,
+    })
+    renderAtUid()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Follow' })).toBeInTheDocument()
+    })
+  })
+
+  it('calls followUser and toggles to "Following" when authenticated user clicks Follow', async () => {
     const user = userEvent.setup()
+    vi.spyOn(userApi, 'getUserProfile').mockResolvedValue(mockProfile)
+    vi.spyOn(userApi, 'followUser').mockResolvedValue(undefined)
+    renderAtUid()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Follow' })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Follow' }))
+
+    expect(userApi.followUser).toHaveBeenCalledWith('uid-123')
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Following' })).toBeInTheDocument()
+    })
+  })
+
+  it('calls unfollowUser and toggles to "Follow" when authenticated user clicks Following', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(userApi, 'getUserProfile').mockResolvedValue({
+      ...mockProfile,
+      isFollowedByCurrentUser: true,
+    })
+    vi.spyOn(userApi, 'unfollowUser').mockResolvedValue(undefined)
+    renderAtUid()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Following' })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Following' }))
+
+    expect(userApi.unfollowUser).toHaveBeenCalledWith('uid-123')
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Follow' })).toBeInTheDocument()
+    })
+  })
+
+  it('navigates to /login when unauthenticated user clicks Follow', async () => {
+    const user = userEvent.setup()
+    mockUseAuth.mockReturnValue({ user: null, isAuthenticated: false })
     vi.spyOn(userApi, 'getUserProfile').mockResolvedValue(mockProfile)
     renderAtUid()
 
@@ -140,9 +230,28 @@ describe('UserProfilePage', () => {
       expect(screen.getByRole('button', { name: 'Follow' })).toBeInTheDocument()
     })
 
-    // Should not throw
     await user.click(screen.getByRole('button', { name: 'Follow' }))
-    expect(screen.getByRole('button', { name: 'Follow' })).toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(screen.getByText('Sign in page')).toBeInTheDocument()
+    })
+  })
+
+  it('reverts follow state when followUser API call fails', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(userApi, 'getUserProfile').mockResolvedValue(mockProfile)
+    vi.spyOn(userApi, 'followUser').mockRejectedValue(new Error('Network error'))
+    renderAtUid()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Follow' })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Follow' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Follow' })).toBeInTheDocument()
+    })
   })
 
   it('renders avatar initial when no avatarUrl', async () => {
