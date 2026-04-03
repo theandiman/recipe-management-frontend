@@ -40,13 +40,32 @@ export const CommunityPage: React.FC = () => {
     )
   }, [recipes, searchText])
 
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Community Recipes</h1>
-          <p className="text-gray-600">Discover recipes shared by the community</p>
-        </div>
+  const hasRecipes = !loading && !error && recipes.length > 0
+
+  return (
+    <div className="max-w-7xl mx-auto">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Community Recipes</h1>
+        <p className="text-sm md:text-base text-gray-600">
+          {hasRecipes
+            ? `Showing ${filtered.length} of ${recipes.length} ${recipes.length === 1 ? 'recipe' : 'recipes'} from the community`
+            : 'Discover recipes shared by the community'}
+        </p>
+        {hasRecipes && (
+          <div className="mt-4">
+            <label htmlFor="community-search" className="sr-only">Search community recipes</label>
+            <input
+              id="community-search"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="Search by recipe name..."
+              className="w-full sm:max-w-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-300"
+            />
+          </div>
+        )}
+      </div>
+
+      {loading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {Array.from({ length: 6 }).map((_, index) => (
             <motion.div
@@ -59,32 +78,16 @@ export const CommunityPage: React.FC = () => {
             </motion.div>
           ))}
         </div>
-      </div>
-    )
-  }
+      )}
 
-  if (error) {
-    return (
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Community Recipes</h1>
-          <p className="text-gray-600">Discover recipes shared by the community</p>
-        </div>
+      {!loading && error && (
         <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
           <p className="font-medium">Error loading community recipes</p>
           <p className="text-sm mt-1">{error}</p>
         </div>
-      </div>
-    )
-  }
+      )}
 
-  if (recipes.length === 0) {
-    return (
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Community Recipes</h1>
-          <p className="text-sm md:text-base text-gray-600">Discover recipes shared by the community</p>
-        </div>
+      {!loading && !error && recipes.length === 0 && (
         <motion.div
           className="text-center py-12"
           initial={{ opacity: 0, y: 20 }}
@@ -119,45 +122,26 @@ export const CommunityPage: React.FC = () => {
             Be the first to share a recipe with the community!
           </motion.p>
         </motion.div>
-      </div>
-    )
-  }
+      )}
 
-  return (
-    <div className="max-w-7xl mx-auto">
-      <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Community Recipes</h1>
-        <p className="text-sm md:text-base text-gray-600">
-          Showing {filtered.length} of {recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'} from the community
-        </p>
-        <div className="mt-4">
-          <label htmlFor="community-search" className="sr-only">Search community recipes</label>
-          <input
-            id="community-search"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            placeholder="Search by recipe name..."
-            className="w-full sm:max-w-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-300"
-          />
-        </div>
-      </div>
+      {hasRecipes && (
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          {filtered.map((recipe) => (
+            <RecipeCard
+              key={recipe.id}
+              recipe={recipe}
+              onView={(id) => navigate(`/dashboard/recipes/${id}`)}
+            />
+          ))}
+        </motion.div>
+      )}
 
-      <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        {filtered.map((recipe) => (
-          <RecipeCard
-            key={recipe.id}
-            recipe={recipe}
-            onView={(id) => navigate(`/dashboard/recipes/${id}`)}
-          />
-        ))}
-      </motion.div>
-
-      {filtered.length === 0 && (
+      {hasRecipes && filtered.length === 0 && (
         <div className="mt-6 text-center text-gray-600">No recipes match your search.</div>
       )}
     </div>

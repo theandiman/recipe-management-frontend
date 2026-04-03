@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { deleteRecipe, saveRecipe, getRecipes, getRecipe, updateRecipe, updateRecipeSharing } from './recipeStorageApi'
+import { deleteRecipe, saveRecipe, getRecipes, getRecipe, updateRecipe, updateRecipeSharing, getPublicRecipes } from './recipeStorageApi'
 import type { Recipe } from '../types/nutrition'
 import type { AxiosResponse } from 'axios'
 
@@ -466,6 +466,46 @@ describe('recipeStorageApi', () => {
 
       await expect(updateRecipeSharing('test-recipe-id', false))
         .rejects.toThrow('Network Error')
+    })
+  })
+
+  describe('getPublicRecipes', () => {
+    it('should request /api/recipes/public', async () => {
+      const axios = (await import('axios')).default
+      const mockRecipes = [createMockRecipe(), createMockRecipe({ id: 'recipe-2' })]
+
+      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse(mockRecipes))
+
+      await getPublicRecipes()
+
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('/api/recipes/public'),
+        expect.any(Object)
+      )
+    })
+
+    it('should not include an Authorization header', async () => {
+      const axios = (await import('axios')).default
+      const mockRecipes = [createMockRecipe()]
+
+      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse(mockRecipes))
+
+      await getPublicRecipes()
+
+      const callArgs = vi.mocked(axios.get).mock.calls[0]
+      const config = callArgs[1] as { headers?: Record<string, unknown> }
+      expect(config?.headers?.['Authorization']).toBeUndefined()
+    })
+
+    it('should return the list of public recipes', async () => {
+      const axios = (await import('axios')).default
+      const mockRecipes = [createMockRecipe(), createMockRecipe({ id: 'recipe-2' })]
+
+      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse(mockRecipes))
+
+      const result = await getPublicRecipes()
+
+      expect(result).toEqual(mockRecipes)
     })
   })
 })
