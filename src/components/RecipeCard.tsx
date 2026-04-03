@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import type { Recipe } from '../types/nutrition'
 import GlobeIcon from './GlobeIcon'
@@ -8,9 +9,11 @@ interface RecipeCardProps {
   onView?: (id: string) => void
   onDelete?: (recipe: Recipe) => void
   compact?: boolean
+  authorUid?: string
+  authorName?: string
 }
 
-export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete, compact }) => {
+export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete, compact, authorUid, authorName }) => {
   const title = recipe.recipeName
   // Calculate total time safely
   const totalTime = recipe.totalTimeMinutes ||
@@ -108,6 +111,21 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
           </div>
         </div>
       </div>
+      {authorUid && (
+        <div className="px-3 sm:px-4 pb-3 border-t border-gray-100 pt-2">
+          <Link
+            to={`/user/${authorUid}`}
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-2 text-xs text-gray-500 hover:text-emerald-600 transition-colors"
+            aria-label={authorName ? `View ${authorName}'s profile` : 'View author profile'}
+          >
+            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+              {((authorName || authorUid)[0] || '?').toUpperCase()}
+            </div>
+            <span className="truncate">{authorName || 'View Author'}</span>
+          </Link>
+        </div>
+      )}
     </motion.div>
   )
 }
