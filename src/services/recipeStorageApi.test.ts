@@ -470,34 +470,7 @@ describe('recipeStorageApi', () => {
   })
 
   describe('getPublicRecipes', () => {
-    it('should request /api/recipes/public', async () => {
-      const axios = (await import('axios')).default
-      const mockRecipes = [createMockRecipe(), createMockRecipe({ id: 'recipe-2' })]
-
-      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse(mockRecipes))
-
-      await getPublicRecipes()
-
-      expect(axios.get).toHaveBeenCalledWith(
-        expect.stringContaining('/api/recipes/public'),
-        expect.any(Object)
-      )
-    })
-
-    it('should not include an Authorization header', async () => {
-      const axios = (await import('axios')).default
-      const mockRecipes = [createMockRecipe()]
-
-      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse(mockRecipes))
-
-      await getPublicRecipes()
-
-      const callArgs = vi.mocked(axios.get).mock.calls[0]
-      const config = callArgs[1] as { headers?: Record<string, unknown> }
-      expect(config?.headers?.['Authorization']).toBeUndefined()
-    })
-
-    it('should return the list of public recipes', async () => {
+    it('should request /api/recipes/public and return the list', async () => {
       const axios = (await import('axios')).default
       const mockRecipes = [createMockRecipe(), createMockRecipe({ id: 'recipe-2' })]
 
@@ -505,7 +478,23 @@ describe('recipeStorageApi', () => {
 
       const result = await getPublicRecipes()
 
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('/api/recipes/public'),
+        expect.any(Object)
+      )
       expect(result).toEqual(mockRecipes)
+    })
+
+    it('should not include an Authorization header', async () => {
+      const axios = (await import('axios')).default
+
+      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse([createMockRecipe()]))
+
+      await getPublicRecipes()
+
+      const callArgs = vi.mocked(axios.get).mock.calls[0]
+      const config = callArgs[1] as { headers?: Record<string, unknown> }
+      expect(config?.headers?.['Authorization']).toBeUndefined()
     })
   })
 })

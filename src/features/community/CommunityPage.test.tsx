@@ -11,38 +11,10 @@ vi.mock('../../services/recipeStorageApi', () => ({
   getPublicRecipes: vi.fn(),
 }))
 
-const mockRecipes: Recipe[] = [
-  {
-    id: '1',
-    userId: 'user-1',
-    recipeName: 'Spaghetti Carbonara',
-    description: 'Classic Italian pasta dish',
-    prepTimeMinutes: 10,
-    cookTimeMinutes: 20,
-    servings: 4,
-    ingredients: ['pasta', 'eggs', 'pancetta'],
-    instructions: ['Cook pasta', 'Mix with eggs'],
-    tags: ['italian', 'pasta'],
-    source: 'ai-generated',
-    createdAt: '2025-01-01T00:00:00Z',
-    updatedAt: '2025-01-01T00:00:00Z',
-  },
-  {
-    id: '2',
-    userId: 'user-2',
-    recipeName: 'Chicken Tikka Masala',
-    description: 'Creamy Indian curry',
-    prepTimeMinutes: 15,
-    cookTimeMinutes: 30,
-    servings: 6,
-    ingredients: ['chicken', 'tomatoes', 'cream'],
-    instructions: ['Marinate chicken', 'Cook curry'],
-    tags: ['indian', 'curry'],
-    source: 'ai-generated',
-    createdAt: '2025-01-02T00:00:00Z',
-    updatedAt: '2025-01-02T00:00:00Z',
-  },
-]
+const mockRecipes = [
+  { id: '1', recipeName: 'Spaghetti Carbonara', description: 'Classic Italian pasta dish', servings: 4 },
+  { id: '2', recipeName: 'Chicken Tikka Masala', description: 'Creamy Indian curry', servings: 6 },
+] as unknown as Recipe[]
 
 const renderWithRouter = (ui: React.ReactElement) =>
   render(<MemoryRouter>{ui}</MemoryRouter>)
