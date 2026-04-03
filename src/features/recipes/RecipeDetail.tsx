@@ -13,9 +13,16 @@ export const RecipeDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [isCookingMode, setIsCookingMode] = useState(false)
   const [isTogglingShare, setIsTogglingShare] = useState(false)
+  const [sharingError, setSharingError] = useState<string | null>(null)
   const [isCopied, setIsCopied] = useState(false)
   const [fallbackUrl, setFallbackUrl] = useState<string | null>(null)
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (!sharingError) return
+    const timer = setTimeout(() => setSharingError(null), 5000)
+    return () => clearTimeout(timer)
+  }, [sharingError])
 
   useEffect(() => {
     return () => {
@@ -80,13 +87,13 @@ export const RecipeDetail: React.FC = () => {
     
     try {
       setIsTogglingShare(true)
+      setSharingError(null)
       const newIsPublic = !recipe.isPublic
       const updatedRecipe = await updateRecipeSharing(id, newIsPublic)
       setRecipe(updatedRecipe)
     } catch (err) {
       console.error('Failed to update recipe sharing:', err)
-      // Don't set global error state - just log it
-      // The recipe is still valid, only the sharing update failed
+      setSharingError('Could not update sharing status. Please try again.')
     } finally {
       setIsTogglingShare(false)
     }
@@ -199,6 +206,30 @@ export const RecipeDetail: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Inline sharing error */}
+      {sharingError && (
+        <div
+          role="alert"
+          className="mb-4 flex items-center justify-between gap-3 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800"
+        >
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <span>{sharingError}</span>
+          </div>
+          <button
+            onClick={() => setSharingError(null)}
+            aria-label="Dismiss error"
+            className="text-red-400 hover:text-red-600 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Recipe title */}
       <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">{recipe.recipeName}</h1>

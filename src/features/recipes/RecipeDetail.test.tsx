@@ -327,6 +327,10 @@ describe('RecipeDetail', () => {
   })
 
   describe('Recipe Sharing', () => {
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
     it('should toggle sharing from private to public', async () => {
       const privateRecipe = { ...mockRecipe, isPublic: false }
       const publicRecipe = { ...mockRecipe, isPublic: true }
@@ -410,8 +414,112 @@ describe('RecipeDetail', () => {
         )
       })
 
+      // Error message should be shown to the user
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument()
+        expect(screen.getByText('Could not update sharing status. Please try again.')).toBeInTheDocument()
+      })
+
       // Button should still show "Share" (state not updated due to error)
       expect(screen.getByRole('button', { name: /share/i })).toBeInTheDocument()
+
+      consoleErrorSpy.mockRestore()
+    })
+
+    it('should dismiss the sharing error when close button is clicked', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const privateRecipe = { ...mockRecipe, isPublic: false }
+
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(privateRecipe)
+      vi.mocked(recipeStorageApi.updateRecipeSharing).mockRejectedValue(new Error('Network error'))
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      await userEvent.click(screen.getByRole('button', { name: /share/i }))
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument()
+      })
+
+      // Click the dismiss button
+      await userEvent.click(screen.getByRole('button', { name: /dismiss error/i }))
+
+      await waitFor(() => {
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+      })
+
+      consoleErrorSpy.mockRestore()
+    })
+
+    it('should auto-dismiss the sharing error after 5 seconds', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      try {
+        const privateRecipe = { ...mockRecipe, isPublic: false }
+
+        vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(privateRecipe)
+        vi.mocked(recipeStorageApi.updateRecipeSharing).mockRejectedValue(new Error('Network error'))
+
+        renderWithRouter()
+
+        await waitFor(() => {
+          expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+        })
+
+        await userEvent.click(screen.getByRole('button', { name: /share/i }))
+
+        await waitFor(() => {
+          expect(screen.getByRole('alert')).toBeInTheDocument()
+        })
+
+        // Advance time by 5 seconds to trigger auto-dismiss
+        await vi.advanceTimersByTimeAsync(5000)
+
+        await waitFor(() => {
+          expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+        })
+      } finally {
+        consoleErrorSpy.mockRestore()
+        vi.useRealTimers()
+      }
+    })
+
+    it('should clear the sharing error when a subsequent toggle succeeds', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const privateRecipe = { ...mockRecipe, isPublic: false }
+      const publicRecipe = { ...mockRecipe, isPublic: true }
+
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(privateRecipe)
+      // First call fails, second call succeeds
+      vi.mocked(recipeStorageApi.updateRecipeSharing)
+        .mockRejectedValueOnce(new Error('Network error'))
+        .mockResolvedValueOnce(publicRecipe)
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      // First click → error banner appears
+      await userEvent.click(screen.getByRole('button', { name: /share/i }))
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument()
+      })
+
+      // Second click → success; banner should be gone immediately
+      await userEvent.click(screen.getByRole('button', { name: /share/i }))
+
+      await waitFor(() => {
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /make private/i })).toBeInTheDocument()
+      })
 
       consoleErrorSpy.mockRestore()
     })
