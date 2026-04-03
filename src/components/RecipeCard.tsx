@@ -1,6 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import type { Recipe } from '../types/nutrition'
+import GlobeIcon from './GlobeIcon'
 
 interface RecipeCardProps {
   recipe: Recipe
@@ -35,6 +36,15 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
     >
+      {recipe.isPublic && (
+        <div
+          data-testid="public-badge"
+          className="absolute top-3 left-3 z-10 flex items-center gap-1 bg-emerald-500 text-white text-xs font-medium px-2 py-0.5 rounded-full pointer-events-none"
+        >
+          <GlobeIcon className="w-3 h-3" />
+          Public
+        </div>
+      )}
       <button
         onClick={(e) => { e.stopPropagation(); onDelete?.(recipe) }}
         className="absolute top-3 right-3 z-10 bg-red-500 text-white p-2.5 md:p-2 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
