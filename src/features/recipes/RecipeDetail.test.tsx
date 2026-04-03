@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import { RecipeDetail } from './RecipeDetail'
@@ -561,18 +561,23 @@ describe('RecipeDetail', () => {
       })
 
       vi.useFakeTimers()
-      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
 
-      const copyButton = screen.getByRole('button', { name: /copy link/i })
-      await user.click(copyButton)
+      // Use fireEvent (synchronous) — userEvent.click hangs with fake timers
+      // because it awaits handler settlement and writeText is a microtask,
+      // not a timer, so advanceTimers never resolves it.
+      fireEvent.click(screen.getByRole('button', { name: /copy link/i }))
 
-      // Flush pending microtasks (clipboard.writeText resolution + React re-render)
-      await vi.advanceTimersByTimeAsync(0)
+      // Flush writeText Promise + React state update.
+      // React 18's scheduler uses queueMicrotask/Promise, not setTimeout,
+      // so act works correctly even when fake timers are active.
+      await act(async () => {})
 
       expect(screen.getByRole('button', { name: /copied!/i })).toBeInTheDocument()
 
-      // Advance 2 seconds for the reset timer to fire
-      await vi.advanceTimersByTimeAsync(2000)
+      // Fire the 2-second reset timer and flush the resulting state update
+      act(() => {
+        vi.advanceTimersByTime(2000)
+      })
 
       expect(screen.getByRole('button', { name: /copy link/i })).toBeInTheDocument()
     })
