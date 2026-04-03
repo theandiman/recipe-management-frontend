@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
@@ -327,6 +327,10 @@ describe('RecipeDetail', () => {
   })
 
   describe('Recipe Sharing', () => {
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
     it('should toggle sharing from private to public', async () => {
       const privateRecipe = { ...mockRecipe, isPublic: false }
       const publicRecipe = { ...mockRecipe, isPublic: true }
@@ -452,7 +456,7 @@ describe('RecipeDetail', () => {
     })
 
     it('should auto-dismiss the sharing error after 5 seconds', async () => {
-      vi.useFakeTimers()
+      vi.useFakeTimers({ shouldAdvanceTime: true })
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       try {
