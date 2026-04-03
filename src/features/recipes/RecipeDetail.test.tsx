@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import { RecipeDetail } from './RecipeDetail'
@@ -458,6 +458,205 @@ describe('RecipeDetail', () => {
       await waitFor(() => {
         const updatedButton = screen.getByRole('button', { name: /make private/i })
         expect(updatedButton).not.toBeDisabled()
+      })
+    })
+  })
+
+  describe('Copy Link', () => {
+    let originalClipboardDescriptor: PropertyDescriptor | undefined
+
+    beforeEach(() => {
+      originalClipboardDescriptor = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+      if (originalClipboardDescriptor !== undefined) {
+        Object.defineProperty(navigator, 'clipboard', originalClipboardDescriptor)
+      } else {
+        Object.defineProperty(navigator, 'clipboard', {
+          value: undefined,
+          configurable: true,
+          writable: true,
+        })
+      }
+    })
+
+    it('should render Copy Link button when recipe is public', async () => {
+      const publicRecipe = { ...mockRecipe, isPublic: true }
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(publicRecipe)
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      expect(screen.getByRole('button', { name: /copy link/i })).toBeInTheDocument()
+    })
+
+    it('should not render Copy Link button when recipe is private', async () => {
+      const privateRecipe = { ...mockRecipe, isPublic: false }
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(privateRecipe)
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      expect(screen.queryByRole('button', { name: /copy link/i })).not.toBeInTheDocument()
+    })
+
+    it('should not render Copy Link button when isPublic is undefined', async () => {
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipe)
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      expect(screen.queryByRole('button', { name: /copy link/i })).not.toBeInTheDocument()
+    })
+
+    it('should call clipboard.writeText with the correct URL when clicked', async () => {
+      const publicRecipe = { ...mockRecipe, isPublic: true }
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(publicRecipe)
+
+      const writeTextMock = vi.fn().mockResolvedValue(undefined)
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: writeTextMock },
+        configurable: true,
+      })
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      const copyButton = screen.getByRole('button', { name: /copy link/i })
+      await userEvent.click(copyButton)
+
+      expect(writeTextMock).toHaveBeenCalledWith(
+        expect.stringContaining('/dashboard/recipes/recipe-1')
+      )
+    })
+
+    it('should show "Copied!" feedback for ~2 seconds after click', async () => {
+      const publicRecipe = { ...mockRecipe, isPublic: true }
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(publicRecipe)
+
+      const writeTextMock = vi.fn().mockResolvedValue(undefined)
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: writeTextMock },
+        configurable: true,
+      })
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      vi.useFakeTimers()
+
+      // Use fireEvent (synchronous) — userEvent.click hangs with fake timers
+      // because it awaits handler settlement and writeText is a microtask,
+      // not a timer, so advanceTimers never resolves it.
+      fireEvent.click(screen.getByRole('button', { name: /copy link/i }))
+
+      // Flush writeText Promise + React state update.
+      // React 18's scheduler uses queueMicrotask/Promise, not setTimeout,
+      // so act works correctly even when fake timers are active.
+      await act(async () => {})
+
+      expect(screen.getByRole('button', { name: /copied!/i })).toBeInTheDocument()
+
+      // Fire the 2-second reset timer and flush the resulting state update
+      act(() => {
+        vi.advanceTimersByTime(2000)
+      })
+
+      expect(screen.getByRole('button', { name: /copy link/i })).toBeInTheDocument()
+    })
+
+    it('should show fallback notification when navigator.clipboard is unavailable', async () => {
+      const publicRecipe = { ...mockRecipe, isPublic: true }
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(publicRecipe)
+
+      Object.defineProperty(navigator, 'clipboard', {
+        value: undefined,
+        configurable: true,
+      })
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      const copyButton = screen.getByRole('button', { name: /copy link/i })
+      await userEvent.click(copyButton)
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument()
+        expect(screen.getByText(/copy this link manually/i)).toBeInTheDocument()
+        expect(screen.getByText(/\/dashboard\/recipes\/recipe-1/)).toBeInTheDocument()
+      })
+    })
+
+    it('should show fallback notification when clipboard.writeText rejects', async () => {
+      const publicRecipe = { ...mockRecipe, isPublic: true }
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(publicRecipe)
+
+      const writeTextMock = vi.fn().mockRejectedValue(new Error('Not allowed'))
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: writeTextMock },
+        configurable: true,
+      })
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      const copyButton = screen.getByRole('button', { name: /copy link/i })
+      await userEvent.click(copyButton)
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument()
+        expect(screen.getByText(/copy this link manually/i)).toBeInTheDocument()
+      })
+    })
+
+    it('should dismiss the fallback notification when Dismiss button is clicked', async () => {
+      const publicRecipe = { ...mockRecipe, isPublic: true }
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(publicRecipe)
+
+      Object.defineProperty(navigator, 'clipboard', {
+        value: undefined,
+        configurable: true,
+      })
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      await userEvent.click(screen.getByRole('button', { name: /copy link/i }))
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument()
+      })
+
+      await userEvent.click(screen.getByRole('button', { name: /dismiss/i }))
+
+      await waitFor(() => {
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument()
       })
     })
   })
