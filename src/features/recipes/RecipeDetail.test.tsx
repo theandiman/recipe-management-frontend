@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
@@ -544,25 +544,25 @@ describe('RecipeDetail', () => {
     })
 
     it('should show "Copied!" feedback for ~2 seconds after click', async () => {
+      const publicRecipe = { ...mockRecipe, isPublic: true }
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(publicRecipe)
+
+      const writeTextMock = vi.fn().mockResolvedValue(undefined)
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: writeTextMock },
+        configurable: true,
+      })
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
       vi.useFakeTimers()
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
 
       try {
-        const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
-        const publicRecipe = { ...mockRecipe, isPublic: true }
-        vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(publicRecipe)
-
-        const writeTextMock = vi.fn().mockResolvedValue(undefined)
-        Object.defineProperty(navigator, 'clipboard', {
-          value: { writeText: writeTextMock },
-          configurable: true,
-        })
-
-        renderWithRouter()
-
-        await waitFor(() => {
-          expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
-        })
-
         const copyButton = screen.getByRole('button', { name: /copy link/i })
         await user.click(copyButton)
 
