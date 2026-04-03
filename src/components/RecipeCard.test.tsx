@@ -172,6 +172,30 @@ describe('RecipeCard', () => {
     expect(onView).not.toHaveBeenCalled()
   })
 
+  it('should display a Public badge when isPublic is true', () => {
+    const publicRecipe = { ...mockRecipe, isPublic: true }
+    render(<RecipeCard recipe={publicRecipe} />)
+
+    expect(screen.getByTestId('public-badge')).toBeInTheDocument()
+    expect(screen.getByText('Public')).toBeInTheDocument()
+  })
+
+  it('should not display a Public badge when isPublic is false', () => {
+    const privateRecipe = { ...mockRecipe, isPublic: false }
+    render(<RecipeCard recipe={privateRecipe} />)
+
+    expect(screen.queryByTestId('public-badge')).not.toBeInTheDocument()
+    expect(screen.queryByText('Public')).not.toBeInTheDocument()
+  })
+
+  it('should not display a Public badge when isPublic is undefined', () => {
+    const recipeWithoutPublicFlag = { ...mockRecipe, isPublic: undefined }
+    render(<RecipeCard recipe={recipeWithoutPublicFlag} />)
+
+    expect(screen.queryByTestId('public-badge')).not.toBeInTheDocument()
+    expect(screen.queryByText('Public')).not.toBeInTheDocument()
+  })
+
   it('should render in compact mode', () => {
     const { container } = render(<RecipeCard recipe={mockRecipe} compact />)
     // Select the main card container (assumed to be [role="button"][tabindex="0"])

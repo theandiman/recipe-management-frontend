@@ -9,6 +9,7 @@ import { CreateRecipe } from '../../features/recipes/CreateRecipe'
 import { EditRecipe } from '../../features/recipes/EditRecipe'
 import { AIGenerator } from '../../features/recipes/AIGenerator'
 import { HelpPage } from '../../features/help/HelpPage'
+import { CommunityPage } from '../../features/community/CommunityPage'
 
 export const DashboardLayout: React.FC = () => {
   const { user, logout } = useAuth()
@@ -52,6 +53,15 @@ export const DashboardLayout: React.FC = () => {
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+      ),
+    },
+    {
+      name: 'Community',
+      path: '/dashboard/community',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
       ),
     },
@@ -273,6 +283,7 @@ export const DashboardLayout: React.FC = () => {
             <Route path="recipes/edit/:id" element={<EditRecipe />} />
             <Route path="create" element={<CreateRecipe />} />
             <Route path="generate" element={<AIGenerator />} />
+            <Route path="community" element={<CommunityPage />} />
             <Route path="help" element={<HelpPage />} />
           </Routes>
         </main>
