@@ -58,8 +58,11 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
       <div className="h-full">
         {recipe.imageUrl ? (
           <motion.div className="relative h-40 sm:h-48 overflow-hidden" whileHover={{ scale: 1.03 }} transition={{ duration: 0.2 }}>
-                <img src={recipe.imageUrl} alt={title} loading="lazy" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.0),rgba(0,0,0,0.25))] opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity" aria-hidden />
+                <img src={recipe.imageUrl} alt="" aria-hidden="true" loading="lazy" className="w-full h-full object-cover" />
+            {/* Title overlay at bottom of image */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 pt-6 pb-3">
+              <h3 className="text-white font-semibold text-sm sm:text-base line-clamp-2">{title}</h3>
+            </div>
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none">
               <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -76,7 +79,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
           </div>
         )}
         <div className={`p-3 sm:p-4 ${compact ? 'p-2 sm:p-3' : ''}`}>
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 line-clamp-2">{title}</h3>
+          {!recipe.imageUrl && <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 line-clamp-2">{title}</h3>}
           {recipe.description && <p className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2">{recipe.description}</p>}
           <div className="flex items-center justify-between text-xs text-gray-500">
             {(totalTime !== undefined && totalTime > 0) ? (

@@ -42,9 +42,11 @@ describe('RecipeCard', () => {
   it('should display recipe image', () => {
     render(<RecipeCard recipe={mockRecipe} />)
     
-    const img = screen.getByAltText('Test Recipe')
+    // Image is decorative (alt="") because the title is conveyed via visible text overlay
+    const img = document.querySelector('img')
     expect(img).toBeInTheDocument()
     expect(img).toHaveAttribute('src', 'https://example.com/recipe.jpg')
+    expect(img).toHaveAttribute('alt', '')
   })
 
   it('should show placeholder when no image', () => {
