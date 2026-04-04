@@ -2,6 +2,21 @@ import '@testing-library/jest-dom'
 import React from 'react'
 import { vi } from 'vitest'
 
+// Mock window.matchMedia (not implemented by jsdom)
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+})
+
 // Mock Firebase to prevent initialization errors in CI/CD
 vi.mock('../config/firebase', () => ({
   auth: {},

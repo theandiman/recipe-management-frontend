@@ -54,7 +54,7 @@ describe('NutritionFacts', () => {
     const { container } = render(<NutritionFacts nutritionalInfo={nutritionalInfo} />)
 
     // Should render with 0 values - check for the component structure
-    expect(container.querySelector('.text-xl')).toBeInTheDocument()
+    expect(container.querySelector('.text-lg')).toBeInTheDocument()
   })
 
   it('should calculate percentages based on UK GDA', () => {
