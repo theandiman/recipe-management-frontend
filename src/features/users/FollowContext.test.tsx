@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor, act } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
 import { FollowProvider, useFollowContext } from './FollowContext'
@@ -266,7 +266,7 @@ describe('FollowContext', () => {
 
     const uid = 'shared-user'
 
-    const { getByTestId } = render(
+    render(
       <FollowProvider>
         <TestConsumer uid={uid} />
         <div>
