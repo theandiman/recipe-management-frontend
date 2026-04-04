@@ -4,9 +4,23 @@ import { uploadRecipeImage, deleteRecipeImage } from '../utils/imageStorage'
 import type { Recipe, RecipeTips } from '../types/nutrition'
 import { RecipeUtils } from '@theandiman/recipe-management-shared/dist/types/recipe'
 
-const MANAGEMENT_API_BASE = import.meta.env.VITE_MANAGEMENT_API_URL || ''
 const IS_TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
 
+const resolveManagementApiBase = (): string => {
+  const managementApiUrl = import.meta.env.VITE_MANAGEMENT_API_URL?.trim()
+
+  if (managementApiUrl) {
+    return managementApiUrl
+  }
+
+  if (IS_TEST_MODE) {
+    return ''
+  }
+
+  throw new Error('Missing required VITE_MANAGEMENT_API_URL environment variable')
+}
+
+const MANAGEMENT_API_BASE = resolveManagementApiBase()
 type NutritionPerServing = NonNullable<NonNullable<Recipe['nutritionalInfo']>['perServing']>
 
 type ManagementRecipePayload = Partial<Recipe> & {
