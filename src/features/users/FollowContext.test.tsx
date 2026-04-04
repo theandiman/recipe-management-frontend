@@ -84,7 +84,7 @@ describe('FollowContext', () => {
     expect(screen.getByTestId('follower-count')).toHaveTextContent('10')
   })
 
-  it('initUser does not overwrite existing state', async () => {
+  it('initUser updates existing state when values differ and no update is pending', async () => {
     const user = userEvent.setup()
     renderConsumer()
 
@@ -93,8 +93,23 @@ describe('FollowContext', () => {
     expect(screen.getByTestId('is-followed')).toHaveTextContent('false')
     expect(screen.getByTestId('follower-count')).toHaveTextContent('10')
 
-    // Second initUser call (e.g. profile re-fetch) should NOT overwrite
+    // Second initUser call with different values (e.g. server re-fetch) should update
     await user.click(screen.getByTestId('init-followed'))
+
+    expect(screen.getByTestId('is-followed')).toHaveTextContent('true')
+    expect(screen.getByTestId('follower-count')).toHaveTextContent('5')
+  })
+
+  it('initUser is a no-op when called with the same values', async () => {
+    const user = userEvent.setup()
+    renderConsumer()
+
+    await user.click(screen.getByTestId('init'))
+    expect(screen.getByTestId('is-followed')).toHaveTextContent('false')
+    expect(screen.getByTestId('follower-count')).toHaveTextContent('10')
+
+    // Same values – should not trigger a re-render or change state
+    await user.click(screen.getByTestId('init'))
 
     expect(screen.getByTestId('is-followed')).toHaveTextContent('false')
     expect(screen.getByTestId('follower-count')).toHaveTextContent('10')

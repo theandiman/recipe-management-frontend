@@ -146,15 +146,8 @@ export const UserProfilePage: React.FC = () => {
             {/* Follower / Following counts – followerCount reads from context for optimistic updates */}
             {(() => {
               const contextState = uid ? getFollowState(uid) : undefined
-              const hasPendingFollowUpdate = contextState?.pending === true
               const displayFollowerCount =
-                contextState === undefined
-                  ? profile.followerCount
-                  : !hasPendingFollowUpdate &&
-                      profile.followerCount !== undefined &&
-                      contextState.followerCount !== profile.followerCount
-                    ? profile.followerCount
-                    : contextState.followerCount
+                contextState !== undefined ? contextState.followerCount : profile.followerCount
               return (displayFollowerCount !== undefined || profile.followingCount !== undefined) ? (
                 <div className="flex items-center justify-center sm:justify-start gap-4 mb-2">
                   {displayFollowerCount !== undefined && (
