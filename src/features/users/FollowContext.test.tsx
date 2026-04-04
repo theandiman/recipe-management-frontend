@@ -36,7 +36,7 @@ const TestConsumer: React.FC<ConsumerProps> = ({ uid }) => {
         Toggle
       </button>
       {state === undefined ? (
-        <span data-testid="state">uninitialised</span>
+        <span data-testid="state">uninitialized</span>
       ) : (
         <>
           <span data-testid="is-followed">{String(state.isFollowed)}</span>
@@ -69,9 +69,9 @@ describe('FollowContext', () => {
     consoleError.mockRestore()
   })
 
-  it('returns undefined for an uninitialised uid', () => {
+  it('returns undefined for an uninitialized uid', () => {
     renderConsumer('unknown')
-    expect(screen.getByTestId('state')).toHaveTextContent('uninitialised')
+    expect(screen.getByTestId('state')).toHaveTextContent('uninitialized')
   })
 
   it('initUser seeds isFollowed and followerCount', async () => {
@@ -298,7 +298,7 @@ describe('FollowContext', () => {
   it('clears follow map when user actively logs out (true → false transition)', async () => {
     const user = userEvent.setup()
 
-    // Start authenticated so state gets initialised
+    // Start authenticated so state gets initialized
     mockUseAuth.mockReturnValue({ isAuthenticated: true })
 
     const { rerender } = renderConsumer()
@@ -315,7 +315,7 @@ describe('FollowContext', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByTestId('state')).toHaveTextContent('uninitialised')
+      expect(screen.getByTestId('state')).toHaveTextContent('uninitialized')
     })
   })
 })

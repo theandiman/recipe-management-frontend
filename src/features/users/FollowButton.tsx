@@ -14,7 +14,7 @@ export const FollowButton: React.FC<FollowButtonProps> = ({ uid }) => {
 
   const state = getFollowState(uid)
 
-  // Don't render until the follow state has been initialised
+  // Don't render until the follow state has been initialized
   if (state === undefined) return null
 
   const { isFollowed } = state

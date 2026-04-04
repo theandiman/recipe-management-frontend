@@ -185,7 +185,7 @@ export const UserProfilePage: React.FC = () => {
             </p>
 
             {/* Follow / Unfollow button – hidden on own profile */}
-            {uid !== currentUser?.uid && <FollowButton uid={uid!} />}
+            {uid !== currentUser?.uid && uid && <FollowButton uid={uid} />}
           </div>
         </div>
       </motion.div>
