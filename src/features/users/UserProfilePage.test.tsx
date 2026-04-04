@@ -11,6 +11,8 @@ vi.mock('../../services/userApi', () => ({
   getUserProfile: vi.fn(),
   followUser: vi.fn(),
   unfollowUser: vi.fn(),
+  getFollowers: vi.fn(),
+  getFollowing: vi.fn(),
 }))
 
 const mockUseAuth = vi.fn()
@@ -300,6 +302,100 @@ describe('UserProfilePage', () => {
 
     await waitFor(() => {
       expect(spy).toHaveBeenCalledWith('uid-123')
+    })
+  })
+
+  it('renders follower and following counts when provided', async () => {
+    vi.spyOn(userApi, 'getUserProfile').mockResolvedValue({
+      ...mockProfile,
+      followerCount: 42,
+      followingCount: 17,
+    })
+    renderAtUid()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /42.*follower/i })).toBeInTheDocument()
+    })
+    expect(screen.getByRole('button', { name: /17.*following/i })).toBeInTheDocument()
+  })
+
+  it('does not render follower/following counts when not provided', async () => {
+    vi.spyOn(userApi, 'getUserProfile').mockResolvedValue(mockProfile)
+    renderAtUid()
+
+    await waitFor(() => {
+      expect(screen.getByText('Jane Chef')).toBeInTheDocument()
+    })
+    expect(screen.queryByRole('button', { name: /followers/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /\d+\s*following/i })).not.toBeInTheDocument()
+  })
+
+  it('opens followers modal when followers count is clicked', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(userApi, 'getUserProfile').mockResolvedValue({
+      ...mockProfile,
+      followerCount: 42,
+      followingCount: 17,
+    })
+    vi.spyOn(userApi, 'getFollowers').mockResolvedValue({ users: [], hasMore: false })
+    renderAtUid()
+
+    await waitFor(() => {
+      expect(screen.getByText(/42/)).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: /42.*follower/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { name: 'Followers' })).toBeInTheDocument()
+    })
+  })
+
+  it('opens following modal when following count is clicked', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(userApi, 'getUserProfile').mockResolvedValue({
+      ...mockProfile,
+      followerCount: 42,
+      followingCount: 17,
+    })
+    vi.spyOn(userApi, 'getFollowing').mockResolvedValue({ users: [], hasMore: false })
+    renderAtUid()
+
+    await waitFor(() => {
+      expect(screen.getByText(/17/)).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: /17.*following/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { name: 'Following' })).toBeInTheDocument()
+    })
+  })
+
+  it('closes modal when close button is clicked', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(userApi, 'getUserProfile').mockResolvedValue({
+      ...mockProfile,
+      followerCount: 5,
+      followingCount: 3,
+    })
+    vi.spyOn(userApi, 'getFollowers').mockResolvedValue({ users: [], hasMore: false })
+    renderAtUid()
+
+    await waitFor(() => {
+      expect(screen.getByText(/5/)).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: /5.*follower/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { name: 'Followers' })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     })
   })
 })
