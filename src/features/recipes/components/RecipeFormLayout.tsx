@@ -48,6 +48,8 @@ interface RecipeFormLayoutProps {
   removeTag: (index: number) => void
   fieldErrors: Record<string, string>
   clearFieldError: (fieldName: string, stepNumber: number) => void
+  setFieldErrors?: React.Dispatch<React.SetStateAction<Record<string, string>>>
+  setStepsWithErrors?: React.Dispatch<React.SetStateAction<Set<number>>>
   
   // Save state
   saveLoading: boolean
@@ -98,12 +100,57 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   removeTag,
   fieldErrors,
   clearFieldError,
+  setFieldErrors,
+  setStepsWithErrors,
   saveLoading,
   saveError,
   setSaveError,
   handleSubmit,
   handleCancel
 }) => {
+  const handlePreviousStepClick = () => {
+    if (saveError) {
+      setSaveError(null)
+    }
+    goToPreviousStep()
+  }
+
+  const handleNextStepClick = () => {
+    if (currentStep === 1 && !title.trim()) {
+      setFieldErrors?.(prev => ({ ...prev, title: 'Recipe name is required' }))
+      setStepsWithErrors?.(prev => new Set([...prev, 1]))
+      return
+    }
+    if (currentStep === 2 && !ingredients.some(i => i.item.trim())) {
+      setFieldErrors?.(prev => ({ ...prev, ingredients: 'At least one ingredient is required' }))
+      setStepsWithErrors?.(prev => new Set([...prev, 2]))
+      return
+    }
+    if (currentStep === 3 && !instructions.some(i => i.trim())) {
+      setFieldErrors?.(prev => ({ ...prev, instructions: 'At least one instruction is required' }))
+      setStepsWithErrors?.(prev => new Set([...prev, 3]))
+      return
+    }
+    if (currentStep === 4) {
+      if (prepTime && Number(prepTime) > 999) {
+        setFieldErrors?.(prev => ({ ...prev, prepTime: 'Prep time must be under 1000 minutes' }))
+        setStepsWithErrors?.(prev => new Set([...prev, 4]))
+        return
+      }
+      if (cookTime && Number(cookTime) > 999) {
+        setFieldErrors?.(prev => ({ ...prev, cookTime: 'Cook time must be under 1000 minutes' }))
+        setStepsWithErrors?.(prev => new Set([...prev, 4]))
+        return
+      }
+      if (servings && Number(servings) > 99) {
+        setFieldErrors?.(prev => ({ ...prev, servings: 'Servings must be under 100' }))
+        setStepsWithErrors?.(prev => new Set([...prev, 4]))
+        return
+      }
+    }
+    goToNextStep()
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Header with Step Indicator */}
@@ -142,7 +189,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
           ingredients={ingredients}
           instructions={instructions}
           tags={tags}
-          prevStep={goToPreviousStep}
+          prevStep={handlePreviousStepClick}
           handleCancel={handleCancel}
           handleSubmit={handleSubmit}
           saveLoading={saveLoading}
@@ -187,7 +234,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
           <div className="flex justify-between items-center gap-4 pt-6 border-t border-gray-200">
             <button
               type="button"
-              onClick={goToPreviousStep}
+              onClick={handlePreviousStepClick}
               disabled={!canGoPrevious}
               className={`px-6 py-3 rounded-lg font-medium transition-colors ${
                 !canGoPrevious
@@ -209,7 +256,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
 
               <button
                 type="button"
-                onClick={goToNextStep}
+                onClick={handleNextStepClick}
                 disabled={!canGoNext}
                 className={`px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors ${
                   !canGoNext ? 'opacity-50 cursor-not-allowed' : ''

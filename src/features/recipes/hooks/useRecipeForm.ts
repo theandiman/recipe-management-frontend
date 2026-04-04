@@ -35,8 +35,8 @@ interface RecipeFormActions {
   setTags: (value: string[]) => void
   setTagInput: (value: string) => void
   setImagePreview: (value: string | null) => void
-  setFieldErrors: (value: Record<string, string>) => void
-  setStepsWithErrors: (value: Set<number>) => void
+  setFieldErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>
+  setStepsWithErrors: React.Dispatch<React.SetStateAction<Set<number>>>
   setSaveLoading: (value: boolean) => void
   setSaveError: (value: string | null) => void
   
