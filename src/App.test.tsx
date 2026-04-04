@@ -69,4 +69,12 @@ describe('App', () => {
     // Should attempt to render dashboard (which will be protected)
     expect(screen.getByTestId('protected-route')).toBeInTheDocument()
   })
+
+  it('should redirect unknown paths to /dashboard', () => {
+    window.history.pushState({}, 'Unknown', '/does-not-exist')
+    render(<App />)
+    // Catch-all route should redirect to /dashboard (protected)
+    expect(screen.getByTestId('protected-route')).toBeInTheDocument()
+    expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument()
+  })
 })
