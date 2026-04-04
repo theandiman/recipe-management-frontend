@@ -131,6 +131,23 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
       setStepsWithErrors?.(prev => new Set([...prev, 3]))
       return
     }
+    if (currentStep === 4) {
+      if (prepTime && Number(prepTime) > 999) {
+        setFieldErrors?.(prev => ({ ...prev, prepTime: 'Prep time must be under 1000 minutes' }))
+        setStepsWithErrors?.(prev => new Set([...prev, 4]))
+        return
+      }
+      if (cookTime && Number(cookTime) > 999) {
+        setFieldErrors?.(prev => ({ ...prev, cookTime: 'Cook time must be under 1000 minutes' }))
+        setStepsWithErrors?.(prev => new Set([...prev, 4]))
+        return
+      }
+      if (servings && Number(servings) > 99) {
+        setFieldErrors?.(prev => ({ ...prev, servings: 'Servings must be under 100' }))
+        setStepsWithErrors?.(prev => new Set([...prev, 4]))
+        return
+      }
+    }
     goToNextStep()
   }
 

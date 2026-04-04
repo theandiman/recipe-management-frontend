@@ -55,6 +55,7 @@ test.describe('Create Recipe Multi-Step Wizard', () => {
   })
 
   test('should enable back button after moving to step 2', async ({ page }) => {
+    await page.getByPlaceholder(/Grandma's Chocolate Chip Cookies/i).fill('Test')
     await page.getByRole('button', { name: 'Next →' }).click()
     const backButton = page.getByRole('button', { name: 'Back' }).first()
     await expect(backButton).toBeEnabled()
@@ -94,6 +95,7 @@ test.describe('Create Recipe Multi-Step Wizard', () => {
   })
 
   test('should show completed steps with checkmark', async ({ page }) => {
+    await page.getByPlaceholder(/Grandma's Chocolate Chip Cookies/i).fill('Test')
     await page.getByRole('button', { name: 'Next →' }).click()
     const step1Button = page.getByRole('button', { name: /Basic Info/i })
     await expect(step1Button.locator('text=✓')).toBeVisible()
@@ -103,7 +105,8 @@ test.describe('Create Recipe Multi-Step Wizard', () => {
     for (let step = 1; step <= 5; step++) {
       await expect(page.getByRole('button', { name: /Cancel/i })).toBeVisible()
       if (step < 5) {
-        await page.getByRole('button', { name: 'Next →' }).click()
+        let stepNames = ['Basic Info', 'Ingredients', 'Instructions', 'Additional Info', 'Review']
+        await page.getByRole('button', { name: stepNames[step] }).click()
       }
     }
   })
