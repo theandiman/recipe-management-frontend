@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { Toaster } from 'sonner'
 import { AuthProvider } from './features/auth/AuthContext'
 import { ThemeProvider } from './features/theme/ThemeContext'
 import { Login } from './features/auth/Login'
@@ -7,6 +8,7 @@ import { Register } from './features/auth/Register'
 import { DashboardLayout } from './components/Layout/DashboardLayout'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { UserProfilePage } from './features/users/UserProfilePage'
+import { FollowProvider } from './features/users/FollowContext'
 import './App.css'
 
 function AnimatedRoutes() {
@@ -77,7 +79,10 @@ function App() {
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <AnimatedRoutes />
+          <FollowProvider>
+            <Toaster position="top-right" richColors />
+            <AnimatedRoutes />
+          </FollowProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
