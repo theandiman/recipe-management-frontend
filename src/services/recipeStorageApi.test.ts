@@ -240,22 +240,20 @@ describe('recipeStorageApi', () => {
     })
   })
 
-  describe('getPublicRecipes', () => {
-    it('should unwrap paginated public recipe responses from the management service', async () => {
-      const axios = (await import('axios')).default
-      const mockRecipes = [createMockRecipe(), createMockRecipe({ id: 'public-2' })]
+  it('should unwrap paginated public recipe responses from the management service', async () => {
+    const axios = (await import('axios')).default
+    const mockRecipes = [createMockRecipe(), createMockRecipe({ id: 'public-2' })]
 
-      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse({
-        recipes: mockRecipes,
-        size: 20,
-        totalCount: 2,
-        nextPageToken: null
-      }))
+    vi.mocked(axios.get).mockResolvedValue(createAxiosResponse({
+      recipes: mockRecipes,
+      size: 20,
+      totalCount: 2,
+      nextPageToken: null
+    }))
 
-      const result = await getPublicRecipes()
+    const result = await getPublicRecipes()
 
-      expect(result).toEqual(mockRecipes)
-    })
+    expect(result).toEqual(mockRecipes)
   })
 
   describe('getSavedRecipes', () => {
