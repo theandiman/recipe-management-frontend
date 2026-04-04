@@ -221,7 +221,7 @@ export const DashboardLayout: React.FC = () => {
 
           {/* User Profile Section */}
           <motion.div
-            className="border-t border-gray-200 p-4"
+            className="border-t border-gray-200 p-4 pb-12 lg:pb-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.3 }}
@@ -271,6 +271,7 @@ export const DashboardLayout: React.FC = () => {
   {/* Top Bar (transparent) */}
   <header className="sticky top-0 z-60 bg-transparent border-b-0 px-4 py-1">
     <div className="flex items-center">
+      {!isSidebarOpen && (
       <motion.button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         className="lg:hidden p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
@@ -282,6 +283,7 @@ export const DashboardLayout: React.FC = () => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </motion.button>
+      )}
       <div className="ml-3 flex-1" />
     </div>
   </header>
