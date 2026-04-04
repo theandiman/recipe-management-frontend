@@ -149,6 +149,7 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
           VITE_FIREBASE_APP_ID: test-app-id
           VITE_API_URL: http://localhost:8080
+          VITE_MANAGEMENT_API_URL: http://localhost:8081
           VITE_STORAGE_API_URL: http://localhost:8081
 
       - name: Upload Playwright report
@@ -195,6 +196,7 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: '123456789'
           VITE_FIREBASE_APP_ID: 'build-test-app'
           VITE_API_URL: 'http://localhost:8080'
+          VITE_MANAGEMENT_API_URL: 'http://localhost:8081'
           VITE_STORAGE_API_URL: 'http://localhost:8081'
 
   # Code Quality Analysis
@@ -333,6 +335,7 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_MANAGEMENT_API_URL: ${{ secrets.VITE_MANAGEMENT_API_URL || secrets.VITE_STORAGE_API_URL }}
           VITE_STORAGE_API_URL: ${{ secrets.VITE_STORAGE_API_URL }}
 
       - name: Deploy to Firebase
