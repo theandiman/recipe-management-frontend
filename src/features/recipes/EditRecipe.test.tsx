@@ -623,7 +623,7 @@ describe('EditRecipe', () => {
   })
 
   describe('Validation', () => {
-    it('shows validation error when title is empty on submit', async () => {
+    it('shows validation error when title is empty and step indicator is clicked', async () => {
       const user = userEvent.setup()
       
       render(
@@ -641,20 +641,17 @@ describe('EditRecipe', () => {
       const titleInput = screen.getByDisplayValue('Test Recipe')
       await user.clear(titleInput)
       
-      // Navigate to preview step
+      // Clicking the step 5 indicator with an empty title should be blocked by
+      // step-indicator validation and show the error inline on step 1
       const step5Button = screen.getByLabelText('Go to step 5: Review')
       await user.click(step5Button)
       
       await waitFor(() => {
-        expect(screen.getByText(/Step 5 of 5/)).toBeInTheDocument()
-      })
-      
-      const saveButton = screen.getByText(/Save Recipe/i)
-      await user.click(saveButton)
-      
-      await waitFor(() => {
         expect(screen.getByText(/Recipe name is required/i)).toBeInTheDocument()
       })
+      
+      // Should have stayed on step 1 (not navigated to step 5)
+      expect(screen.queryByText(/Step 5 of 5/)).not.toBeInTheDocument()
     })
 
     it.skip('shows error message when validation fails', async () => {

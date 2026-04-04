@@ -43,9 +43,14 @@ test.describe('Create Recipe Multi-Step Wizard', () => {
   })
 
   test('should navigate using progress indicator', async ({ page }) => {
+    // Fill required fields before navigating forward via step indicator
+    await page.getByPlaceholder(/Grandma's Chocolate Chip Cookies/i).fill('Test Recipe')
+    await page.getByRole('button', { name: 'Next →' }).click()
+    await page.getByPlaceholder(/e.g., all-purpose flour/i).fill('Flour')
     await page.getByRole('button', { name: 'Instructions' }).click()
     await expect(page.getByText(/Step 3 of 5/i)).toBeVisible()
     
+    // Backward navigation is always free
     await page.getByRole('button', { name: 'Basic Info' }).click()
     await expect(page.getByText(/Step 1 of 5/i)).toBeVisible()
   })
@@ -71,6 +76,10 @@ test.describe('Create Recipe Multi-Step Wizard', () => {
   })
 
   test('should add instructions', async ({ page }) => {
+    // Fill required fields before navigating to Instructions step via indicator
+    await page.getByPlaceholder(/Grandma's Chocolate Chip Cookies/i).fill('Test Recipe')
+    await page.getByRole('button', { name: 'Next →' }).click()
+    await page.getByPlaceholder(/e.g., all-purpose flour/i).fill('Flour')
     await page.getByRole('button', { name: 'Instructions' }).click()
     await expect(page.getByText(/Step 3 of 5/i)).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Instructions' })).toBeVisible()
@@ -82,6 +91,12 @@ test.describe('Create Recipe Multi-Step Wizard', () => {
   })
 
   test('should add tags', async ({ page }) => {
+    // Navigate step by step to reach the Additional Info step (step 4)
+    await page.getByPlaceholder(/Grandma's Chocolate Chip Cookies/i).fill('Test Recipe')
+    await page.getByRole('button', { name: 'Next →' }).click()
+    await page.getByPlaceholder(/e.g., all-purpose flour/i).fill('Flour')
+    await page.getByRole('button', { name: 'Next →' }).click()
+    await page.getByPlaceholder(/Describe this step in detail/i).first().fill('Mix ingredients')
     await page.getByRole('button', { name: 'Additional Info' }).click()
     await page.getByPlaceholder(/Add tags/i).fill('quick')
     await page.keyboard.press('Enter')
@@ -90,6 +105,12 @@ test.describe('Create Recipe Multi-Step Wizard', () => {
 
   test('should show correct buttons on each step', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'Next →' })).toBeVisible()
+    // Fill required fields before navigating to Review step via step indicator
+    await page.getByPlaceholder(/Grandma's Chocolate Chip Cookies/i).fill('Test Recipe')
+    await page.getByRole('button', { name: 'Next →' }).click()
+    await page.getByPlaceholder(/e.g., all-purpose flour/i).fill('Flour')
+    await page.getByRole('button', { name: 'Next →' }).click()
+    await page.getByPlaceholder(/Describe this step in detail/i).first().fill('Step 1')
     await page.getByRole('button', { name: 'Review' }).click()
     await expect(page.getByRole('button', { name: 'Next →' })).not.toBeVisible()
     await expect(page.getByRole('button', { name: /Save Recipe/i })).toBeVisible()

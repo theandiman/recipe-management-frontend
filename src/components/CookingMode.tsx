@@ -37,14 +37,14 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.3 }}
       >
         <motion.div
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] overflow-hidden flex flex-col"
+          className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-6xl h-[90vh] overflow-hidden flex flex-col border border-gray-200 dark:border-slate-700"
           initial={{ scale: 0.9, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -93,7 +93,7 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
                 transition={{ duration: 0.3 }}
               >
                 <motion.h3
-                  className="text-2xl font-bold text-gray-900 mb-6"
+                  className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8"
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1, duration: 0.3 }}
@@ -115,7 +115,7 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
                   {recipe.ingredients.map((ingredient: string, index: number) => (
                     <motion.li
                       key={index}
-                      className="flex items-start p-3 bg-emerald-50 rounded-lg"
+                      className="flex items-start p-4 bg-emerald-50 dark:bg-slate-800 rounded-xl"
                       variants={{
                         hidden: { opacity: 0, x: -20 },
                         visible: { opacity: 1, x: 0 }
@@ -133,7 +133,7 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </motion.svg>
-                      <span className="text-lg text-gray-700">{ingredient}</span>
+                      <span className="text-xl md:text-2xl text-gray-800 dark:text-gray-200">{ingredient}</span>
                     </motion.li>
                   ))}
                 </motion.ul>
@@ -152,7 +152,7 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
               <motion.button
                 onClick={goToPreviousStep}
                 disabled={currentStep === 0}
-                className="flex-shrink-0 p-4 text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="flex-shrink-0 p-4 text-gray-400 dark:text-gray-500 hover:text-emerald-600 dark:hover:text-emerald-400 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
                 title="Previous step"
                 whileHover={{ scale: 1.1, x: -5 }}
                 whileTap={{ scale: 0.9 }}
@@ -166,14 +166,14 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
               {/* Current instruction - large card */}
               <motion.div
                 key={currentStep}
-                className="flex-1 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-12 text-center border-2 border-emerald-200 flex flex-col items-center justify-center overflow-hidden"
+                className="flex-1 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-800 dark:to-slate-800/50 rounded-3xl p-10 md:p-16 text-center border-2 border-emerald-200 dark:border-slate-700 flex flex-col items-center justify-center overflow-hidden shadow-inner"
                 initial={{ opacity: 0, x: 50, scale: 0.95 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: -50, scale: 0.95 }}
                 transition={{ duration: 0.4, ease: "easeInOut" }}
               >
                 <motion.div
-                  className="text-5xl font-light text-emerald-300 mb-4"
+                  className="text-7xl font-black text-emerald-500/20 dark:text-emerald-400/10 mb-6"
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.2, duration: 0.3 }}
@@ -181,7 +181,7 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
                   {currentStep + 1}
                 </motion.div>
                 <motion.p
-                  className="text-3xl leading-relaxed text-gray-900 font-medium overflow-y-auto max-h-full"
+                  className="text-3xl md:text-5xl leading-tight text-gray-900 dark:text-gray-100 font-semibold overflow-y-auto max-h-full"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.3 }}
@@ -210,10 +210,10 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
         </div>
 
         {/* Footer controls */}
-        <div className="bg-gray-50 border-t border-gray-200 px-8 py-4 flex gap-4 items-center justify-center flex-shrink-0">
+        <div className="bg-gray-50 dark:bg-slate-900/50 border-t border-gray-200 dark:border-slate-700 px-8 py-5 flex gap-4 items-center justify-center flex-shrink-0">
           <motion.button
             onClick={() => setShowIngredients(!showIngredients)}
-            className="py-3 px-6 bg-emerald-50 text-emerald-700 rounded-lg font-medium hover:bg-emerald-100 transition-colors flex items-center gap-2"
+            className="py-3 px-8 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-100 rounded-full font-bold hover:bg-emerald-200 dark:hover:bg-emerald-800 transition-colors flex items-center gap-2"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             transition={{ duration: 0.2 }}

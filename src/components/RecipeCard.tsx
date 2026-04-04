@@ -35,11 +35,12 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
         }
       }}
       onClick={() => { if (recipe.id) onView?.(recipe.id) }}
-      className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative group cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-400 ${compact ? 'p-0' : ''}`}
-      initial={{ opacity: 0, y: 10 }}
+      className={`bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-xl border border-gray-200 dark:border-slate-700 overflow-hidden relative group cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-300 ${compact ? 'p-0' : ''}`}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.99 }}
+      whileHover={{ y: -5, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
     >
       {recipe.isPublic && (
         <div
@@ -72,20 +73,29 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
       )}
       <div className="h-full">
         {recipe.imageUrl ? (
-          <motion.div className="relative h-40 sm:h-48 overflow-hidden" whileHover={{ scale: 1.03 }} transition={{ duration: 0.2 }}>
-                <img src={recipe.imageUrl} alt="" aria-hidden="true" loading="lazy" className="w-full h-full object-cover" />
+          <div className="relative h-48 sm:h-56 overflow-hidden">
+            <motion.img 
+              src={recipe.imageUrl} 
+              alt="" 
+              aria-hidden="true" 
+              loading="lazy" 
+              className="w-full h-full object-cover"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.4 }}
+            />
             {/* Title overlay at bottom of image */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 pt-6 pb-3">
-              <h3 className="text-white font-semibold text-sm sm:text-base line-clamp-2">{title}</h3>
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/20 to-transparent pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 right-0 px-4 pt-6 pb-4">
+              <h3 className="text-white font-bold text-lg sm:text-xl line-clamp-2 drop-shadow-md">{title}</h3>
             </div>
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
+              <div className="bg-white/30 dark:bg-slate-900/50 backdrop-blur-md rounded-full p-3 shadow-lg">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14v-4zM3 5h8v14H3z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14v-4zM3 5h8v14H3z" />
                 </svg>
               </div>
             </div>
-          </motion.div>
+          </div>
         ) : (
           <div className="h-40 sm:h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
             <svg className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,27 +103,27 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
             </svg>
           </div>
         )}
-        <div className={`p-3 sm:p-4 ${compact ? 'p-2 sm:p-3' : ''}`}>
-          {!recipe.imageUrl && <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 line-clamp-2">{title}</h3>}
-          {recipe.description && <p className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2">{recipe.description}</p>}
-          <div className="flex items-center justify-between text-xs text-gray-500">
+        <div className={`p-4 sm:p-5 ${compact ? 'p-3 sm:p-4' : ''}`}>
+          {!recipe.imageUrl && <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">{title}</h3>}
+          {recipe.description && <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 leading-relaxed">{recipe.description}</p>}
+          <div className="flex items-center justify-between text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
             {(totalTime !== undefined && totalTime > 0) ? (
-              <span className="flex items-center">
-                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <span className="flex items-center bg-gray-100 dark:bg-slate-700/50 px-2 py-1 rounded-md">
+                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 {totalTime} min
               </span>
             ) : (recipe.prepTime || recipe.cookTime) ? (
-               <span className="flex items-center">
-                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <span className="flex items-center bg-gray-100 dark:bg-slate-700/50 px-2 py-1 rounded-md">
+                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                  {recipe.prepTime} {recipe.cookTime}
               </span>
             ) : null}
-            <span className="flex items-center">
-              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span className="flex items-center bg-gray-100 dark:bg-slate-700/50 px-2 py-1 rounded-md">
+              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
               {recipe.servings} servings
@@ -122,7 +132,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
         </div>
       </div>
       {authorUid && (
-        <div className="px-3 sm:px-4 pb-3 border-t border-gray-100 pt-2">
+        <div className="px-4 pb-4 border-t border-gray-100 dark:border-slate-700/50 pt-3 mt-auto">
           <Link
             to={`/user/${authorUid}`}
             onClick={(e) => e.stopPropagation()}
@@ -131,13 +141,13 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
                 e.stopPropagation()
               }
             }}
-            className="flex items-center gap-2 text-xs text-gray-500 hover:text-emerald-600 transition-colors"
+            className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
             aria-label={authorName ? `View ${authorName}'s profile` : 'View author profile'}
           >
-            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 shadow-inner">
               {((authorName || authorUid)[0] || '?').toUpperCase()}
             </div>
-            <span className="truncate">{authorName || 'View Author'}</span>
+            <span className="truncate font-medium">{authorName || 'View Author'}</span>
           </Link>
         </div>
       )}

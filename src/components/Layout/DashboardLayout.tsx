@@ -3,6 +3,7 @@ import { NavLink, Routes, Route, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../features/auth/AuthContext'
 import { Dashboard } from '../Dashboard'
+import { ThemeToggle } from '../ThemeToggle'
 import { RecipeLibrary } from '../../features/recipes/RecipeLibrary'
 import { RecipeDetail } from '../../features/recipes/RecipeDetail'
 import { CreateRecipe } from '../../features/recipes/CreateRecipe'
@@ -108,7 +109,7 @@ export const DashboardLayout: React.FC = () => {
 
   return (
     <SavedRecipesProvider>
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
       {/* Sidebar */}
       <AnimatePresence>
         {isSidebarOpen && (
@@ -121,9 +122,8 @@ export const DashboardLayout: React.FC = () => {
               ease: [0.25, 0.46, 0.45, 0.94],
               type: "tween"
             }}
-            className="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200"
+            className="fixed inset-y-4 left-4 z-50 w-64 h-[calc(100vh-2rem)] bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border border-gray-200 dark:border-slate-700 rounded-3xl shadow-2xl transition-colors duration-300 overflow-hidden flex flex-col"
           >
-        <div className="flex flex-col h-full">
           {/* Logo/Brand */}
           <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200">
             <motion.div
@@ -145,10 +145,10 @@ export const DashboardLayout: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3, duration: 0.3 }}
               >
-                <span className="text-xl font-bold text-gray-800">
+                <span className="text-xl font-bold text-gray-800 dark:text-gray-100">
                   CookFlow
                 </span>
-                <p className="text-xs text-gray-500 -mt-0.5">Seamlessly Organized</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 -mt-0.5">Seamlessly Organized</p>
               </motion.div>
             </motion.div>
             <motion.button
@@ -184,8 +184,8 @@ export const DashboardLayout: React.FC = () => {
                   className={({ isActive }) =>
                     `flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
                       isActive
-                        ? 'bg-emerald-50 text-emerald-700 font-medium'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-medium'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700/50'
                     }`
                   }
                 >
@@ -221,7 +221,7 @@ export const DashboardLayout: React.FC = () => {
 
           {/* User Profile Section */}
           <motion.div
-            className="border-t border-gray-200 p-4 pb-12 lg:pb-4"
+            className="border-t border-gray-200 dark:border-slate-700 p-4 pb-12 lg:pb-4 transition-colors duration-300"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.3 }}
@@ -236,10 +236,10 @@ export const DashboardLayout: React.FC = () => {
                   {user?.email?.[0].toUpperCase() || 'U'}
                 </motion.div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                     {user?.email || 'User'}
                   </p>
-                  <p className="text-xs text-gray-500">Signed in</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Signed in</p>
                 </div>
               </div>
             </div>
@@ -263,18 +263,17 @@ export const DashboardLayout: React.FC = () => {
               <span>Sign out</span>
             </motion.button>
           </motion.div>
-        </div>
           </motion.aside>
         )}
       </AnimatePresence>      {/* Main Content Area */}
-      <div className="lg:pl-64 transition-all duration-300">
+      <div className="lg:pl-[19rem] transition-all duration-300">
   {/* Top Bar (transparent) */}
   <header className="sticky top-0 z-[60] bg-transparent border-b-0 px-4 py-1">
     <div className="flex items-center">
       {!isSidebarOpen && (
       <motion.button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="lg:hidden p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+        className="lg:hidden p-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         transition={{ duration: 0.2 }}
@@ -285,11 +284,12 @@ export const DashboardLayout: React.FC = () => {
       </motion.button>
       )}
       <div className="ml-3 flex-1" />
+      <ThemeToggle />
     </div>
   </header>
 
         {/* Page Content */}
-        <main className="p-4 bg-gray-50">
+        <main className="p-4 bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="recipes/*" element={<RecipeLibrary />} />

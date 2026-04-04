@@ -2,6 +2,21 @@ import '@testing-library/jest-dom'
 import React from 'react'
 import { vi } from 'vitest'
 
+// Mock window.matchMedia (not implemented by jsdom)
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+})
+
 // Mock Firebase to prevent initialization errors in CI/CD
 vi.mock('../config/firebase', () => ({
   auth: {},
@@ -52,10 +67,15 @@ vi.mock('framer-motion', () => {
       button: makeMock('button'),
       svg: makeMock('svg'),
       path: makeMock('path'),
+      h1: makeMock('h1'),
+      h2: makeMock('h2'),
       h3: makeMock('h3'),
       p: makeMock('p'),
       ul: makeMock('ul'),
       li: makeMock('li'),
+      img: makeMock('img'),
+      span: makeMock('span'),
+      aside: makeMock('aside'),
     },
     AnimatePresence: ({ children }: any) => React.createElement(React.Fragment, null, children),
   }
