@@ -35,6 +35,7 @@ export const FollowProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     if (prevAuthRef.current && !isAuthenticated) {
       setFollowMap({})
+      pendingRef.current.clear()
     }
     prevAuthRef.current = isAuthenticated
   }, [isAuthenticated])
