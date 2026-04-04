@@ -4,11 +4,14 @@ import { uploadRecipeImage, deleteRecipeImage } from '../utils/imageStorage'
 import type { Recipe, RecipeTips } from '../types/nutrition'
 import { RecipeUtils } from '@theandiman/recipe-management-shared/dist/types/recipe'
 
-const STORAGE_API_BASE = import.meta.env.VITE_STORAGE_API_URL || ''
+const STORAGE_API_BASE =
+  import.meta.env.VITE_MANAGEMENT_API_URL ||
+  import.meta.env.VITE_STORAGE_API_URL ||
+  ''
 const IS_TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
 
 /**
- * Request DTO for creating a recipe in the storage service
+ * Request DTO for creating a recipe in the management service
  */
 export interface CreateRecipeRequest {
   recipeName: string
@@ -106,7 +109,7 @@ const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
 }
 
 /**
- * Save a recipe to the storage service
+ * Save a recipe to the management service
  * @param recipe - The AI-generated recipe to save
  * @returns The saved recipe with ID and metadata
  */

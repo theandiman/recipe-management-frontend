@@ -58,7 +58,7 @@ FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN:-$PROJECT_ID.firebaseapp.com}
 FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-$PROJECT_ID}
 FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET:-$PROJECT_ID.appspot.com}
 
-# Get Cloud Run service URLs for AI and Storage services
+# Get Cloud Run service URLs for AI and management services
 echo "Fetching Cloud Run service URLs..."
 
 # Get AI service URL
@@ -69,10 +69,10 @@ if [ -z "$API_URL" ]; then
   exit 1
 fi
 
-# Get Storage service URL
-STORAGE_API_URL=$(gcloud run services describe recipe-management-service --region=europe-west2 --project="$PROJECT_ID" --format='value(status.url)' 2>/dev/null || echo "")
+# Get management service URL
+MANAGEMENT_API_URL=$(gcloud run services describe recipe-management-service --region=europe-west2 --project="$PROJECT_ID" --format='value(status.url)' 2>/dev/null || echo "")
 
-if [ -z "$STORAGE_API_URL" ]; then
+if [ -z "$MANAGEMENT_API_URL" ]; then
   echo "Failed to find recipe-management-service in Cloud Run (europe-west2). Check service name and region." >&2
   exit 1
 fi
@@ -85,7 +85,8 @@ VITE_FIREBASE_STORAGE_BUCKET=$FIREBASE_STORAGE_BUCKET
 VITE_FIREBASE_MESSAGING_SENDER_ID=$FIREBASE_MESSAGING_SENDER_ID
 VITE_FIREBASE_APP_ID=$FIREBASE_APP_ID
 VITE_API_URL=$API_URL
-VITE_STORAGE_API_URL=$STORAGE_API_URL
+VITE_MANAGEMENT_API_URL=$MANAGEMENT_API_URL
+VITE_STORAGE_API_URL=$MANAGEMENT_API_URL
 EOF
 
 echo ".env.local created (or overwritten)"
