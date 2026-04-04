@@ -30,7 +30,7 @@ export const SavedRecipesProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const pendingRef = useRef<Set<string>>(new Set())
 
   const savedIds = React.useMemo(
-    () => new Set(savedRecipes.map((r) => r.id).filter(Boolean) as string[]),
+    () => new Set((Array.isArray(savedRecipes) ? savedRecipes : []).map((r) => r.id).filter(Boolean) as string[]),
     [savedRecipes]
   )
 
@@ -39,7 +39,7 @@ export const SavedRecipesProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       setIsLoading(true)
       const data = await getSavedRecipes()
-      setSavedRecipes(data)
+      setSavedRecipes(Array.isArray(data) ? data : [])
     } catch (err) {
       console.error('Failed to load saved recipes:', err)
     } finally {
