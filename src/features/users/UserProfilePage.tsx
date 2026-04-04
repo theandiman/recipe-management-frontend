@@ -49,13 +49,18 @@ export const UserProfilePage: React.FC = () => {
       return
     }
 
+    if (!uid) {
+      setError('Unable to update follow status: missing user id')
+      return
+    }
+
     const next = !followed
     setFollowed(next)
     try {
       if (next) {
-        await followUser(uid!)
+        await followUser(uid)
       } else {
-        await unfollowUser(uid!)
+        await unfollowUser(uid)
       }
     } catch {
       setFollowed(!next)
