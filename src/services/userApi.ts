@@ -27,6 +27,17 @@ export interface UserProfile {
   isFollowedByCurrentUser?: boolean
 }
 
+export interface FollowUser {
+  uid: string
+  displayName: string
+  avatarUrl?: string
+}
+
+export interface FollowListPage {
+  users: FollowUser[]
+  hasMore: boolean
+}
+
 const getUserApiHeaders = async (requireAuth = false): Promise<Record<string, string>> => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -78,4 +89,20 @@ export async function unfollowUser(uid: string): Promise<void> {
   const headers = await getUserApiHeaders(true)
 
   await axios.delete(url, { headers })
+}
+
+export async function getFollowers(uid: string, page = 1): Promise<FollowListPage> {
+  const url = buildApiUrl(USER_API_BASE, `/api/users/${uid}/followers?page=${page}`)
+  const headers = await getUserApiHeaders(false)
+
+  const response = await axios.get<FollowListPage>(url, { headers })
+  return response.data
+}
+
+export async function getFollowing(uid: string, page = 1): Promise<FollowListPage> {
+  const url = buildApiUrl(USER_API_BASE, `/api/users/${uid}/following?page=${page}`)
+  const headers = await getUserApiHeaders(false)
+
+  const response = await axios.get<FollowListPage>(url, { headers })
+  return response.data
 }

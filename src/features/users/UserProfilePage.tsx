@@ -5,6 +5,7 @@ import { getUserProfile, followUser, unfollowUser } from '../../services/userApi
 import { useAuth } from '../../features/auth/AuthContext'
 import RecipeCard from '../../components/RecipeCard'
 import { RecipeCardSkeleton } from '../../components/skeletons/RecipeCardSkeleton'
+import { FollowListModal } from './FollowListModal'
 import type { UserProfile } from '../../services/userApi'
 
 export const UserProfilePage: React.FC = () => {
@@ -16,6 +17,7 @@ export const UserProfilePage: React.FC = () => {
   const [notFound, setNotFound] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [followed, setFollowed] = useState(false)
+  const [followModal, setFollowModal] = useState<'followers' | 'following' | null>(null)
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -162,6 +164,35 @@ export const UserProfilePage: React.FC = () => {
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
               {profile.displayName}
             </h1>
+
+            {/* Follower / Following counts */}
+            {(profile.followerCount !== undefined || profile.followingCount !== undefined) && (
+              <div className="flex items-center justify-center sm:justify-start gap-4 mb-2">
+                {profile.followerCount !== undefined && (
+                  <button
+                    type="button"
+                    onClick={() => setFollowModal('followers')}
+                    className="text-sm text-gray-600 hover:text-emerald-600 transition-colors focus:outline-none"
+                  >
+                    <span className="font-semibold text-gray-900">{profile.followerCount}</span>
+                    {' '}
+                    {profile.followerCount === 1 ? 'follower' : 'followers'}
+                  </button>
+                )}
+                {profile.followingCount !== undefined && (
+                  <button
+                    type="button"
+                    onClick={() => setFollowModal('following')}
+                    className="text-sm text-gray-600 hover:text-emerald-600 transition-colors focus:outline-none"
+                  >
+                    <span className="font-semibold text-gray-900">{profile.followingCount}</span>
+                    {' '}
+                    following
+                  </button>
+                )}
+              </div>
+            )}
+
             {profile.bio && (
               <p className="text-gray-600 mb-3">{profile.bio}</p>
             )}
@@ -222,6 +253,14 @@ export const UserProfilePage: React.FC = () => {
             </motion.div>
           ))}
         </motion.div>
+      )}
+      {/* Followers / Following modal */}
+      {followModal && uid && (
+        <FollowListModal
+          uid={uid}
+          type={followModal}
+          onClose={() => setFollowModal(null)}
+        />
       )}
     </div>
   )
