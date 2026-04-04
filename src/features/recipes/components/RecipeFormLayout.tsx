@@ -48,8 +48,8 @@ interface RecipeFormLayoutProps {
   removeTag: (index: number) => void
   fieldErrors: Record<string, string>
   clearFieldError: (fieldName: string, stepNumber: number) => void
-  setFieldErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>
-  setStepsWithErrors: React.Dispatch<React.SetStateAction<Set<number>>>
+  setFieldErrors?: React.Dispatch<React.SetStateAction<Record<string, string>>>
+  setStepsWithErrors?: React.Dispatch<React.SetStateAction<Set<number>>>
   
   // Save state
   saveLoading: boolean
@@ -117,18 +117,18 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
 
   const handleNextStepClick = () => {
     if (currentStep === 1 && !title.trim()) {
-      setFieldErrors(prev => ({ ...prev, title: 'Recipe name is required' }))
-      setStepsWithErrors(prev => new Set([...prev, 1]))
+      setFieldErrors?.(prev => ({ ...prev, title: 'Recipe name is required' }))
+      setStepsWithErrors?.(prev => new Set([...prev, 1]))
       return
     }
     if (currentStep === 2 && !ingredients.some(i => i.item.trim())) {
-      setFieldErrors(prev => ({ ...prev, ingredients: 'At least one ingredient is required' }))
-      setStepsWithErrors(prev => new Set([...prev, 2]))
+      setFieldErrors?.(prev => ({ ...prev, ingredients: 'At least one ingredient is required' }))
+      setStepsWithErrors?.(prev => new Set([...prev, 2]))
       return
     }
     if (currentStep === 3 && !instructions.some(i => i.trim())) {
-      setFieldErrors(prev => ({ ...prev, instructions: 'At least one instruction is required' }))
-      setStepsWithErrors(prev => new Set([...prev, 3]))
+      setFieldErrors?.(prev => ({ ...prev, instructions: 'At least one instruction is required' }))
+      setStepsWithErrors?.(prev => new Set([...prev, 3]))
       return
     }
     goToNextStep()
