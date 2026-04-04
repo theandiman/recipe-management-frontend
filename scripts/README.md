@@ -95,7 +95,7 @@ sleep 5
 **Environment Variables:**
 - `FIREBASE_ID_TOKEN` - **Required** - Your Firebase authentication token
 - `VITE_API_URL` - API base URL (default: http://localhost:8080)
-- `VITE_STORAGE_API_URL` - Storage API base URL (default: http://localhost:8081)
+- `VITE_MANAGEMENT_API_URL` - Management API base URL (default: http://localhost:8081)
 
 **Examples:**
 ```bash
@@ -111,7 +111,7 @@ FIREBASE_ID_TOKEN="eyJhbGc..." node scripts/populate-recipes.js 100
 # Use custom API URLs
 FIREBASE_ID_TOKEN="eyJhbGc..." \
 VITE_API_URL="https://api.example.com" \
-VITE_STORAGE_API_URL="https://storage.example.com" \
+VITE_MANAGEMENT_API_URL="https://storage.example.com" \
 node scripts/populate-recipes.js 50
 ```
 
@@ -195,7 +195,7 @@ Image generation is optional. The script will continue and save recipes without 
 🍳 Recipe Database Population Script
 ====================================
 API URL: http://localhost:8080
-Storage API URL: http://localhost:8081
+Management API URL: http://localhost:8081
 Target count: 50 recipes
 Delay between requests: 5000ms
 
