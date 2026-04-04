@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { getUserProfile } from '../../services/userApi'
+import { getUserProfile, followUser, unfollowUser } from '../../services/userApi'
+import { useAuth } from '../../features/auth/AuthContext'
 import RecipeCard from '../../components/RecipeCard'
 import { RecipeCardSkeleton } from '../../components/skeletons/RecipeCardSkeleton'
 import type { UserProfile } from '../../services/userApi'
@@ -9,10 +10,12 @@ import type { UserProfile } from '../../services/userApi'
 export const UserProfilePage: React.FC = () => {
   const { uid } = useParams<{ uid: string }>()
   const navigate = useNavigate()
+  const { user: currentUser, isAuthenticated } = useAuth()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [followed, setFollowed] = useState(false)
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -23,6 +26,7 @@ export const UserProfilePage: React.FC = () => {
         setError(null)
         const data = await getUserProfile(uid)
         setProfile(data)
+        setFollowed(data.isFollowedByCurrentUser ?? false)
       } catch (err: unknown) {
         const apiError = err as { response?: { status?: number; data?: { message?: string } } }
         if (apiError.response?.status === 404) {
@@ -38,6 +42,30 @@ export const UserProfilePage: React.FC = () => {
 
     fetchProfile()
   }, [uid])
+
+  const handleFollowClick = async () => {
+    if (!isAuthenticated) {
+      navigate('/login')
+      return
+    }
+
+    if (!uid) {
+      setError('Unable to update follow status: missing user id')
+      return
+    }
+
+    const next = !followed
+    setFollowed(next)
+    try {
+      if (next) {
+        await followUser(uid)
+      } else {
+        await unfollowUser(uid)
+      }
+    } catch {
+      setFollowed(!next)
+    }
+  }
 
   if (loading) {
     return (
@@ -142,14 +170,21 @@ export const UserProfilePage: React.FC = () => {
               {profile.publicRecipeCount === 1 ? 'public recipe' : 'public recipes'}
             </p>
 
-            {/* Follow button – placeholder for M3 */}
-            {/* TODO(M3): wire up follow/unfollow API */}
-            <button
-              className="px-5 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400"
-              onClick={() => { /* TODO(M3): implement follow */ }}
-            >
-              Follow
-            </button>
+            {/* Follow / Unfollow button – hidden on own profile */}
+            {uid !== currentUser?.uid && (
+              <button
+                type="button"
+                aria-pressed={followed}
+                className={`px-5 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 ${
+                  followed
+                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                }`}
+                onClick={handleFollowClick}
+              >
+                {followed ? 'Following' : 'Follow'}
+              </button>
+            )}
           </div>
         </div>
       </motion.div>
