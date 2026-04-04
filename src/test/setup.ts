@@ -45,6 +45,12 @@ vi.mock('firebase/storage', () => ({
   deleteObject: vi.fn()
 }))
 
+// Mock sonner to prevent toast rendering issues in jsdom
+vi.mock('sonner', () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+  Toaster: () => null,
+}))
+
 // Mock Framer Motion to prevent animations from interfering with tests
 vi.mock('framer-motion', () => {
   const omitMotionProps = (props: any) => {

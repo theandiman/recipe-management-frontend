@@ -1,22 +1,24 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { getUserProfile, followUser, unfollowUser } from '../../services/userApi'
+import { getUserProfile } from '../../services/userApi'
 import { useAuth } from '../../features/auth/AuthContext'
 import RecipeCard from '../../components/RecipeCard'
 import { RecipeCardSkeleton } from '../../components/skeletons/RecipeCardSkeleton'
 import { FollowListModal } from './FollowListModal'
+import { FollowButton } from './FollowButton'
+import { useFollowContext } from './FollowContext'
 import type { UserProfile } from '../../services/userApi'
 
 export const UserProfilePage: React.FC = () => {
   const { uid } = useParams<{ uid: string }>()
   const navigate = useNavigate()
-  const { user: currentUser, isAuthenticated } = useAuth()
+  const { user: currentUser } = useAuth()
+  const { initUser, getFollowState } = useFollowContext()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [followed, setFollowed] = useState(false)
   const [followModal, setFollowModal] = useState<'followers' | 'following' | null>(null)
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export const UserProfilePage: React.FC = () => {
         setError(null)
         const data = await getUserProfile(uid)
         setProfile(data)
-        setFollowed(data.isFollowedByCurrentUser ?? false)
+        initUser(uid, data.isFollowedByCurrentUser ?? false, data.followerCount)
       } catch (err: unknown) {
         const apiError = err as { response?: { status?: number; data?: { message?: string } } }
         if (apiError.response?.status === 404) {
@@ -43,31 +45,7 @@ export const UserProfilePage: React.FC = () => {
     }
 
     fetchProfile()
-  }, [uid])
-
-  const handleFollowClick = async () => {
-    if (!isAuthenticated) {
-      navigate('/login')
-      return
-    }
-
-    if (!uid) {
-      setError('Unable to update follow status: missing user id')
-      return
-    }
-
-    const next = !followed
-    setFollowed(next)
-    try {
-      if (next) {
-        await followUser(uid)
-      } else {
-        await unfollowUser(uid)
-      }
-    } catch {
-      setFollowed(!next)
-    }
-  }
+  }, [uid, initUser])
 
   if (loading) {
     return (
@@ -165,33 +143,38 @@ export const UserProfilePage: React.FC = () => {
               {profile.displayName}
             </h1>
 
-            {/* Follower / Following counts */}
-            {(profile.followerCount !== undefined || profile.followingCount !== undefined) && (
-              <div className="flex items-center justify-center sm:justify-start gap-4 mb-2">
-                {profile.followerCount !== undefined && (
-                  <button
-                    type="button"
-                    onClick={() => setFollowModal('followers')}
-                    className="text-sm text-gray-600 hover:text-emerald-600 transition-colors focus:outline-none"
-                  >
-                    <span className="font-semibold text-gray-900">{profile.followerCount}</span>
-                    {' '}
-                    {profile.followerCount === 1 ? 'follower' : 'followers'}
-                  </button>
-                )}
-                {profile.followingCount !== undefined && (
-                  <button
-                    type="button"
-                    onClick={() => setFollowModal('following')}
-                    className="text-sm text-gray-600 hover:text-emerald-600 transition-colors focus:outline-none"
-                  >
-                    <span className="font-semibold text-gray-900">{profile.followingCount}</span>
-                    {' '}
-                    following
-                  </button>
-                )}
-              </div>
-            )}
+            {/* Follower / Following counts – followerCount reads from context for optimistic updates */}
+            {(() => {
+              const contextState = uid ? getFollowState(uid) : undefined
+              const displayFollowerCount =
+                contextState !== undefined ? contextState.followerCount : profile.followerCount
+              return (displayFollowerCount !== undefined || profile.followingCount !== undefined) ? (
+                <div className="flex items-center justify-center sm:justify-start gap-4 mb-2">
+                  {displayFollowerCount !== undefined && (
+                    <button
+                      type="button"
+                      onClick={() => setFollowModal('followers')}
+                      className="text-sm text-gray-600 hover:text-emerald-600 transition-colors focus:outline-none"
+                    >
+                      <span className="font-semibold text-gray-900">{displayFollowerCount}</span>
+                      {' '}
+                      {displayFollowerCount === 1 ? 'follower' : 'followers'}
+                    </button>
+                  )}
+                  {profile.followingCount !== undefined && (
+                    <button
+                      type="button"
+                      onClick={() => setFollowModal('following')}
+                      className="text-sm text-gray-600 hover:text-emerald-600 transition-colors focus:outline-none"
+                    >
+                      <span className="font-semibold text-gray-900">{profile.followingCount}</span>
+                      {' '}
+                      following
+                    </button>
+                  )}
+                </div>
+              ) : null
+            })()}
 
             {profile.bio && (
               <p className="text-gray-600 mb-3">{profile.bio}</p>
@@ -202,20 +185,7 @@ export const UserProfilePage: React.FC = () => {
             </p>
 
             {/* Follow / Unfollow button – hidden on own profile */}
-            {uid !== currentUser?.uid && (
-              <button
-                type="button"
-                aria-pressed={followed}
-                className={`px-5 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 ${
-                  followed
-                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                }`}
-                onClick={handleFollowClick}
-              >
-                {followed ? 'Following' : 'Follow'}
-              </button>
-            )}
+            {uid !== currentUser?.uid && uid && <FollowButton uid={uid} />}
           </div>
         </div>
       </motion.div>

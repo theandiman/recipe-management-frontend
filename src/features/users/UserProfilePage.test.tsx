@@ -6,6 +6,7 @@ import { UserProfilePage } from './UserProfilePage'
 import * as userApi from '../../services/userApi'
 import type { UserProfile } from '../../services/userApi'
 import type { Recipe } from '../../types/nutrition'
+import { FollowProvider } from './FollowContext'
 
 vi.mock('../../services/userApi', () => ({
   getUserProfile: vi.fn(),
@@ -18,6 +19,11 @@ vi.mock('../../services/userApi', () => ({
 const mockUseAuth = vi.fn()
 vi.mock('../../features/auth/AuthContext', () => ({
   useAuth: () => mockUseAuth(),
+}))
+
+vi.mock('sonner', () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+  Toaster: () => null,
 }))
 
 const mockRecipe: Recipe = {
@@ -43,11 +49,13 @@ const mockProfile: UserProfile = {
 const renderAtUid = (uid = 'uid-123') =>
   render(
     <MemoryRouter initialEntries={[`/user/${uid}`]}>
-      <Routes>
-        <Route path="/user/:uid" element={<UserProfilePage />} />
-        <Route path="/dashboard/recipes/:id" element={<div>Recipe detail</div>} />
-        <Route path="/login" element={<div>Sign in page</div>} />
-      </Routes>
+      <FollowProvider>
+        <Routes>
+          <Route path="/user/:uid" element={<UserProfilePage />} />
+          <Route path="/dashboard/recipes/:id" element={<div>Recipe detail</div>} />
+          <Route path="/login" element={<div>Sign in page</div>} />
+        </Routes>
+      </FollowProvider>
     </MemoryRouter>
   )
 
