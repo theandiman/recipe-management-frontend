@@ -284,6 +284,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 value={prepTime}
                 onChange={(e) => setPrepTime(e.target.value)}
                 min="0"
+                max="999"
                 placeholder="15"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
@@ -297,6 +298,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 value={cookTime}
                 onChange={(e) => setCookTime(e.target.value)}
                 min="0"
+                max="999"
                 placeholder="30"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
@@ -310,6 +312,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 value={servings}
                 onChange={(e) => setServings(e.target.value)}
                 min="1"
+                max="99"
                 placeholder="4"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
