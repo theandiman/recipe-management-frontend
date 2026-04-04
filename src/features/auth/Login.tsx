@@ -38,8 +38,8 @@ export const Login: React.FC = () => {
       submittingText="Signing in..."
       onGoogleSignIn={handleGoogleSignIn}
       googleButtonLabel="Sign in with Google"
-      bottomDividerText="New to CookFlow?"
-      bottomButtonText="Create an account"
+      bottomDividerText="Don't have an account?"
+      bottomButtonText="Sign up"
       bottomButtonAction={() => navigate('/register')}
     >
       <AuthFormInput
