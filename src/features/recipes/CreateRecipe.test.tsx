@@ -56,6 +56,9 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
     it('should navigate to next step when Next button is clicked', () => {
       renderWithRouter(<CreateRecipe />)
       
+      const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+      fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+      
       const nextButton = screen.getByRole('button', { name: /Next →/i })
       fireEvent.click(nextButton)
       
@@ -66,6 +69,8 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       renderWithRouter(<CreateRecipe />)
       
       // Go to step 2
+      const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+      fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
       const nextButton = screen.getByRole('button', { name: /Next →/i })
       fireEvent.click(nextButton)
       
@@ -138,8 +143,8 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
     beforeEach(() => {
       renderWithRouter(<CreateRecipe />)
       // Navigate to step 2
-      const nextButton = screen.getByRole('button', { name: /Next →/i })
-      fireEvent.click(nextButton)
+      const step2Button = screen.getByRole('button', { name: /Ingredients/i })
+      fireEvent.click(step2Button)
     })
 
     it('should render ingredients section', () => {
@@ -319,8 +324,8 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument()
         
         if (i < 4) {
-          const nextButton = screen.getByRole('button', { name: /Next →/i })
-          fireEvent.click(nextButton)
+          const stepButton = screen.getByRole('button', { name: new RegExp(String(i + 1)) })
+          fireEvent.click(stepButton)
         }
       }
     })
@@ -344,8 +349,8 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
       
       // Go to step 2
-      const nextButton = screen.getByRole('button', { name: /Next →/i })
-      fireEvent.click(nextButton)
+      const step2Button = screen.getByRole('button', { name: /Ingredients/i })
+      fireEvent.click(step2Button)
       
       // Go back to step 1
       const backButton = screen.getByRole('button', { name: /← Back/i })
@@ -370,6 +375,8 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       renderWithRouter(<CreateRecipe />)
       
       // Navigate to step 2
+      const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+      fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
       const nextButton = screen.getByRole('button', { name: /Next →/i })
       fireEvent.click(nextButton)
       
