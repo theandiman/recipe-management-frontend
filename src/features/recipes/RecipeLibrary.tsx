@@ -165,6 +165,7 @@ export const RecipeLibrary: React.FC = () => {
             transition={{ duration: 0.4, delay: 0.6 }}
           >
             <motion.button
+              type="button"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/dashboard/create')}
@@ -173,10 +174,11 @@ export const RecipeLibrary: React.FC = () => {
               Create Recipe
             </motion.button>
             <motion.button
+              type="button"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/dashboard/generate')}
-              className="px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
+              className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
             >
               Try AI Generator
             </motion.button>
