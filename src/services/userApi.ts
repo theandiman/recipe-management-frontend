@@ -2,10 +2,7 @@ import axios from 'axios'
 import { buildApiUrl } from '../utils/apiUtils'
 import type { Recipe } from '../types/nutrition'
 
-const USER_API_BASE =
-  import.meta.env.VITE_MANAGEMENT_API_URL ||
-  import.meta.env.VITE_STORAGE_API_URL ||
-  ''
+const USER_API_BASE = import.meta.env.VITE_MANAGEMENT_API_URL || ''
 const IS_TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
 
 export interface UserProfile {

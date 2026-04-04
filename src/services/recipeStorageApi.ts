@@ -4,10 +4,7 @@ import { uploadRecipeImage, deleteRecipeImage } from '../utils/imageStorage'
 import type { Recipe, RecipeTips } from '../types/nutrition'
 import { RecipeUtils } from '@theandiman/recipe-management-shared/dist/types/recipe'
 
-const MANAGEMENT_API_BASE =
-  import.meta.env.VITE_MANAGEMENT_API_URL ||
-  import.meta.env.VITE_STORAGE_API_URL ||
-  ''
+const MANAGEMENT_API_BASE = import.meta.env.VITE_MANAGEMENT_API_URL || ''
 const IS_TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
 
 type NutritionPerServing = NonNullable<NonNullable<Recipe['nutritionalInfo']>['perServing']>
