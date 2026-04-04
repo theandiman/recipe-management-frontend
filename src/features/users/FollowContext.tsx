@@ -48,7 +48,16 @@ export const FollowProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     (uid: string, isFollowed: boolean, followerCount: number | undefined) => {
       setFollowMap((prev) => {
         // Don't overwrite in-flight optimistic state
-        if (prev[uid] !== undefined) return prev
+        if (pendingRef.current.has(uid)) return prev
+
+        const existing = prev[uid]
+        if (
+          existing !== undefined &&
+          existing.isFollowed === isFollowed &&
+          existing.followerCount === followerCount
+        ) {
+          return prev
+        }
         return { ...prev, [uid]: { isFollowed, followerCount } }
       })
     },
