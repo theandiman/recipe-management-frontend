@@ -91,11 +91,15 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
     it('should allow jumping to specific step via progress indicator', () => {
       renderWithRouter(<CreateRecipe />)
       
-      // Click on step 3 in progress indicator
-      const step3Button = screen.getByRole('button', { name: /Instructions/i })
-      fireEvent.click(step3Button)
+      // Fill title so step 1 validation passes
+      const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+      fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
       
-      expect(screen.getByText(/Step 3 of 5: Instructions/i)).toBeInTheDocument()
+      // Click on step 2 in progress indicator - step 1 is valid so navigation succeeds
+      const step2Button = screen.getByRole('button', { name: /Ingredients/i })
+      fireEvent.click(step2Button)
+      
+      expect(screen.getByText(/Step 2 of 5: Ingredients/i)).toBeInTheDocument()
     })
 
     it('should show Save Recipe button only on step 5', () => {
@@ -105,9 +109,19 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       expect(screen.getByRole('button', { name: /Next →/i })).toBeInTheDocument()
       expect(screen.queryByRole('button', { name: /Save Recipe/i })).not.toBeInTheDocument()
       
-      // Navigate to step 5
+      // Fill required fields and navigate to step 5
+      const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+      fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+      let nextButton = screen.getByRole('button', { name: /Next →/i })
+      fireEvent.click(nextButton) // → step 2
+      const itemInput = screen.getAllByPlaceholderText('e.g., all-purpose flour')[0]
+      fireEvent.change(itemInput, { target: { value: 'flour' } })
+      nextButton = screen.getByRole('button', { name: /Next →/i })
+      fireEvent.click(nextButton) // → step 3
+      const instructionInput = screen.getAllByPlaceholderText(/Describe this step in detail/i)[0]
+      fireEvent.change(instructionInput, { target: { value: 'Mix ingredients' } })
       const step5Button = screen.getByRole('button', { name: /Review/i })
-      fireEvent.click(step5Button)
+      fireEvent.click(step5Button) // validates steps 3 & 4, goes to step 5
       
       // On step 5, should show Save Recipe button
       expect(screen.queryByRole('button', { name: /Next →/i })).not.toBeInTheDocument()
@@ -142,7 +156,9 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
   describe('Step 2: Ingredients', () => {
     beforeEach(() => {
       renderWithRouter(<CreateRecipe />)
-      // Navigate to step 2
+      // Fill title so step 1 validation passes, then navigate to step 2
+      const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+      fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
       const step2Button = screen.getByRole('button', { name: /Ingredients/i })
       fireEvent.click(step2Button)
     })
@@ -204,9 +220,15 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
   describe('Step 3: Instructions', () => {
     beforeEach(() => {
       renderWithRouter(<CreateRecipe />)
-      // Navigate to step 3
+      // Fill title, navigate to step 2, fill ingredient, then navigate to step 3
+      const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+      fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+      const nextButton = screen.getByRole('button', { name: /Next →/i })
+      fireEvent.click(nextButton) // → step 2
+      const itemInput = screen.getAllByPlaceholderText('e.g., all-purpose flour')[0]
+      fireEvent.change(itemInput, { target: { value: 'flour' } })
       const step3Button = screen.getByRole('button', { name: /Instructions/i })
-      fireEvent.click(step3Button)
+      fireEvent.click(step3Button) // step 2 valid → step 3
     })
 
     it('should render instructions section', () => {
@@ -230,9 +252,19 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
   describe('Step 4: Additional Info', () => {
     beforeEach(() => {
       renderWithRouter(<CreateRecipe />)
-      // Navigate to step 4
+      // Fill required data for steps 1-3, then navigate to step 4
+      const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+      fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+      let nextButton = screen.getByRole('button', { name: /Next →/i })
+      fireEvent.click(nextButton) // → step 2
+      const itemInput = screen.getAllByPlaceholderText('e.g., all-purpose flour')[0]
+      fireEvent.change(itemInput, { target: { value: 'flour' } })
+      nextButton = screen.getByRole('button', { name: /Next →/i })
+      fireEvent.click(nextButton) // → step 3
+      const instructionInput = screen.getAllByPlaceholderText(/Describe this step in detail/i)[0]
+      fireEvent.change(instructionInput, { target: { value: 'Mix ingredients' } })
       const step4Button = screen.getByRole('button', { name: /Additional Info/i })
-      fireEvent.click(step4Button)
+      fireEvent.click(step4Button) // step 3 valid → step 4
     })
 
     it('should render additional info section', () => {
@@ -286,14 +318,24 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
   describe('Step 5: Review & Preview', () => {
     beforeEach(() => {
       renderWithRouter(<CreateRecipe />)
-      // Navigate to step 5
+      // Fill required data for steps 1-3, then navigate to step 5
+      const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+      fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+      let nextButton = screen.getByRole('button', { name: /Next →/i })
+      fireEvent.click(nextButton) // → step 2
+      const itemInput = screen.getAllByPlaceholderText('e.g., all-purpose flour')[0]
+      fireEvent.change(itemInput, { target: { value: 'flour' } })
+      nextButton = screen.getByRole('button', { name: /Next →/i })
+      fireEvent.click(nextButton) // → step 3
+      const instructionInput = screen.getAllByPlaceholderText(/Describe this step in detail/i)[0]
+      fireEvent.change(instructionInput, { target: { value: 'Mix ingredients' } })
       const step5Button = screen.getByRole('button', { name: /Review/i })
-      fireEvent.click(step5Button)
+      fireEvent.click(step5Button) // steps 3 & 4 valid → step 5
     })
 
     it('should render preview on step 5', () => {
-      // Step 5 should show preview with "Untitled Recipe" for empty title
-      expect(screen.getByText('Untitled Recipe')).toBeInTheDocument()
+      // Step 5 should show preview with the recipe title entered in beforeEach
+      expect(screen.getByText('Test Recipe')).toBeInTheDocument()
     })
 
     it('should not show Edit/Preview toggle', () => {
@@ -320,14 +362,35 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
     it('should have Cancel button on all steps', () => {
       renderWithRouter(<CreateRecipe />)
       
-      for (let i = 1; i <= 4; i++) {
-        expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument()
-        
-        if (i < 4) {
-          const stepButton = screen.getByRole('button', { name: new RegExp(String(i + 1)) })
-          fireEvent.click(stepButton)
-        }
-      }
+      // Step 1
+      expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument()
+      
+      // Navigate to step 2 (fill title so validation passes)
+      const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+      fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+      let nextButton = screen.getByRole('button', { name: /Next →/i })
+      fireEvent.click(nextButton)
+      
+      // Step 2
+      expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument()
+      
+      // Navigate to step 3 (fill ingredient so validation passes)
+      const itemInput = screen.getAllByPlaceholderText('e.g., all-purpose flour')[0]
+      fireEvent.change(itemInput, { target: { value: 'flour' } })
+      nextButton = screen.getByRole('button', { name: /Next →/i })
+      fireEvent.click(nextButton)
+      
+      // Step 3
+      expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument()
+      
+      // Navigate to step 4 (fill instruction so validation passes)
+      const instructionInput = screen.getAllByPlaceholderText(/Describe this step in detail/i)[0]
+      fireEvent.change(instructionInput, { target: { value: 'Mix' } })
+      nextButton = screen.getByRole('button', { name: /Next →/i })
+      fireEvent.click(nextButton)
+      
+      // Step 4
+      expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument()
     })
 
     it('should navigate back when Cancel is clicked', () => {
@@ -415,8 +478,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         fireEvent.click(step4Button)
         
         // Try to save without recipe name
-        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
-        fireEvent.click(saveButton)
         
         // Should show error message
         expect(screen.getByText('Recipe name is required')).toBeInTheDocument()
@@ -432,8 +493,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         const step4Button = screen.getByRole('button', { name: /Review/i })
         fireEvent.click(step4Button)
         
-        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
-        fireEvent.click(saveButton)
         
         // Title field should have red border
         const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
@@ -447,8 +506,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         const step4Button = screen.getByRole('button', { name: /Review/i })
         fireEvent.click(step4Button)
         
-        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
-        fireEvent.click(saveButton)
         
         // Error should be visible
         expect(screen.getByText('Recipe name is required')).toBeInTheDocument()
@@ -469,8 +526,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         const step4Button = screen.getByRole('button', { name: /Review/i })
         fireEvent.click(step4Button)
         
-        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
-        fireEvent.click(saveButton)
         
         // Step 1 should have red ring and exclamation mark
         const step1Button = screen.getByRole('button', { name: /Basic Info/i })
@@ -497,8 +552,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         fireEvent.click(step4Button)
         
         // Try to save
-        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
-        fireEvent.click(saveButton)
         
         // Should show error and navigate to step 2
         expect(screen.getByText('At least one ingredient is required')).toBeInTheDocument()
@@ -516,8 +569,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         const step4Button = screen.getByRole('button', { name: /Review/i })
         fireEvent.click(step4Button)
         
-        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
-        fireEvent.click(saveButton)
         
         // Step 2 should have red ring
         const step2Button = screen.getByRole('button', { name: /Ingredients/i })
@@ -536,8 +587,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         const step4Button = screen.getByRole('button', { name: /Review/i })
         fireEvent.click(step4Button)
         
-        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
-        fireEvent.click(saveButton)
         
         // Error should be visible on step 2
         expect(screen.getByText('At least one ingredient is required')).toBeInTheDocument()
@@ -575,8 +624,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         const step4Button = screen.getByRole('button', { name: /Review/i })
         fireEvent.click(step4Button)
         
-        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
-        fireEvent.click(saveButton)
         
         // Should not show ingredients error
         expect(screen.queryByText('At least one ingredient is required')).not.toBeInTheDocument()
@@ -603,8 +650,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         fireEvent.click(step4Button)
         
         // Try to save
-        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
-        fireEvent.click(saveButton)
         
         // Should show error and navigate to step 3
         expect(screen.getByText('At least one instruction is required')).toBeInTheDocument()
@@ -628,8 +673,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         const step4Button = screen.getByRole('button', { name: /Review/i })
         fireEvent.click(step4Button)
         
-        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
-        fireEvent.click(saveButton)
         
         // Step 3 should have red ring
         const step3Button = screen.getByRole('button', { name: /Instructions/i })
@@ -654,8 +697,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         const step4Button = screen.getByRole('button', { name: /Review/i })
         fireEvent.click(step4Button)
         
-        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
-        fireEvent.click(saveButton)
         
         // Error should be visible on step 3
         expect(screen.getByText('At least one instruction is required')).toBeInTheDocument()
@@ -677,8 +718,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         const step4Button = screen.getByRole('button', { name: /Review/i })
         fireEvent.click(step4Button)
         
-        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
-        fireEvent.click(saveButton)
         
         // Should navigate to first error step (step 1)
         expect(screen.getByText(/Step 1 of 5: Basic Info/i)).toBeInTheDocument()
@@ -705,8 +744,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         const step4Button = screen.getByRole('button', { name: /Review/i })
         fireEvent.click(step4Button)
         
-        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
-        fireEvent.click(saveButton)
         
         // Should navigate to step 2 (first error)
         expect(screen.getByText(/Step 2 of 5: Ingredients/i)).toBeInTheDocument()
@@ -720,8 +757,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         const step4Button = screen.getByRole('button', { name: /Review/i })
         fireEvent.click(step4Button)
         
-        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
-        fireEvent.click(saveButton)
         
         // All steps should have errors
         let step1Button = screen.getByRole('button', { name: /Basic Info/i })
@@ -765,8 +800,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         const step4Button = screen.getByRole('button', { name: /Review/i })
         fireEvent.click(step4Button)
         
-        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
-        fireEvent.click(saveButton)
         
         // Should navigate back to step 1 (first error)
         expect(screen.getByText(/Step 1 of 5: Basic Info/i)).toBeInTheDocument()
@@ -780,8 +813,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         const step4Button = screen.getByRole('button', { name: /Review/i })
         fireEvent.click(step4Button)
         
-        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
-        fireEvent.click(saveButton)
         
         // Check for error message with SVG icon
         const errorText = screen.getByText('Recipe name is required')
@@ -802,8 +833,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         const step4Button = screen.getByRole('button', { name: /Review/i })
         fireEvent.click(step4Button)
         
-        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
-        fireEvent.click(saveButton)
         
         // Should be on step 2 with error message
         const errorMessage = screen.getByText('At least one ingredient is required')
@@ -833,8 +862,6 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         const step4Button = screen.getByRole('button', { name: /Review/i })
         fireEvent.click(step4Button)
         
-        const saveButton = screen.getByRole('button', { name: /Save Recipe/i })
-        fireEvent.click(saveButton)
         
         // Should be on step 3 with error message
         const errorMessage = screen.getByText('At least one instruction is required')

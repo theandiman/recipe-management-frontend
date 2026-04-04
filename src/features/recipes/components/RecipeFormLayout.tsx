@@ -161,9 +161,21 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   const handleStepIndicatorClick = (targetStep: number) => {
     // Only validate if moving forward
     if (targetStep > currentStep) {
-      // Validate all steps from current up to the target
+      // Validate ALL steps from current up to the target so all error indicators are set
+      let firstErrorStep: number | null = null
       for (let i = currentStep; i < targetStep; i++) {
-        if (!validateStep(i)) return // Stop navigation if intermediate step is invalid
+        const stepValid = validateStep(i)
+        if (!stepValid && firstErrorStep === null) {
+          firstErrorStep = i
+        }
+      }
+      if (firstErrorStep !== null) {
+        // Navigate to the first failing step so the user can see and fix the error.
+        // If the failing step IS the current step, stay on it.
+        if (firstErrorStep !== currentStep) {
+          goToStep(firstErrorStep)
+        }
+        return
       }
     }
     goToStep(targetStep)
