@@ -269,7 +269,7 @@ export const DashboardLayout: React.FC = () => {
       </AnimatePresence>      {/* Main Content Area */}
       <div className="lg:pl-64 transition-all duration-300">
   {/* Top Bar (transparent) */}
-  <header className="sticky top-0 z-60 bg-transparent border-b-0 px-4 py-1">
+  <header className="sticky top-0 z-[60] bg-transparent border-b-0 px-4 py-1">
     <div className="flex items-center">
       {!isSidebarOpen && (
       <motion.button
