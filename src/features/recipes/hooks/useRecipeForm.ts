@@ -1,3 +1,4 @@
+import type React from 'react'
 import { useState, useCallback, useMemo } from 'react'
 import type { Ingredient } from '../../../types/nutrition'
 

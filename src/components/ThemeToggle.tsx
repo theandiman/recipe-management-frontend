@@ -7,6 +7,7 @@ export const ThemeToggle: React.FC = () => {
 
   return (
     <motion.button
+      type="button"
       onClick={toggleTheme}
       className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 overflow-hidden ${
         theme === 'dark' ? 'bg-slate-700' : 'bg-emerald-100'
@@ -14,6 +15,7 @@ export const ThemeToggle: React.FC = () => {
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       aria-label="Toggle Dark Mode"
+      aria-pressed={theme === 'dark'}
     >
       {/* Background stars for dark mode */}
       {theme === 'dark' && (

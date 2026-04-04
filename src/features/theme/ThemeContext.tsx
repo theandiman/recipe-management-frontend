@@ -13,8 +13,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [theme, setTheme] = useState<Theme>(() => {
     // Check local storage or system preference
     if (typeof window !== 'undefined') {
-      const storedTheme = localStorage.getItem('theme') as Theme;
-      if (storedTheme) return storedTheme;
+      try {
+        const storedTheme = window.localStorage.getItem('theme');
+        if (storedTheme === 'dark' || storedTheme === 'light') {
+          return storedTheme;
+        }
+      } catch (err) {
+        // Fallback for privacy browsing or restricted contexts
+      }
       
       const userMedia = window.matchMedia('(prefers-color-scheme: dark)');
       if (userMedia.matches) return 'dark';
@@ -29,7 +35,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } else {
       root.classList.remove('dark');
     }
-    localStorage.setItem('theme', theme);
+    
+    try {
+      window.localStorage.setItem('theme', theme);
+    } catch (err) {
+      // Ignore
+    }
   }, [theme]);
 
   const toggleTheme = () => {

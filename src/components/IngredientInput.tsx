@@ -95,11 +95,11 @@ export const IngredientInput: React.FC<IngredientInputProps> = ({
               </div>
 
               {/* Unit Dropdown */}
-              <div className="w-20 sm:w-24 flex-shrink-0">
+              <div className="w-20 sm:w-24 flex-shrink-0 relative">
                 <select
                   value={ingredient.unit}
                   onChange={(e) => onUpdateIngredient(index, 'unit', e.target.value)}
-                  className="w-full px-2 sm:px-3 py-2.5 border border-gray-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-gray-100 text-sm transition-colors appearance-none"
+                  className="w-full pl-2 pr-6 sm:pl-3 sm:pr-8 py-2.5 border border-gray-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-gray-100 text-sm transition-colors appearance-none"
                 >
                   {COMMON_UNITS.map((unit) => (
                     <option key={unit} value={unit}>
@@ -107,6 +107,11 @@ export const IngredientInput: React.FC<IngredientInputProps> = ({
                     </option>
                   ))}
                 </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 sm:px-2 text-gray-500 dark:text-gray-400">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
               </div>
 
               {/* Item Input */}

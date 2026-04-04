@@ -48,8 +48,8 @@ interface RecipeFormLayoutProps {
   removeTag: (index: number) => void
   fieldErrors: Record<string, string>
   clearFieldError: (fieldName: string, stepNumber: number) => void
-  setFieldErrors?: React.Dispatch<React.SetStateAction<Record<string, string>>>
-  setStepsWithErrors?: React.Dispatch<React.SetStateAction<Set<number>>>
+  setFieldErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>
+  setStepsWithErrors: React.Dispatch<React.SetStateAction<Set<number>>>
   
   // Save state
   saveLoading: boolean
@@ -115,40 +115,58 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     goToPreviousStep()
   }
 
-  const handleNextStepClick = () => {
-    if (currentStep === 1 && !title.trim()) {
-      setFieldErrors?.(prev => ({ ...prev, title: 'Recipe name is required' }))
-      setStepsWithErrors?.(prev => new Set([...prev, 1]))
-      return
+  const validateStep = (step: number): boolean => {
+    let isValid = true
+    if (step === 1 && !title.trim()) {
+      setFieldErrors(prev => ({ ...prev, title: 'Recipe name is required' }))
+      setStepsWithErrors(prev => new Set([...prev, 1]))
+      isValid = false
     }
-    if (currentStep === 2 && !ingredients.some(i => i.item.trim())) {
-      setFieldErrors?.(prev => ({ ...prev, ingredients: 'At least one ingredient is required' }))
-      setStepsWithErrors?.(prev => new Set([...prev, 2]))
-      return
+    if (step === 2 && !ingredients.some(i => i.item.trim())) {
+      setFieldErrors(prev => ({ ...prev, ingredients: 'At least one ingredient is required' }))
+      setStepsWithErrors(prev => new Set([...prev, 2]))
+      isValid = false
     }
-    if (currentStep === 3 && !instructions.some(i => i.trim())) {
-      setFieldErrors?.(prev => ({ ...prev, instructions: 'At least one instruction is required' }))
-      setStepsWithErrors?.(prev => new Set([...prev, 3]))
-      return
+    if (step === 3 && !instructions.some(i => i.trim())) {
+      setFieldErrors(prev => ({ ...prev, instructions: 'At least one instruction is required' }))
+      setStepsWithErrors(prev => new Set([...prev, 3]))
+      isValid = false
     }
-    if (currentStep === 4) {
+    if (step === 4) {
       if (prepTime && Number(prepTime) > 999) {
-        setFieldErrors?.(prev => ({ ...prev, prepTime: 'Prep time must be under 1000 minutes' }))
-        setStepsWithErrors?.(prev => new Set([...prev, 4]))
-        return
+        setFieldErrors(prev => ({ ...prev, prepTime: 'Prep time must be under 1000 minutes' }))
+        setStepsWithErrors(prev => new Set([...prev, 4]))
+        isValid = false
       }
       if (cookTime && Number(cookTime) > 999) {
-        setFieldErrors?.(prev => ({ ...prev, cookTime: 'Cook time must be under 1000 minutes' }))
-        setStepsWithErrors?.(prev => new Set([...prev, 4]))
-        return
+        setFieldErrors(prev => ({ ...prev, cookTime: 'Cook time must be under 1000 minutes' }))
+        setStepsWithErrors(prev => new Set([...prev, 4]))
+        isValid = false
       }
       if (servings && Number(servings) > 99) {
-        setFieldErrors?.(prev => ({ ...prev, servings: 'Servings must be under 100' }))
-        setStepsWithErrors?.(prev => new Set([...prev, 4]))
-        return
+        setFieldErrors(prev => ({ ...prev, servings: 'Servings must be under 100' }))
+        setStepsWithErrors(prev => new Set([...prev, 4]))
+        isValid = false
       }
     }
-    goToNextStep()
+    return isValid
+  }
+
+  const handleNextStepClick = () => {
+    if (validateStep(currentStep)) {
+      goToNextStep()
+    }
+  }
+
+  const handleStepIndicatorClick = (targetStep: number) => {
+    // Only validate if moving forward
+    if (targetStep > currentStep) {
+      // Validate all steps from current up to the target
+      for (let i = currentStep; i < targetStep; i++) {
+        if (!validateStep(i)) return // Stop navigation if intermediate step is invalid
+      }
+    }
+    goToStep(targetStep)
   }
 
   return (
@@ -170,7 +188,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
         <StepIndicator
           steps={steps}
           currentStep={currentStep}
-          onStepClick={goToStep}
+          onStepClick={handleStepIndicatorClick}
           stepsWithErrors={stepsWithErrors}
         />
       </div>
