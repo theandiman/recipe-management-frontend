@@ -240,15 +240,30 @@ describe('UserProfilePage', () => {
   it('reverts follow state when followUser API call fails', async () => {
     const user = userEvent.setup()
     vi.spyOn(userApi, 'getUserProfile').mockResolvedValue(mockProfile)
-    vi.spyOn(userApi, 'followUser').mockRejectedValue(new Error('Network error'))
+
+    let rejectFollow!: (reason: Error) => void
+    vi.spyOn(userApi, 'followUser').mockImplementation(
+      () => new Promise<void>((_, reject) => { rejectFollow = reject })
+    )
     renderAtUid()
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Follow' })).toBeInTheDocument()
     })
 
-    await user.click(screen.getByRole('button', { name: 'Follow' }))
+    // Click without awaiting – handler suspends at followUser, optimistic update fires first
+    const clickPromise = user.click(screen.getByRole('button', { name: 'Follow' }))
 
+    // Optimistic update: button should switch to "Following" before API settles
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Following' })).toBeInTheDocument()
+    })
+
+    // Reject the in-flight API call and let the handler finish
+    rejectFollow(new Error('Network error'))
+    await clickPromise
+
+    // State should revert back to "Follow"
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Follow' })).toBeInTheDocument()
     })
