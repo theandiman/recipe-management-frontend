@@ -8,7 +8,7 @@
  * 
  * Environment variables required:
  *   - VITE_API_URL: The API base URL
- *   - VITE_STORAGE_API_URL: The storage API base URL
+ *   - VITE_MANAGEMENT_API_URL: The management API base URL
  *   - FIREBASE_ID_TOKEN: Firebase ID token for authentication
  * 
  * Example:
@@ -124,7 +124,7 @@ const ALLERGIES = [
 
 // Configuration
 const API_URL = process.env.VITE_API_URL || 'http://localhost:8080'
-const STORAGE_API_URL = process.env.VITE_STORAGE_API_URL || 'http://localhost:8081'
+const MANAGEMENT_API_URL = process.env.VITE_MANAGEMENT_API_URL || 'http://localhost:8081'
 const ID_TOKEN = process.env.FIREBASE_ID_TOKEN
 const COUNT = parseInt(process.argv[2] || '50', 10)
 const DELAY_MS = 5000 // 5 second delay between requests to avoid rate limiting
@@ -231,7 +231,7 @@ const generateAndSaveRecipe = async (index, total) => {
       originalRecipe: recipe.originalRecipe || null
     }
     
-    const saveUrl = `${STORAGE_API_URL}/api/recipes`
+    const saveUrl = `${MANAGEMENT_API_URL}/api/recipes`
     const saveResponse = await postWithAuth(saveUrl, recipeRequest)
     
     console.log(`   ✅ Recipe saved with ID: ${saveResponse.data.id}`)
@@ -260,7 +260,7 @@ const main = async () => {
   console.log('🍳 Recipe Database Population Script')
   console.log('====================================')
   console.log(`API URL: ${API_URL}`)
-  console.log(`Storage API URL: ${STORAGE_API_URL}`)
+  console.log(`Management API URL: ${MANAGEMENT_API_URL}`)
   console.log(`Target count: ${COUNT} recipes`)
   console.log(`Delay between requests: ${DELAY_MS}ms`)
   console.log('')

@@ -4,10 +4,7 @@ import { uploadRecipeImage, deleteRecipeImage } from '../utils/imageStorage'
 import type { Recipe, RecipeTips } from '../types/nutrition'
 import { RecipeUtils } from '@theandiman/recipe-management-shared/dist/types/recipe'
 
-const STORAGE_API_BASE =
-  import.meta.env.VITE_MANAGEMENT_API_URL ||
-  import.meta.env.VITE_STORAGE_API_URL ||
-  ''
+const MANAGEMENT_API_BASE = import.meta.env.VITE_MANAGEMENT_API_URL || ''
 const IS_TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
 
 const normalizeStringArray = (value: unknown): string[] =>
@@ -163,7 +160,7 @@ const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
  * @returns The saved recipe with ID and metadata
  */
 export const saveRecipe = async (recipe: Recipe): Promise<Recipe> => {
-  const url = buildApiUrl(STORAGE_API_BASE, '/api/recipes')
+  const url = buildApiUrl(MANAGEMENT_API_BASE, '/api/recipes')
   let request = mapRecipeToCreateRequest(recipe)
   
   // If there's a base64 image, upload it to Firebase Storage first
@@ -209,7 +206,7 @@ export const saveRecipe = async (recipe: Recipe): Promise<Recipe> => {
  * @returns List of recipes
  */
 export const getRecipes = async (): Promise<Recipe[]> => {
-  const url = buildApiUrl(STORAGE_API_BASE, '/api/recipes')
+  const url = buildApiUrl(MANAGEMENT_API_BASE, '/api/recipes')
   const { default: axios } = await import('axios')
 
   const headers: Record<string, string> = {
@@ -246,7 +243,7 @@ export const getRecipe = async (id: string): Promise<Recipe> => {
   }
 
   const token = await user.getIdToken()
-  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}`)
+  const url = buildApiUrl(MANAGEMENT_API_BASE, `/api/recipes/${id}`)
   
   const response = await axios.get(url, {
     headers: {
@@ -274,7 +271,7 @@ export const updateRecipe = async (id: string, recipe: Recipe): Promise<Recipe> 
   }
 
   const token = await user.getIdToken()
-  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}`)
+  const url = buildApiUrl(MANAGEMENT_API_BASE, `/api/recipes/${id}`)
   
   let request = mapRecipeToCreateRequest(recipe)
   
@@ -320,7 +317,7 @@ export const deleteRecipe = async (id: string): Promise<void> => {
   }
 
   const token = await user.getIdToken()
-  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}`)
+  const url = buildApiUrl(MANAGEMENT_API_BASE, `/api/recipes/${id}`)
   
   // Delete recipe from backend
   await axios.delete(url, {
@@ -346,7 +343,7 @@ export const deleteRecipe = async (id: string): Promise<void> => {
  */
 export const getPublicRecipes = async (): Promise<Recipe[]> => {
   const { default: axios } = await import('axios')
-  const url = buildApiUrl(STORAGE_API_BASE, '/api/recipes/public')
+  const url = buildApiUrl(MANAGEMENT_API_BASE, '/api/recipes/public')
 
   const response = await axios.get(url, {
     headers: {
@@ -371,7 +368,7 @@ export const bookmarkRecipe = async (id: string): Promise<void> => {
   }
 
   const token = await user.getIdToken()
-  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}/save`)
+  const url = buildApiUrl(MANAGEMENT_API_BASE, `/api/recipes/${id}/save`)
 
   await axios.post(url, null, {
     headers: {
@@ -395,7 +392,7 @@ export const unbookmarkRecipe = async (id: string): Promise<void> => {
   }
 
   const token = await user.getIdToken()
-  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}/save`)
+  const url = buildApiUrl(MANAGEMENT_API_BASE, `/api/recipes/${id}/save`)
 
   await axios.delete(url, {
     headers: {
@@ -419,7 +416,7 @@ export const getSavedRecipes = async (): Promise<Recipe[]> => {
   }
 
   const token = await user.getIdToken()
-  const url = buildApiUrl(STORAGE_API_BASE, '/api/recipes/saved')
+  const url = buildApiUrl(MANAGEMENT_API_BASE, '/api/recipes/saved')
 
   const response = await axios.get(url, {
     headers: {
@@ -447,7 +444,7 @@ export const updateRecipeSharing = async (id: string, isPublic: boolean): Promis
   }
 
   const token = await user.getIdToken()
-  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}/sharing`)
+  const url = buildApiUrl(MANAGEMENT_API_BASE, `/api/recipes/${id}/sharing`)
   
   const response = await axios.patch(url, { isPublic }, {
     headers: {
