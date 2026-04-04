@@ -7,6 +7,55 @@ import { RecipeUtils } from '@theandiman/recipe-management-shared/dist/types/rec
 const MANAGEMENT_API_BASE = import.meta.env.VITE_MANAGEMENT_API_URL || ''
 const IS_TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
 
+const normalizeStringArray = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+
+const normalizeRecipe = (recipe: Recipe): Recipe => {
+  const normalized: Recipe = {
+    ...recipe,
+    ingredients: normalizeStringArray(recipe.ingredients),
+    instructions: normalizeStringArray(recipe.instructions),
+  }
+
+  if (Array.isArray(recipe.tags)) {
+    normalized.tags = normalizeStringArray(recipe.tags)
+  }
+
+  if (Array.isArray(recipe.dietaryRestrictions)) {
+    normalized.dietaryRestrictions = normalizeStringArray(recipe.dietaryRestrictions)
+  }
+
+  if (recipe.tips) {
+    normalized.tips = {
+      ...recipe.tips,
+      ...(Array.isArray(recipe.tips.substitutions)
+        ? { substitutions: normalizeStringArray(recipe.tips.substitutions) }
+        : {}),
+      ...(Array.isArray(recipe.tips.variations)
+        ? { variations: normalizeStringArray(recipe.tips.variations) }
+        : {}),
+    }
+  }
+
+  return normalized
+}
+
+const extractRecipes = (payload: unknown): Recipe[] => {
+  if (Array.isArray(payload)) {
+    return payload.map((recipe) => normalizeRecipe(recipe as Recipe))
+  }
+
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    Array.isArray((payload as { recipes?: unknown }).recipes)
+  ) {
+    return ((payload as { recipes: Recipe[] }).recipes || []).map((recipe) => normalizeRecipe(recipe))
+  }
+
+  return []
+}
+
 /**
  * Request DTO for creating a recipe in the management service
  */
@@ -144,11 +193,11 @@ export const saveRecipe = async (recipe: Recipe): Promise<Recipe> => {
         'Content-Type': 'application/json'
       }
     })
-    return response.data
+    return normalizeRecipe(response.data)
   } else {
     // Normal mode with authentication
     const response = await postWithAuth(url, request)
-    return response.data
+    return normalizeRecipe(response.data)
   }
 }
 
@@ -176,7 +225,7 @@ export const getRecipes = async (): Promise<Recipe[]> => {
 
   const response = await axios.get(url, { headers })
 
-  return response.data
+  return extractRecipes(response.data)
 }
 
 /**
@@ -203,7 +252,7 @@ export const getRecipe = async (id: string): Promise<Recipe> => {
     }
   })
   
-  return response.data
+  return normalizeRecipe(response.data)
 }
 
 /**
@@ -251,7 +300,7 @@ export const updateRecipe = async (id: string, recipe: Recipe): Promise<Recipe> 
     }
   })
   
-  return response.data
+  return normalizeRecipe(response.data)
 }
 
 /**
@@ -302,7 +351,7 @@ export const getPublicRecipes = async (): Promise<Recipe[]> => {
     },
   })
 
-  return response.data
+  return extractRecipes(response.data)
 }
 
 /**
@@ -376,7 +425,7 @@ export const getSavedRecipes = async (): Promise<Recipe[]> => {
     }
   })
 
-  return response.data
+  return extractRecipes(response.data)
 }
 
 /**
@@ -404,7 +453,7 @@ export const updateRecipeSharing = async (id: string, isPublic: boolean): Promis
     }
   })
   
-  return response.data
+  return normalizeRecipe(response.data)
 }
 
 export default {

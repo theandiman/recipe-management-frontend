@@ -12,17 +12,12 @@ export interface UserProfile {
   bio?: string
   publicRecipeCount: number
   publicRecipes: Recipe[]
+  followerCount?: number
+  followingCount?: number
   isFollowedByCurrentUser?: boolean
 }
 
-export async function getUserProfile(uid: string): Promise<UserProfile> {
-  const url = buildApiUrl(USER_API_BASE, `/api/users/${uid}/profile`)
-  const headers = await getAuthHeaders()
-  const response = await axios.get<UserProfile>(url, { headers })
-  return response.data
-}
-
-async function getAuthHeaders(): Promise<Record<string, string>> {
+const getUserApiHeaders = async (requireAuth = false): Promise<Record<string, string>> => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   }
@@ -30,6 +25,11 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   if (!IS_TEST_MODE) {
     const { auth } = await import('../config/firebase')
     const user = auth.currentUser
+
+    if (requireAuth && !user) {
+      throw new Error('User not authenticated')
+    }
+
     if (user) {
       const token = await user.getIdToken()
       headers.Authorization = `Bearer ${token}`
@@ -39,14 +39,33 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   return headers
 }
 
+export async function getUserProfile(uid: string): Promise<UserProfile> {
+  const url = buildApiUrl(USER_API_BASE, `/api/users/${uid}/profile`)
+  const headers = await getUserApiHeaders(false)
+
+  const response = await axios.get<UserProfile>(url, { headers })
+  const profile = response.data
+
+  return {
+    ...profile,
+    publicRecipes: Array.isArray(profile.publicRecipes)
+      ? profile.publicRecipes
+      : Array.isArray((profile.publicRecipes as unknown as { recipes?: Recipe[] } | undefined)?.recipes)
+        ? ((profile.publicRecipes as unknown as { recipes: Recipe[] }).recipes || [])
+        : [],
+  }
+}
+
 export async function followUser(uid: string): Promise<void> {
   const url = buildApiUrl(USER_API_BASE, `/api/users/${uid}/follow`)
-  const headers = await getAuthHeaders()
-  await axios.post(url, {}, { headers })
+  const headers = await getUserApiHeaders(true)
+
+  await axios.post(url, null, { headers })
 }
 
 export async function unfollowUser(uid: string): Promise<void> {
   const url = buildApiUrl(USER_API_BASE, `/api/users/${uid}/follow`)
-  const headers = await getAuthHeaders()
+  const headers = await getUserApiHeaders(true)
+
   await axios.delete(url, { headers })
 }
