@@ -75,7 +75,7 @@ export const IngredientInput: React.FC<IngredientInputProps> = ({
         <AnimatePresence initial={false}>
           {ingredients.map((ingredient, index) => (
             <motion.div 
-              key={`${index}-${ingredient.item || 'empty'}`}
+              key={index}
               initial={{ opacity: 0, height: 0, scale: 0.95 }}
               animate={{ opacity: 1, height: 'auto', scale: 1 }}
               exit={{ opacity: 0, height: 0, scale: 0.95, overflow: 'hidden' }}
