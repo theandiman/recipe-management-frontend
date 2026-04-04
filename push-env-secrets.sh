@@ -57,10 +57,10 @@ gh secret set VITE_API_URL \
     --repo "$REPO" \
     --body "$VITE_API_URL"
 
-gh secret set VITE_STORAGE_API_URL \
+gh secret set VITE_MANAGEMENT_API_URL \
     --env "$ENV" \
     --repo "$REPO" \
-    --body "$VITE_STORAGE_API_URL"
+    --body "$VITE_MANAGEMENT_API_URL"
 
 echo "📤 Setting Firebase deployment secrets..."
 gh secret set FIREBASE_PROJECT_ID_DEV \

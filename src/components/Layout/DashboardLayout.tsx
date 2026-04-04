@@ -221,7 +221,7 @@ export const DashboardLayout: React.FC = () => {
 
           {/* User Profile Section */}
           <motion.div
-            className="border-t border-gray-200 dark:border-slate-700 p-4 transition-colors duration-300"
+            className="border-t border-gray-200 dark:border-slate-700 p-4 pb-12 lg:pb-4 transition-colors duration-300"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.3 }}
@@ -268,8 +268,9 @@ export const DashboardLayout: React.FC = () => {
       </AnimatePresence>      {/* Main Content Area */}
       <div className="lg:pl-[19rem] transition-all duration-300">
   {/* Top Bar (transparent) */}
-  <header className="sticky top-0 z-60 bg-transparent border-b-0 px-4 py-1">
+  <header className="sticky top-0 z-[60] bg-transparent border-b-0 px-4 py-1">
     <div className="flex items-center">
+      {!isSidebarOpen && (
       <motion.button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         className="lg:hidden p-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
@@ -281,6 +282,7 @@ export const DashboardLayout: React.FC = () => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </motion.button>
+      )}
       <div className="ml-3 flex-1" />
       <ThemeToggle />
     </div>

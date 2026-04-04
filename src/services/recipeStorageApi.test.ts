@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { deleteRecipe, saveRecipe, getRecipes, getRecipe, updateRecipe, updateRecipeSharing, getPublicRecipes } from './recipeStorageApi'
+import { deleteRecipe, saveRecipe, getRecipes, getRecipe, updateRecipe, updateRecipeSharing, getPublicRecipes, getSavedRecipes } from './recipeStorageApi'
 import type { Recipe } from '../types/nutrition'
 import type { AxiosResponse } from 'axios'
 
@@ -80,7 +80,7 @@ describe('recipeStorageApi', () => {
       expect(postWithAuth).toHaveBeenCalledWith(
         expect.stringContaining('/api/recipes'),
         expect.objectContaining({
-          recipeName: 'Test Recipe',
+          title: 'Test Recipe',
           ingredients: mockRecipe.ingredients,
           instructions: mockRecipe.instructions
         })
@@ -103,8 +103,8 @@ describe('recipeStorageApi', () => {
       expect(postWithAuth).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          prepTimeMinutes: 30,
-          cookTimeMinutes: 60
+          prepTime: 30,
+          cookTime: 60
         })
       )
     })
@@ -131,9 +131,9 @@ describe('recipeStorageApi', () => {
         expect.objectContaining({
           tips: {
             substitutions: ['sub 1', 'sub 2'],
-            makeAhead: 'Can be made ahead',
-            storage: 'Store in fridge',
-            reheating: 'Reheat in oven',
+            makeAhead: ['Can be made ahead'],
+            storage: ['Store in fridge'],
+            reheating: ['Reheat in oven'],
             variations: ['var 1']
           }
         })
@@ -217,6 +217,49 @@ describe('recipeStorageApi', () => {
       )
       expect(result).toEqual(mockRecipes)
     })
+
+    it('should map management-service recipe fields to the shared frontend shape', async () => {
+      const axios = (await import('axios')).default
+
+      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse([
+        {
+          id: 'backend-1',
+          userId: 'test-user-id',
+          title: 'Mapped Recipe',
+          description: 'Mapped from backend',
+          ingredients: ['ingredient 1'],
+          instructions: ['step 1'],
+          prepTime: 15,
+          cookTime: 30,
+          servings: 2,
+          nutrition: { calories: 450, protein: 20 },
+          tips: {
+            makeAhead: ['Make the sauce in advance'],
+            storage: ['Keep refrigerated for up to 3 days'],
+            substitutions: ['Use tofu'],
+            variations: ['Add chili flakes']
+          },
+          source: 'manual',
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z'
+        }
+      ]))
+
+      const [recipe] = await getRecipes()
+
+      expect(recipe.recipeName).toBe('Mapped Recipe')
+      expect(recipe.prepTimeMinutes).toBe(15)
+      expect(recipe.cookTimeMinutes).toBe(30)
+      expect(recipe.nutritionalInfo).toEqual({
+        perServing: { calories: 450, protein: 20 }
+      })
+      expect(recipe.tips).toEqual(expect.objectContaining({
+        makeAhead: 'Make the sauce in advance',
+        storage: 'Keep refrigerated for up to 3 days',
+        substitutions: ['Use tofu'],
+        variations: ['Add chili flakes']
+      }))
+    })
   })
 
   describe('getRecipe', () => {
@@ -240,6 +283,40 @@ describe('recipeStorageApi', () => {
     })
   })
 
+  it('should unwrap paginated public recipe responses from the management service', async () => {
+    const axios = (await import('axios')).default
+    const mockRecipes = [createMockRecipe(), createMockRecipe({ id: 'public-2' })]
+
+    vi.mocked(axios.get).mockResolvedValue(createAxiosResponse({
+      recipes: mockRecipes,
+      size: 20,
+      totalCount: 2,
+      nextPageToken: null
+    }))
+
+    const result = await getPublicRecipes()
+
+    expect(result).toEqual(mockRecipes)
+  })
+
+  describe('getSavedRecipes', () => {
+    it('should unwrap paginated saved recipe responses from the management service', async () => {
+      const axios = (await import('axios')).default
+      const mockRecipes = [createMockRecipe({ id: 'saved-1' })]
+
+      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse({
+        recipes: mockRecipes,
+        size: 20,
+        totalCount: 1,
+        nextPageToken: null
+      }))
+
+      const result = await getSavedRecipes()
+
+      expect(result).toEqual(mockRecipes)
+    })
+  })
+
   describe('updateRecipe', () => {
     it('should update recipe with authentication', async () => {
       const axios = (await import('axios')).default
@@ -252,7 +329,7 @@ describe('recipeStorageApi', () => {
       expect(axios.put).toHaveBeenCalledWith(
         expect.stringContaining('/api/recipes/test-recipe-id'),
         expect.objectContaining({
-          recipeName: 'Test Recipe'
+          title: 'Test Recipe'
         }),
         expect.objectContaining({
           headers: expect.objectContaining({

@@ -104,6 +104,25 @@ describe('RecipeLibrary', () => {
 
       expect(screen.getByText('Get started by generating your first recipe!')).toBeInTheDocument()
     })
+
+    it('should navigate when empty state CTAs are clicked', async () => {
+      vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue([])
+
+      renderRecipeLibrary()
+
+      await waitFor(() => {
+        expect(screen.getByText('No recipes yet')).toBeInTheDocument()
+      })
+
+      const createBtn = screen.getByRole('button', { name: /Create Recipe/i })
+      const generateBtn = screen.getByRole('button', { name: /Try AI Generator/i })
+      
+      fireEvent.click(createBtn)
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard/create')
+      
+      fireEvent.click(generateBtn)
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard/generate')
+    })
   })
 
   describe('Error State', () => {

@@ -67,6 +67,7 @@ function AnimatedRoutes() {
         }
       />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   )
 }

@@ -4,31 +4,181 @@ import { uploadRecipeImage, deleteRecipeImage } from '../utils/imageStorage'
 import type { Recipe, RecipeTips } from '../types/nutrition'
 import { RecipeUtils } from '@theandiman/recipe-management-shared/dist/types/recipe'
 
-const STORAGE_API_BASE = import.meta.env.VITE_STORAGE_API_URL || ''
 const IS_TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
 
+const resolveManagementApiBase = (): string => {
+  const managementApiUrl = import.meta.env.VITE_MANAGEMENT_API_URL?.trim()
+
+  if (managementApiUrl) {
+    return managementApiUrl
+  }
+
+  if (IS_TEST_MODE) {
+    return ''
+  }
+
+  throw new Error('Missing required VITE_MANAGEMENT_API_URL environment variable')
+}
+
+const MANAGEMENT_API_BASE = resolveManagementApiBase()
+type NutritionPerServing = NonNullable<NonNullable<Recipe['nutritionalInfo']>['perServing']>
+
+type ManagementRecipePayload = Partial<Recipe> & {
+  title?: string
+  prepTime?: number | string
+  cookTime?: number | string
+  nutrition?: NutritionPerServing | null
+  tips?: Record<string, unknown> | RecipeTips | null
+  public?: boolean
+}
+
+const normalizeStringArray = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+
+const parseTimeToMinutes = (value?: string | number | unknown): number | undefined => {
+  if (value === undefined || value === null) return undefined
+
+  if (typeof value === 'number') {
+    return value > 0 ? Math.floor(value) : undefined
+  }
+
+  const timeStr = String(value).trim()
+  if (!timeStr) return undefined
+
+  const match = timeStr.match(/(\d+)\s*(minute|min|hour|hr)/i)
+  if (match) {
+    const amount = parseInt(match[1], 10)
+    const unit = match[2].toLowerCase()
+    return unit.startsWith('hour') || unit.startsWith('hr') ? amount * 60 : amount
+  }
+
+  const num = parseInt(timeStr, 10)
+  return Number.isNaN(num) || num <= 0 ? undefined : num
+}
+
+const normalizeTipText = (value: unknown): string | undefined => {
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    return trimmed || undefined
+  }
+
+  const items = normalizeStringArray(value)
+  return items.length ? items.join(' ') : undefined
+}
+
+const normalizeTips = (tips?: Record<string, unknown> | RecipeTips | null): RecipeTips | undefined => {
+  if (!tips || typeof tips !== 'object') {
+    return undefined
+  }
+
+  const normalizedTips: RecipeTips = {}
+  const substitutions = normalizeStringArray((tips as { substitutions?: unknown }).substitutions)
+  const variations = normalizeStringArray((tips as { variations?: unknown }).variations)
+  const makeAhead = normalizeTipText((tips as { makeAhead?: unknown }).makeAhead)
+  const storage = normalizeTipText((tips as { storage?: unknown }).storage)
+  const reheating = normalizeTipText((tips as { reheating?: unknown }).reheating)
+
+  if (substitutions.length) normalizedTips.substitutions = substitutions
+  if (variations.length) normalizedTips.variations = variations
+  if (makeAhead) normalizedTips.makeAhead = makeAhead
+  if (storage) normalizedTips.storage = storage
+  if (reheating) normalizedTips.reheating = reheating
+
+  return Object.keys(normalizedTips).length > 0 ? normalizedTips : undefined
+}
+
+const normalizeRecipe = (recipe: ManagementRecipePayload): Recipe => {
+  const prepTimeMinutes = recipe.prepTimeMinutes ?? parseTimeToMinutes(recipe.prepTime)
+  const cookTimeMinutes = recipe.cookTimeMinutes ?? parseTimeToMinutes(recipe.cookTime)
+  const recipeName =
+    typeof recipe.recipeName === 'string' && recipe.recipeName.trim()
+      ? recipe.recipeName
+      : typeof recipe.title === 'string' && recipe.title.trim()
+        ? recipe.title
+        : 'Untitled Recipe'
+
+  const normalized: Recipe = {
+    ...recipe,
+    recipeName,
+    ingredients: normalizeStringArray(recipe.ingredients),
+    instructions: normalizeStringArray(recipe.instructions),
+    servings: RecipeUtils.getServingsAsNumber(recipe.servings ?? 1),
+    source: recipe.source || 'manual',
+  }
+
+  if (prepTimeMinutes !== undefined) {
+    normalized.prepTimeMinutes = prepTimeMinutes
+    if (typeof recipe.prepTime !== 'string') {
+      normalized.prepTime = `${prepTimeMinutes} min`
+    }
+  } else if (typeof recipe.prepTime === 'string') {
+    normalized.prepTime = recipe.prepTime
+  }
+
+  if (cookTimeMinutes !== undefined) {
+    normalized.cookTimeMinutes = cookTimeMinutes
+    if (typeof recipe.cookTime !== 'string') {
+      normalized.cookTime = `${cookTimeMinutes} min`
+    }
+  } else if (typeof recipe.cookTime === 'string') {
+    normalized.cookTime = recipe.cookTime
+  }
+
+  if (recipe.nutritionalInfo) {
+    normalized.nutritionalInfo = recipe.nutritionalInfo
+  } else if (recipe.nutrition && typeof recipe.nutrition === 'object') {
+    normalized.nutritionalInfo = { perServing: recipe.nutrition }
+  }
+
+  const normalizedTips = normalizeTips(recipe.tips)
+  if (normalizedTips) {
+    normalized.tips = normalizedTips
+  }
+
+  if (Array.isArray(recipe.tags)) {
+    normalized.tags = normalizeStringArray(recipe.tags)
+  }
+
+  if (Array.isArray(recipe.dietaryRestrictions)) {
+    normalized.dietaryRestrictions = normalizeStringArray(recipe.dietaryRestrictions)
+  }
+
+  if (recipe.isPublic !== undefined || recipe.public !== undefined) {
+    normalized.isPublic = recipe.isPublic ?? Boolean(recipe.public)
+  }
+
+  return normalized
+}
+
+const extractRecipes = (payload: unknown): Recipe[] => {
+  if (Array.isArray(payload)) {
+    return payload.map((recipe) => normalizeRecipe(recipe as ManagementRecipePayload))
+  }
+
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    Array.isArray((payload as { recipes?: unknown }).recipes)
+  ) {
+    return ((payload as { recipes: ManagementRecipePayload[] }).recipes || []).map((recipe) => normalizeRecipe(recipe))
+  }
+
+  return []
+}
+
 /**
- * Request DTO for creating a recipe in the storage service
+ * Request DTO for creating a recipe in the management service
  */
 export interface CreateRecipeRequest {
-  recipeName: string
+  title: string
   description?: string
   ingredients: string[]
   instructions: string[]
-  prepTimeMinutes?: number
-  cookTimeMinutes?: number
+  prepTime?: number
+  cookTime?: number
   servings: number
-  nutritionalInfo?: {
-    perServing?: {
-      calories?: number
-      protein?: number
-      carbohydrates?: number
-      fat?: number
-      fiber?: number
-      sodium?: number
-    }
-  }
-  tips?: Record<string, string | string[]> // Backend expects strings for makeAhead/storage/reheating, arrays for substitutions/variations
+  nutrition?: NutritionPerServing
+  tips?: Record<string, string[]>
   imageUrl?: string
   source: string
   tags?: string[]
@@ -39,64 +189,41 @@ export interface CreateRecipeRequest {
  * Convert AI-generated Recipe to CreateRecipeRequest
  */
 const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
-  // Parse time strings to minutes (e.g., "30 minutes" -> 30)
-  const parseTimeToMinutes = (time?: string | number | undefined): number | undefined => {
-    if (time === undefined || time === null) return undefined
-    // If it's a number, accept only positive values; treat 0 or negatives as undefined
-    if (typeof time === 'number') {
-      return time > 0 ? Math.floor(time) : undefined
-    }
-    const timeStr = String(time).trim()
-    if (!timeStr) return undefined
-    const match = timeStr.match(/(\d+)\s*(minute|min|hour|hr)/i)
-    if (match) {
-      const value = parseInt(match[1], 10)
-      const unit = match[2].toLowerCase()
-      return unit.startsWith('hour') || unit.startsWith('hr') ? value * 60 : value
-    }
-
-    // Fallback: try to parse a plain number string
-    const num = parseInt(timeStr, 10)
-    return isNaN(num) || num <= 0 ? undefined : num
-  }
-
-  // Convert tips to Map<String, List<String>> format expected by backend
-  const mapTips = (tips?: RecipeTips): Record<string, string | string[]> | undefined => {
+  const mapTips = (tips?: RecipeTips): Record<string, string[]> | undefined => {
     if (!tips) return undefined
-    
-    const result: Record<string, string | string[]> = {}
-    
-    if (tips.substitutions) {
+
+    const result: Record<string, string[]> = {}
+
+    if (tips.substitutions?.length) {
       result.substitutions = tips.substitutions
     }
     if (tips.makeAhead) {
-      result.makeAhead = tips.makeAhead // Keep as string
+      result.makeAhead = [tips.makeAhead]
     }
     if (tips.storage) {
-      result.storage = tips.storage // Keep as string
+      result.storage = [tips.storage]
     }
     if (tips.reheating) {
-      result.reheating = tips.reheating // Keep as string
+      result.reheating = [tips.reheating]
     }
-    if (tips.variations) {
+    if (tips.variations?.length) {
       result.variations = tips.variations
     }
-    
+
     return Object.keys(result).length > 0 ? result : undefined
   }
 
-  // Skip imageUrl if it's a base64 data URL (too large for Firestore)
   const imageUrl = recipe.imageUrl?.startsWith('data:') ? undefined : recipe.imageUrl
 
   return {
-    recipeName: recipe.recipeName,
+    title: recipe.recipeName,
     description: recipe.description,
     ingredients: recipe.ingredients,
     instructions: recipe.instructions,
-    prepTimeMinutes: recipe.prepTimeMinutes ?? parseTimeToMinutes(recipe.prepTime),
-    cookTimeMinutes: recipe.cookTimeMinutes ?? parseTimeToMinutes(recipe.cookTime),
+    prepTime: recipe.prepTimeMinutes ?? parseTimeToMinutes(recipe.prepTime),
+    cookTime: recipe.cookTimeMinutes ?? parseTimeToMinutes(recipe.cookTime),
     servings: RecipeUtils.getServingsAsNumber(recipe.servings),
-    nutritionalInfo: recipe.nutritionalInfo ? { perServing: recipe.nutritionalInfo.perServing } : undefined,
+    nutrition: recipe.nutritionalInfo?.perServing,
     tips: mapTips(recipe.tips),
     imageUrl,
     source: recipe.source || 'ai-generated',
@@ -106,12 +233,12 @@ const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
 }
 
 /**
- * Save a recipe to the storage service
+ * Save a recipe to the management service
  * @param recipe - The AI-generated recipe to save
  * @returns The saved recipe with ID and metadata
  */
 export const saveRecipe = async (recipe: Recipe): Promise<Recipe> => {
-  const url = buildApiUrl(STORAGE_API_BASE, '/api/recipes')
+  const url = buildApiUrl(MANAGEMENT_API_BASE, '/api/recipes')
   let request = mapRecipeToCreateRequest(recipe)
   
   // If there's a base64 image, upload it to Firebase Storage first
@@ -144,11 +271,11 @@ export const saveRecipe = async (recipe: Recipe): Promise<Recipe> => {
         'Content-Type': 'application/json'
       }
     })
-    return response.data
+    return normalizeRecipe(response.data)
   } else {
     // Normal mode with authentication
     const response = await postWithAuth(url, request)
-    return response.data
+    return normalizeRecipe(response.data)
   }
 }
 
@@ -157,7 +284,7 @@ export const saveRecipe = async (recipe: Recipe): Promise<Recipe> => {
  * @returns List of recipes
  */
 export const getRecipes = async (): Promise<Recipe[]> => {
-  const url = buildApiUrl(STORAGE_API_BASE, '/api/recipes')
+  const url = buildApiUrl(MANAGEMENT_API_BASE, '/api/recipes')
   const { default: axios } = await import('axios')
 
   const headers: Record<string, string> = {
@@ -176,7 +303,7 @@ export const getRecipes = async (): Promise<Recipe[]> => {
 
   const response = await axios.get(url, { headers })
 
-  return response.data
+  return extractRecipes(response.data)
 }
 
 /**
@@ -194,7 +321,7 @@ export const getRecipe = async (id: string): Promise<Recipe> => {
   }
 
   const token = await user.getIdToken()
-  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}`)
+  const url = buildApiUrl(MANAGEMENT_API_BASE, `/api/recipes/${id}`)
   
   const response = await axios.get(url, {
     headers: {
@@ -203,7 +330,7 @@ export const getRecipe = async (id: string): Promise<Recipe> => {
     }
   })
   
-  return response.data
+  return normalizeRecipe(response.data)
 }
 
 /**
@@ -222,7 +349,7 @@ export const updateRecipe = async (id: string, recipe: Recipe): Promise<Recipe> 
   }
 
   const token = await user.getIdToken()
-  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}`)
+  const url = buildApiUrl(MANAGEMENT_API_BASE, `/api/recipes/${id}`)
   
   let request = mapRecipeToCreateRequest(recipe)
   
@@ -251,7 +378,7 @@ export const updateRecipe = async (id: string, recipe: Recipe): Promise<Recipe> 
     }
   })
   
-  return response.data
+  return normalizeRecipe(response.data)
 }
 
 /**
@@ -268,7 +395,7 @@ export const deleteRecipe = async (id: string): Promise<void> => {
   }
 
   const token = await user.getIdToken()
-  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}`)
+  const url = buildApiUrl(MANAGEMENT_API_BASE, `/api/recipes/${id}`)
   
   // Delete recipe from backend
   await axios.delete(url, {
@@ -294,7 +421,7 @@ export const deleteRecipe = async (id: string): Promise<void> => {
  */
 export const getPublicRecipes = async (): Promise<Recipe[]> => {
   const { default: axios } = await import('axios')
-  const url = buildApiUrl(STORAGE_API_BASE, '/api/recipes/public')
+  const url = buildApiUrl(MANAGEMENT_API_BASE, '/api/recipes/public')
 
   const response = await axios.get(url, {
     headers: {
@@ -302,7 +429,7 @@ export const getPublicRecipes = async (): Promise<Recipe[]> => {
     },
   })
 
-  return response.data
+  return extractRecipes(response.data)
 }
 
 /**
@@ -319,7 +446,7 @@ export const bookmarkRecipe = async (id: string): Promise<void> => {
   }
 
   const token = await user.getIdToken()
-  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}/save`)
+  const url = buildApiUrl(MANAGEMENT_API_BASE, `/api/recipes/${id}/save`)
 
   await axios.post(url, null, {
     headers: {
@@ -343,7 +470,7 @@ export const unbookmarkRecipe = async (id: string): Promise<void> => {
   }
 
   const token = await user.getIdToken()
-  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}/save`)
+  const url = buildApiUrl(MANAGEMENT_API_BASE, `/api/recipes/${id}/save`)
 
   await axios.delete(url, {
     headers: {
@@ -367,7 +494,7 @@ export const getSavedRecipes = async (): Promise<Recipe[]> => {
   }
 
   const token = await user.getIdToken()
-  const url = buildApiUrl(STORAGE_API_BASE, '/api/recipes/saved')
+  const url = buildApiUrl(MANAGEMENT_API_BASE, '/api/recipes/saved')
 
   const response = await axios.get(url, {
     headers: {
@@ -376,7 +503,7 @@ export const getSavedRecipes = async (): Promise<Recipe[]> => {
     }
   })
 
-  return response.data
+  return extractRecipes(response.data)
 }
 
 /**
@@ -395,7 +522,7 @@ export const updateRecipeSharing = async (id: string, isPublic: boolean): Promis
   }
 
   const token = await user.getIdToken()
-  const url = buildApiUrl(STORAGE_API_BASE, `/api/recipes/${id}/sharing`)
+  const url = buildApiUrl(MANAGEMENT_API_BASE, `/api/recipes/${id}/sharing`)
   
   const response = await axios.patch(url, { isPublic }, {
     headers: {
@@ -404,7 +531,7 @@ export const updateRecipeSharing = async (id: string, isPublic: boolean): Promis
     }
   })
   
-  return response.data
+  return normalizeRecipe(response.data)
 }
 
 export default {

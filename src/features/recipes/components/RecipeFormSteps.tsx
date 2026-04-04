@@ -3,6 +3,14 @@ import { IngredientInput } from '../../../components/IngredientInput'
 import { UI_STYLES } from '../../../utils/uiStyles'
 import type { Ingredient } from '../../../types/nutrition'
 
+const clampedNumericHandler = (setter: (v: string) => void, min: number, max: number) =>
+  (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value
+    if (raw === '') { setter(''); return }
+    const n = parseInt(raw, 10)
+    if (!isNaN(n)) setter(String(Math.min(max, Math.max(min, n))))
+  }
+
 interface RecipeFormStepsProps {
   currentStep: number
   // Basic Info
@@ -282,12 +290,16 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               <input
                 type="number"
                 value={prepTime}
-                onChange={(e) => setPrepTime(e.target.value)}
+                onChange={clampedNumericHandler(setPrepTime, 0, 999)}
                 min="0"
                 max="999"
+                step="1"
                 placeholder="15"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${fieldErrors.prepTime ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-emerald-500'}`}
               />
+              {fieldErrors.prepTime && (
+                <p className="mt-1 text-sm text-red-600" role="alert">{fieldErrors.prepTime}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -296,12 +308,16 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               <input
                 type="number"
                 value={cookTime}
-                onChange={(e) => setCookTime(e.target.value)}
+                onChange={clampedNumericHandler(setCookTime, 0, 999)}
                 min="0"
                 max="999"
+                step="1"
                 placeholder="30"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${fieldErrors.cookTime ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-emerald-500'}`}
               />
+              {fieldErrors.cookTime && (
+                <p className="mt-1 text-sm text-red-600" role="alert">{fieldErrors.cookTime}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -310,12 +326,16 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               <input
                 type="number"
                 value={servings}
-                onChange={(e) => setServings(e.target.value)}
+                onChange={clampedNumericHandler(setServings, 1, 99)}
                 min="1"
                 max="99"
+                step="1"
                 placeholder="4"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${fieldErrors.servings ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-emerald-500'}`}
               />
+              {fieldErrors.servings && (
+                <p className="mt-1 text-sm text-red-600" role="alert">{fieldErrors.servings}</p>
+              )}
             </div>
           </div>
 

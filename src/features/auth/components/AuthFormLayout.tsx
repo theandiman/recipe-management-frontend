@@ -108,21 +108,15 @@ export const AuthFormLayout: React.FC<AuthFormLayoutProps> = ({
             </div>
           </div>
           
-          <div className="mt-6">
-            <AuthDivider text={bottomDividerText} />
-            
-            <div className="mt-6">
-              <button
-                type="button"
-                onClick={bottomButtonAction}
-                className="w-full flex justify-center items-center py-3 px-4 border-2 border-gray-300 rounded-lg shadow-sm text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-200"
-              >
-                {bottomButtonText}
-                <svg className="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </button>
-            </div>
+          <div className="mt-8 text-center text-sm font-medium">
+            <span className="text-gray-600">{bottomDividerText}</span>{' '}
+            <button
+              type="button"
+              onClick={bottomButtonAction}
+              className="text-emerald-600 hover:text-emerald-500 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 rounded px-1 -mx-1"
+            >
+              {bottomButtonText}
+            </button>
           </div>
         </motion.div>
         
