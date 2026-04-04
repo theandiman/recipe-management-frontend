@@ -2,12 +2,19 @@ import axios from 'axios'
 import { buildApiUrl } from '../utils/apiUtils'
 import type { Recipe } from '../types/nutrition'
 
-const USER_API_BASE =
-  import.meta.env.VITE_MANAGEMENT_API_URL ||
-  import.meta.env.VITE_STORAGE_API_URL ||
-  ''
+const RAW_USER_API_BASE = import.meta.env.VITE_MANAGEMENT_API_URL
 const IS_TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
+const USER_API_BASE = (() => {
+  const apiBase = RAW_USER_API_BASE?.trim() || ''
 
+  if (!IS_TEST_MODE && !apiBase) {
+    throw new Error(
+      'Missing required environment variable: VITE_MANAGEMENT_API_URL. Set it explicitly unless VITE_TEST_MODE is "true".',
+    )
+  }
+
+  return apiBase
+})()
 export interface UserProfile {
   uid: string
   displayName: string
