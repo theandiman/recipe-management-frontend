@@ -21,6 +21,7 @@ test.describe('Create Recipe Multi-Step Wizard', () => {
     
     // Step 2: Ingredients
     await expect(page.getByText(/Step 2 of 5/i)).toBeVisible()
+    await page.getByPlaceholder(/e.g., all-purpose flour/i).fill('Flour')
     await page.getByRole('button', { name: 'Next →' }).click()
     
     // Step 3: Instructions
