@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { AuthProvider } from './features/auth/AuthContext'
+import { ThemeProvider } from './features/theme/ThemeContext'
 import { Login } from './features/auth/Login'
 import { Register } from './features/auth/Register'
 import { DashboardLayout } from './components/Layout/DashboardLayout'
@@ -73,9 +74,11 @@ function AnimatedRoutes() {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AnimatedRoutes />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AnimatedRoutes />
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   )
 }

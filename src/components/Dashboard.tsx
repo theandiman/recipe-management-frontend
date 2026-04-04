@@ -14,6 +14,10 @@ export const Dashboard: React.FC = () => {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [recentRecipes, setRecentRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeCategory, setActiveCategory] = useState('All')
+
+  const categories = ['All', 'Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Vegan', 'High-Protein']
 
   // Fetch recipes on component mount
   useEffect(() => {
@@ -120,21 +124,76 @@ export const Dashboard: React.FC = () => {
       transition={{ duration: 0.5 }}
       className="space-y-6"
     >
-      {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl p-6 text-white">
+      {/* Welcome & Hero Search */}
+      <motion.div 
+        className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-sm border border-gray-200 dark:border-slate-700 transition-colors duration-300 relative overflow-hidden"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.5 }}
+      >
+        {/* Background decorative blob */}
+        <div className="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-emerald-500/10 dark:bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
+          className="relative z-10"
         >
-          <h1 className="text-3xl font-bold mb-2">
-            Welcome back, {user?.displayName || user?.email?.split('@')[0] || 'Chef'}! 👋
+          <h1 className="text-4xl font-extrabold mb-3 text-gray-900 dark:text-gray-50 tracking-tight">
+            Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500">{user?.displayName || user?.email?.split('@')[0] || 'Chef'}</span>! 👋
           </h1>
-          <p className="text-emerald-100 text-lg">
-            Ready to create something delicious today?
+          <p className="text-gray-500 dark:text-gray-400 text-lg mb-8 max-w-2xl">
+            What are you craving today? Search your recipe library or explore new categorizations.
           </p>
+
+          {/* Search Bar */}
+          <div className="relative max-w-2xl mb-6">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search recipes, ingredients, or tags..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-4 py-4 rounded-2xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-900/50 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner transition-all text-lg placeholder-gray-400 dark:placeholder-gray-500"
+            />
+          </div>
+
+          {/* Animated Category Pills */}
+          <div className="flex flex-wrap gap-3">
+            {categories.map((category, idx) => (
+              <motion.button
+                key={category}
+                onClick={() => setActiveCategory(category)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 + idx * 0.05 }}
+                className={`relative px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                  activeCategory === category
+                    ? 'text-emerald-900 dark:text-emerald-100'
+                    : 'bg-gray-100 dark:bg-slate-700/50 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700'
+                }`}
+              >
+                {activeCategory === category && (
+                  <motion.div
+                    layoutId="activeCategoryIndicator"
+                    className="absolute inset-0 bg-emerald-100 dark:bg-emerald-900/40 rounded-full border border-emerald-200 dark:border-emerald-800"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{category}</span>
+              </motion.button>
+            ))}
+          </div>
         </motion.div>
-      </div>
+      </motion.div>
 
       {/* Quick Stats */}
       <motion.div

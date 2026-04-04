@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import type { NutritionalInfo } from '../types/nutrition'
 
 // Nutrition calculation constants
@@ -79,44 +80,48 @@ export default function NutritionFacts({ nutritionalInfo }: NutritionFactsProps)
   const servingSize = DEFAULT_SERVING_SIZE
 
   return (
-    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 w-full shadow-sm">
+    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-6 w-full shadow-sm hover:shadow-md transition-shadow duration-300">
       {/* Header */}
-      <div className="text-center mb-3">
-        <h3 className="text-sm font-bold text-gray-700">Each serving ({servingSize}g) contains</h3>
+      <div className="mb-6">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Nutrition Facts</h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 uppercase tracking-wider font-semibold">Per Serving ({servingSize}g)</p>
       </div>
 
-      {/* Nutrient pills - horizontal row */}
-      <div className="flex flex-wrap gap-1.5 justify-center mb-3">
-        {nutrients.map((nutrient, index) => (
-          <div 
-            key={index}
-            className={`
-              ${nutrient.color}
-              rounded-2xl px-3 py-2.5 flex flex-col items-center justify-center
-              ${index === 0 ? 'border-2' : ''}
-              min-w-[85px] flex-1 max-w-[110px]
-            `}
-          >
-            <div className="text-xs font-bold mb-0.5 whitespace-nowrap">{nutrient.name}</div>
-            <div className="font-extrabold leading-tight">
-              {nutrient.subValue ? (
-                <div className="flex flex-col items-center">
-                  <div className="text-xs leading-none">{nutrient.value}</div>
-                  <div className="text-lg leading-none mt-0.5">{nutrient.subValue}</div>
+      {/* Nutrient horizontal bars */}
+      <div className="space-y-5 mb-6">
+        {nutrients.map((nutrient, index) => {
+          // Parse out the color class just to get a safe hex or tailwind class without text-white
+          const barColor = nutrient.color.includes('bg-red') ? 'bg-red-500' : 
+                         nutrient.color.includes('bg-amber') ? 'bg-amber-500' : 
+                         nutrient.color.includes('bg-green') ? 'bg-emerald-500' : 'bg-blue-500'
+                         
+          return (
+            <div key={index}>
+              <div className="flex justify-between items-baseline mb-1.5">
+                <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm tracking-wide">{nutrient.name}</span>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{nutrient.subValue ? `${nutrient.value} (${nutrient.subValue})` : nutrient.value}</span>
+                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 ml-1.5">({nutrient.percentage}%)</span>
                 </div>
-              ) : (
-                <div className="text-xl leading-none">{nutrient.value}</div>
-              )}
+              </div>
+              <div className="h-2 w-full bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden shadow-inner">
+                <motion.div
+                  className={`h-full rounded-full ${barColor}`}
+                  initial={{ width: 0 }}
+                  whileInView={{ width: `${Math.min(nutrient.percentage, 100)}%` }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1, ease: "easeOut", delay: index * 0.1 }}
+                />
+              </div>
             </div>
-            <div className="text-base font-extrabold mt-0.5">{nutrient.percentage}%</div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* Footer - per 100g reference */}
-      <div className="text-center pt-2 border-t border-gray-300">
-        <p className="text-xs text-gray-500">
-          Typical values per 100g: Energy {Math.round((perServing.calories ?? 0) * 100 / servingSize * 4.184)}kJ/{Math.round((perServing.calories ?? 0) * 100 / servingSize)}kcal
+      <div className="text-center pt-4 border-t border-gray-100 dark:border-slate-700/50">
+        <p className="text-xs text-gray-400 dark:text-gray-500">
+          Typical values per 100g: Energy {Math.round((perServing.calories ?? 0) * 100 / servingSize * 4.184)}kJ / {Math.round((perServing.calories ?? 0) * 100 / servingSize)}kcal
         </p>
       </div>
     </div>
