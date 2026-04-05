@@ -15,6 +15,10 @@ vi.mock('./components/Layout/DashboardLayout', () => ({
   DashboardLayout: () => <div data-testid="dashboard-layout">Dashboard Layout</div>
 }))
 
+vi.mock('./features/recipes/RecipeDetail', () => ({
+  RecipeDetail: () => <div data-testid="recipe-detail-public">Recipe Detail</div>
+}))
+
 vi.mock('./features/auth/AuthContext', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => <div data-testid="auth-provider">{children}</div>,
   useAuth: () => ({
@@ -76,5 +80,13 @@ describe('App', () => {
     // Catch-all route should redirect to /dashboard (protected)
     expect(screen.getByTestId('protected-route')).toBeInTheDocument()
     expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument()
+  })
+
+  it('should render public recipe detail without authentication when navigating to /recipes/:id', () => {
+    window.history.pushState({}, 'Public Recipe', '/recipes/test-recipe-123')
+    render(<App />)
+    expect(screen.getByTestId('recipe-detail-public')).toBeInTheDocument()
+    // The public route must NOT be wrapped in a ProtectedRoute
+    expect(screen.queryByTestId('protected-route')).not.toBeInTheDocument()
   })
 })

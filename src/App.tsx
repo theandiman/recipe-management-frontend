@@ -7,6 +7,7 @@ import { Login } from './features/auth/Login'
 import { Register } from './features/auth/Register'
 import { DashboardLayout } from './components/Layout/DashboardLayout'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { RecipeDetail } from './features/recipes/RecipeDetail'
 import { UserProfilePage } from './features/users/UserProfilePage'
 import { FollowProvider } from './features/users/FollowContext'
 import { LikeProvider } from './features/recipes/LikeContext'
@@ -66,6 +67,18 @@ function AnimatedRoutes() {
             <ProtectedRoute>
               <UserProfilePage />
             </ProtectedRoute>
+          </motion.div>
+        }
+      />
+      <Route
+        path="/recipes/:id"
+        element={
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+          >
+            <RecipeDetail />
           </motion.div>
         }
       />

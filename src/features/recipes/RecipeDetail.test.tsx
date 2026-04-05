@@ -687,8 +687,31 @@ describe('RecipeDetail', () => {
       await userEvent.click(copyButton)
 
       expect(writeTextMock).toHaveBeenCalledWith(
-        expect.stringContaining('/dashboard/recipes/recipe-1')
+        expect.stringContaining('/recipes/recipe-1')
       )
+    })
+
+    it('handleCopyLink should use public route URL (/recipes/:id)', async () => {
+      const publicRecipe = { ...mockRecipe, isPublic: true }
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(publicRecipe)
+
+      const writeTextMock = vi.fn().mockResolvedValue(undefined)
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: writeTextMock },
+        configurable: true,
+      })
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      await userEvent.click(screen.getByRole('button', { name: /copy link/i }))
+
+      const calledUrl: string = writeTextMock.mock.calls[0][0]
+      expect(calledUrl).toContain('/recipes/recipe-1')
+      expect(calledUrl).not.toContain('/dashboard/recipes/recipe-1')
     })
 
     it('should show "Copied!" feedback for ~2 seconds after click', async () => {
@@ -750,7 +773,7 @@ describe('RecipeDetail', () => {
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument()
         expect(screen.getByText(/copy this link manually/i)).toBeInTheDocument()
-        expect(screen.getByText(/\/dashboard\/recipes\/recipe-1/)).toBeInTheDocument()
+        expect(screen.getByText(/\/recipes\/recipe-1/)).toBeInTheDocument()
       })
     })
 
