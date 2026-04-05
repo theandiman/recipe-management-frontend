@@ -11,6 +11,7 @@ import { RecipeDetail } from './features/recipes/RecipeDetail'
 import { UserProfilePage } from './features/users/UserProfilePage'
 import { FollowProvider } from './features/users/FollowContext'
 import { LikeProvider } from './features/recipes/LikeContext'
+import { SavedRecipesProvider } from './features/recipes/SavedRecipesContext'
 import './App.css'
 
 function AnimatedRoutes() {
@@ -95,8 +96,10 @@ function App() {
         <AuthProvider>
           <FollowProvider>
             <LikeProvider>
-              <Toaster position="top-right" richColors />
-              <AnimatedRoutes />
+              <SavedRecipesProvider>
+                <Toaster position="top-right" richColors />
+                <AnimatedRoutes />
+              </SavedRecipesProvider>
             </LikeProvider>
           </FollowProvider>
         </AuthProvider>

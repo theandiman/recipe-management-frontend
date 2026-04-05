@@ -19,6 +19,10 @@ vi.mock('./features/recipes/RecipeDetail', () => ({
   RecipeDetail: () => <div data-testid="recipe-detail-public">Recipe Detail</div>
 }))
 
+vi.mock('./features/recipes/SavedRecipesContext', () => ({
+  SavedRecipesProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}))
+
 vi.mock('./features/auth/AuthContext', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => <div data-testid="auth-provider">{children}</div>,
   useAuth: () => ({

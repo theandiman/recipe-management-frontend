@@ -12,7 +12,6 @@ import { AIGenerator } from '../../features/recipes/AIGenerator'
 import { HelpPage } from '../../features/help/HelpPage'
 import { CommunityPage } from '../../features/community/CommunityPage'
 import { SavedRecipesPage } from '../../features/recipes/SavedRecipesPage'
-import { SavedRecipesProvider } from '../../features/recipes/SavedRecipesContext'
 
 export const DashboardLayout: React.FC = () => {
   const { user, logout } = useAuth()
@@ -108,7 +107,6 @@ export const DashboardLayout: React.FC = () => {
   ]
 
   return (
-    <SavedRecipesProvider>
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
       {/* Sidebar */}
       <AnimatePresence>
@@ -312,6 +310,5 @@ export const DashboardLayout: React.FC = () => {
         />
       )}
     </div>
-    </SavedRecipesProvider>
   )
 }
