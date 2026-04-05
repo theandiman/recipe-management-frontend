@@ -60,9 +60,8 @@ export const CommunityPage: React.FC = () => {
       : [...recipes]
 
     if (sortOption === 'most-liked') {
-      result = result.sort(
-        (a, b) => ((b as Recipe & { likeCount?: number }).likeCount ?? 0) - ((a as Recipe & { likeCount?: number }).likeCount ?? 0)
-      )
+      const getLikeCount = (r: Recipe) => (r as Recipe & { likeCount?: number }).likeCount ?? 0
+      result = result.sort((a, b) => getLikeCount(b) - getLikeCount(a))
     }
 
     return result

@@ -152,7 +152,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
               </div>
               <span className="truncate font-medium">{authorName || 'View Author'}</span>
             </Link>
-          ) : <div />}
+          ) : null}
           {showLike && (
             <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
               <LikeButton
