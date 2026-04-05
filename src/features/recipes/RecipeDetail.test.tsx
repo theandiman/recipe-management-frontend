@@ -512,6 +512,10 @@ describe('RecipeDetail', () => {
 
         await userEvent.click(screen.getByRole('button', { name: /share/i }))
 
+        await waitFor(() => {
+          expect(screen.getByRole('alert')).toBeInTheDocument()
+        })
+
         // Advance time by 5 seconds to trigger auto-dismiss
         await vi.advanceTimersByTimeAsync(5000)
 

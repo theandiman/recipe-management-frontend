@@ -22,6 +22,7 @@ export const RecipeDetail: React.FC = () => {
   const [isCopied, setIsCopied] = useState(false)
   const [fallbackUrl, setFallbackUrl] = useState<string | null>(null)
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isOwner = !!currentUser && !!recipe?.userId && currentUser.uid === recipe.userId
 
   useEffect(() => {
     if (!sharingError) return
@@ -149,7 +150,7 @@ export const RecipeDetail: React.FC = () => {
         </button>
         
         <div className="flex gap-3">
-          {!!currentUser && !!recipe?.userId && currentUser.uid === recipe.userId && (
+          {isOwner && (
             <button
               onClick={() => navigate(`/dashboard/recipes/edit/${id}`)}
               className="flex items-center gap-2 px-4 py-2 bg-white text-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-50 font-medium transition-colors"
@@ -175,7 +176,7 @@ export const RecipeDetail: React.FC = () => {
             />
           )}
           
-          {!!currentUser && !!recipe?.userId && currentUser.uid === recipe.userId && (
+          {isOwner && (
             <button
               onClick={handleToggleSharing}
               disabled={isTogglingShare}

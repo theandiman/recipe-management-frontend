@@ -12,7 +12,7 @@ import { useAuth } from '../../features/auth/AuthContext'
 export const EditRecipe: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user: currentUser } = useAuth()
+  const { user: currentUser, isLoading: isAuthLoading } = useAuth()
   
   // Loading state
   const [loading, setLoading] = useState(true)
@@ -57,8 +57,8 @@ export const EditRecipe: React.FC = () => {
         setLoadError(null)
         const data = await getRecipe(id)
 
-        if (data.userId && data.userId !== currentUser?.uid) {
-          navigate(`/dashboard/recipes/${id}`)
+        if (!isAuthLoading && data.userId !== currentUser?.uid) {
+          navigate(`/dashboard/recipes/${id}`, { replace: true })
           return
         }
         
@@ -101,7 +101,7 @@ export const EditRecipe: React.FC = () => {
     }
 
     fetchRecipe()
-  }, [id, navigate, currentUser, form.setTitle, form.setDescription, form.setPrepTime, form.setCookTime, form.setServings, form.setIngredients, form.setInstructions, form.setTags, form.setDietaryRestrictions, form.setImagePreview])
+  }, [id, navigate, isAuthLoading, currentUser?.uid, form.setTitle, form.setDescription, form.setPrepTime, form.setCookTime, form.setServings, form.setIngredients, form.setInstructions, form.setTags, form.setDietaryRestrictions, form.setImagePreview])
 
   const handleCancel = useCallback(() => {
     navigate(`/dashboard/recipes/${id}`)

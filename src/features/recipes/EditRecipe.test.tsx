@@ -49,7 +49,7 @@ describe('EditRecipe', () => {
     vi.clearAllMocks()
     mockNavigate.mockClear()
     vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipe)
-    vi.mocked(useAuth).mockReturnValue({ user: null } as any)
+    vi.mocked(useAuth).mockReturnValue({ user: null, isLoading: false } as any)
   })
 
   describe('Loading State', () => {
@@ -891,6 +891,7 @@ describe('EditRecipe', () => {
       vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(ownedRecipe)
       vi.mocked(useAuth).mockReturnValue({
         user: { uid: 'other-user', email: null, displayName: null, photoURL: null },
+        isLoading: false,
       } as any)
 
       render(
@@ -902,8 +903,29 @@ describe('EditRecipe', () => {
       )
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith('/dashboard/recipes/test-recipe-123')
+        expect(mockNavigate).toHaveBeenCalledWith('/dashboard/recipes/test-recipe-123', { replace: true })
       })
+    })
+
+    it('should not redirect while auth is still loading to avoid false owner rejections', async () => {
+      const ownedRecipe = { ...mockRecipe, userId: 'owner-uid' }
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(ownedRecipe)
+      vi.mocked(useAuth).mockReturnValue({
+        user: null,
+        isLoading: true,
+      } as any)
+
+      render(
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<EditRecipe />} />
+          </Routes>
+        </BrowserRouter>
+      )
+
+      // Give async effects a chance to run
+      await new Promise((r) => setTimeout(r, 50))
+      expect(mockNavigate).not.toHaveBeenCalled()
     })
 
     it('should load recipe when current user owns the recipe', async () => {
@@ -911,6 +933,7 @@ describe('EditRecipe', () => {
       vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(ownedRecipe)
       vi.mocked(useAuth).mockReturnValue({
         user: { uid: 'owner-uid', email: null, displayName: null, photoURL: null },
+        isLoading: false,
       } as any)
 
       render(
