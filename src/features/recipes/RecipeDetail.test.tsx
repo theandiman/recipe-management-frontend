@@ -687,7 +687,7 @@ describe('RecipeDetail', () => {
       await userEvent.click(copyButton)
 
       expect(writeTextMock).toHaveBeenCalledWith(
-        expect.stringContaining('/dashboard/recipes/recipe-1')
+        expect.stringContaining('/recipes/recipe-1')
       )
     })
 
@@ -750,7 +750,7 @@ describe('RecipeDetail', () => {
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument()
         expect(screen.getByText(/copy this link manually/i)).toBeInTheDocument()
-        expect(screen.getByText(/\/dashboard\/recipes\/recipe-1/)).toBeInTheDocument()
+        expect(screen.getByText(/\/recipes\/recipe-1/)).toBeInTheDocument()
       })
     })
 

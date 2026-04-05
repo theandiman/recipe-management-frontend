@@ -7,9 +7,11 @@ import { Login } from './features/auth/Login'
 import { Register } from './features/auth/Register'
 import { DashboardLayout } from './components/Layout/DashboardLayout'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { RecipeDetail } from './features/recipes/RecipeDetail'
 import { UserProfilePage } from './features/users/UserProfilePage'
 import { FollowProvider } from './features/users/FollowContext'
 import { LikeProvider } from './features/recipes/LikeContext'
+import { SavedRecipesProvider } from './features/recipes/SavedRecipesContext'
 import './App.css'
 
 function AnimatedRoutes() {
@@ -69,6 +71,18 @@ function AnimatedRoutes() {
           </motion.div>
         }
       />
+      <Route
+        path="/recipes/:id"
+        element={
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+          >
+            <RecipeDetail />
+          </motion.div>
+        }
+      />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
@@ -82,8 +96,10 @@ function App() {
         <AuthProvider>
           <FollowProvider>
             <LikeProvider>
-              <Toaster position="top-right" richColors />
-              <AnimatedRoutes />
+              <SavedRecipesProvider>
+                <Toaster position="top-right" richColors />
+                <AnimatedRoutes />
+              </SavedRecipesProvider>
             </LikeProvider>
           </FollowProvider>
         </AuthProvider>

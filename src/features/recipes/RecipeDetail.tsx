@@ -60,7 +60,7 @@ export const RecipeDetail: React.FC = () => {
 
   const handleCopyLink = async () => {
     if (!id) return
-    const url = `${window.location.origin}/dashboard/recipes/${id}`
+    const url = `${window.location.origin}/recipes/${id}`
     const showFallback = () => {
       if (copyTimerRef.current) {
         clearTimeout(copyTimerRef.current)
