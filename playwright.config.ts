@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const isPostDeploy = !!process.env.RUN_POST_DEPLOY_TESTS;
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -27,13 +29,26 @@ export default defineConfig({
   },
 
   projects: [
+    // ── Local dev / CI unit-like tests (with local dev server) ──────────────
     {
       name: 'chromium',
+      testIgnore: ['**/post-deploy/**'],
       use: { ...devices['Desktop Chrome'] },
+    },
+
+    // ── Post-deployment tests (no local server needed) ───────────────────────
+    {
+      name: 'post-deploy',
+      testMatch: ['**/post-deploy/**/*.spec.ts'],
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: process.env.DEPLOYED_APP_URL || 'https://recipe-mgmt-dev.web.app',
+      },
     },
   ],
 
-  webServer: {
+  // Only start the dev server for non-post-deploy runs
+  webServer: isPostDeploy ? undefined : {
     command: 'npm run dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
