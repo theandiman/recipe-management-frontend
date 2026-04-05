@@ -54,7 +54,7 @@ The Admin SDK is privileged and intended for backend/admin use. When it creates 
 
 The Firebase service account used by the test provisioner must have sufficient IAM permissions to create and delete Firebase Auth users.
 
-**Minimum required role:** `roles/firebase.admin`
+**Minimum required role:** `roles/firebase.admin` (shown as "Firebase Authentication Admin" in the Google Cloud IAM console)
 
 If you prefer a least-privilege setup, grant these specific permissions:
 - `firebaseauth.users.create`
@@ -80,7 +80,7 @@ The service account JSON key must be exported and stored as the `FIREBASE_ADMIN_
 | `FIREBASE_ADMIN_SERVICE_ACCOUNT` | GitHub Secret | Full JSON content of the Firebase service account key with Auth Admin permissions |
 | `FIREBASE_WEB_API_KEY` | GitHub Secret | Firebase project Web API key (found in Project Settings → General) |
 | `MANAGEMENT_API_URL` | GitHub Secret | Base URL of the deployed backend service (e.g., `https://api.recipe-mgmt-dev.web.app`) |
-| `BASE_URL` | GitHub Secret *(optional)* | Base URL of the deployed frontend. Defaults to `https://recipe-mgmt-dev.web.app` |
+| `DEPLOYED_APP_URL` | GitHub Secret | Base URL of the deployed frontend app (e.g., `https://recipe-mgmt-dev.web.app`) |
 
 ### Obtaining the service account key
 
@@ -110,36 +110,41 @@ The service account JSON key must be exported and stored as the `FIREBASE_ADMIN_
 
 ### Set up local environment
 
-Create a `.env.test.local` file (this file is in `.gitignore` and will never be committed):
+Create a `.env.test.local` file (this file is in `.gitignore` and will never be committed), then `source` it before running tests since Playwright does not auto-load `.env` files:
 
 ```bash
 # .env.test.local — DO NOT COMMIT
-FIREBASE_ADMIN_SERVICE_ACCOUNT='{"type":"service_account","project_id":"...","private_key":"...","client_email":"...",...}'
-FIREBASE_WEB_API_KEY=AIza...
-MANAGEMENT_API_URL=https://api.recipe-mgmt-dev.web.app
-BASE_URL=https://recipe-mgmt-dev.web.app
+export FIREBASE_ADMIN_SERVICE_ACCOUNT='{"type":"service_account","project_id":"...","private_key":"...","client_email":"...",...}'
+export FIREBASE_WEB_API_KEY=AIza...
+export MANAGEMENT_API_URL=https://api.recipe-mgmt-dev.web.app
+export DEPLOYED_APP_URL=https://recipe-mgmt-dev.web.app
+```
+
+```bash
+# Source the file to export all variables into the current shell
+source .env.test.local
 ```
 
 ### Run post-deploy tests
 
 ```bash
 # Run all post-deploy tests
-npx playwright test tests/post-deploy/
+npm run test:post-deploy
 
 # Run only API post-deploy tests
-npx playwright test tests/post-deploy/multi-user-api.spec.ts
+npx playwright test tests/post-deploy/multi-user-api.spec.ts --project=post-deploy
 
 # Run only frontend post-deploy tests
-npx playwright test tests/post-deploy/multi-user-frontend.spec.ts
+npx playwright test tests/post-deploy/multi-user-frontend.spec.ts --project=post-deploy
 
 # Run in headed mode to watch the browser
-npx playwright test tests/post-deploy/ --headed
+npx playwright test tests/post-deploy/ --project=post-deploy --headed
 
 # Run with UI mode for interactive debugging
-npx playwright test tests/post-deploy/ --ui
+npx playwright test tests/post-deploy/ --project=post-deploy --ui
 ```
 
-> **Note:** Post-deploy tests do **not** start a local dev server. They run against the URLs in `BASE_URL` and `MANAGEMENT_API_URL`. Make sure those environments are deployed before running.
+> **Note:** Post-deploy tests do **not** start a local dev server. They run against the URLs in `DEPLOYED_APP_URL` and `MANAGEMENT_API_URL`. Make sure those environments are deployed before running.
 
 ---
 
@@ -150,7 +155,7 @@ Post-deploy tests are triggered automatically by the CI/CD pipeline after a succ
 1. Code is merged to `main`
 2. CI builds and deploys the app to Firebase Hosting
 3. CI deploys the backend service
-4. CI runs `npx playwright test tests/post-deploy/` with the required secrets injected as environment variables
+4. CI runs `npm run test:post-deploy` with the required secrets injected as environment variables
 5. Results are reported back to the PR/commit
 
 The required secrets must be configured in the repository's GitHub Actions secrets:
@@ -289,10 +294,11 @@ firebase auth:delete <uid>
 Or use the Admin SDK in a one-off script:
 
 ```typescript
+import { readFileSync } from 'fs';
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 
-const serviceAccount = require('./service-account.json');
+const serviceAccount = JSON.parse(readFileSync('./service-account.json', 'utf8'));
 const app = initializeApp({ credential: cert(serviceAccount) });
 const auth = getAuth(app);
 const { users } = await auth.listUsers();
@@ -344,7 +350,7 @@ test.afterAll(async () => {
 
 test('user A cannot see user B private recipes', async ({ request }) => {
   // Use userA.idToken and userB.idToken in your assertions
-  const res = await request.get(`${process.env.MANAGEMENT_API_URL}/recipes`, {
+  const res = await request.get(`${process.env.MANAGEMENT_API_URL}/api/recipes`, {
     headers: { Authorization: `Bearer ${userA.idToken}` },
   });
   // ...
@@ -411,17 +417,17 @@ Never rely on a test passing to trigger cleanup — use `afterAll` unconditional
 
 **Cause:** Missing or misconfigured GitHub secrets.
 
-**Fix:** Confirm all four secrets (`FIREBASE_ADMIN_SERVICE_ACCOUNT`, `FIREBASE_WEB_API_KEY`, `MANAGEMENT_API_URL`, `BASE_URL`) are set in **Settings → Secrets and variables → Actions**. Check that the deployment step completed successfully before the test step runs.
+**Fix:** Confirm all four secrets (`FIREBASE_ADMIN_SERVICE_ACCOUNT`, `FIREBASE_WEB_API_KEY`, `MANAGEMENT_API_URL`, `DEPLOYED_APP_URL`) are set in **Settings → Secrets and variables → Actions**. Check that the deployment step completed successfully before the test step runs.
 
 ---
 
-### Playwright can't reach `BASE_URL`
+### Playwright can't reach `DEPLOYED_APP_URL`
 
 **Symptom:** `net::ERR_NAME_NOT_RESOLVED` or timeout errors.
 
-**Cause:** The deployment step failed, or `BASE_URL` points to the wrong environment.
+**Cause:** The deployment step failed, or `DEPLOYED_APP_URL` points to the wrong environment.
 
-**Fix:** Confirm the deployment was successful before the test step, and verify `BASE_URL` in the workflow YAML matches the deployed hosting URL.
+**Fix:** Confirm the deployment was successful before the test step, and verify `DEPLOYED_APP_URL` in the workflow YAML matches the deployed hosting URL.
 
 ---
 
