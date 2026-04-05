@@ -970,4 +970,29 @@ describe('AI metadata preservation', () => {
       )
     })
   })
+
+  it('shows dietary restriction values in step 4 form when recipe is loaded', async () => {
+    const user = userEvent.setup()
+    renderEditRecipe()
+
+    await waitFor(() => {
+      expect(screen.getByText('Edit Recipe')).toBeInTheDocument()
+    })
+
+    const step4Button = screen.getByLabelText('Go to step 4: Additional Info')
+    await user.click(step4Button)
+
+    await waitFor(() => {
+      expect(screen.getByText(/Step 4 of 5/)).toBeInTheDocument()
+    })
+
+    expect(screen.getByText('Dietary Restrictions (Optional)')).toBeInTheDocument()
+    // vegan appears in both tags and dietary restrictions chips
+    const veganElements = screen.getAllByText('vegan')
+    // The dietary restriction chip has blue styling
+    const dietaryChip = veganElements.find(el =>
+      el.closest('span')?.classList.contains('bg-blue-50')
+    )
+    expect(dietaryChip).toBeDefined()
+  })
 })

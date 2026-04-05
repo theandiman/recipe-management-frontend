@@ -19,7 +19,7 @@ describe('useRecipeValidation', () => {
       const { result } = renderHook(() => useRecipeValidation())
       const recipe = result.current.buildRecipeObject(
         'Test Recipe', '', '', '', '2', baseIngredients, baseInstructions, [], null,
-        { source: 'ai-generated' }
+        undefined, { source: 'ai-generated' }
       )
       expect(recipe.source).toBe('ai-generated')
     })
@@ -29,7 +29,7 @@ describe('useRecipeValidation', () => {
       const nutritionalInfo = { perServing: { calories: 350, protein: 10, carbohydrates: 50, fat: 8, fiber: 3 } }
       const recipe = result.current.buildRecipeObject(
         'Test Recipe', '', '', '', '2', baseIngredients, baseInstructions, [], null,
-        { nutritionalInfo }
+        undefined, { nutritionalInfo }
       )
       expect(recipe.nutritionalInfo).toEqual(nutritionalInfo)
     })
@@ -39,7 +39,7 @@ describe('useRecipeValidation', () => {
       const tips = { storage: 'refrigerate', reheating: 'microwave 2 minutes' }
       const recipe = result.current.buildRecipeObject(
         'Test Recipe', '', '', '', '2', baseIngredients, baseInstructions, [], null,
-        { tips }
+        undefined, { tips }
       )
       expect(recipe.tips).toEqual(tips)
     })
@@ -48,7 +48,7 @@ describe('useRecipeValidation', () => {
       const { result } = renderHook(() => useRecipeValidation())
       const recipe = result.current.buildRecipeObject(
         'Test Recipe', '', '', '', '2', baseIngredients, baseInstructions, [], null,
-        { dietaryRestrictions: ['vegan', 'gluten-free'] }
+        ['vegan', 'gluten-free']
       )
       expect(recipe.dietaryRestrictions).toEqual(['vegan', 'gluten-free'])
     })
@@ -59,11 +59,11 @@ describe('useRecipeValidation', () => {
       const tips = { storage: 'freeze up to 3 months' }
       const recipe = result.current.buildRecipeObject(
         'AI Recipe', 'An AI dish', '10', '20', '4', baseIngredients, baseInstructions, ['vegan'], null,
+        ['vegan'],
         {
           source: 'ai-generated',
           nutritionalInfo,
           tips,
-          dietaryRestrictions: ['vegan'],
         }
       )
       expect(recipe.source).toBe('ai-generated')
