@@ -40,7 +40,9 @@ export const LikeButton: React.FC<LikeButtonProps> = ({ recipe, className = '' }
       return
     }
 
-    await toggleLike(id)
+    if (!id) return
+
+    await toggleLike(id, { isLiked: serverIsLiked, likeCount: serverLikeCount })
   }
 
   return (

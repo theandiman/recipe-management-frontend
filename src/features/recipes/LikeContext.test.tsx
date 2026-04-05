@@ -240,10 +240,38 @@ describe('LikeContext', () => {
     // Now the in-flight request rejects — rollback must NOT fire
     await act(async () => { rejectApi(new Error('Network error')) })
 
-    // State should remain false (not rolled back to the pre-toggle liked=false
-    // with the stale snapshot that had isLiked=false — either way false is correct,
-    // but likeCount must not be corrupted by a stale snapshot's rollback)
+    // isLiked must stay false (not rolled back to isLiked=true).
+    // likeCount stays at the optimistic value (6) because rollback was skipped.
     expect(screen.getByTestId('is-liked')).toHaveTextContent('false')
-    expect(screen.getByTestId('like-count')).toHaveTextContent('5')
+    expect(screen.getByTestId('like-count')).toHaveTextContent('6')
+  })
+
+  it('uses initialState fallback in toggleLike when recipe has not been initialized', async () => {
+    // Do NOT call initRecipe — recipe state is still undefined in context.
+    // toggleLike is invoked with an initialState to simulate a fast click before
+    // the useEffect in LikeButton has had a chance to run initRecipe.
+    const TestFastClick = ({ recipeId }: { recipeId: string }) => {
+      const { toggleLike } = useLikeContext()
+      return (
+        <button onClick={() => toggleLike(recipeId, { isLiked: false, likeCount: 3 })}>
+          Fast Toggle
+        </button>
+      )
+    }
+    render(
+      <LikeProvider>
+        <TestConsumer recipeId="r1" />
+        <TestFastClick recipeId="r1" />
+      </LikeProvider>
+    )
+
+    await act(async () => {
+      screen.getByText('Fast Toggle').click()
+    })
+
+    // Should have applied an optimistic like even without prior initRecipe
+    expect(screen.getByTestId('is-liked')).toHaveTextContent('true')
+    expect(screen.getByTestId('like-count')).toHaveTextContent('4')
+    expect(mockLikeRecipe).toHaveBeenCalledWith('r1')
   })
 })

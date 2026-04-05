@@ -81,7 +81,7 @@ describe('LikeButton', () => {
     renderWithRouter(<LikeButton recipe={mockRecipe} />)
 
     await user.click(screen.getByRole('button'))
-    expect(mockToggleLike).toHaveBeenCalledWith('recipe-1')
+    expect(mockToggleLike).toHaveBeenCalledWith('recipe-1', { isLiked: false, likeCount: 5 })
   })
 
   it('redirects to login when unauthenticated user clicks', async () => {
@@ -98,6 +98,15 @@ describe('LikeButton', () => {
   it('initializes recipe state on mount', () => {
     renderWithRouter(<LikeButton recipe={mockRecipe} />)
     expect(mockInitRecipe).toHaveBeenCalledWith('recipe-1', false, 5)
+  })
+
+  it('does not call toggleLike when recipe has no id', async () => {
+    const user = userEvent.setup()
+    const recipeNoId = { ...mockRecipe, id: undefined }
+    renderWithRouter(<LikeButton recipe={recipeNoId} />)
+
+    await user.click(screen.getByRole('button'))
+    expect(mockToggleLike).not.toHaveBeenCalled()
   })
 
   it('renders the recipe like count even if recipe has no id', () => {

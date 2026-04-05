@@ -11,7 +11,7 @@ interface LikeState {
 interface LikeContextType {
   getLikeState: (id: string) => LikeState | undefined
   initRecipe: (id: string, isLiked: boolean, likeCount: number) => void
-  toggleLike: (id: string) => Promise<void>
+  toggleLike: (id: string, initialState?: LikeState) => Promise<void>
 }
 
 const LikeContext = createContext<LikeContextType | undefined>(undefined)
@@ -76,11 +76,13 @@ export const LikeProvider: React.FC<{ children: React.ReactNode }> = ({ children
   )
 
   const toggleLike = useCallback(
-    async (id: string) => {
+    async (id: string, initialState?: LikeState) => {
       if (!isAuthenticated) return
       if (pendingRef.current.has(id)) return
 
-      const prev = likeMap[id]
+      // Use context state if already initialized; fall back to the initial state
+      // passed by the caller (e.g. a fast click before useEffect runs initRecipe).
+      const prev = likeMap[id] ?? initialState
       if (!prev) return
 
       // Capture the current auth generation before the async call so the catch
