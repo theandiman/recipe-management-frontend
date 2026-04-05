@@ -484,6 +484,73 @@ jobs:
           echo ""
           echo "Check individual steps for details."
 
+  # Dynamic multi-user post-deployment tests (main branch only, after deploy)
+  # Requires FIREBASE_ADMIN_SERVICE_ACCOUNT, FIREBASE_WEB_API_KEY,
+  # VITE_MANAGEMENT_API_URL to be configured as secrets.
+  # Gracefully skipped when secrets are absent.
+  multi-user-post-deploy-tests:
+    name: Multi-User Post-Deploy Tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [deploy]
+    env:
+      FIREBASE_ADMIN_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_ADMIN_SERVICE_ACCOUNT }}
+      FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
+      MANAGEMENT_API_URL: ${{ secrets.VITE_MANAGEMENT_API_URL }}
+      DEPLOYED_APP_URL: https://recipe-mgmt-dev.web.app
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@theandiman'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
+
+      - name: Install dependencies
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Wait for deployment to be ready
+        run: |
+          echo "Waiting 30 seconds for deployment to propagate..."
+          sleep 30
+
+      - name: Check required secrets
+        id: check-secrets
+        run: |
+          if [ -z "$FIREBASE_ADMIN_SERVICE_ACCOUNT" ] || [ -z "$FIREBASE_WEB_API_KEY" ] || [ -z "$MANAGEMENT_API_URL" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::Skipping multi-user post-deploy tests: one or more required secrets (FIREBASE_ADMIN_SERVICE_ACCOUNT, FIREBASE_WEB_API_KEY, VITE_MANAGEMENT_API_URL) are not configured."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run multi-user post-deployment tests
+        if: steps.check-secrets.outputs.skip == 'false'
+        run: npm run test:post-deploy
+        env:
+          CI: true
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v7
+        if: always() && steps.check-secrets.outputs.skip == 'false'
+        with:
+          name: multi-user-post-deploy-playwright-report
+          path: playwright-report/
+          retention-days: 14
+
   # OWASP Security Scan (main branch only, after deploy, parallel to post-deploy-tests)
   owasp-security-scan:
     name: OWASP Security Scan
