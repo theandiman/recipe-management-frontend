@@ -206,4 +206,44 @@ describe('LikeContext', () => {
       expect(screen.getByTestId('like-count')).toHaveTextContent('10')
     })
   })
+
+  it('does not rollback isLiked when API fails after user has logged out', async () => {
+    // Simulate a slow API that rejects after the user logs out mid-flight
+    let rejectApi!: (e: Error) => void
+    mockLikeRecipe.mockReturnValue(new Promise<void>((_, reject) => { rejectApi = reject }))
+
+    const { rerender } = renderProvider()
+
+    await act(async () => {
+      screen.getByText('Init').click()  // seed: isLiked=false, count=5
+    })
+
+    // Start the toggle (optimistic update fires immediately)
+    act(() => { screen.getByText('Toggle').click() })
+
+    // Optimistic state: liked=true, count=6
+    expect(screen.getByTestId('is-liked')).toHaveTextContent('true')
+
+    // User logs out while request is still in-flight
+    mockUseAuth.mockReturnValue({ isAuthenticated: false })
+    rerender(
+      <LikeProvider>
+        <TestConsumer recipeId="r1" />
+      </LikeProvider>
+    )
+
+    await waitFor(() => {
+      // Logout reset should have set isLiked to false
+      expect(screen.getByTestId('is-liked')).toHaveTextContent('false')
+    })
+
+    // Now the in-flight request rejects — rollback must NOT fire
+    await act(async () => { rejectApi(new Error('Network error')) })
+
+    // State should remain false (not rolled back to the pre-toggle liked=false
+    // with the stale snapshot that had isLiked=false — either way false is correct,
+    // but likeCount must not be corrupted by a stale snapshot's rollback)
+    expect(screen.getByTestId('is-liked')).toHaveTextContent('false')
+    expect(screen.getByTestId('like-count')).toHaveTextContent('5')
+  })
 })

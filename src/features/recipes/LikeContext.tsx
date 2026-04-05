@@ -30,10 +30,14 @@ export const LikeProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const pendingRef = useRef<Set<string>>(new Set())
 
   const prevAuthRef = useRef(isAuthenticated)
+  // Incremented on every logout; captured by toggleLike before each API call so
+  // the catch block can detect whether a logout occurred mid-flight and skip rollback.
+  const authGenRef = useRef(0)
 
   // Reset isLiked flags when user logs out; preserve counts as public data
   useEffect(() => {
     if (prevAuthRef.current && !isAuthenticated) {
+      authGenRef.current += 1
       setLikeMap((prev) => {
         const next: Record<string, LikeState> = {}
         for (const id in prev) {
@@ -79,6 +83,10 @@ export const LikeProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const prev = likeMap[id]
       if (!prev) return
 
+      // Capture the current auth generation before the async call so the catch
+      // block can tell whether the user logged out while the request was in-flight.
+      const capturedGen = authGenRef.current
+
       pendingRef.current.add(id)
 
       const newLiked = !prev.isLiked
@@ -97,12 +105,15 @@ export const LikeProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await unlikeRecipe(id)
         }
       } catch {
-        // Rollback optimistic update
-        setLikeMap((current) => ({
-          ...current,
-          [id]: prev,
-        }))
-        toast.error('Failed to update like status. Please try again.')
+        // Skip rollback if the user logged out while the request was in-flight;
+        // the logout handler has already reset isLiked to false.
+        if (authGenRef.current === capturedGen) {
+          setLikeMap((current) => ({
+            ...current,
+            [id]: prev,
+          }))
+          toast.error('Failed to update like status. Please try again.')
+        }
       } finally {
         pendingRef.current.delete(id)
       }
