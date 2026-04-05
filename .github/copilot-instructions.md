@@ -34,5 +34,5 @@ Deploy to Firebase: `firebase deploy` (after configuring Firebase CLI with proje
 Once work has completed:
 
 - Mark PR as ready to review
-- Monitor PR for buld failures and fix
+- Monitor PR for build failures and fix
 - Monitor PR for comments and address
