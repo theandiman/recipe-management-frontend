@@ -14,6 +14,7 @@ interface UseRecipeSaveOptions {
   instructions: string[]
   tags: string[]
   imagePreview: string | null
+  recipeOverrides?: Partial<Recipe>
   setFieldErrors: (errors: Record<string, string>) => void
   setStepsWithErrors: (steps: Set<number>) => void
   setSaveLoading: (loading: boolean) => void
@@ -32,7 +33,8 @@ interface UseRecipeSaveOptions {
     ingredients: Ingredient[],
     instructions: string[],
     tags: string[],
-    imagePreview: string | null
+    imagePreview: string | null,
+    overrides?: Partial<Recipe>
   ) => Recipe
   goToStep: (step: number) => void
 }
@@ -48,6 +50,7 @@ export function useRecipeSave({
   instructions,
   tags,
   imagePreview,
+  recipeOverrides,
   setFieldErrors,
   setStepsWithErrors,
   setSaveLoading,
@@ -100,7 +103,8 @@ export function useRecipeSave({
         ingredients,
         instructions,
         tags,
-        imagePreview
+        imagePreview,
+        recipeOverrides
       )
       
       // Save or update recipe
@@ -132,6 +136,7 @@ export function useRecipeSave({
     instructions,
     tags,
     imagePreview,
+    recipeOverrides,
     setFieldErrors,
     setStepsWithErrors,
     setSaveLoading,

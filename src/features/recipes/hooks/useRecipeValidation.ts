@@ -46,7 +46,8 @@ export function useRecipeValidation() {
     ingredients: Ingredient[],
     instructions: string[],
     tags: string[],
-    imagePreview: string | null
+    imagePreview: string | null,
+    overrides?: Partial<Recipe>
   ): Recipe => {
     const ingredientStrings = ingredients
       .filter(ing => ing.item.trim())
@@ -64,7 +65,8 @@ export function useRecipeValidation() {
       servings: servings ? parseInt(servings, 10) : 1,
       tags: tags.length > 0 ? tags : undefined,
       imageUrl: imagePreview || undefined,
-      source: 'manual' as const
+      source: 'manual' as const,
+      ...overrides
     }
   }, [])
 
