@@ -4,12 +4,18 @@ import userEvent from '@testing-library/user-event'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { EditRecipe } from './EditRecipe'
 import * as recipeStorageApi from '../../services/recipeStorageApi'
+import { useAuth } from '../../features/auth/AuthContext'
 import type { Recipe } from '../../types/nutrition'
 
 vi.mock('../../services/recipeStorageApi')
 vi.mock('../../config/firebase', () => ({
   auth: {},
   storage: {}
+}))
+
+// Mock AuthContext
+vi.mock('../../features/auth/AuthContext', () => ({
+  useAuth: vi.fn(),
 }))
 
 // Mock useNavigate
@@ -43,6 +49,7 @@ describe('EditRecipe', () => {
     vi.clearAllMocks()
     mockNavigate.mockClear()
     vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipe)
+    vi.mocked(useAuth).mockReturnValue({ user: null } as any)
   })
 
   describe('Loading State', () => {
@@ -877,6 +884,50 @@ describe('EditRecipe', () => {
       })
     })
   })
+
+  describe('Ownership', () => {
+    it('should redirect to recipe detail when current user does not own the recipe', async () => {
+      const ownedRecipe = { ...mockRecipe, userId: 'owner-uid' }
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(ownedRecipe)
+      vi.mocked(useAuth).mockReturnValue({
+        user: { uid: 'other-user', email: null, displayName: null, photoURL: null },
+      } as any)
+
+      render(
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<EditRecipe />} />
+          </Routes>
+        </BrowserRouter>
+      )
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/dashboard/recipes/test-recipe-123')
+      })
+    })
+
+    it('should load recipe when current user owns the recipe', async () => {
+      const ownedRecipe = { ...mockRecipe, userId: 'owner-uid' }
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(ownedRecipe)
+      vi.mocked(useAuth).mockReturnValue({
+        user: { uid: 'owner-uid', email: null, displayName: null, photoURL: null },
+      } as any)
+
+      render(
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<EditRecipe />} />
+          </Routes>
+        </BrowserRouter>
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText('Edit Recipe')).toBeInTheDocument()
+      })
+
+      expect(mockNavigate).not.toHaveBeenCalled()
+    })
+  })
 })
 
 describe('AI metadata preservation', () => {
@@ -902,6 +953,7 @@ describe('AI metadata preservation', () => {
     mockNavigate.mockClear()
     vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(aiRecipe)
     vi.mocked(recipeStorageApi.updateRecipe).mockResolvedValue(aiRecipe)
+    vi.mocked(useAuth).mockReturnValue({ user: null } as any)
   })
 
   const renderEditRecipe = () =>
