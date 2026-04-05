@@ -33,6 +33,7 @@ export const EditRecipe: React.FC = () => {
     ingredients: form.ingredients,
     instructions: form.instructions,
     tags: form.tags,
+    dietaryRestrictions: form.dietaryRestrictions,
     imagePreview: form.imagePreview,
     recipeOverrides,
     setFieldErrors: form.setFieldErrors,
@@ -75,11 +76,11 @@ export const EditRecipe: React.FC = () => {
         
         form.setInstructions(data.instructions && data.instructions.length > 0 ? data.instructions : [''])
         form.setTags(data.tags || [])
+        form.setDietaryRestrictions(data.dietaryRestrictions || [])
         form.setImagePreview(data.imageUrl || null)
         setRecipeOverrides({
           nutritionalInfo: data.nutritionalInfo,
           tips: data.tips,
-          dietaryRestrictions: data.dietaryRestrictions,
           source: data.source,
         })
       } catch (err: unknown) {
@@ -93,7 +94,7 @@ export const EditRecipe: React.FC = () => {
     }
 
     fetchRecipe()
-  }, [id, form.setTitle, form.setDescription, form.setPrepTime, form.setCookTime, form.setServings, form.setIngredients, form.setInstructions, form.setTags, form.setImagePreview])
+  }, [id, form.setTitle, form.setDescription, form.setPrepTime, form.setCookTime, form.setServings, form.setIngredients, form.setInstructions, form.setTags, form.setDietaryRestrictions, form.setImagePreview])
 
   const handleCancel = useCallback(() => {
     navigate(`/dashboard/recipes/${id}`)
