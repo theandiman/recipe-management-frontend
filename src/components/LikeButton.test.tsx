@@ -100,10 +100,10 @@ describe('LikeButton', () => {
     expect(mockInitRecipe).toHaveBeenCalledWith('recipe-1', false, 5)
   })
 
-  it('does not render if recipe has no id', () => {
+  it('renders the recipe like count even if recipe has no id', () => {
     const recipeNoId = { ...mockRecipe, id: undefined }
     renderWithRouter(<LikeButton recipe={recipeNoId} />)
-    // Button still renders but with empty id / 0 count
+    // Button still renders and shows the recipe-provided like count.
     expect(screen.getByText('5')).toBeInTheDocument()
   })
 })
