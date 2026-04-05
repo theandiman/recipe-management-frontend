@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { deleteRecipe, saveRecipe, getRecipes, getRecipe, updateRecipe, updateRecipeSharing, getPublicRecipes, getSavedRecipes } from './recipeStorageApi'
+import { deleteRecipe, saveRecipe, getRecipes, getRecipe, updateRecipe, updateRecipeSharing, getPublicRecipes, getSavedRecipes, getFeed } from './recipeStorageApi'
 import type { Recipe } from '../types/nutrition'
 import type { AxiosResponse } from 'axios'
 
@@ -572,6 +572,71 @@ describe('recipeStorageApi', () => {
       const callArgs = vi.mocked(axios.get).mock.calls[0]
       const config = callArgs[1] as { headers?: Record<string, unknown> }
       expect(config?.headers?.['Authorization']).toBeUndefined()
+    })
+  })
+
+  describe('getFeed', () => {
+    it('should request GET /api/feed with bearer token', async () => {
+      const axios = (await import('axios')).default
+      const mockRecipes = [createMockRecipe(), createMockRecipe({ id: 'feed-2' })]
+
+      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse(mockRecipes))
+
+      const result = await getFeed()
+
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('/api/feed'),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer mock-token',
+          }),
+        })
+      )
+      expect(result).toEqual(mockRecipes)
+    })
+
+    it('should normalize an array response via extractRecipes', async () => {
+      const axios = (await import('axios')).default
+      const mockRecipes = [
+        { id: 'feed-1', title: 'Feed Pasta', ingredients: ['pasta'], instructions: ['boil'], servings: 2, source: 'manual' },
+      ]
+
+      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse(mockRecipes))
+
+      const [recipe] = await getFeed()
+
+      expect(recipe.recipeName).toBe('Feed Pasta')
+    })
+
+    it('should normalize a paginated { recipes: [...] } payload', async () => {
+      const axios = (await import('axios')).default
+      const mockRecipes = [createMockRecipe({ id: 'feed-page-1' })]
+
+      vi.mocked(axios.get).mockResolvedValue(
+        createAxiosResponse({ recipes: mockRecipes, size: 20, totalCount: 1, nextPageToken: null })
+      )
+
+      const result = await getFeed()
+
+      expect(result).toEqual(mockRecipes)
+    })
+
+    it('should throw when the user is not authenticated', async () => {
+      const { auth } = await import('../config/firebase')
+
+      Object.defineProperty(auth, 'currentUser', {
+        get: () => null,
+        configurable: true,
+      })
+
+      await expect(getFeed()).rejects.toThrow('User not authenticated')
+
+      // Restore
+      const mockGetIdToken = vi.fn().mockResolvedValue('mock-token')
+      Object.defineProperty(auth, 'currentUser', {
+        get: () => ({ getIdToken: mockGetIdToken }),
+        configurable: true,
+      })
     })
   })
 })
