@@ -59,13 +59,13 @@ export const CommunityPage: React.FC = () => {
       ? recipes.filter(r => (r.recipeName || '').toLowerCase().includes(text))
       : [...recipes]
 
-    if (sortOption === 'most-liked') {
+    if (activeTab === 'community' && sortOption === 'most-liked') {
       const getLikeCount = (r: Recipe) => (r as Recipe & { likeCount?: number }).likeCount ?? 0
       result = result.sort((a, b) => getLikeCount(b) - getLikeCount(a))
     }
 
     return result
-  }, [recipes, searchText, sortOption])
+  }, [activeTab, recipes, searchText, sortOption])
 
   const hasRecipes = !loading && !error && recipes.length > 0
 
