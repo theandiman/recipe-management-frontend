@@ -40,6 +40,18 @@ vi.mock('../../features/auth/AuthContext', () => ({
   AuthProvider: ({ children }: any) => children
 }))
 
+// Mock BookmarkButton to avoid SavedRecipesContext dependencies
+vi.mock('../../components/BookmarkButton', () => ({
+  default: () => null,
+  BookmarkButton: () => null,
+}))
+
+// Mock LikeButton to avoid LikeContext dependencies
+vi.mock('../../components/LikeButton', () => ({
+  default: () => null,
+  LikeButton: () => null,
+}))
+
 // Mock child components that are not under test
 vi.mock('../../components/Dashboard', async () => ({
   Dashboard: () => <div>DashboardStub</div>

@@ -9,6 +9,7 @@ import { DashboardLayout } from './components/Layout/DashboardLayout'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { UserProfilePage } from './features/users/UserProfilePage'
 import { FollowProvider } from './features/users/FollowContext'
+import { LikeProvider } from './features/recipes/LikeContext'
 import './App.css'
 
 function AnimatedRoutes() {
@@ -80,8 +81,10 @@ function App() {
       <ThemeProvider>
         <AuthProvider>
           <FollowProvider>
-            <Toaster position="top-right" richColors />
-            <AnimatedRoutes />
+            <LikeProvider>
+              <Toaster position="top-right" richColors />
+              <AnimatedRoutes />
+            </LikeProvider>
           </FollowProvider>
         </AuthProvider>
       </ThemeProvider>
