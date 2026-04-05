@@ -1,27 +1,30 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Detect whether only the post-deploy project is being run, either via the
-// npm lifecycle script name or by explicit --project=post-deploy CLI args.
-// We intentionally avoid relying on a bare env-var check here: an env var alone
-// is too broad and would disable the dev server even when running all projects
-// together. The lifecycle event and explicit --project flag are precise signals.
-const lifecycleIsPostDeploy = process.env.npm_lifecycle_event === 'test:post-deploy';
+/**
+ * Returns true only when the runner is exclusively targeting the post-deploy
+ * project — either via the npm lifecycle script or an explicit --project flag.
+ *
+ * We deliberately avoid a bare env-var check here: an env var alone would be
+ * too broad and would disable the dev server even when running all projects
+ * together, breaking the chromium project.
+ */
+function isPostDeployOnlyRun(): boolean {
+  if (process.env.npm_lifecycle_event === 'test:post-deploy') return true;
 
-const cliArgs = process.argv.slice(2);
-const selectedProjects: string[] = [];
-for (let i = 0; i < cliArgs.length; i++) {
-  const arg = cliArgs[i];
-  if (arg.startsWith('--project=')) {
-    selectedProjects.push(...arg.slice('--project='.length).split(','));
-  } else if ((arg === '--project' || arg === '-p') && cliArgs[i + 1] && !cliArgs[i + 1].startsWith('-')) {
-    selectedProjects.push(...cliArgs[++i].split(','));
+  const args = process.argv.slice(2);
+  const projects: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg.startsWith('--project=')) {
+      projects.push(...arg.slice('--project='.length).split(','));
+    } else if ((arg === '--project' || arg === '-p') && args[i + 1] && !args[i + 1].startsWith('-')) {
+      projects.push(...args[++i].split(','));
+    }
   }
+  return projects.length > 0 && projects.map((p) => p.trim()).every((p) => p === 'post-deploy');
 }
-const cliIsPostDeployOnly =
-  selectedProjects.length > 0 &&
-  selectedProjects.map((p) => p.trim()).every((p) => p === 'post-deploy');
 
-const isPostDeploy = lifecycleIsPostDeploy || cliIsPostDeployOnly;
+const isPostDeploy = isPostDeployOnlyRun();
 
 export default defineConfig({
   testDir: './tests',
@@ -63,7 +66,7 @@ export default defineConfig({
       testMatch: ['**/post-deploy/**/*.spec.ts'],
       use: {
         ...devices['Desktop Chrome'],
-        baseURL: process.env.DEPLOYED_APP_URL,
+        baseURL: process.env.DEPLOYED_APP_URL || 'http://missing-deployed-app-url',
       },
     },
   ],
