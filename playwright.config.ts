@@ -1,5 +1,31 @@
 import { defineConfig, devices } from '@playwright/test';
 
+/**
+ * Returns true only when the runner is exclusively targeting the post-deploy
+ * project — either via the npm lifecycle script or an explicit --project flag.
+ *
+ * We deliberately avoid a bare env-var check here: an env var alone would be
+ * too broad and would disable the dev server even when running all projects
+ * together, breaking the chromium project.
+ */
+function isPostDeployOnlyRun(): boolean {
+  if (process.env.npm_lifecycle_event === 'test:post-deploy') return true;
+
+  const args = process.argv.slice(2);
+  const projects: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg.startsWith('--project=')) {
+      projects.push(...arg.slice('--project='.length).split(','));
+    } else if ((arg === '--project' || arg === '-p') && args[i + 1] && !args[i + 1].startsWith('-')) {
+      projects.push(...args[++i].split(','));
+    }
+  }
+  return projects.length > 0 && projects.map((p) => p.trim()).every((p) => p === 'post-deploy');
+}
+
+const isPostDeploy = isPostDeployOnlyRun();
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -27,13 +53,26 @@ export default defineConfig({
   },
 
   projects: [
+    // ── Local dev / CI unit-like tests (with local dev server) ──────────────
     {
       name: 'chromium',
+      testIgnore: ['**/post-deploy/**'],
       use: { ...devices['Desktop Chrome'] },
+    },
+
+    // ── Post-deployment tests (no local server needed) ───────────────────────
+    {
+      name: 'post-deploy',
+      testMatch: ['**/post-deploy/**/*.spec.ts'],
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: process.env.DEPLOYED_APP_URL || 'http://missing-deployed-app-url',
+      },
     },
   ],
 
-  webServer: {
+  // Only start the dev server for non-post-deploy runs
+  webServer: isPostDeploy ? undefined : {
     command: 'npm run dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
