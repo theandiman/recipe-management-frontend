@@ -1,27 +1,37 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { getPublicRecipes } from '../../services/recipeStorageApi'
+import { getPublicRecipes, getFeed } from '../../services/recipeStorageApi'
+import { useAuth } from '../auth/AuthContext'
 import RecipeCard from '../../components/RecipeCard'
 import { RecipeCardSkeleton } from '../../components/skeletons/RecipeCardSkeleton'
 import type { Recipe } from '../../types/nutrition'
 
+type Tab = 'community' | 'following'
+
 export const CommunityPage: React.FC = () => {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { user } = useAuth()
+
+  const activeTab: Tab =
+    user && searchParams.get('tab') === 'following' ? 'following' : 'community'
+
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [searchText, setSearchText] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchPublicRecipes = async () => {
+    const fetchRecipes = async () => {
       try {
         setLoading(true)
         setError(null)
-        const data = await getPublicRecipes()
+        setSearchText('')
+        const data = activeTab === 'following' ? await getFeed() : await getPublicRecipes()
         setRecipes(data)
       } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load community recipes'
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load recipes'
         const apiError = err as { response?: { data?: { message?: string } } }
         setError(apiError.response?.data?.message || errorMessage)
       } finally {
@@ -29,8 +39,17 @@ export const CommunityPage: React.FC = () => {
       }
     }
 
-    fetchPublicRecipes()
-  }, [])
+    fetchRecipes()
+  }, [activeTab])
+
+  const handleTabChange = (tab: Tab) => {
+    if (tab === 'community') {
+      searchParams.delete('tab')
+      setSearchParams(searchParams, { replace: true })
+    } else {
+      setSearchParams({ tab }, { replace: true })
+    }
+  }
 
   const filtered = React.useMemo(() => {
     const text = searchText.trim().toLowerCase()
@@ -45,11 +64,39 @@ export const CommunityPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Community Recipes</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Community Recipes</h1>
+
+        {user && (
+          <div className="flex border-b border-gray-200 mb-4">
+            <button
+              onClick={() => handleTabChange('community')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'community'
+                  ? 'border-emerald-500 text-emerald-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Community
+            </button>
+            <button
+              onClick={() => handleTabChange('following')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'following'
+                  ? 'border-emerald-500 text-emerald-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Following
+            </button>
+          </div>
+        )}
+
         <p className="text-sm md:text-base text-gray-600">
           {hasRecipes
-            ? `Showing ${filtered.length} of ${recipes.length} ${recipes.length === 1 ? 'recipe' : 'recipes'} from the community`
-            : 'Discover recipes shared by the community'}
+            ? `Showing ${filtered.length} of ${recipes.length} ${recipes.length === 1 ? 'recipe' : 'recipes'} from the ${activeTab === 'following' ? 'cooks you follow' : 'community'}`
+            : activeTab === 'following'
+              ? 'Recipes from cooks you follow'
+              : 'Discover recipes shared by the community'}
         </p>
         {hasRecipes && (
           <div className="mt-4">
@@ -82,12 +129,12 @@ export const CommunityPage: React.FC = () => {
 
       {!loading && error && (
         <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
-          <p className="font-medium">Error loading community recipes</p>
+          <p className="font-medium">Error loading {activeTab === 'following' ? 'following feed' : 'community recipes'}</p>
           <p className="text-sm mt-1">{error}</p>
         </div>
       )}
 
-      {!loading && !error && recipes.length === 0 && (
+      {!loading && !error && recipes.length === 0 && activeTab === 'community' && (
         <motion.div
           className="text-center py-12"
           initial={{ opacity: 0, y: 20 }}
@@ -121,6 +168,52 @@ export const CommunityPage: React.FC = () => {
           >
             Be the first to share a recipe with the community!
           </motion.p>
+        </motion.div>
+      )}
+
+      {!loading && !error && recipes.length === 0 && activeTab === 'following' && (
+        <motion.div
+          className="text-center py-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+        >
+          <motion.svg
+            className="mx-auto h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </motion.svg>
+          <motion.h3
+            className="mt-4 text-base sm:text-lg font-medium text-gray-900"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.4 }}
+          >
+            No recipes from followed cooks yet
+          </motion.h3>
+          <motion.p
+            className="mt-2 text-sm sm:text-base text-gray-600"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.5 }}
+          >
+            Follow some cooks to see their recipes here
+          </motion.p>
+          <motion.button
+            onClick={() => handleTabChange('community')}
+            className="mt-4 inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.6 }}
+          >
+            Browse Community
+          </motion.button>
         </motion.div>
       )}
 

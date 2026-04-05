@@ -416,6 +416,32 @@ export const deleteRecipe = async (id: string): Promise<void> => {
 }
 
 /**
+ * Fetch the following feed for the current user (recipes from followed users)
+ * @returns List of recipes from followed users
+ */
+export const getFeed = async (): Promise<Recipe[]> => {
+  const { default: axios } = await import('axios')
+  const { auth } = await import('../config/firebase')
+
+  const user = auth.currentUser
+  if (!user) {
+    throw new Error('User not authenticated')
+  }
+
+  const token = await user.getIdToken()
+  const url = buildApiUrl(MANAGEMENT_API_BASE, '/api/feed')
+
+  const response = await axios.get(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  })
+
+  return extractRecipes(response.data)
+}
+
+/**
  * Fetch all public recipes from all users (no authentication required)
  * @returns List of public recipes
  */
@@ -538,6 +564,7 @@ export default {
   saveRecipe,
   getRecipes,
   getPublicRecipes,
+  getFeed,
   getRecipe,
   updateRecipe,
   deleteRecipe,
