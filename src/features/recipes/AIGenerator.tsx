@@ -2,13 +2,12 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useAppDispatch, useAppSelector } from '../../store'
 import { generateRecipe, generateImage, clearImage } from './recipeSlice'
 import { motion } from 'framer-motion'
-import NutritionFacts from '../../components/NutritionFacts'
 import ServingsStepper from '../../components/ServingsStepper'
 import { scaleIngredient } from '../../utils/quantityUtils'
-import { formatMinutes, parseMinutes } from '../../utils/timeUtils'
 import { saveRecipe } from '../../services/recipeStorageApi'
 import type { Recipe } from '../../types/nutrition'
 import type { RootState } from '../../store'
+import RecipeBody from './components/RecipeBody'
 
 export const AIGenerator: React.FC = () => {
   const dispatch = useAppDispatch()
@@ -408,33 +407,6 @@ export const AIGenerator: React.FC = () => {
               )}
             </div>
 
-            {/* Time and Servings */}
-            <div className="flex items-center space-x-6 mb-6 text-sm text-gray-600">
-              {(parsedRecipe.prepTime || parsedRecipe.cookTime) && (
-                <div className="flex items-center space-x-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>
-                    {(() => {
-                      const prep = parseMinutes(parsedRecipe.prepTime) || 0
-                      const cook = parseMinutes(parsedRecipe.cookTime) || 0
-                      const total = prep + cook
-                      return formatMinutes(total)
-                    })()}
-                  </span>
-                </div>
-              )}
-              {parsedRecipe.servings && (
-                <div className="flex items-center space-x-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  <span>{parsedRecipe.servings} servings</span>
-                </div>
-              )}
-            </div>
-
             {/* Servings Adjuster */}
             {parsedRecipe.servings && (
               <div className="mb-6">
@@ -446,141 +418,18 @@ export const AIGenerator: React.FC = () => {
               </div>
             )}
 
-            {/* Ingredients */}
-            <div className="mb-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Ingredients</h3>
-              <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-left">
-                {parsedRecipe.ingredients?.map((ing: string, idx: number) => {
-                  const scaledIngredient = targetServings !== null ? scaleIngredient(ing, targetServings / (Number(parsedRecipe.servings) || 1)) : ing
-                  return (
-                    <li key={idx} className="flex items-start text-left">
-                      <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full mt-2 mr-3 flex-shrink-0" />
-                      <span className="text-gray-700 text-left">{String(scaledIngredient)}</span>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
-
-            {/* Instructions */}
-            <div className="mb-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Instructions</h3>
-              <ol className="space-y-4">
-                {parsedRecipe.instructions?.map((instruction: string, idx: number) => (
-                  <li key={idx} className="flex items-start">
-                    <span className="inline-flex items-center justify-center w-8 h-8 bg-emerald-100 text-emerald-700 font-semibold rounded-full mr-4 flex-shrink-0">
-                      {idx + 1}
-                    </span>
-                    <span className="text-gray-700 pt-1">{instruction}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            {/* Nutrition Facts */}
-            {parsedRecipe.nutritionalInfo && (
-              <div className="mt-8">
-                <NutritionFacts
-                  nutritionalInfo={parsedRecipe.nutritionalInfo}
-                />
-              </div>
-            )}
-
-            {/* Recipe Tips */}
-            {parsedRecipe.tips && (
-              <div className="mt-8 space-y-4">
-                <h3 className="text-xl font-bold text-gray-900">Tips & Tricks</h3>
-                
-                {/* Substitutions */}
-                {parsedRecipe.tips.substitutions && parsedRecipe.tips.substitutions.length > 0 && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                    <div className="flex items-start space-x-3">
-                      <svg className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                      </svg>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-amber-900 mb-2">Ingredient Substitutions</h4>
-                        <ul className="space-y-1 text-sm text-amber-800">
-                          {parsedRecipe.tips.substitutions.map((sub: string, idx: number) => (
-                            <li key={idx} className="flex items-start">
-                              <span className="mr-2">•</span>
-                              <span>{sub}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Variations */}
-                {parsedRecipe.tips.variations && parsedRecipe.tips.variations.length > 0 && (
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-                    <div className="flex items-start space-x-3">
-                      <svg className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
-                      </svg>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-emerald-900 mb-2">Recipe Variations</h4>
-                        <ul className="space-y-1 text-sm text-purple-800">
-                          {parsedRecipe.tips.variations.map((variation: string, idx: number) => (
-                            <li key={idx} className="flex items-start">
-                              <span className="mr-2">•</span>
-                              <span>{variation}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Storage & Make-Ahead */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {parsedRecipe.tips.storage && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <div className="flex items-start space-x-3">
-                        <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                        </svg>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-blue-900 mb-1">Storage</h4>
-                          <p className="text-sm text-blue-800">{parsedRecipe.tips.storage}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {parsedRecipe.tips.makeAhead && (
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-                      <div className="flex items-start space-x-3">
-                        <svg className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-emerald-900 mb-1">Make-Ahead</h4>
-                          <p className="text-sm text-emerald-800">{parsedRecipe.tips.makeAhead}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {parsedRecipe.tips.reheating && (
-                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                      <div className="flex items-start space-x-3">
-                        <svg className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                        </svg>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-orange-900 mb-1">Reheating</h4>
-                          <p className="text-sm text-orange-800">{parsedRecipe.tips.reheating}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            <RecipeBody
+              recipe={
+                targetServings !== null && parsedRecipe.ingredients
+                  ? {
+                      ...parsedRecipe,
+                      ingredients: parsedRecipe.ingredients.map((ing: string) =>
+                        String(scaleIngredient(ing, targetServings / (Number(parsedRecipe.servings) || 1)))
+                      ),
+                    }
+                  : parsedRecipe
+              }
+            />
           </div>
         </div>
       )}
