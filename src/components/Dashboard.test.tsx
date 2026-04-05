@@ -24,6 +24,12 @@ vi.mock('../components/BookmarkButton', () => ({
   BookmarkButton: () => null,
 }))
 
+// Mock LikeButton to avoid LikeContext dependencies
+vi.mock('../components/LikeButton', () => ({
+  default: () => null,
+  LikeButton: () => null,
+}))
+
 describe('Dashboard', () => {
   const mockUser = {
     uid: 'test-uid',

@@ -18,6 +18,12 @@ vi.mock('../../components/BookmarkButton', () => ({
   BookmarkButton: () => null,
 }))
 
+// Mock LikeButton to avoid LikeContext dependencies
+vi.mock('../../components/LikeButton', () => ({
+  default: () => null,
+  LikeButton: () => null,
+}))
+
 // Mock useAuth - default to unauthenticated
 const mockUseAuth = vi.fn()
 vi.mock('../auth/AuthContext', () => ({
@@ -254,6 +260,42 @@ describe('CommunityPage', () => {
       })
       expect(recipeStorageApi.getPublicRecipes).toHaveBeenCalledTimes(1)
       expect(recipeStorageApi.getFeed).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('sort', () => {
+    const recipesWithLikes = [
+      { id: '1', recipeName: 'Spaghetti Carbonara', description: 'Classic', servings: 4, likeCount: 3 },
+      { id: '2', recipeName: 'Chicken Tikka Masala', description: 'Curry', servings: 6, likeCount: 10 },
+      { id: '3', recipeName: 'Caesar Salad', description: 'Salad', servings: 2, likeCount: 1 },
+    ] as unknown as Recipe[]
+
+    it('shows sort select only in community tab when recipes are loaded', async () => {
+      mockUseAuth.mockReturnValue({ user: { uid: 'u1' } })
+      vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue(recipesWithLikes)
+      renderWithRouter(<CommunityPage />)
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Sort by:')).toBeInTheDocument()
+      })
+    })
+
+    it('sorts recipes by most liked when "Most liked" is selected', async () => {
+      const user = userEvent.setup()
+      mockUseAuth.mockReturnValue({ user: { uid: 'u1' } })
+      vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue(recipesWithLikes)
+      renderWithRouter(<CommunityPage />)
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Sort by:')).toBeInTheDocument()
+      })
+
+      await user.selectOptions(screen.getByLabelText('Sort by:'), 'most-liked')
+
+      const cards = screen.getAllByText(/Spaghetti Carbonara|Chicken Tikka Masala|Caesar Salad/)
+      expect(cards[0].textContent).toBe('Chicken Tikka Masala')
+      expect(cards[1].textContent).toBe('Spaghetti Carbonara')
+      expect(cards[2].textContent).toBe('Caesar Salad')
     })
   })
 })

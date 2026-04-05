@@ -17,6 +17,12 @@ vi.mock('../../components/BookmarkButton', () => ({
   BookmarkButton: () => null,
 }))
 
+// Mock LikeButton to avoid LikeContext dependencies
+vi.mock('../../components/LikeButton', () => ({
+  default: () => null,
+  LikeButton: () => null,
+}))
+
 // Mock useNavigate
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {

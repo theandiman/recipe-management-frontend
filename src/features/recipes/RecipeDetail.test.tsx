@@ -15,6 +15,12 @@ vi.mock('../../components/BookmarkButton', () => ({
   BookmarkButton: () => null,
 }))
 
+// Mock LikeButton to avoid LikeContext dependencies
+vi.mock('../../components/LikeButton', () => ({
+  default: () => null,
+  LikeButton: () => null,
+}))
+
 // Mock SavedRecipesContext to avoid needing SavedRecipesProvider
 vi.mock('../../features/recipes/SavedRecipesContext', () => ({
   useSavedRecipes: () => ({
