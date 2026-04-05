@@ -35,12 +35,12 @@ export const LikeButton: React.FC<LikeButtonProps> = ({ recipe, className = '' }
     e.stopPropagation()
     e.preventDefault()
 
+    if (!id) return
+
     if (!isAuthenticated) {
       navigate('/login')
       return
     }
-
-    if (!id) return
 
     await toggleLike(id, { isLiked: serverIsLiked, likeCount: serverLikeCount })
   }
