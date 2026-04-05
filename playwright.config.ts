@@ -2,6 +2,9 @@ import { defineConfig, devices } from '@playwright/test';
 
 // Detect whether only the post-deploy project is being run, either via the
 // npm lifecycle script name or by explicit --project=post-deploy CLI args.
+// We intentionally avoid relying on a bare env-var check here: an env var alone
+// is too broad and would disable the dev server even when running all projects
+// together. The lifecycle event and explicit --project flag are precise signals.
 const lifecycleIsPostDeploy = process.env.npm_lifecycle_event === 'test:post-deploy';
 
 const cliArgs = process.argv.slice(2);
@@ -18,7 +21,7 @@ const cliIsPostDeployOnly =
   selectedProjects.length > 0 &&
   selectedProjects.map((p) => p.trim()).every((p) => p === 'post-deploy');
 
-const isPostDeploy = !!process.env.RUN_POST_DEPLOY_TESTS || lifecycleIsPostDeploy || cliIsPostDeployOnly;
+const isPostDeploy = lifecycleIsPostDeploy || cliIsPostDeployOnly;
 
 export default defineConfig({
   testDir: './tests',
