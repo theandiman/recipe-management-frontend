@@ -19,24 +19,38 @@ const APP_URL = process.env.DEPLOYED_APP_URL ?? ''
 const BASE_API = process.env.MANAGEMENT_API_URL ?? ''
 
 /** Inject a Firebase ID token into localStorage so the app treats the
- *  browser session as authenticated. The key must match what the app reads. */
+ *  browser session as authenticated. Uses the Firebase Web API key as part
+ *  of the storage key, matching Firebase's local persistence format. */
 async function injectAuthToken(page: import('@playwright/test').Page, idToken: string, user: TestUser) {
-  // Write a minimal Firebase auth persistence entry that the app's onAuthStateChanged
-  // listener can read on next navigation.
+  const webApiKey = process.env.FIREBASE_WEB_API_KEY!
   await page.addInitScript(
-    ({ token, uid, email, displayName }) => {
-      // Firebase Local persistence key (emulator-safe fallback via cookie)
+    ({ token, uid, email, displayName, apiKey }) => {
       try {
-        const key = `firebase:authUser:${(window as any).__FIREBASE_APP_NAME__ ?? '[DEFAULT]'}:[DEFAULT]`
+        const key = `firebase:authUser:${apiKey}:[DEFAULT]`
         localStorage.setItem(
           key,
-          JSON.stringify({ uid, email, displayName, stsTokenManager: { accessToken: token, expirationTime: Date.now() + 3600 * 1000 } })
+          JSON.stringify({
+            uid,
+            email,
+            displayName,
+            emailVerified: true,
+            isAnonymous: false,
+            providerData: [{ providerId: 'password', uid: email, email, displayName }],
+            stsTokenManager: {
+              accessToken: token,
+              expirationTime: Date.now() + 3_600_000,
+            },
+            createdAt: Date.now().toString(),
+            lastLoginAt: Date.now().toString(),
+            apiKey,
+            appName: '[DEFAULT]',
+          })
         )
       } catch {
-        // ignore - page may not have localStorage
+        // ignore — page may not have localStorage yet
       }
     },
-    { token: idToken, uid: user.uid, email: user.email, displayName: user.displayName }
+    { token: idToken, uid: user.uid, email: user.email, displayName: user.displayName, apiKey: webApiKey }
   )
 }
 
@@ -47,7 +61,6 @@ test.describe('Multi-user frontend post-deployment @post-deploy', () => {
   let author: TestUser
   let follower: TestUser
   let recipeId: string
-  let recipeSlug: string
 
   test.beforeAll(async () => {
     if (
@@ -96,7 +109,6 @@ test.describe('Multi-user frontend post-deployment @post-deploy', () => {
     expect(res.status()).toBe(201)
     const body = await res.json()
     recipeId = body.id
-    recipeSlug = recipeId // fallback; actual slug may differ
     expect(recipeId).toBeTruthy()
   })
 
@@ -113,8 +125,9 @@ test.describe('Multi-user frontend post-deployment @post-deploy', () => {
   test('follower can view public recipe page', async ({ browser }) => {
     const ctx = await browser.newContext({ baseURL: APP_URL })
     const page = await ctx.newPage()
-    await page.goto(`${APP_URL}/recipes/${recipeId}/public`, { waitUntil: 'networkidle' })
-    // Expect recipe title visible (or a public-recipe card)
+    await injectAuthToken(page, follower.idToken, follower)
+    await page.goto(`${APP_URL}/recipes/${recipeId}`, { waitUntil: 'networkidle' })
+    // Expect recipe title visible on the recipe detail route
     await expect(page.getByText(`Frontend E2E Recipe ${provisioner.runId}`)).toBeVisible({ timeout: 15000 })
     await ctx.close()
   })

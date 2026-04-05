@@ -120,7 +120,7 @@ test.describe('Multi-user API post-deployment @post-deploy', () => {
 
   test('unauthenticated request gets 401 on protected endpoint', async ({ request }) => {
     const res = await request.get(`${BASE_API}/api/recipes/${recipeId}`)
-    expect([401, 403]).toContain(res.status())
+    expect(res.status()).toBe(401)
   })
 
   // ── Share / unshare flow ──────────────────────────────────────────────────
