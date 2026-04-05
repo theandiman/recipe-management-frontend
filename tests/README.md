@@ -93,6 +93,8 @@ npm run test:post-deploy
 
 Tests **skip gracefully** when required env vars are absent, so local development is unaffected.
 
+📖 **Full documentation:** [docs/MULTI_USER_POST_DEPLOY_TESTING.md](../docs/MULTI_USER_POST_DEPLOY_TESTING.md) — architecture, permissions, allowlist bypass, cleanup strategy, extending tests, and troubleshooting.
+
 ### How the test-user harness works
 
 `TestUserProvisioner` uses the Firebase Admin SDK to create uniquely-named users per test run (bypassing the email-allowlist blocking function). After each test suite, `cleanup()` deletes all provisioned users. Firebase ID tokens are obtained via the REST `signInWithPassword` endpoint.
