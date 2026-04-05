@@ -66,7 +66,7 @@ The `tests/post-deploy/` directory contains tests that run against a **live depl
 Unlike the standard E2E tests, post-deploy tests:
 - Require a deployed environment (they do **not** start a local dev server)
 - Use real Firebase Auth users provisioned via the Admin SDK
-- Require secrets (`FIREBASE_ADMIN_SERVICE_ACCOUNT`, `FIREBASE_WEB_API_KEY`, `MANAGEMENT_API_URL`)
+- Require secrets (`FIREBASE_ADMIN_SERVICE_ACCOUNT`, `FIREBASE_WEB_API_KEY`, `MANAGEMENT_API_URL`, `BASE_URL`)
 - Are run automatically by CI after each deployment
 
 ### Quick start

@@ -229,11 +229,17 @@ CookFlow uses a Firebase `beforeUserCreated` blocking function to enforce invite
 // functions/src/index.ts
 export const beforecreated = beforeUserCreated((event) => {
   const email = event.data?.email?.toLowerCase();
+  if (!email) return;
+
   const isEmailAllowed = ALLOWED_EMAILS.includes(email);
-  const isDomainAllowed = ALLOWED_DOMAINS.includes(email.split('@')[1]);
+  const domain = email.split('@')[1];
+  const isDomainAllowed = ALLOWED_DOMAINS.includes(domain);
 
   if (!isEmailAllowed && !isDomainAllowed) {
-    throw new HttpsError('permission-denied', 'Registration is currently invite-only.');
+    throw new HttpsError(
+      'permission-denied',
+      'Registration is currently invite-only. Please contact support if you believe this is an error.'
+    );
   }
 });
 ```
@@ -286,7 +292,9 @@ Or use the Admin SDK in a one-off script:
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 
-const auth = getAuth(initializeApp({ credential: cert(require('./service-account.json')) }));
+const serviceAccount = require('./service-account.json');
+const app = initializeApp({ credential: cert(serviceAccount) });
+const auth = getAuth(app);
 const { users } = await auth.listUsers();
 const testUsers = users.filter(u => u.email?.endsWith('@test-cookflow.example'));
 await Promise.all(testUsers.map(u => auth.deleteUser(u.uid)));
