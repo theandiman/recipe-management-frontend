@@ -30,3 +30,9 @@ The recipe management frontend is ready for development with:
 Start development: `npm run dev`
 Build for production: `npm run build`
 Deploy to Firebase: `firebase deploy` (after configuring Firebase CLI with project from infrastructure repo)
+
+Once work has completed:
+
+- Mark PR as ready to review
+- Monitor PR for buld failures and fix
+- Monitor PR for comments and address
