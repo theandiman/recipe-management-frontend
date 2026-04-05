@@ -285,8 +285,8 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       const tagInput = screen.getByPlaceholderText(/Add tags/i)
       fireEvent.change(tagInput, { target: { value: 'quick' } })
       
-      const addButton = screen.getByRole('button', { name: /^Add$/i })
-      fireEvent.click(addButton)
+      const addButtons = screen.getAllByRole('button', { name: /^Add$/i })
+      fireEvent.click(addButtons[0]) // First Add button is for tags
       
       expect(screen.getByText('quick')).toBeInTheDocument()
     })
@@ -304,8 +304,8 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       const tagInput = screen.getByPlaceholderText(/Add tags/i)
       fireEvent.change(tagInput, { target: { value: 'vegetarian' } })
       
-      const addButton = screen.getByRole('button', { name: /^Add$/i })
-      fireEvent.click(addButton)
+      const addButtons = screen.getAllByRole('button', { name: /^Add$/i })
+      fireEvent.click(addButtons[0]) // First Add button is for tags
       
       // Find and click the × button
       const removeButton = screen.getByRole('button', { name: /×/i })
@@ -941,5 +941,37 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       })
     })
   })
-})
 
+  describe('Step 4: Dietary Restrictions', () => {
+    beforeEach(() => {
+      renderWithRouter(<CreateRecipe />)
+      const titleInput = screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i)
+      fireEvent.change(titleInput, { target: { value: 'Test Recipe' } })
+      let nextButton = screen.getByRole('button', { name: /Next →/i })
+      fireEvent.click(nextButton) // → step 2
+      const itemInput = screen.getAllByPlaceholderText('e.g., all-purpose flour')[0]
+      fireEvent.change(itemInput, { target: { value: 'flour' } })
+      nextButton = screen.getByRole('button', { name: /Next →/i })
+      fireEvent.click(nextButton) // → step 3
+      const instructionInput = screen.getAllByPlaceholderText(/Describe this step in detail/i)[0]
+      fireEvent.change(instructionInput, { target: { value: 'Mix ingredients' } })
+      const step4Button = screen.getByRole('button', { name: /Additional Info/i })
+      fireEvent.click(step4Button) // → step 4
+    })
+
+    it('should show "Dietary Restrictions (Optional)" heading in step 4', () => {
+      expect(screen.getByText('Dietary Restrictions (Optional)')).toBeInTheDocument()
+    })
+
+    it('should add a dietary restriction and show it as a chip', () => {
+      const dietaryInput = screen.getByPlaceholderText(/vegan.*gluten-free.*nut-free/i)
+      fireEvent.change(dietaryInput, { target: { value: 'vegan' } })
+
+      const addButtons = screen.getAllByRole('button', { name: /^Add$/i })
+      // Click the last Add button (dietary restrictions)
+      fireEvent.click(addButtons[addButtons.length - 1])
+
+      expect(screen.getByText('vegan')).toBeInTheDocument()
+    })
+  })
+})

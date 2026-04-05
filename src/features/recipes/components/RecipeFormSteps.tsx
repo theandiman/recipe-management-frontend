@@ -42,6 +42,11 @@ interface RecipeFormStepsProps {
   setTagInput: (value: string) => void
   addTag: () => void
   removeTag: (index: number) => void
+  dietaryRestrictions: string[]
+  dietaryInput: string
+  setDietaryInput: (value: string) => void
+  addDietaryRestriction: () => void
+  removeDietaryRestriction: (index: number) => void
   // Validation
   fieldErrors: Record<string, string>
   clearFieldError: (fieldName: string, stepNumber: number) => void
@@ -75,6 +80,11 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
   setTagInput,
   addTag,
   removeTag,
+  dietaryRestrictions,
+  dietaryInput,
+  setDietaryInput,
+  addDietaryRestriction,
+  removeDietaryRestriction,
   fieldErrors,
   clearFieldError
 }) => {
@@ -380,6 +390,55 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                       type="button"
                       onClick={() => removeTag(index)}
                       className="ml-2 text-emerald-600 hover:text-emerald-800"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* Dietary Restrictions Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Dietary Restrictions (Optional)
+            </h3>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="text"
+                value={dietaryInput}
+                onChange={(e) => setDietaryInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    addDietaryRestriction()
+                  }
+                }}
+                placeholder="e.g., 'vegan', 'gluten-free', 'nut-free'"
+                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              />
+              <button
+                type="button"
+                onClick={addDietaryRestriction}
+                className={UI_STYLES.secondaryButton}
+              >
+                Add
+              </button>
+            </div>
+
+            {dietaryRestrictions.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {dietaryRestrictions.map((dr, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium inline-flex items-center"
+                  >
+                    {dr}
+                    <button
+                      type="button"
+                      onClick={() => removeDietaryRestriction(index)}
+                      className="ml-2 text-blue-600 hover:text-blue-800"
                     >
                       ×
                     </button>

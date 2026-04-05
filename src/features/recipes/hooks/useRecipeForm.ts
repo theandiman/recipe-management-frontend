@@ -13,6 +13,8 @@ interface RecipeFormState {
   instructions: string[]
   tags: string[]
   tagInput: string
+  dietaryRestrictions: string[]
+  dietaryInput: string
   imagePreview: string | null
   
   // Validation state
@@ -55,6 +57,12 @@ interface RecipeFormActions {
   addTag: () => void
   removeTag: (index: number) => void
   
+  // Dietary restriction handlers
+  setDietaryRestrictions: (value: string[]) => void
+  setDietaryInput: (value: string) => void
+  addDietaryRestriction: () => void
+  removeDietaryRestriction: (index: number) => void
+  
   // Image handlers
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
   removeImage: () => void
@@ -76,6 +84,8 @@ export function useRecipeForm(initialState?: Partial<RecipeFormState>): RecipeFo
   const [instructions, setInstructions] = useState<string[]>(initialState?.instructions || [''])
   const [tags, setTags] = useState<string[]>(initialState?.tags || [])
   const [tagInput, setTagInput] = useState('')
+  const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>(initialState?.dietaryRestrictions || [])
+  const [dietaryInput, setDietaryInput] = useState('')
   const [imagePreview, setImagePreview] = useState<string | null>(initialState?.imagePreview || null)
 
   // Validation state
@@ -190,6 +200,18 @@ export function useRecipeForm(initialState?: Partial<RecipeFormState>): RecipeFo
     setTags(prev => prev.filter((_, i) => i !== index))
   }, [])
 
+  const addDietaryRestriction = useCallback(() => {
+    const trimmed = dietaryInput.trim()
+    if (trimmed && !dietaryRestrictions.includes(trimmed)) {
+      setDietaryRestrictions(prev => [...prev, trimmed])
+      setDietaryInput('')
+    }
+  }, [dietaryInput, dietaryRestrictions])
+
+  const removeDietaryRestriction = useCallback((index: number) => {
+    setDietaryRestrictions(prev => prev.filter((_, i) => i !== index))
+  }, [])
+
   // Image upload handler
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -217,6 +239,8 @@ export function useRecipeForm(initialState?: Partial<RecipeFormState>): RecipeFo
     instructions,
     tags,
     tagInput,
+    dietaryRestrictions,
+    dietaryInput,
     imagePreview,
     fieldErrors,
     stepsWithErrors,
@@ -233,6 +257,8 @@ export function useRecipeForm(initialState?: Partial<RecipeFormState>): RecipeFo
     setInstructions,
     setTags,
     setTagInput,
+    setDietaryRestrictions,
+    setDietaryInput,
     setImagePreview,
     setFieldErrors,
     setStepsWithErrors,
@@ -248,11 +274,13 @@ export function useRecipeForm(initialState?: Partial<RecipeFormState>): RecipeFo
     removeInstruction,
     addTag,
     removeTag,
+    addDietaryRestriction,
+    removeDietaryRestriction,
     handleImageUpload,
     removeImage,
     clearFieldError
   }), [
-    title, description, prepTime, cookTime, servings, ingredients, instructions, tags, tagInput, imagePreview, fieldErrors, stepsWithErrors, saveLoading, saveError,
-    addIngredient, updateIngredient, removeIngredient, addInstruction, updateInstruction, removeInstruction, addTag, removeTag, handleImageUpload, removeImage, clearFieldError
+    title, description, prepTime, cookTime, servings, ingredients, instructions, tags, tagInput, dietaryRestrictions, dietaryInput, imagePreview, fieldErrors, stepsWithErrors, saveLoading, saveError,
+    addIngredient, updateIngredient, removeIngredient, addInstruction, updateInstruction, removeInstruction, addTag, removeTag, addDietaryRestriction, removeDietaryRestriction, handleImageUpload, removeImage, clearFieldError
   ])
 }

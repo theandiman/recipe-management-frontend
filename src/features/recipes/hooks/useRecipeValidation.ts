@@ -47,6 +47,7 @@ export function useRecipeValidation() {
     instructions: string[],
     tags: string[],
     imagePreview: string | null,
+    dietaryRestrictions?: string[],
     overrides?: Partial<Recipe>
   ): Recipe => {
     const ingredientStrings = ingredients
@@ -64,6 +65,7 @@ export function useRecipeValidation() {
       cookTime: cookTime ? `${cookTime} minutes` : undefined,
       servings: servings ? parseInt(servings, 10) : 1,
       tags: tags.length > 0 ? tags : undefined,
+      dietaryRestrictions: dietaryRestrictions && dietaryRestrictions.length > 0 ? dietaryRestrictions : undefined,
       imageUrl: imagePreview || undefined,
       source: 'manual' as const,
       ...overrides

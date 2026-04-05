@@ -24,6 +24,7 @@ export const CreateRecipe: React.FC = () => {
     ingredients: form.ingredients,
     instructions: form.instructions,
     tags: form.tags,
+    dietaryRestrictions: form.dietaryRestrictions,
     imagePreview: form.imagePreview,
     setFieldErrors: form.setFieldErrors,
     setStepsWithErrors: form.setStepsWithErrors,

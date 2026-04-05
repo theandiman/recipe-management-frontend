@@ -864,4 +864,35 @@ describe('RecipeDetail', () => {
       expect(screen.queryByText('Tips & Tricks')).not.toBeInTheDocument()
     })
   })
+
+  describe('dietary restrictions', () => {
+    const mockRecipeWithDietaryRestrictions: Recipe = {
+      ...mockRecipe,
+      dietaryRestrictions: ['vegan', 'gluten-free'],
+    }
+
+    it('renders dietary restriction chips when recipe.dietaryRestrictions is present', async () => {
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipeWithDietaryRestrictions)
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      expect(screen.getByText('Dietary')).toBeInTheDocument()
+      expect(screen.getByText('vegan')).toBeInTheDocument()
+      expect(screen.getByText('gluten-free')).toBeInTheDocument()
+    })
+
+    it('does not render dietary restrictions section when absent', async () => {
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipe)
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      expect(screen.queryByText('Dietary')).not.toBeInTheDocument()
+    })
+  })
 })

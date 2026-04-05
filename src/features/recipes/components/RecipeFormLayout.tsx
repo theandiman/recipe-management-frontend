@@ -46,6 +46,11 @@ interface RecipeFormLayoutProps {
   setTagInput: (value: string) => void
   addTag: () => void
   removeTag: (index: number) => void
+  dietaryRestrictions: string[]
+  dietaryInput: string
+  setDietaryInput: (value: string) => void
+  addDietaryRestriction: () => void
+  removeDietaryRestriction: (index: number) => void
   fieldErrors: Record<string, string>
   clearFieldError: (fieldName: string, stepNumber: number) => void
   setFieldErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>
@@ -98,6 +103,11 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   setTagInput,
   addTag,
   removeTag,
+  dietaryRestrictions,
+  dietaryInput,
+  setDietaryInput,
+  addDietaryRestriction,
+  removeDietaryRestriction,
   fieldErrors,
   clearFieldError,
   setFieldErrors,
@@ -255,6 +265,11 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 setTagInput={setTagInput}
                 addTag={addTag}
                 removeTag={removeTag}
+                dietaryRestrictions={dietaryRestrictions}
+                dietaryInput={dietaryInput}
+                setDietaryInput={setDietaryInput}
+                addDietaryRestriction={addDietaryRestriction}
+                removeDietaryRestriction={removeDietaryRestriction}
                 fieldErrors={fieldErrors}
                 clearFieldError={clearFieldError}
               />
