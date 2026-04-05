@@ -793,4 +793,75 @@ describe('RecipeDetail', () => {
       })
     })
   })
+
+  describe('AI metadata display', () => {
+    const mockRecipeWithNutritionAndTips: Recipe = {
+      ...mockRecipe,
+      nutritionalInfo: {
+        perServing: {
+          calories: 350,
+          protein: 20,
+          carbohydrates: 45,
+          fat: 8,
+          fiber: 3,
+          sodium: 200,
+        },
+      },
+      tips: {
+        storage: 'Store in fridge',
+        makeAhead: 'Can be made 1 day ahead',
+        substitutions: ['Use oat milk instead of dairy'],
+        variations: ['Add chili for heat'],
+        reheating: 'Microwave 2 min',
+      },
+    }
+
+    it('renders NutritionFacts section when nutritionalInfo.perServing is present', async () => {
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipeWithNutritionAndTips)
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByText('Nutrition Facts')).toBeInTheDocument()
+      })
+    })
+
+    it('does not render NutritionFacts section when nutritionalInfo is absent', async () => {
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipe)
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+      expect(screen.queryByText('Nutrition Facts')).not.toBeInTheDocument()
+    })
+
+    it('renders tips section with storage and makeAhead when tips are present', async () => {
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipeWithNutritionAndTips)
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByText('Tips & Tricks')).toBeInTheDocument()
+      })
+      expect(screen.getByText('Store in fridge')).toBeInTheDocument()
+      expect(screen.getByText('Can be made 1 day ahead')).toBeInTheDocument()
+      expect(screen.getByText('Microwave 2 min')).toBeInTheDocument()
+    })
+
+    it('renders tips substitutions and variations', async () => {
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipeWithNutritionAndTips)
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByText('Ingredient Substitutions')).toBeInTheDocument()
+      })
+      expect(screen.getByText('Use oat milk instead of dairy')).toBeInTheDocument()
+      expect(screen.getByText('Recipe Variations')).toBeInTheDocument()
+      expect(screen.getByText('Add chili for heat')).toBeInTheDocument()
+    })
+
+    it('does not render tips section when recipe.tips is absent', async () => {
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipe)
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+      expect(screen.queryByText('Tips & Tricks')).not.toBeInTheDocument()
+    })
+  })
 })

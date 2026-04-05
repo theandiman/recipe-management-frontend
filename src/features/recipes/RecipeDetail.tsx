@@ -5,6 +5,7 @@ import { CookingMode } from '../../components/CookingMode'
 import GlobeIcon from '../../components/GlobeIcon'
 import BookmarkButton from '../../components/BookmarkButton'
 import LikeButton from '../../components/LikeButton'
+import NutritionFacts from '../../components/NutritionFacts'
 import type { Recipe } from '../../types/nutrition'
 
 export const RecipeDetail: React.FC = () => {
@@ -369,6 +370,76 @@ export const RecipeDetail: React.FC = () => {
                   {tag}
                 </span>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Nutrition Facts */}
+        {recipe.nutritionalInfo?.perServing && (
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <NutritionFacts nutritionalInfo={recipe.nutritionalInfo} />
+          </div>
+        )}
+
+        {/* Tips & Tricks */}
+        {recipe.tips && (
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+              <span className="text-2xl">💡</span>Tips & Tricks
+            </h2>
+            <div className="space-y-6">
+              {recipe.tips.substitutions && recipe.tips.substitutions.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <span>🔄</span>Ingredient Substitutions
+                  </h3>
+                  <ul className="space-y-2">
+                    {recipe.tips.substitutions.map((sub: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2 text-gray-700">
+                        <span className="text-emerald-500 mt-0.5">•</span>{sub}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {recipe.tips.variations && recipe.tips.variations.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <span>✨</span>Recipe Variations
+                  </h3>
+                  <ul className="space-y-2">
+                    {recipe.tips.variations.map((variation: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2 text-gray-700">
+                        <span className="text-purple-500 mt-0.5">•</span>{variation}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {recipe.tips.storage && (
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                  <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                    <span>📦</span>Storage Instructions
+                  </h3>
+                  <p className="text-sm text-blue-800">{recipe.tips.storage}</p>
+                </div>
+              )}
+              {recipe.tips.makeAhead && (
+                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+                  <h3 className="font-semibold text-emerald-900 mb-2 flex items-center gap-2">
+                    <span>⏰</span>Make-Ahead Tips
+                  </h3>
+                  <p className="text-sm text-emerald-800">{recipe.tips.makeAhead}</p>
+                </div>
+              )}
+              {recipe.tips.reheating && (
+                <div className="bg-orange-50 border border-orange-100 rounded-xl p-4">
+                  <h3 className="font-semibold text-orange-900 mb-2 flex items-center gap-2">
+                    <span>🔥</span>Reheating Instructions
+                  </h3>
+                  <p className="text-sm text-orange-800">{recipe.tips.reheating}</p>
+                </div>
+              )}
             </div>
           </div>
         )}
