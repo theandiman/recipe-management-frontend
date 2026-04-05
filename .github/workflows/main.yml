@@ -486,7 +486,7 @@ jobs:
 
   # Dynamic multi-user post-deployment tests (main branch only, after deploy)
   # Requires FIREBASE_ADMIN_SERVICE_ACCOUNT, FIREBASE_WEB_API_KEY,
-  # VITE_MANAGEMENT_API_URL, VITE_FIREBASE_API_KEY to be configured as secrets.
+  # VITE_MANAGEMENT_API_URL to be configured as secrets.
   # Gracefully skipped when secrets are absent.
   multi-user-post-deploy-tests:
     name: Multi-User Post-Deploy Tests
