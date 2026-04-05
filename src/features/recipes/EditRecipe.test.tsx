@@ -878,3 +878,96 @@ describe('EditRecipe', () => {
     })
   })
 })
+
+describe('AI metadata preservation', () => {
+  const aiRecipe: Recipe = {
+    id: 'test-recipe-123',
+    recipeName: 'AI Vegan Bowl',
+    description: 'A healthy bowl',
+    ingredients: ['1 cup rice', '2 cups broccoli'],
+    instructions: ['Cook rice', 'Steam broccoli'],
+    prepTimeMinutes: 10,
+    cookTimeMinutes: 20,
+    servings: 2,
+    source: 'ai-generated',
+    nutritionalInfo: { perServing: { calories: 350, protein: 8, carbohydrates: 60, fat: 5, fiber: 6 } },
+    dietaryRestrictions: ['vegan'],
+    tips: { storage: 'refrigerate up to 3 days' },
+    tags: ['vegan', 'healthy'],
+    updatedAt: new Date(),
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockNavigate.mockClear()
+    vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(aiRecipe)
+    vi.mocked(recipeStorageApi.updateRecipe).mockResolvedValue(aiRecipe)
+  })
+
+  const renderEditRecipe = () =>
+    render(
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<EditRecipe />} />
+        </Routes>
+      </BrowserRouter>
+    )
+
+  it('preserves source=ai-generated and nutritionalInfo through edit/save round-trip', async () => {
+    const user = userEvent.setup()
+    renderEditRecipe()
+
+    await waitFor(() => {
+      expect(screen.getByText('Edit Recipe')).toBeInTheDocument()
+    })
+
+    const step5Button = screen.getByLabelText('Go to step 5: Review')
+    await user.click(step5Button)
+
+    await waitFor(() => {
+      expect(screen.getByText(/Step 5 of 5/)).toBeInTheDocument()
+    })
+
+    const saveButton = screen.getByText(/Save Recipe/i)
+    await user.click(saveButton)
+
+    await waitFor(() => {
+      expect(recipeStorageApi.updateRecipe).toHaveBeenCalledWith(
+        'test-recipe-123',
+        expect.objectContaining({
+          source: 'ai-generated',
+          nutritionalInfo: aiRecipe.nutritionalInfo,
+        })
+      )
+    })
+  })
+
+  it('preserves dietaryRestrictions and tips through edit/save round-trip', async () => {
+    const user = userEvent.setup()
+    renderEditRecipe()
+
+    await waitFor(() => {
+      expect(screen.getByText('Edit Recipe')).toBeInTheDocument()
+    })
+
+    const step5Button = screen.getByLabelText('Go to step 5: Review')
+    await user.click(step5Button)
+
+    await waitFor(() => {
+      expect(screen.getByText(/Step 5 of 5/)).toBeInTheDocument()
+    })
+
+    const saveButton = screen.getByText(/Save Recipe/i)
+    await user.click(saveButton)
+
+    await waitFor(() => {
+      expect(recipeStorageApi.updateRecipe).toHaveBeenCalledWith(
+        'test-recipe-123',
+        expect.objectContaining({
+          dietaryRestrictions: ['vegan'],
+          tips: { storage: 'refrigerate up to 3 days' },
+        })
+      )
+    })
+  })
+})

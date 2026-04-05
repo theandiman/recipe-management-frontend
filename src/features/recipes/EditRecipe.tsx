@@ -6,6 +6,7 @@ import { useRecipeForm } from './hooks/useRecipeForm'
 import { useRecipeValidation } from './hooks/useRecipeValidation'
 import { useRecipeFormNavigation } from './hooks/useRecipeFormNavigation'
 import { useRecipeSave } from './hooks/useRecipeSave'
+import type { Recipe } from '../../types/nutrition'
 
 export const EditRecipe: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -14,6 +15,7 @@ export const EditRecipe: React.FC = () => {
   // Loading state
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [recipeOverrides, setRecipeOverrides] = useState<Partial<Recipe>>({})
   
   // Use custom hooks
   const navigation = useRecipeFormNavigation()
@@ -32,6 +34,7 @@ export const EditRecipe: React.FC = () => {
     instructions: form.instructions,
     tags: form.tags,
     imagePreview: form.imagePreview,
+    recipeOverrides,
     setFieldErrors: form.setFieldErrors,
     setStepsWithErrors: form.setStepsWithErrors,
     setSaveLoading: form.setSaveLoading,
@@ -73,6 +76,12 @@ export const EditRecipe: React.FC = () => {
         form.setInstructions(data.instructions && data.instructions.length > 0 ? data.instructions : [''])
         form.setTags(data.tags || [])
         form.setImagePreview(data.imageUrl || null)
+        setRecipeOverrides({
+          nutritionalInfo: data.nutritionalInfo,
+          tips: data.tips,
+          dietaryRestrictions: data.dietaryRestrictions,
+          source: data.source,
+        })
       } catch (err: unknown) {
         console.error('Failed to fetch recipe:', err)
         const errorMessage = err instanceof Error ? err.message : 'Failed to load recipe'
