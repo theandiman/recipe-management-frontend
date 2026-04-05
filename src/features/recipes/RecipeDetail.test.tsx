@@ -894,5 +894,17 @@ describe('RecipeDetail', () => {
 
       expect(screen.queryByText('Dietary')).not.toBeInTheDocument()
     })
+
+    it('does not render dietary restrictions section when array is empty', async () => {
+      const mockRecipeEmptyDietary: Recipe = { ...mockRecipe, dietaryRestrictions: [] }
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipeEmptyDietary)
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      expect(screen.queryByText('Dietary')).not.toBeInTheDocument()
+    })
   })
 })
