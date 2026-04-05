@@ -4,6 +4,7 @@ import { getRecipe, updateRecipeSharing } from '../../services/recipeStorageApi'
 import { CookingMode } from '../../components/CookingMode'
 import GlobeIcon from '../../components/GlobeIcon'
 import BookmarkButton from '../../components/BookmarkButton'
+import LikeButton from '../../components/LikeButton'
 import type { Recipe } from '../../types/nutrition'
 
 export const RecipeDetail: React.FC = () => {
@@ -159,6 +160,13 @@ export const RecipeDetail: React.FC = () => {
             <BookmarkButton
               recipe={recipe}
               className="px-4 py-2 bg-white border border-emerald-600 rounded-lg hover:bg-emerald-50 font-medium"
+            />
+          )}
+
+          {recipe && (
+            <LikeButton
+              recipe={recipe}
+              className="px-4 py-2 bg-white border border-rose-300 rounded-lg hover:bg-rose-50 font-medium"
             />
           )}
           

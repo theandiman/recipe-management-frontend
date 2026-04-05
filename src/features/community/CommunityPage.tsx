@@ -8,6 +8,7 @@ import { RecipeCardSkeleton } from '../../components/skeletons/RecipeCardSkeleto
 import type { Recipe } from '../../types/nutrition'
 
 type Tab = 'community' | 'following'
+type SortOption = 'recent' | 'most-liked'
 
 export const CommunityPage: React.FC = () => {
   const navigate = useNavigate()
@@ -19,6 +20,7 @@ export const CommunityPage: React.FC = () => {
 
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [searchText, setSearchText] = useState('')
+  const [sortOption, setSortOption] = useState<SortOption>('recent')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -53,11 +55,17 @@ export const CommunityPage: React.FC = () => {
 
   const filtered = React.useMemo(() => {
     const text = searchText.trim().toLowerCase()
-    if (!text) return recipes
-    return recipes.filter(r =>
-      (r.recipeName || '').toLowerCase().includes(text)
-    )
-  }, [recipes, searchText])
+    let result = text
+      ? recipes.filter(r => (r.recipeName || '').toLowerCase().includes(text))
+      : [...recipes]
+
+    if (activeTab === 'community' && sortOption === 'most-liked') {
+      const getLikeCount = (r: Recipe) => (r as Recipe & { likeCount?: number }).likeCount ?? 0
+      result = result.sort((a, b) => getLikeCount(b) - getLikeCount(a))
+    }
+
+    return result
+  }, [activeTab, recipes, searchText, sortOption])
 
   const hasRecipes = !loading && !error && recipes.length > 0
 
@@ -99,15 +107,31 @@ export const CommunityPage: React.FC = () => {
               : 'Discover recipes shared by the community'}
         </p>
         {hasRecipes && (
-          <div className="mt-4">
-            <label htmlFor="community-search" className="sr-only">Search community recipes</label>
-            <input
-              id="community-search"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              placeholder="Search by recipe name..."
-              className="w-full sm:max-w-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-300"
-            />
+          <div className="mt-4 flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <label htmlFor="community-search" className="sr-only">Search community recipes</label>
+              <input
+                id="community-search"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder="Search by recipe name..."
+                className="w-full sm:max-w-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-300"
+              />
+            </div>
+            {activeTab === 'community' && (
+              <div className="flex items-center gap-2">
+                <label htmlFor="community-sort" className="text-sm text-gray-600 whitespace-nowrap">Sort by:</label>
+                <select
+                  id="community-sort"
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value as SortOption)}
+                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 bg-white"
+                >
+                  <option value="recent">Most recent</option>
+                  <option value="most-liked">Most liked</option>
+                </select>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -231,6 +255,7 @@ export const CommunityPage: React.FC = () => {
               onView={(id) => navigate(`/dashboard/recipes/${id}`)}
               authorUid={recipe.userId}
               showBookmark
+              showLike
             />
           ))}
         </motion.div>

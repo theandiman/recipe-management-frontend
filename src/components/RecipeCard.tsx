@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import type { Recipe } from '../types/nutrition'
 import GlobeIcon from './GlobeIcon'
 import BookmarkButton from './BookmarkButton'
+import LikeButton from './LikeButton'
 
 interface RecipeCardProps {
   recipe: Recipe
@@ -13,9 +14,10 @@ interface RecipeCardProps {
   authorUid?: string
   authorName?: string
   showBookmark?: boolean
+  showLike?: boolean
 }
 
-export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete, compact, authorUid, authorName, showBookmark = false }) => {
+export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete, compact, authorUid, authorName, showBookmark = false, showLike = false }) => {
   const title = recipe.recipeName
   // Calculate total time safely
   const totalTime = recipe.totalTimeMinutes ||
@@ -131,24 +133,34 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
           </div>
         </div>
       </div>
-      {authorUid && (
-        <div className="px-4 pb-4 border-t border-gray-100 dark:border-slate-700/50 pt-3 mt-auto">
-          <Link
-            to={`/user/${authorUid}`}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.stopPropagation()
-              }
-            }}
-            className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-            aria-label={authorName ? `View ${authorName}'s profile` : 'View author profile'}
-          >
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 shadow-inner">
-              {((authorName || authorUid)[0] || '?').toUpperCase()}
+      {(authorUid || showLike) && (
+        <div className="px-4 pb-4 border-t border-gray-100 dark:border-slate-700/50 pt-3 mt-auto flex items-center justify-between gap-2">
+          {authorUid ? (
+            <Link
+              to={`/user/${authorUid}`}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.stopPropagation()
+                }
+              }}
+              className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors min-w-0"
+              aria-label={authorName ? `View ${authorName}'s profile` : 'View author profile'}
+            >
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 shadow-inner">
+                {((authorName || authorUid)[0] || '?').toUpperCase()}
+              </div>
+              <span className="truncate font-medium">{authorName || 'View Author'}</span>
+            </Link>
+          ) : null}
+          {showLike && (
+            <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+              <LikeButton
+                recipe={recipe}
+                className="bg-white/90 dark:bg-slate-700/80 shadow-sm hover:bg-white dark:hover:bg-slate-700"
+              />
             </div>
-            <span className="truncate font-medium">{authorName || 'View Author'}</span>
-          </Link>
+          )}
         </div>
       )}
     </motion.div>

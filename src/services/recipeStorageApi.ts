@@ -560,6 +560,54 @@ export const updateRecipeSharing = async (id: string, isPublic: boolean): Promis
   return normalizeRecipe(response.data)
 }
 
+/**
+ * Like a recipe for the current user
+ * @param id - The recipe ID to like
+ */
+export const likeRecipe = async (id: string): Promise<void> => {
+  const { default: axios } = await import('axios')
+  const { auth } = await import('../config/firebase')
+
+  const user = auth.currentUser
+  if (!user) {
+    throw new Error('User not authenticated')
+  }
+
+  const token = await user.getIdToken()
+  const url = buildApiUrl(MANAGEMENT_API_BASE, `/api/recipes/${id}/like`)
+
+  await axios.post(url, null, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+}
+
+/**
+ * Unlike a recipe for the current user
+ * @param id - The recipe ID to unlike
+ */
+export const unlikeRecipe = async (id: string): Promise<void> => {
+  const { default: axios } = await import('axios')
+  const { auth } = await import('../config/firebase')
+
+  const user = auth.currentUser
+  if (!user) {
+    throw new Error('User not authenticated')
+  }
+
+  const token = await user.getIdToken()
+  const url = buildApiUrl(MANAGEMENT_API_BASE, `/api/recipes/${id}/like`)
+
+  await axios.delete(url, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+}
+
 export default {
   saveRecipe,
   getRecipes,
@@ -571,5 +619,7 @@ export default {
   updateRecipeSharing,
   bookmarkRecipe,
   unbookmarkRecipe,
-  getSavedRecipes
+  getSavedRecipes,
+  likeRecipe,
+  unlikeRecipe,
 }
