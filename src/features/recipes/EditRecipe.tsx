@@ -7,10 +7,12 @@ import { useRecipeValidation } from './hooks/useRecipeValidation'
 import { useRecipeFormNavigation } from './hooks/useRecipeFormNavigation'
 import { useRecipeSave } from './hooks/useRecipeSave'
 import type { Recipe } from '../../types/nutrition'
+import { useAuth } from '../../features/auth/AuthContext'
 
 export const EditRecipe: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user: currentUser, isLoading: isAuthLoading } = useAuth()
   
   // Loading state
   const [loading, setLoading] = useState(true)
@@ -54,6 +56,11 @@ export const EditRecipe: React.FC = () => {
         setLoading(true)
         setLoadError(null)
         const data = await getRecipe(id)
+
+        if (!isAuthLoading && data.userId !== currentUser?.uid) {
+          navigate(`/dashboard/recipes/${id}`, { replace: true })
+          return
+        }
         
         // Populate form fields
         form.setTitle(data.recipeName || '')
@@ -94,7 +101,7 @@ export const EditRecipe: React.FC = () => {
     }
 
     fetchRecipe()
-  }, [id, form.setTitle, form.setDescription, form.setPrepTime, form.setCookTime, form.setServings, form.setIngredients, form.setInstructions, form.setTags, form.setDietaryRestrictions, form.setImagePreview])
+  }, [id, navigate, isAuthLoading, currentUser?.uid, form.setTitle, form.setDescription, form.setPrepTime, form.setCookTime, form.setServings, form.setIngredients, form.setInstructions, form.setTags, form.setDietaryRestrictions, form.setImagePreview])
 
   const handleCancel = useCallback(() => {
     navigate(`/dashboard/recipes/${id}`)
