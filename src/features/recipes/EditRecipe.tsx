@@ -52,9 +52,9 @@ export const EditRecipe: React.FC = () => {
     const fetchRecipe = async () => {
       if (!id) return
 
-      // Wait for Firebase auth to finish initialising before checking ownership.
-      // Without this guard the condition below would be skipped while
-      // isAuthLoading is true, letting non-owners briefly see the edit form.
+      // Wait for Firebase auth to finish initialising before fetching the recipe.
+      // Otherwise we could fetch, populate the form, or redirect while
+      // currentUser is still temporarily null during auth resolution.
       if (isAuthLoading) return
       
       try {

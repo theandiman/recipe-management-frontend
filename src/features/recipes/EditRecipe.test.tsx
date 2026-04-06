@@ -946,7 +946,8 @@ describe('EditRecipe', () => {
         </BrowserRouter>
       )
 
-      await new Promise((r) => setTimeout(r, 50))
+      // Flush all React effects and microtasks without relying on wall-clock delays
+      await act(async () => {})
 
       // Spinner must be visible while auth is loading
       expect(container.querySelector('.animate-spin')).toBeTruthy()
@@ -973,8 +974,7 @@ describe('EditRecipe', () => {
         </BrowserRouter>
       )
 
-      // Confirm form is not shown yet
-      await new Promise((r) => setTimeout(r, 20))
+      // Confirm form is not shown yet while auth is still loading
       expect(screen.queryByText('Edit Recipe')).not.toBeInTheDocument()
 
       // Auth resolves as a non-owner
