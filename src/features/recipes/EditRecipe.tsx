@@ -51,13 +51,18 @@ export const EditRecipe: React.FC = () => {
   useEffect(() => {
     const fetchRecipe = async () => {
       if (!id) return
+
+      // Wait for Firebase auth to finish initialising before fetching the recipe.
+      // Otherwise we could fetch, populate the form, or redirect while
+      // currentUser is still temporarily null during auth resolution.
+      if (isAuthLoading) return
       
       try {
         setLoading(true)
         setLoadError(null)
         const data = await getRecipe(id)
 
-        if (!isAuthLoading && data.userId !== currentUser?.uid) {
+        if (data.userId !== currentUser?.uid) {
           navigate(`/dashboard/recipes/${id}`, { replace: true })
           return
         }
