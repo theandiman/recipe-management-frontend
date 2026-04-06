@@ -1,5 +1,5 @@
 import { describe, it, vi, beforeEach, expect } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { EditRecipe } from './EditRecipe'
@@ -926,6 +926,76 @@ describe('EditRecipe', () => {
       // Give async effects a chance to run
       await new Promise((r) => setTimeout(r, 50))
       expect(mockNavigate).not.toHaveBeenCalled()
+    })
+
+    it('should show spinner and not reveal edit form while auth is still loading (race condition regression)', async () => {
+      // Regression test for: non-owners could see the edit form briefly because
+      // the ownership check was skipped when isAuthLoading was true.
+      const nonOwnerRecipe = { ...mockRecipe, userId: 'owner-uid' }
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(nonOwnerRecipe)
+      vi.mocked(useAuth).mockReturnValue({
+        user: null,
+        isLoading: true,
+      } as any)
+
+      const { container } = render(
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<EditRecipe />} />
+          </Routes>
+        </BrowserRouter>
+      )
+
+      await new Promise((r) => setTimeout(r, 50))
+
+      // Spinner must be visible while auth is loading
+      expect(container.querySelector('.animate-spin')).toBeTruthy()
+      // The edit form title must NOT appear — non-owner must not see the form
+      expect(screen.queryByText('Edit Recipe')).not.toBeInTheDocument()
+      // getRecipe should not have been called before auth resolved
+      expect(recipeStorageApi.getRecipe).not.toHaveBeenCalled()
+    })
+
+    it('should redirect non-owner once auth resolves after initially loading (race condition regression)', async () => {
+      // Regression test for: non-owner sees form during auth initialization window.
+      // Simulate: component renders while auth is loading, then auth resolves as non-owner.
+      const nonOwnerRecipe = { ...mockRecipe, userId: 'owner-uid' }
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(nonOwnerRecipe)
+
+      // Auth starts as loading
+      vi.mocked(useAuth).mockReturnValue({ user: null, isLoading: true } as any)
+
+      const { rerender } = render(
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<EditRecipe />} />
+          </Routes>
+        </BrowserRouter>
+      )
+
+      // Confirm form is not shown yet
+      await new Promise((r) => setTimeout(r, 20))
+      expect(screen.queryByText('Edit Recipe')).not.toBeInTheDocument()
+
+      // Auth resolves as a non-owner
+      vi.mocked(useAuth).mockReturnValue({
+        user: { uid: 'non-owner-uid', email: null, displayName: null, photoURL: null },
+        isLoading: false,
+      } as any)
+
+      await act(async () => {
+        rerender(
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<EditRecipe />} />
+            </Routes>
+          </BrowserRouter>
+        )
+      })
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/dashboard/recipes/test-recipe-123', { replace: true })
+      })
     })
 
     it('should load recipe when current user owns the recipe', async () => {

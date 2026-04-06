@@ -51,13 +51,18 @@ export const EditRecipe: React.FC = () => {
   useEffect(() => {
     const fetchRecipe = async () => {
       if (!id) return
+
+      // Wait for Firebase auth to finish initialising before checking ownership.
+      // Without this guard the condition below would be skipped while
+      // isAuthLoading is true, letting non-owners briefly see the edit form.
+      if (isAuthLoading) return
       
       try {
         setLoading(true)
         setLoadError(null)
         const data = await getRecipe(id)
 
-        if (!isAuthLoading && data.userId !== currentUser?.uid) {
+        if (data.userId !== currentUser?.uid) {
           navigate(`/dashboard/recipes/${id}`, { replace: true })
           return
         }
