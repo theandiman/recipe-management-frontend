@@ -13,13 +13,16 @@ test.describe('Simple Create Recipe (Quick Entry)', () => {
   })
 
   test('should show the mode toggle with both options', async ({ page }) => {
-    await expect(page.getByRole('tab', { name: /Guided/i })).toBeVisible()
-    await expect(page.getByRole('tab', { name: /Quick entry/i })).toBeVisible()
+    const nav = page.getByRole('navigation', { name: /Recipe creation mode/i })
+    await expect(nav).toBeVisible()
+    await expect(nav.getByText(/Guided/i)).toBeVisible()
+    await expect(nav.getByRole('link', { name: /Quick entry/i })).toBeVisible()
   })
 
   test('should mark Quick entry tab as selected', async ({ page }) => {
-    const quickTab = page.getByRole('tab', { name: /Quick entry/i })
-    await expect(quickTab).toHaveAttribute('aria-selected', 'true')
+    const quickLink = page.getByRole('navigation', { name: /Recipe creation mode/i })
+      .getByRole('link', { name: /Quick entry/i })
+    await expect(quickLink).toHaveAttribute('aria-current', 'page')
   })
 
   test('should always show required fields', async ({ page }) => {
@@ -145,6 +148,19 @@ test.describe('Simple Create Recipe (Quick Entry)', () => {
   // ─── Happy path save ──────────────────────────────────────────────────────────
 
   test('happy path: fills required fields and saves recipe', async ({ page }) => {
+    // Mock the recipe API so save succeeds without a running backend
+    await page.route('**/api/recipes', (route) => {
+      if (route.request().method() === 'POST') {
+        route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify({ id: 'test-recipe-123', name: 'Quick Pasta' }),
+        })
+      } else {
+        route.continue()
+      }
+    })
+
     await page.getByPlaceholder(/Grandma's Chocolate Chip Cookies/i).fill('Quick Pasta')
     await page.getByPlaceholder(/Brief description/i).fill('A simple pasta dish')
     await page.getByPlaceholder(/e.g., all-purpose flour/i).fill('Pasta')
@@ -157,6 +173,19 @@ test.describe('Simple Create Recipe (Quick Entry)', () => {
   })
 
   test('happy path: adds optional timing and tags, then saves', async ({ page }) => {
+    // Mock the recipe API so save succeeds without a running backend
+    await page.route('**/api/recipes', (route) => {
+      if (route.request().method() === 'POST') {
+        route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify({ id: 'test-recipe-456', name: 'Speedy Soup' }),
+        })
+      } else {
+        route.continue()
+      }
+    })
+
     await page.getByPlaceholder(/Grandma's Chocolate Chip Cookies/i).fill('Speedy Soup')
     await page.getByPlaceholder(/e.g., all-purpose flour/i).fill('Broth')
     await page.getByPlaceholder(/Describe this step in detail/i).fill('Simmer for 20 minutes.')
@@ -179,7 +208,8 @@ test.describe('Simple Create Recipe (Quick Entry)', () => {
   // ─── Mode toggle navigation ───────────────────────────────────────────────────
 
   test('Guided tab should navigate to /dashboard/create', async ({ page }) => {
-    await page.getByRole('tab', { name: /Guided/i }).click()
+    await page.getByRole('navigation', { name: /Recipe creation mode/i })
+      .getByText(/Guided/i).click()
     await expect(page).toHaveURL(/\/dashboard\/create$/)
   })
 
@@ -189,7 +219,8 @@ test.describe('Simple Create Recipe (Quick Entry)', () => {
     await page.goto('/dashboard/create')
     await page.waitForLoadState('networkidle')
     await expect(page.getByText(/Step 1 of 5/i)).toBeVisible()
-    await expect(page.getByRole('tab', { name: /Quick entry/i })).toBeVisible()
+    const nav = page.getByRole('navigation', { name: /Recipe creation mode/i })
+    await expect(nav.getByRole('link', { name: /Quick entry/i })).toBeVisible()
   })
 
   // ─── Session storage persistence ─────────────────────────────────────────────
