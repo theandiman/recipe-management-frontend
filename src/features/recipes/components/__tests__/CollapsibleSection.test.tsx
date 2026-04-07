@@ -18,11 +18,11 @@ describe('CollapsibleSection', () => {
   })
 
   it('hides content when closed', () => {
-    render(<CollapsibleSection {...defaultProps} isOpen={false} />)
-    // The content wrapper has `hidden` when the section is closed.
-    // We walk up to the hidden ancestor.
-    const textEl = screen.getByText('Section content', { hidden: true })
-    expect(textEl.closest('[hidden]')).toBeTruthy()
+    const { container } = render(<CollapsibleSection {...defaultProps} isOpen={false} />)
+    // The content wrapper carries the `hidden` attribute when closed.
+    const hiddenDiv = container.querySelector('[hidden]')
+    expect(hiddenDiv).toBeTruthy()
+    expect(hiddenDiv).toHaveTextContent('Section content')
   })
 
   it('shows content when open', () => {
