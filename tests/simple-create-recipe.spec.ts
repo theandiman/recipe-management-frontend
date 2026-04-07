@@ -3,7 +3,6 @@ import { test, expect } from '@playwright/test'
 test.describe('Simple Create Recipe (Quick Entry)', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/dashboard/create/simple')
-    await page.waitForLoadState('networkidle')
   })
 
   // ─── Layout ──────────────────────────────────────────────────────────────────
@@ -169,7 +168,7 @@ test.describe('Simple Create Recipe (Quick Entry)', () => {
     await page.getByRole('button', { name: /Save Recipe/i }).click()
 
     // After save, user is navigated away from the form
-    await expect(page).not.toHaveURL(/\/create\/simple/, { timeout: 10000 })
+    await expect(page).toHaveURL(/\/dashboard\/recipes/, { timeout: 10000 })
   })
 
   test('happy path: adds optional timing and tags, then saves', async ({ page }) => {
@@ -202,7 +201,7 @@ test.describe('Simple Create Recipe (Quick Entry)', () => {
     await expect(page.getByText('quick').first()).toBeVisible()
 
     await page.getByRole('button', { name: /Save Recipe/i }).click()
-    await expect(page).not.toHaveURL(/\/create\/simple/, { timeout: 10000 })
+    await expect(page).toHaveURL(/\/dashboard\/recipes/, { timeout: 10000 })
   })
 
   // ─── Mode toggle navigation ───────────────────────────────────────────────────
@@ -217,7 +216,6 @@ test.describe('Simple Create Recipe (Quick Entry)', () => {
 
   test('visiting /dashboard/create still shows the multi-step wizard', async ({ page }) => {
     await page.goto('/dashboard/create')
-    await page.waitForLoadState('networkidle')
     await expect(page.getByText(/Step 1 of 5/i)).toBeVisible()
     const nav = page.getByRole('navigation', { name: /Recipe creation mode/i })
     await expect(nav.getByRole('link', { name: /Quick entry/i })).toBeVisible()
@@ -236,7 +234,6 @@ test.describe('Simple Create Recipe (Quick Entry)', () => {
     // Navigate away then back
     await page.goto('/dashboard')
     await page.goto('/dashboard/create/simple')
-    await page.waitForLoadState('networkidle')
 
     // Timing should still be open
     await expect(page.getByRole('button', { name: /Timing/i })).toHaveAttribute(
