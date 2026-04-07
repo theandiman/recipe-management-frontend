@@ -46,14 +46,16 @@ describe('SimpleCreateRecipe', () => {
 
   it('renders the mode toggle with Guided and Quick entry options', () => {
     renderWithRouter(<SimpleCreateRecipe />)
-    expect(screen.getByRole('tab', { name: /Guided/i })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /Quick entry/i })).toBeInTheDocument()
+    const nav = screen.getByRole('navigation', { name: /Recipe creation mode/i })
+    expect(nav).toBeInTheDocument()
+    expect(screen.getByText(/Guided/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Quick entry/i })).toBeInTheDocument()
   })
 
-  it('marks Quick entry tab as selected', () => {
+  it('marks Quick entry as the current page in the mode toggle', () => {
     renderWithRouter(<SimpleCreateRecipe />)
-    const quickTab = screen.getByRole('tab', { name: /Quick entry/i })
-    expect(quickTab).toHaveAttribute('aria-selected', 'true')
+    const quickLink = screen.getByRole('link', { name: /Quick entry/i })
+    expect(quickLink).toHaveAttribute('aria-current', 'page')
   })
 
   it('renders the recipe name input', () => {
