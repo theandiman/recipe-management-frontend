@@ -7,6 +7,7 @@ import { ThemeToggle } from '../ThemeToggle'
 import { RecipeLibrary } from '../../features/recipes/RecipeLibrary'
 import { RecipeDetail } from '../../features/recipes/RecipeDetail'
 import { CreateRecipe } from '../../features/recipes/CreateRecipe'
+import { SimpleCreateRecipe } from '../../features/recipes/SimpleCreateRecipe'
 import { EditRecipe } from '../../features/recipes/EditRecipe'
 import { AIGenerator } from '../../features/recipes/AIGenerator'
 import { HelpPage } from '../../features/help/HelpPage'
@@ -294,6 +295,7 @@ export const DashboardLayout: React.FC = () => {
             <Route path="recipes/:id" element={<RecipeDetail />} />
             <Route path="recipes/edit/:id" element={<EditRecipe />} />
             <Route path="create" element={<CreateRecipe />} />
+            <Route path="create/simple" element={<SimpleCreateRecipe />} />
             <Route path="generate" element={<AIGenerator />} />
             <Route path="community" element={<CommunityPage />} />
             <Route path="help" element={<HelpPage />} />
