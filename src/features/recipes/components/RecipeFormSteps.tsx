@@ -1,15 +1,8 @@
 import React from 'react'
 import { IngredientInput } from '../../../components/IngredientInput'
 import { UI_STYLES } from '../../../utils/uiStyles'
+import { clampedNumericHandler } from '../../../utils/formUtils'
 import type { Ingredient } from '../../../types/nutrition'
-
-const clampedNumericHandler = (setter: (v: string) => void, min: number, max: number) =>
-  (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value
-    if (raw === '') { setter(''); return }
-    const n = parseInt(raw, 10)
-    if (!isNaN(n)) setter(String(Math.min(max, Math.max(min, n))))
-  }
 
 interface RecipeFormStepsProps {
   currentStep: number

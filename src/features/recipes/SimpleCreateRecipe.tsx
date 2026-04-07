@@ -6,19 +6,8 @@ import { useRecipeSave } from './hooks/useRecipeSave'
 import { CollapsibleSection } from './components/CollapsibleSection'
 import { IngredientInput } from '../../components/IngredientInput'
 import { UI_STYLES } from '../../utils/uiStyles'
+import { clampedNumericHandler } from '../../utils/formUtils'
 import { useSimpleCreateSections } from './hooks/useSimpleCreateSections'
-
-const clampedNumericHandler =
-  (setter: (v: string) => void, min: number, max: number) =>
-  (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value
-    if (raw === '') {
-      setter('')
-      return
-    }
-    const n = parseInt(raw, 10)
-    if (!isNaN(n)) setter(String(Math.min(max, Math.max(min, n))))
-  }
 
 export const SimpleCreateRecipe: React.FC = () => {
   const navigate = useNavigate()
@@ -61,27 +50,24 @@ export const SimpleCreateRecipe: React.FC = () => {
         </div>
 
         {/* Entry-point mode toggle */}
-        <div
+        <nav
           className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1 mb-6"
-          role="tablist"
           aria-label="Recipe creation mode"
         >
           <Link
             to="/dashboard/create"
-            role="tab"
-            aria-selected={false}
             className="px-4 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-white transition-colors"
           >
             🧭 Guided (step-by-step)
           </Link>
-          <span
-            role="tab"
-            aria-selected={true}
+          <Link
+            to="/dashboard/create/simple"
+            aria-current="page"
             className="px-4 py-2 rounded-md text-sm font-medium bg-white text-emerald-700 shadow-sm border border-gray-200"
           >
             ⚡ Quick entry
-          </span>
-        </div>
+          </Link>
+        </nav>
 
         <p className="text-sm text-gray-500">
           Fill in everything at once. Required fields are always visible; optional sections can be
@@ -264,7 +250,7 @@ export const SimpleCreateRecipe: React.FC = () => {
                   onChange={(e) => form.updateInstruction(index, e.target.value)}
                   placeholder="Describe this step in detail..."
                   rows={2}
-                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-y"
                 />
                 {form.instructions.length > 1 && (
                   <button
@@ -443,7 +429,7 @@ export const SimpleCreateRecipe: React.FC = () => {
                   <div className="flex flex-wrap gap-2 mt-2">
                     {form.tags.map((tag, index) => (
                       <span
-                        key={index}
+                        key={tag}
                         className={`${UI_STYLES.tagWithPadding} inline-flex items-center`}
                       >
                         {tag}
@@ -492,7 +478,7 @@ export const SimpleCreateRecipe: React.FC = () => {
                   <div className="flex flex-wrap gap-2 mt-2">
                     {form.dietaryRestrictions.map((dr, index) => (
                       <span
-                        key={index}
+                        key={dr}
                         className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium inline-flex items-center"
                       >
                         {dr}

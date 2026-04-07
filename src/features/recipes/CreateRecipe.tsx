@@ -40,27 +40,23 @@ export const CreateRecipe: React.FC = () => {
   }, [navigate])
 
   const modeToggle = (
-    <div
+    <nav
       className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1 mb-6"
-      role="tablist"
       aria-label="Recipe creation mode"
     >
       <span
-        role="tab"
-        aria-selected={true}
+        aria-current="page"
         className="px-4 py-2 rounded-md text-sm font-medium bg-white text-emerald-700 shadow-sm border border-gray-200"
       >
         🧭 Guided (step-by-step)
       </span>
       <Link
         to="/dashboard/create/simple"
-        role="tab"
-        aria-selected={false}
         className="px-4 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-white transition-colors"
       >
         ⚡ Quick entry
       </Link>
-    </div>
+    </nav>
   )
 
   return (

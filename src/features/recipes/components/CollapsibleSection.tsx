@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useId } from 'react'
 
 interface CollapsibleSectionProps {
   title: string
@@ -19,6 +19,9 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   children,
   'data-testid': testId,
 }) => {
+  const uid = useId()
+  const contentId = `collapsible-section-${uid}`
+
   return (
     <div
       className="border border-gray-200 rounded-xl overflow-hidden"
@@ -28,7 +31,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
-        aria-controls={`section-${title.toLowerCase().replace(/\s+/g, '-')}`}
+        aria-controls={contentId}
         className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
       >
         <div className="flex items-center space-x-3">
@@ -61,7 +64,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
         </svg>
       </button>
       <div
-        id={`section-${title.toLowerCase().replace(/\s+/g, '-')}`}
+        id={contentId}
         hidden={!isOpen}
         className="px-6 py-5 bg-white border-t border-gray-200"
       >

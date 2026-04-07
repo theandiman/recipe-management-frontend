@@ -16,14 +16,35 @@ interface SectionState {
   photo: boolean
 }
 
+const DEFAULT_SECTION_STATE: SectionState = {
+  timing: false,
+  serving: false,
+  tags: false,
+  photo: false,
+}
+
+const SECTION_KEYS = Object.keys(DEFAULT_SECTION_STATE) as Array<keyof SectionState>
+
 function loadFromSession(): SectionState {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY)
-    if (raw) return JSON.parse(raw) as SectionState
+    if (raw) {
+      const parsed: unknown = JSON.parse(raw)
+      if (parsed !== null && typeof parsed === 'object') {
+        const record = parsed as Record<string, unknown>
+        return SECTION_KEYS.reduce<SectionState>(
+          (acc, key) => ({
+            ...acc,
+            [key]: typeof record[key] === 'boolean' ? record[key] : DEFAULT_SECTION_STATE[key],
+          }),
+          { ...DEFAULT_SECTION_STATE },
+        )
+      }
+    }
   } catch {
     // ignore parse errors
   }
-  return { timing: false, serving: false, tags: false, photo: false }
+  return { ...DEFAULT_SECTION_STATE }
 }
 
 function saveToSession(state: SectionState) {
