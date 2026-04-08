@@ -13,6 +13,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useAIAuditTrail, _resetIdCounter } from './useAIAuditTrail'
+import type { UndoResult } from './useAIAuditTrail'
 
 beforeEach(() => {
   _resetIdCounter()
