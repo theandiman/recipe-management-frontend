@@ -1,7 +1,9 @@
-import React from 'react'
+import React, { useRef, useEffect } from 'react'
 import { StepIndicator } from './StepIndicator'
 import { RecipeFormSteps } from './RecipeFormSteps'
 import { RecipePreview } from './RecipePreview'
+import { useDerivedFields } from '../hooks/useDerivedFields'
+import { useServingsRecalculation } from '../hooks/useServingsRecalculation'
 import type { Ingredient } from '../../../types/nutrition'
 
 interface RecipeFormLayoutProps {
@@ -28,6 +30,9 @@ interface RecipeFormLayoutProps {
   setPrepTime: (value: string) => void
   cookTime: string
   setCookTime: (value: string) => void
+  /** User-supplied total time (empty string = use auto-calculated value) */
+  totalTime: string
+  setTotalTime: (value: string) => void
   servings: string
   setServings: (value: string) => void
   imagePreview: string | null
@@ -64,6 +69,11 @@ interface RecipeFormLayoutProps {
   // Handlers
   handleSubmit: (e?: React.FormEvent) => void
   handleCancel: () => void
+
+  // AI Audit Trail (optional — only present when AI suggestions are enabled)
+  canUndoAI?: boolean
+  onUndoLastAI?: () => void
+  lastUndoableAIField?: string | null
 }
 
 export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
@@ -85,6 +95,8 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   setPrepTime,
   cookTime,
   setCookTime,
+  totalTime,
+  setTotalTime,
   servings,
   setServings,
   imagePreview,
@@ -116,8 +128,35 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   saveError,
   setSaveError,
   handleSubmit,
-  handleCancel
+  handleCancel,
+  canUndoAI = false,
+  onUndoLastAI,
+  lastUndoableAIField,
 }) => {
+  // Derived fields – auto-calculate totalTime from prep+cook
+  const { derivedTotalTime } = useDerivedFields(prepTime, cookTime)
+  const isTotalTimeOverridden = totalTime !== '' && totalTime !== derivedTotalTime
+
+  // Track the first non-empty servings value as the baseline for recalculation
+  const originalServingsRef = useRef<string>('')
+  useEffect(() => {
+    if (servings && !originalServingsRef.current) {
+      originalServingsRef.current = servings
+    }
+  }, [servings])
+  const originalServings = originalServingsRef.current || servings
+
+  // Servings-based ingredient quantity recalculation
+  const servingsChanged =
+    servings !== '' && originalServings !== '' && servings !== originalServings
+  const {
+    showPanel: showRecalcPanel,
+    preview: recalcPreview,
+    openRecalculationPanel,
+    dismissPanel,
+    applyRecalculation,
+  } = useServingsRecalculation(ingredients, originalServings, servings, setIngredients)
+
   const handlePreviousStepClick = () => {
     if (saveError) {
       setSaveError(null)
@@ -291,6 +330,17 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
             </button>
 
             <div className="flex items-center space-x-4">
+              {canUndoAI && onUndoLastAI && (
+                <button
+                  type="button"
+                  onClick={onUndoLastAI}
+                  aria-label={lastUndoableAIField ? `Undo AI change to ${lastUndoableAIField}` : 'Undo last AI change'}
+                  className="px-4 py-2 text-sm border border-amber-400 text-amber-700 rounded-lg font-medium hover:bg-amber-50 transition-colors flex items-center gap-1"
+                >
+                  ↩ {lastUndoableAIField ? `Undo AI: ${lastUndoableAIField}` : 'Undo AI change'}
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={handleCancel}
