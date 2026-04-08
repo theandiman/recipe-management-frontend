@@ -98,13 +98,13 @@ export const CreateRecipe: React.FC = () => {
         aria-current="page"
         className="px-4 py-2 rounded-md text-sm font-medium bg-white text-emerald-700 shadow-sm border border-gray-200"
       >
-        Guided (step-by-step)
+        🧭 Guided (step-by-step)
       </span>
       <Link
         to="/dashboard/create/simple"
         className="px-4 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-white transition-colors"
       >
-        Quick entry
+        ⚡ Quick entry
       </Link>
     </nav>
   )
