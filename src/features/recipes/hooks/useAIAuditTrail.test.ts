@@ -93,7 +93,7 @@ describe('Scenario 2 — undoLastAIChange', () => {
       result.current.recordAccepted('prepTime', '10', '20')
     })
 
-    let undoResult: ReturnType<typeof result.current.undoLastAIChange> = null
+    let undoResult: UndoResult | null = null
     act(() => {
       undoResult = result.current.undoLastAIChange()
     })
@@ -120,7 +120,7 @@ describe('Scenario 2 — undoLastAIChange', () => {
   it('returns null when there is nothing to undo', () => {
     const { result } = renderHook(() => useAIAuditTrail())
 
-    let undoResult: ReturnType<typeof result.current.undoLastAIChange> = undefined as unknown as null
+    let undoResult: UndoResult | null = null
     act(() => {
       undoResult = result.current.undoLastAIChange()
     })
@@ -136,7 +136,7 @@ describe('Scenario 2 — undoLastAIChange', () => {
       result.current.recordAccepted('description', 'Original Desc', 'AI Desc')
     })
 
-    let undoResult: ReturnType<typeof result.current.undoLastAIChange> = null
+    let undoResult: UndoResult | null = null
     act(() => {
       undoResult = result.current.undoLastAIChange()
     })
@@ -165,7 +165,7 @@ describe('Scenario 3 — manual edits are not affected by undo', () => {
     expect(result.current.auditLog.some(e => e.field === 'description')).toBe(false)
 
     // Undo title — description is unaffected because it was never in the audit log
-    let undoResult: ReturnType<typeof result.current.undoLastAIChange> = null
+    let undoResult: UndoResult | null = null
     act(() => {
       undoResult = result.current.undoLastAIChange()
     })
@@ -188,7 +188,7 @@ describe('Scenario 4 — undoFieldAIChange', () => {
       result.current.recordAccepted('prepTime', '10', '15')
     })
 
-    let undoResult: ReturnType<typeof result.current.undoFieldAIChange> = null
+    let undoResult: UndoResult | null = null
     act(() => {
       undoResult = result.current.undoFieldAIChange('title')
     })
@@ -209,7 +209,7 @@ describe('Scenario 4 — undoFieldAIChange', () => {
       result.current.recordAccepted('title', 'Old', 'New')
     })
 
-    let undoResult: ReturnType<typeof result.current.undoFieldAIChange> = undefined as unknown as null
+    let undoResult: UndoResult | null = null
     act(() => {
       undoResult = result.current.undoFieldAIChange('description')
     })
@@ -363,7 +363,7 @@ describe('Scenario 7 — double-undo safety', () => {
       result.current.undoLastAIChange()
     })
 
-    let secondUndo: ReturnType<typeof result.current.undoLastAIChange> = undefined as unknown as null
+    let secondUndo: UndoResult | null = null
     act(() => {
       secondUndo = result.current.undoLastAIChange()
     })
