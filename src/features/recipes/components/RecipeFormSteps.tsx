@@ -47,6 +47,10 @@ interface RecipeFormStepsProps {
   clearFieldError: (fieldName: string, stepNumber: number) => void
   // AI Instruction Refinement
   recipeName: string
+  // Ingredient Normalization
+  normalizationStates?: Map<number, import('../hooks/useIngredientNormalization').NormalizationState>
+  onApplyNormalization?: (index: number) => void
+  onDismissNormalization?: (index: number) => void
 }
 
 
@@ -85,7 +89,10 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
   addDietaryRestriction,
   removeDietaryRestriction,
   fieldErrors,
-  clearFieldError
+  clearFieldError,
+  normalizationStates,
+  onApplyNormalization,
+  onDismissNormalization,
 }) => {
   return (
     <div className="space-y-8">
@@ -202,6 +209,9 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
             onAddIngredient={addIngredient}
             onUpdateIngredient={updateIngredient}
             onRemoveIngredient={removeIngredient}
+            normalizationStates={normalizationStates}
+            onApplyNormalization={onApplyNormalization}
+            onDismissNormalization={onDismissNormalization}
           />
           {fieldErrors.ingredients && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
