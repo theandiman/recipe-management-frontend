@@ -104,11 +104,7 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
           )}
 
           {/* Suggestion cards */}
-<<<<<<< HEAD
-          {hasSuggestions && (
-=======
           {status === 'success' && hasSuggestions && (
->>>>>>> origin/main
             <ul className="space-y-2 mt-1" role="list">
               {suggestions.map(suggestion => {
                 const setter = fieldSetters[suggestion.field]
