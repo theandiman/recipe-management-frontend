@@ -60,7 +60,7 @@ export const RecipeDetail: React.FC = () => {
     }
   }, [])
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside or pressing Escape
   useEffect(() => {
     if (!isMenuOpen) return
     const handleClickOutside = (e: MouseEvent) => {
@@ -68,8 +68,15 @@ export const RecipeDetail: React.FC = () => {
         setIsMenuOpen(false)
       }
     }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsMenuOpen(false)
+    }
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
   }, [isMenuOpen])
 
   useEffect(() => {
@@ -156,12 +163,12 @@ export const RecipeDetail: React.FC = () => {
       <div className="max-w-4xl mx-auto">
         <button
           onClick={() => navigate('/dashboard/recipes')}
-          className="mb-6 text-emerald-600 hover:text-emerald-700 flex items-center transition-colors"
+          className="mb-6 text-emerald-600 hover:text-emerald-700 flex items-center transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded"
         >
           <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          Back to Library
+          Back
         </button>
         <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
           <p className="font-medium">Error loading recipe</p>
@@ -177,7 +184,7 @@ export const RecipeDetail: React.FC = () => {
       <div className="mb-6 flex items-center justify-between gap-3">
         <button
           onClick={() => navigate('/dashboard/recipes')}
-          className="text-emerald-600 hover:text-emerald-700 flex items-center gap-1.5 font-medium transition-colors shrink-0"
+          className="text-emerald-600 hover:text-emerald-700 flex items-center gap-1.5 font-medium transition-colors shrink-0 focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -200,9 +207,11 @@ export const RecipeDetail: React.FC = () => {
             <div className="relative" ref={menuRef}>
               <button
                 type="button"
+                id="recipe-options-button"
                 onClick={() => !isTogglingShare && setIsMenuOpen(v => !v)}
-                aria-haspopup="true"
+                aria-haspopup="menu"
                 aria-expanded={isMenuOpen}
+                aria-controls="recipe-options-menu"
                 aria-label={isTogglingShare ? 'Updating…' : 'More options'}
                 title="More options"
                 disabled={isTogglingShare}
@@ -219,7 +228,9 @@ export const RecipeDetail: React.FC = () => {
 
               {isMenuOpen && (
                 <div
+                  id="recipe-options-menu"
                   role="menu"
+                  aria-labelledby="recipe-options-button"
                   className="absolute right-0 mt-1.5 w-48 rounded-xl bg-white dark:bg-gray-900 shadow-lg ring-1 ring-black/5 dark:ring-white/10 py-1 z-20 animate-[fadeIn_0.1s_ease]"
                 >
                   {isOwner && (
@@ -269,7 +280,7 @@ export const RecipeDetail: React.FC = () => {
           {/* Primary CTA */}
           <button
             onClick={() => setIsCookingMode(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 font-medium text-sm transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 font-medium text-sm transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
