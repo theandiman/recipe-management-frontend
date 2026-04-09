@@ -219,10 +219,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     prepTime: setPrepTime,
     cookTime: setCookTime,
     servings: setServings,
-    tags: (tagsArr: string[]) => {
-      // Replace the tags array
-      if (Array.isArray(tagsArr)) setTags(tagsArr)
-    },
+
   }
 
   // Shared request builder for AI suggestions
