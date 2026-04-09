@@ -1,9 +1,11 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { StepIndicator } from './StepIndicator'
 import { RecipeFormSteps } from './RecipeFormSteps'
 
 
 import { RecipePreview } from './RecipePreview'
+import { AISuggestionPanel } from './AISuggestionPanel'
+import { useAISuggestions } from '../hooks/useAISuggestions'
 import type { Ingredient } from '../../../types/nutrition'
 
 interface RecipeFormLayoutProps {
@@ -204,6 +206,58 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     goToStep(targetStep)
   }
 
+  // AI suggestion integration
+  const {
+    visibleSuggestions,
+    status: suggestionStatus,
+    error: suggestionError,
+    fetchSuggestions,
+    applySuggestion,
+    dismissSuggestion,
+    auditLog,
+    canUndo,
+    undoLastAIChange,
+    undoFieldAIChange,
+  } = useAISuggestions()
+
+  // Fetch suggestions once when the recipe title is available (first meaningful state)
+  const suggestionFetched = useRef(false)
+  useEffect(() => {
+    if (!suggestionFetched.current && title.trim().length > 2) {
+      suggestionFetched.current = true
+      fetchSuggestions(buildSuggestionRequest())
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title])
+
+  // Wrap setters to allow passing previousValue for audit trail
+  const fieldSetters: Partial<Record<string, (value: string) => void> & { currentValue?: string }> = {
+    recipeName: Object.assign(setTitle, { currentValue: title }),
+    description: Object.assign(setDescription, { currentValue: description }),
+    prepTime: Object.assign(setPrepTime, { currentValue: prepTime }),
+    cookTime: Object.assign(setCookTime, { currentValue: cookTime }),
+    servings: Object.assign(setServings, { currentValue: servings }),
+  }
+
+  // Shared request builder for AI suggestions
+  const buildSuggestionRequest = () => ({
+    recipeName: title || undefined,
+    description: description || undefined,
+    prepTime: prepTime || undefined,
+    cookTime: cookTime || undefined,
+    servings: servings || undefined,
+    tags: tags.length > 0 ? tags : undefined,
+    ingredients: ingredients.filter(i => i.item.trim()).map(i =>
+      [i.quantity, i.unit, i.item].filter(Boolean).join(' ')
+    ),
+    instructions: instructions.filter(i => i.trim()),
+  })
+
+  const handleRetrySuggestions = () => {
+    suggestionFetched.current = false
+    fetchSuggestions(buildSuggestionRequest())
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Header with Step Indicator */}
@@ -227,6 +281,19 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
           stepsWithErrors={stepsWithErrors}
         />
       </div>
+
+      {/* AI Suggestion Panel — shown on non-preview steps */}
+      {currentStep !== 5 && (
+        <AISuggestionPanel
+          suggestions={visibleSuggestions}
+          status={suggestionStatus}
+          error={suggestionError}
+          onApply={applySuggestion}
+          onDismiss={dismissSuggestion}
+          fieldSetters={fieldSetters}
+          onRetry={handleRetrySuggestions}
+        />
+      )}
 
       {/* Preview Step */}
       {currentStep === 5 ? (

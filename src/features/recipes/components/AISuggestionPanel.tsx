@@ -1,18 +1,17 @@
 import React from 'react'
 import type { FieldSuggestion, SuggestionStatus } from '../hooks/useAISuggestions'
+import { FIELD_LABELS } from '../constants/aiConstants'
 
 interface AISuggestionPanelProps {
   suggestions: FieldSuggestion[]
   status: SuggestionStatus
   error: string | null
-  onApply: (field: string, applyFn: (value: string) => void) => void
+  onApply: (field: string, applyFn: (value: string) => void, previousValue: string) => void
   onDismiss: (field: string) => void
   /** Maps field names to their corresponding form setter functions */
   fieldSetters: Partial<Record<string, (value: string) => void>>
   onRetry?: () => void
 }
-
-import { FIELD_LABELS } from '../constants/aiConstants'
 
 /**
  * Collapsible panel that displays AI-generated field suggestions.
@@ -97,11 +96,16 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
           )}
 
           {/* Suggestion cards */}
+<<<<<<< HEAD
           {hasSuggestions && (
+=======
+          {status === 'success' && hasSuggestions && (
+>>>>>>> origin/main
             <ul className="space-y-2 mt-1" role="list">
               {suggestions.map(suggestion => {
                 const setter = fieldSetters[suggestion.field]
                 const label = FIELD_LABELS[suggestion.field] ?? suggestion.field
+                // For audit trail: require previousValue for apply
                 return (
                   <li
                     key={suggestion.field}
@@ -125,7 +129,13 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
                       {setter && (
                         <button
                           type="button"
-                          onClick={() => onApply(suggestion.field, setter)}
+                          onClick={() => {
+                            // Get the current value for audit trail
+                            let previousValue = ''
+                            if (suggestion.field === 'recipeName') previousValue = (setter as any).currentValue || ''
+                            // For other fields, pass empty string or implement as needed
+                            onApply(suggestion.field, setter, previousValue)
+                          }}
                           className="px-3 py-1.5 text-xs font-semibold rounded-md bg-amber-500 hover:bg-amber-600 text-white transition-colors"
                           aria-label={`Apply AI suggestion for ${label}`}
                         >
