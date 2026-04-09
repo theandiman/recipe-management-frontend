@@ -94,7 +94,7 @@ describe('useAISuggestions', () => {
 
     const setter = vi.fn()
     act(() => {
-      result.current.applySuggestion('description', setter)
+      result.current.applySuggestion('description', setter, '')
     })
 
     expect(setter).toHaveBeenCalledWith('A tasty dish')
@@ -175,7 +175,7 @@ describe('useAISuggestions', () => {
         // Apply suggestion
     const setter = vi.fn()
     act(() => {
-      result.current.applySuggestion('description', setter)
+      result.current.applySuggestion('description', setter, '')
     })
     expect(events).toContain('ai_suggestion_applied')
 

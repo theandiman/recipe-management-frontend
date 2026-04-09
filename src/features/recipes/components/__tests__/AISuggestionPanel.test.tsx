@@ -121,7 +121,7 @@ describe('AISuggestionPanel', () => {
       />
     )
     fireEvent.click(screen.getByRole('button', { name: /apply ai suggestion for description/i }))
-    expect(onApply).toHaveBeenCalledWith('description', setter)
+    expect(onApply).toHaveBeenCalledWith('description', setter, expect.any(String))
   })
 
   it('calls onDismiss with field name when Dismiss is clicked', () => {

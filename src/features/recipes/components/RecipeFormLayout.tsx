@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react'
 import { StepIndicator } from './StepIndicator'
 import { RecipeFormSteps } from './RecipeFormSteps'
+
+
 import { RecipePreview } from './RecipePreview'
 import { AISuggestionPanel } from './AISuggestionPanel'
 import { useAISuggestions } from '../hooks/useAISuggestions'
@@ -128,6 +130,9 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   onUndoLastAI,
   lastUndoableAIField,
 }) => {
+  // --- AI Instruction Refinement Hook ---
+
+
   const handlePreviousStepClick = () => {
     if (saveError) {
       setSaveError(null)
@@ -221,13 +226,13 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title])
 
-  const fieldSetters: Partial<Record<string, (value: string) => void>> = {
-    recipeName: setTitle,
-    description: setDescription,
-    prepTime: setPrepTime,
-    cookTime: setCookTime,
-    servings: setServings,
-
+  // Wrap setters to allow passing previousValue for audit trail
+  const fieldSetters: Partial<Record<string, (value: string) => void> & { currentValue?: string }> = {
+    recipeName: Object.assign(setTitle, { currentValue: title }),
+    description: Object.assign(setDescription, { currentValue: description }),
+    prepTime: Object.assign(setPrepTime, { currentValue: prepTime }),
+    cookTime: Object.assign(setCookTime, { currentValue: cookTime }),
+    servings: Object.assign(setServings, { currentValue: servings }),
   }
 
   // Shared request builder for AI suggestions
@@ -343,6 +348,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 removeDietaryRestriction={removeDietaryRestriction}
                 fieldErrors={fieldErrors}
                 clearFieldError={clearFieldError}
+                recipeName={title}
               />
           </div>
 
