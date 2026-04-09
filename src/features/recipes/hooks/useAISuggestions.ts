@@ -74,7 +74,7 @@ export function useAISuggestions(): UseAISuggestionsReturn {
     const startTime = Date.now()
 
     try {
-      const apiBase = import.meta.env.VITE_API_URL || ''
+      const apiBase = import.meta.env.VITE_AI_API_URL || import.meta.env.VITE_API_URL || ''
       const url = buildApiUrl(apiBase, '/api/recipes/suggest-fields')
       const res = await postWithAuth(url, request)
       const data = res.data as { suggestions: FieldSuggestion[] }
