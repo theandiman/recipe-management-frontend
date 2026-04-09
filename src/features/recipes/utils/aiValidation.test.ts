@@ -27,6 +27,10 @@ afterEach(() => {
   warnSpy.mockClear()
 })
 
+afterAll(() => {
+  warnSpy.mockRestore()
+})
+
 // ---------------------------------------------------------------------------
 // sanitizeAIText
 // ---------------------------------------------------------------------------
@@ -140,7 +144,7 @@ describe('validateAISuggestionField – servings', () => {
   it('rejects servings of 0 — Scenario 5', () => {
     const result = validateAISuggestionField('servings', 0)
     expect(result.isValid).toBe(false)
-    expect(result.errors[0]).toMatch(/servings must be between/)
+    expect(result.errors[0]).toMatch(/servings must be an integer between/)
   })
 
   it('rejects negative servings — Scenario 5', () => {
@@ -191,6 +195,11 @@ describe('validateAISuggestionField – tags', () => {
 
   it('accepts null tags', () => {
     expect(validateAISuggestionField('tags', null).isValid).toBe(true)
+  })
+
+  it('rejects non-array tags', () => {
+    expect(validateAISuggestionField('tags', 123).isValid).toBe(false)
+    expect(validateAISuggestionField('tags', {}).isValid).toBe(false)
   })
 })
 
