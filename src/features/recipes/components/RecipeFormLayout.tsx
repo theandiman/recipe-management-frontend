@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { StepIndicator } from './StepIndicator'
 import { RecipeFormSteps } from './RecipeFormSteps'
 
@@ -6,6 +6,7 @@ import { RecipeFormSteps } from './RecipeFormSteps'
 import { RecipePreview } from './RecipePreview'
 import { AISuggestionPanel } from './AISuggestionPanel'
 import { useAISuggestions } from '../hooks/useAISuggestions'
+import { FIELD_LABELS } from '../constants/aiConstants'
 import type { Ingredient } from '../../../types/nutrition'
 
 interface RecipeFormLayoutProps {
@@ -129,9 +130,9 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   setSaveError,
   handleSubmit,
   handleCancel,
-  canUndoAI = false,
+  canUndoAI: _canUndoAI = false,
   onUndoLastAI,
-  lastUndoableAIField,
+  lastUndoableAIField: _lastUndoableAIField,
   normalizationStates,
   onApplyNormalization,
   onDismissNormalization,
@@ -220,7 +221,21 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     fetchSuggestions,
     applySuggestion,
     dismissSuggestion,
+    canUndo: localCanUndo,
+    undoLastAIChange: localUndoLastAIChange,
+    auditLog: localAuditLog,
   } = useAISuggestions()
+
+  // Derive the last undoable AI field name from the local audit trail
+  const localLastUndoableAIField = useMemo<string | null>(() => {
+    for (let i = localAuditLog.length - 1; i >= 0; i--) {
+      const e = localAuditLog[i]
+      if (e.event === 'accepted') {
+        return FIELD_LABELS[e.field] ?? e.field
+      }
+    }
+    return null
+  }, [localAuditLog])
 
   // Fetch suggestions once when the recipe title is available (first meaningful state)
   const suggestionFetched = useRef(false)
@@ -240,6 +255,23 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     cookTime: Object.assign(setCookTime, { currentValue: cookTime }),
     servings: Object.assign(setServings, { currentValue: servings }),
   }
+
+  // Internal undo handler: uses the local audit trail (from RecipeFormLayout's own hook)
+  const handleLocalUndo = useCallback(() => {
+    const result = localUndoLastAIChange()
+    if (!result) return
+    const setterMap: Record<string, (v: string) => void> = {
+      recipeName: setTitle,
+      description: setDescription,
+      prepTime: setPrepTime,
+      cookTime: setCookTime,
+      servings: setServings,
+    }
+    const setter = setterMap[result.field]
+    if (setter) setter(String(result.previousValue ?? ''))
+    // Also invoke the parent's undo handler if provided (for synchronisation)
+    if (onUndoLastAI) onUndoLastAI()
+  }, [localUndoLastAIChange, setTitle, setDescription, setPrepTime, setCookTime, setServings, onUndoLastAI])
 
   // Shared request builder for AI suggestions
   const buildSuggestionRequest = () => ({
@@ -377,14 +409,14 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
             </button>
 
             <div className="flex items-center space-x-4">
-              {canUndoAI && onUndoLastAI && (
+              {localCanUndo && (
                 <button
                   type="button"
-                  onClick={onUndoLastAI}
-                  aria-label={lastUndoableAIField ? `Undo AI change to ${lastUndoableAIField}` : 'Undo last AI change'}
+                  onClick={handleLocalUndo}
+                  aria-label={localLastUndoableAIField ? `Undo AI change to ${localLastUndoableAIField}` : 'Undo last AI change'}
                   className="px-4 py-2 text-sm border border-amber-400 text-amber-700 rounded-lg font-medium hover:bg-amber-50 transition-colors flex items-center gap-1"
                 >
-                  ↩ {lastUndoableAIField ? `Undo AI: ${lastUndoableAIField}` : 'Undo AI change'}
+                  ↩ {localLastUndoableAIField ? `Undo AI: ${localLastUndoableAIField}` : 'Undo AI change'}
                 </button>
               )}
 
