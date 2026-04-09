@@ -6,6 +6,7 @@ import { useRecipeValidation } from './hooks/useRecipeValidation'
 import { useRecipeFormNavigation } from './hooks/useRecipeFormNavigation'
 import { useRecipeSave } from './hooks/useRecipeSave'
 import { useAISuggestions } from './hooks/useAISuggestions'
+import { useIngredientNormalization } from './hooks/useIngredientNormalization'
 
 const FIELD_LABELS: Record<string, string> = {
   recipeName: 'Recipe Name',
@@ -22,6 +23,11 @@ export const CreateRecipe: React.FC = () => {
   const form = useRecipeForm()
   const { validateForm, buildRecipeObject } = useRecipeValidation()
   const { canUndo, auditLog, undoLastAIChange } = useAISuggestions()
+  const {
+    normalizationStates,
+    applyNormalization,
+    dismissNormalization,
+  } = useIngredientNormalization(form.updateIngredient)
 
   const { handleSubmit } = useRecipeSave({
     title: form.title,
@@ -120,6 +126,9 @@ export const CreateRecipe: React.FC = () => {
         canUndoAI={canUndo}
         onUndoLastAI={handleUndoLastAI}
         lastUndoableAIField={lastUndoableAIField}
+        normalizationStates={normalizationStates}
+        onApplyNormalization={applyNormalization}
+        onDismissNormalization={dismissNormalization}
       />
     </div>
   )

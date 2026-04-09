@@ -74,6 +74,9 @@ interface RecipeFormLayoutProps {
   canUndoAI?: boolean
   onUndoLastAI?: () => void
   lastUndoableAIField?: string | null
+  normalizationStates?: Map<number, import('../hooks/useIngredientNormalization').NormalizationState>
+  onApplyNormalization?: (index: number) => void
+  onDismissNormalization?: (index: number) => void
 }
 
 export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
@@ -130,6 +133,9 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   canUndoAI: _canUndoAI = false,
   onUndoLastAI,
   lastUndoableAIField: _lastUndoableAIField,
+  normalizationStates,
+  onApplyNormalization,
+  onDismissNormalization,
 }) => {
   // --- AI Instruction Refinement Hook ---
 
@@ -381,6 +387,9 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 fieldErrors={fieldErrors}
                 clearFieldError={clearFieldError}
                 recipeName={title}
+                normalizationStates={normalizationStates}
+                onApplyNormalization={onApplyNormalization}
+                onDismissNormalization={onDismissNormalization}
               />
           </div>
 
