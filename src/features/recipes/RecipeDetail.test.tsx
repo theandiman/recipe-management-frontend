@@ -89,6 +89,10 @@ const mockRecipeOwnedByUser: Recipe = {
   userId: 'owner-uid',
 }
 
+const openMoreMenu = async () => {
+  await userEvent.click(screen.getByRole('button', { name: /more options/i }))
+}
+
 const renderWithRouter = (initialPath = '/dashboard/recipes/recipe-1') => {
   return render(
     <BrowserRouter>
@@ -179,7 +183,7 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Error loading recipe')).toBeInTheDocument()
       })
 
-      const backButton = screen.getByRole('button', { name: /back to library/i })
+      const backButton = screen.getByRole('button', { name: /back/i })
       await userEvent.click(backButton)
 
       await waitFor(() => {
@@ -270,7 +274,7 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
 
-      const backButton = screen.getByRole('button', { name: /back to library/i })
+      const backButton = screen.getByRole('button', { name: /back/i })
       await userEvent.click(backButton)
 
       await waitFor(() => {
@@ -287,7 +291,8 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
 
-      const editButton = screen.getByRole('button', { name: /edit recipe/i })
+      await openMoreMenu()
+      const editButton = screen.getByRole('menuitem', { name: /edit recipe/i })
       await userEvent.click(editButton)
 
       await waitFor(() => {
@@ -306,7 +311,7 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
 
-      const cookingButton = screen.getByRole('button', { name: /start cooking mode/i })
+      const cookingButton = screen.getByRole('button', { name: /cook/i })
       await userEvent.click(cookingButton)
 
       await waitFor(() => {
@@ -325,7 +330,7 @@ describe('RecipeDetail', () => {
       })
 
       // Open cooking mode
-      const cookingButton = screen.getByRole('button', { name: /start cooking mode/i })
+      const cookingButton = screen.getByRole('button', { name: /cook/i })
       await userEvent.click(cookingButton)
 
       await waitFor(() => {
@@ -383,9 +388,9 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
 
-      // Initially should show "Share" button
-      const shareButton = screen.getByRole('button', { name: /share/i })
-      expect(shareButton).toHaveAttribute('title', 'Share recipe publicly')
+      // Initially should show "Share publicly" menu item
+      await openMoreMenu()
+      const shareButton = screen.getByRole('menuitem', { name: /share publicly/i })
 
       // Click to share
       await userEvent.click(shareButton)
@@ -394,9 +399,10 @@ describe('RecipeDetail', () => {
         expect(recipeStorageApi.updateRecipeSharing).toHaveBeenCalledWith('recipe-1', true)
       })
 
-      // Button should now show "Make Private"
+      // Re-open menu; item should now show "Make private"
+      await openMoreMenu()
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /make private/i })).toBeInTheDocument()
+        expect(screen.getByRole('menuitem', { name: /make private/i })).toBeInTheDocument()
       })
     })
 
@@ -413,9 +419,9 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
 
-      // Initially should show "Make Private" button
-      const makePrivateButton = screen.getByRole('button', { name: /make private/i })
-      expect(makePrivateButton).toHaveAttribute('title', 'Make recipe private')
+      // Initially should show "Make private" menu item
+      await openMoreMenu()
+      const makePrivateButton = screen.getByRole('menuitem', { name: /make private/i })
 
       // Click to make private
       await userEvent.click(makePrivateButton)
@@ -424,9 +430,10 @@ describe('RecipeDetail', () => {
         expect(recipeStorageApi.updateRecipeSharing).toHaveBeenCalledWith('recipe-1', false)
       })
 
-      // Button should now show "Share"
+      // Re-open menu; item should now show "Share publicly"
+      await openMoreMenu()
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /share/i })).toBeInTheDocument()
+        expect(screen.getByRole('menuitem', { name: /share publicly/i })).toBeInTheDocument()
       })
     })
 
@@ -443,7 +450,8 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
 
-      const shareButton = screen.getByRole('button', { name: /share/i })
+      await openMoreMenu()
+      const shareButton = screen.getByRole('menuitem', { name: /share publicly/i })
       await userEvent.click(shareButton)
 
       await waitFor(() => {
@@ -459,8 +467,9 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Could not update sharing status. Please try again.')).toBeInTheDocument()
       })
 
-      // Button should still show "Share" (state not updated due to error)
-      expect(screen.getByRole('button', { name: /share/i })).toBeInTheDocument()
+      // Re-open menu; item should still show "Share publicly" (state not updated due to error)
+      await openMoreMenu()
+      expect(screen.getByRole('menuitem', { name: /share publicly/i })).toBeInTheDocument()
 
       consoleErrorSpy.mockRestore()
     })
@@ -478,7 +487,8 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
 
-      await userEvent.click(screen.getByRole('button', { name: /share/i }))
+      await openMoreMenu()
+      await userEvent.click(screen.getByRole('menuitem', { name: /share publicly/i }))
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument()
@@ -510,7 +520,8 @@ describe('RecipeDetail', () => {
           expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
         })
 
-        await userEvent.click(screen.getByRole('button', { name: /share/i }))
+        await openMoreMenu()
+        await userEvent.click(screen.getByRole('menuitem', { name: /share publicly/i }))
 
         await waitFor(() => {
           expect(screen.getByRole('alert')).toBeInTheDocument()
@@ -546,19 +557,22 @@ describe('RecipeDetail', () => {
       })
 
       // First click → error banner appears
-      await userEvent.click(screen.getByRole('button', { name: /share/i }))
+      await openMoreMenu()
+      await userEvent.click(screen.getByRole('menuitem', { name: /share publicly/i }))
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument()
       })
 
       // Second click → success; banner should be gone immediately
-      await userEvent.click(screen.getByRole('button', { name: /share/i }))
+      await openMoreMenu()
+      await userEvent.click(screen.getByRole('menuitem', { name: /share publicly/i }))
 
       await waitFor(() => {
         expect(screen.queryByRole('alert')).not.toBeInTheDocument()
-        expect(screen.getByRole('button', { name: /make private/i })).toBeInTheDocument()
       })
+      await openMoreMenu()
+      expect(screen.getByRole('menuitem', { name: /make private/i })).toBeInTheDocument()
 
       consoleErrorSpy.mockRestore()
     })
@@ -581,19 +595,19 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
 
-      const shareButton = screen.getByRole('button', { name: /share/i })
-      expect(shareButton).not.toBeDisabled()
+      // More options button should start enabled
+      const moreOptionsBtn = screen.getByRole('button', { name: /more options/i })
+      expect(moreOptionsBtn).not.toBeDisabled()
 
-      // Click to initiate sharing
-      await userEvent.click(shareButton)
+      // Open menu and click Share
+      await openMoreMenu()
+      await userEvent.click(screen.getByRole('menuitem', { name: /share publicly/i }))
 
-      // Button should be disabled during API call
+      // More options button should be disabled and show spinner during API call
       await waitFor(() => {
-        expect(shareButton).toBeDisabled()
+        expect(screen.getByRole('button', { name: /updating/i })).toBeDisabled()
       })
-
-      // Should show loading spinner
-      const spinner = shareButton.querySelector('.animate-spin')
+      const spinner = screen.getByRole('button', { name: /updating/i }).querySelector('.animate-spin')
       expect(spinner).toBeInTheDocument()
 
       // Resolve the API call
@@ -601,10 +615,9 @@ describe('RecipeDetail', () => {
         resolveUpdate(publicRecipe)
       }
 
-      // Button should be enabled again
+      // More options button should be enabled again
       await waitFor(() => {
-        const updatedButton = screen.getByRole('button', { name: /make private/i })
-        expect(updatedButton).not.toBeDisabled()
+        expect(screen.getByRole('button', { name: /more options/i })).not.toBeDisabled()
       })
     })
   })
@@ -639,7 +652,8 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
 
-      expect(screen.getByRole('button', { name: /copy link/i })).toBeInTheDocument()
+      await openMoreMenu()
+      expect(screen.getByRole('menuitem', { name: /copy link/i })).toBeInTheDocument()
     })
 
     it('should not render Copy Link button when recipe is private', async () => {
@@ -683,7 +697,8 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
 
-      const copyButton = screen.getByRole('button', { name: /copy link/i })
+      await openMoreMenu()
+      const copyButton = screen.getByRole('menuitem', { name: /copy link/i })
       await userEvent.click(copyButton)
 
       expect(writeTextMock).toHaveBeenCalledWith(
@@ -707,26 +722,30 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
 
+      await openMoreMenu()
+
       vi.useFakeTimers()
 
       // Use fireEvent (synchronous) — userEvent.click hangs with fake timers
       // because it awaits handler settlement and writeText is a microtask,
       // not a timer, so advanceTimers never resolves it.
-      fireEvent.click(screen.getByRole('button', { name: /copy link/i }))
+      fireEvent.click(screen.getByRole('menuitem', { name: /copy link/i }))
 
       // Flush writeText Promise + React state update.
       // React 18's scheduler uses queueMicrotask/Promise, not setTimeout,
       // so act works correctly even when fake timers are active.
       await act(async () => {})
 
-      expect(screen.getByRole('button', { name: /copied!/i })).toBeInTheDocument()
+      // Menu stays open; item should show "Copied!"
+      expect(screen.getByRole('menuitem', { name: /copied!/i })).toBeInTheDocument()
 
       // Fire the 2-second reset timer and flush the resulting state update
       act(() => {
         vi.advanceTimersByTime(2000)
       })
 
-      expect(screen.getByRole('button', { name: /copy link/i })).toBeInTheDocument()
+      await act(async () => {})
+      expect(screen.getByRole('menuitem', { name: /copy link/i })).toBeInTheDocument()
     })
 
     it('should show fallback notification when navigator.clipboard is unavailable', async () => {
@@ -744,7 +763,8 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
 
-      const copyButton = screen.getByRole('button', { name: /copy link/i })
+      await openMoreMenu()
+      const copyButton = screen.getByRole('menuitem', { name: /copy link/i })
       await userEvent.click(copyButton)
 
       await waitFor(() => {
@@ -770,7 +790,8 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
 
-      const copyButton = screen.getByRole('button', { name: /copy link/i })
+      await openMoreMenu()
+      const copyButton = screen.getByRole('menuitem', { name: /copy link/i })
       await userEvent.click(copyButton)
 
       await waitFor(() => {
@@ -794,7 +815,8 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
 
-      await userEvent.click(screen.getByRole('button', { name: /copy link/i }))
+      await openMoreMenu()
+      await userEvent.click(screen.getByRole('menuitem', { name: /copy link/i }))
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument()
@@ -932,8 +954,10 @@ describe('RecipeDetail', () => {
       renderWithRouter()
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /edit recipe/i })).toBeInTheDocument()
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
+      await openMoreMenu()
+      expect(screen.getByRole('menuitem', { name: /edit recipe/i })).toBeInTheDocument()
     })
 
     it('should hide Edit Recipe button when current user does not own the recipe', async () => {
@@ -948,7 +972,8 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
 
-      expect(screen.queryByRole('button', { name: /edit recipe/i })).not.toBeInTheDocument()
+      // Menu button should not be present (no owner actions, no public)
+      expect(screen.queryByRole('button', { name: /more options/i })).not.toBeInTheDocument()
     })
 
     it('should hide Edit Recipe button when user is not authenticated', async () => {
@@ -961,7 +986,8 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
 
-      expect(screen.queryByRole('button', { name: /edit recipe/i })).not.toBeInTheDocument()
+      // More options button should not be present
+      expect(screen.queryByRole('button', { name: /more options/i })).not.toBeInTheDocument()
     })
 
     it('should show Share button when current user owns the recipe', async () => {
@@ -974,8 +1000,10 @@ describe('RecipeDetail', () => {
       renderWithRouter()
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /share/i })).toBeInTheDocument()
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
+      await openMoreMenu()
+      expect(screen.getByRole('menuitem', { name: /share publicly/i })).toBeInTheDocument()
     })
 
     it('should hide Share button when current user does not own the recipe', async () => {
@@ -991,7 +1019,8 @@ describe('RecipeDetail', () => {
         expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
       })
 
-      expect(screen.queryByRole('button', { name: /share/i })).not.toBeInTheDocument()
+      // More options button should not be present (non-owner, private recipe)
+      expect(screen.queryByRole('button', { name: /more options/i })).not.toBeInTheDocument()
     })
   })
 })
