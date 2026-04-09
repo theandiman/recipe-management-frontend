@@ -41,9 +41,9 @@ export function sanitizeAIText(value: string | null | undefined): string {
   if (value == null) return ''
   // Remove all script/style elements and all HTML tags
   let result = String(value)
-    .replace(/<script[\s\S]*?<\/script>/gi, '') // remove script blocks
-    .replace(/<style[\s\S]*?<\/style>/gi, '')   // remove style blocks
-    .replace(/<[^>]*>/g, '')                      // remove all HTML tags
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script\s*>/gi, '') // Remove script tags and content (handles attributes and whitespace in tags)
+    .replace(/<style[\s\S]*?>[\s\S]*?<\/style\s*>/gi, '') // Remove style tags and content
+    .replace(/<[^>]*>/g, '') // Strip remaining HTML tags
     .replace(CONTROL_CHAR_PATTERN, '')
   return result
 }
@@ -83,79 +83,69 @@ export function validateAISuggestionField(
     }
 
     case 'servings': {
-      const numVal: number = typeof value === 'string' ? Number(value) : typeof value === 'number' ? (value as number) : NaN
-      if (!Number.isFinite(numVal) || !Number.isInteger(numVal) || numVal < AI_FIELD_LIMITS.servings.min || numVal > AI_FIELD_LIMITS.servings.max) {
-        if (value != null) {
-          errors.push(`servings must be an integer between ${AI_FIELD_LIMITS.servings.min} and ${AI_FIELD_LIMITS.servings.max}`)
-        }
-      }
-      break
-    }
+  if (value == null) break;
+  const numVal = typeof value === 'string' ? Number(value) : typeof value === 'number' ? value : NaN;
+  if (!Number.isInteger(numVal) || numVal < AI_FIELD_LIMITS.servings.min || numVal > AI_FIELD_LIMITS.servings.max) {
+    errors.push(`servings must be an integer between ${AI_FIELD_LIMITS.servings.min} and ${AI_FIELD_LIMITS.servings.max}`);
+  }
+  break;
+}
 
     case 'tags': {
-      if (value == null) break;
-      if (!Array.isArray(value)) {
-        errors.push('tags must be an array of non-empty strings')
-        break
-      }
-      if (value.length > AI_FIELD_LIMITS.tags.maxCount) {
-        errors.push(
-          `tags list exceeds maximum of ${AI_FIELD_LIMITS.tags.maxCount} tags (got ${value.length})`
-        )
-      }
-      value.forEach((tag: unknown) => {
-        if (typeof tag !== 'string') {
-          errors.push('tags must be an array of non-empty strings')
-        } else if (tag.trim().length === 0) {
-          errors.push('tags must not contain empty strings')
-        } else if (tag.length > AI_FIELD_LIMITS.tag.maxLength) {
-          errors.push(
-            `tag "${tag.substring(0, 30)}${tag.length > 30 ? '...' : ''}" exceeds maximum length of ${AI_FIELD_LIMITS.tag.maxLength} characters`
-          )
-        }
-      })
-      break
+  if (!Array.isArray(value)) {
+    if (value != null) errors.push('tags must be an array of non-empty strings')
+    break
+  }
+  if (value.length > AI_FIELD_LIMITS.tags.maxCount) {
+    errors.push(`tags list exceeds maximum of ${AI_FIELD_LIMITS.tags.maxCount} tags (got ${value.length})`)
+  }
+  value.forEach((tag: unknown, index: number) => {
+    if (typeof tag !== 'string') {
+      errors.push(`tag at index ${index} must be a string`)
+    } else if (tag.trim().length === 0) {
+      errors.push(`tag at index ${index} must not be empty or whitespace-only`)
+    } else if (tag.length > AI_FIELD_LIMITS.tag.maxLength) {
+      errors.push(`tag "${tag.substring(0, 30)}${tag.length > 30 ? '...' : ''}" exceeds maximum length of ${AI_FIELD_LIMITS.tag.maxLength} characters`)
     }
+  })
+  break
+}
 
     case 'ingredients': {
-      if (!Array.isArray(value)) {
-        errors.push('ingredients must be an array of strings')
-        break
-      }
-      if (value.length > AI_FIELD_LIMITS.ingredients.maxCount) {
-        errors.push(
-          `ingredients list exceeds maximum of ${AI_FIELD_LIMITS.ingredients.maxCount} items (got ${value.length})`
-        )
-      }
-      value.forEach((ing: unknown) => {
-        if (typeof ing !== 'string') {
-          errors.push('ingredients must be an array of strings')
-        } else if (ing.length > AI_FIELD_LIMITS.ingredient.maxLength) {
-          errors.push(`ingredient entry exceeds maximum length of ${AI_FIELD_LIMITS.ingredient.maxLength} characters`)
-        }
-      })
-      break
+  if (!Array.isArray(value)) {
+    if (value != null) errors.push('ingredients must be an array of strings')
+    break
+  }
+  if (value.length > AI_FIELD_LIMITS.ingredients.maxCount) {
+    errors.push(`ingredients list exceeds maximum of ${AI_FIELD_LIMITS.ingredients.maxCount} items (got ${value.length})`)
+  }
+  value.forEach((ing: unknown, index: number) => {
+    if (typeof ing !== 'string') {
+      errors.push(`ingredient at index ${index} must be a string`)
+    } else if (ing.length > AI_FIELD_LIMITS.ingredient.maxLength) {
+      errors.push(`ingredient entry exceeds maximum length of ${AI_FIELD_LIMITS.ingredient.maxLength} characters`)
     }
+  })
+  break
+}
 
     case 'instructions': {
-      if (!Array.isArray(value)) {
-        errors.push('instructions must be an array of strings')
-        break
-      }
-      if (value.length > AI_FIELD_LIMITS.instructions.maxCount) {
-        errors.push(
-          `instructions list exceeds maximum of ${AI_FIELD_LIMITS.instructions.maxCount} steps (got ${value.length})`
-        )
-      }
-      value.forEach((step: unknown) => {
-        if (typeof step !== 'string') {
-          errors.push('instructions must be an array of strings')
-        } else if (step.length > AI_FIELD_LIMITS.instruction.maxLength) {
-          errors.push(`instruction step exceeds maximum length of ${AI_FIELD_LIMITS.instruction.maxLength} characters`)
-        }
-      })
-      break
+  if (!Array.isArray(value)) {
+    if (value != null) errors.push('instructions must be an array of strings')
+    break
+  }
+  if (value.length > AI_FIELD_LIMITS.instructions.maxCount) {
+    errors.push(`instructions list exceeds maximum of ${AI_FIELD_LIMITS.instructions.maxCount} steps (got ${value.length})`)
+  }
+  value.forEach((step: unknown, index: number) => {
+    if (typeof step !== 'string') {
+      errors.push(`instruction step at index ${index} must be a string`)
+    } else if (step.length > AI_FIELD_LIMITS.instruction.maxLength) {
+      errors.push(`instruction step exceeds maximum length of ${AI_FIELD_LIMITS.instruction.maxLength} characters`)
     }
+  })
+  break
+}
 
     default:
       // Unknown fields are not validated — additive/non-breaking
@@ -189,8 +179,8 @@ export interface AIRecipeSuggestion {
  * @returns combined validation result across all fields
  */
 export function validateAISuggestion(recipe: AIRecipeSuggestion): AISuggestionValidationResult {
-  if (typeof recipe !== 'object' || recipe === null) {
-    return { isValid: false, errors: ['AI suggestion payload is not a valid object'] }
+  if (recipe === null || recipe === undefined || typeof recipe !== 'object') {
+    return { isValid: false, errors: ['AI suggestion must be a non-null object'] }
   }
   const allErrors: string[] = []
 
@@ -227,7 +217,9 @@ export function validateAISuggestion(recipe: AIRecipeSuggestion): AISuggestionVa
  * @param recipe - the raw AI-generated recipe payload
  * @returns a new recipe object with sanitized text fields
  */
-export function sanitizeAISuggestion(recipe: AIRecipeSuggestion): AIRecipeSuggestion {
+export function sanitizeAISuggestion(
+  recipe: AIRecipeSuggestion | null | undefined
+): AIRecipeSuggestion {
   if (!recipe || typeof recipe !== 'object' || Array.isArray(recipe)) {
     return {} as AIRecipeSuggestion
   }
