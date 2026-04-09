@@ -19,7 +19,7 @@ const MOCK_INGREDIENT_AMBIGUOUS: Ingredient = { quantity: '', unit: '', item: 's
 const MOCK_INGREDIENT_CLEAR: Ingredient = { quantity: '2', unit: 'cups', item: 'flour' }
 
 describe('useIngredientNormalization', () => {
-  let mockUpdateIngredient: ReturnType<typeof vi.fn>
+  let mockUpdateIngredient: (index: number, field: keyof Ingredient, value: string) => void
 
   beforeEach(() => {
     vi.clearAllMocks()
