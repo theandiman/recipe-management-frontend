@@ -1,10 +1,6 @@
 import { useState, useCallback } from 'react'
 import { buildApiUrl } from '../../../utils/apiUtils'
 import { postWithAuth } from '../../../utils/authApi'
-import { useAIAuditTrail } from './useAIAuditTrail'
-import type { AuditEntry, UndoResult } from './useAIAuditTrail'
-
-export type { AuditEntry, UndoResult }
 
 /** A single AI-generated suggestion for one recipe field. */
 export interface FieldSuggestion {
@@ -33,14 +29,9 @@ interface UseAISuggestionsReturn {
   status: SuggestionStatus
   error: string | null
   fetchSuggestions: (request: FieldSuggestionRequest) => Promise<void>
-  applySuggestion: (field: string, applyFn: (value: string) => void, previousValue?: string) => void
+  applySuggestion: (field: string, applyFn: (value: string) => void) => void
   dismissSuggestion: (field: string) => void
   visibleSuggestions: FieldSuggestion[]
-  // Audit trail
-  auditLog: AuditEntry[]
-  canUndo: boolean
-  undoLastAIChange: () => UndoResult | null
-  undoFieldAIChange: (field: string) => UndoResult | null
 }
 
 /**
@@ -56,17 +47,9 @@ export function useAISuggestions(): UseAISuggestionsReturn {
   const [status, setStatus] = useState<SuggestionStatus>('idle')
   const [error, setError] = useState<string | null>(null)
 
-  const {
-    auditLog,
-    canUndo,
-    recordSuggestion,
-    recordAccepted,
-    recordRejected,
-    undoLastAIChange,
-    undoFieldAIChange,
-  } = useAIAuditTrail()
-
   const fetchSuggestions = useCallback(async (request: FieldSuggestionRequest) => {
+    setSuggestions([])
+    setDismissedFields(new Set())
     setStatus('loading')
     setError(null)
     const startTime = Date.now()
@@ -85,42 +68,35 @@ export function useAISuggestions(): UseAISuggestionsReturn {
       const event = { type: 'ai_suggestions_fetched', count: fetched.length, latencyMs }
       console.log('[AI Suggestions]', event)
       window.dispatchEvent(new CustomEvent('ai:suggestions', { detail: event }))
-
-      // Record each fetched suggestion in the audit trail
-      for (const s of fetched) {
-        recordSuggestion(s.field, s.suggestedValue)
-      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to fetch AI suggestions'
       setError(msg)
+      setSuggestions([])
+      setDismissedFields(new Set())
       setStatus('error')
       console.warn('[AI Suggestions] fetch failed:', msg)
     }
   }, [])
 
-  const applySuggestion = useCallback((field: string, applyFn: (value: string) => void, previousValue = '') => {
+  const applySuggestion = useCallback((field: string, applyFn: (value: string) => void) => {
     const suggestion = suggestions.find(s => s.field === field)
     if (!suggestion) return
 
     applyFn(suggestion.suggestedValue)
     setDismissedFields(prev => new Set([...prev, field]))
 
-    recordAccepted(field, previousValue, suggestion.suggestedValue)
-
     const event = { type: 'ai_suggestion_applied', field }
     console.log('[AI Suggestions]', event)
     window.dispatchEvent(new CustomEvent('ai:suggestions', { detail: event }))
-  }, [suggestions, recordAccepted])
+  }, [suggestions])
 
   const dismissSuggestion = useCallback((field: string) => {
     setDismissedFields(prev => new Set([...prev, field]))
 
-    recordRejected(field)
-
     const event = { type: 'ai_suggestion_dismissed', field }
     console.log('[AI Suggestions]', event)
     window.dispatchEvent(new CustomEvent('ai:suggestions', { detail: event }))
-  }, [recordRejected])
+  }, [])
 
   const visibleSuggestions = suggestions.filter(s => !dismissedFields.has(s.field))
 
@@ -133,9 +109,5 @@ export function useAISuggestions(): UseAISuggestionsReturn {
     applySuggestion,
     dismissSuggestion,
     visibleSuggestions,
-    auditLog,
-    canUndo,
-    undoLastAIChange,
-    undoFieldAIChange,
   }
 }
