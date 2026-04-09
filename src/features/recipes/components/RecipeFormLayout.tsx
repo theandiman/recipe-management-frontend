@@ -7,6 +7,8 @@ import { RecipePreview } from './RecipePreview'
 import { AISuggestionPanel } from './AISuggestionPanel'
 import { useAISuggestions } from '../hooks/useAISuggestions'
 import { FIELD_LABELS } from '../constants/aiConstants'
+import { useNutritionEstimate } from '../hooks/useNutritionEstimate'
+import { NutritionEstimatePanel } from './NutritionEstimatePanel'
 import type { Ingredient } from '../../../types/nutrition'
 
 interface RecipeFormLayoutProps {
@@ -138,6 +140,18 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   onDismissNormalization,
 }) => {
   // --- AI Instruction Refinement Hook ---
+
+  // --- Nutrition Estimate Hook ---
+  const {
+    estimate: nutritionEstimate,
+    loadingState: nutritionLoadingState,
+    error: nutritionError,
+    estimateNutrition,
+    clearEstimate: clearNutritionEstimate,
+    acceptEstimate: acceptNutritionEstimate,
+  } = useNutritionEstimate()
+
+  const hasIngredients = ingredients.some((i) => i.item.trim())
 
 
   const handlePreviousStepClick = () => {
@@ -392,6 +406,29 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 onDismissNormalization={onDismissNormalization}
               />
           </div>
+
+          {/* Nutrition Estimate — shown on step 2 (Ingredients) */}
+          {currentStep === 2 && (
+            <div className="mt-4">
+              <button
+                type="button"
+                disabled={!hasIngredients || nutritionLoadingState === 'loading'}
+                onClick={() =>
+                  estimateNutrition(ingredients, parseInt(servings, 10) || 1, title)
+                }
+                className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {nutritionLoadingState === 'loading' ? 'Estimating…' : 'Recalculate Nutrition'}
+              </button>
+              <NutritionEstimatePanel
+                estimate={nutritionEstimate}
+                loadingState={nutritionLoadingState}
+                error={nutritionError}
+                onAccept={() => acceptNutritionEstimate(() => {})}
+                onDismiss={clearNutritionEstimate}
+              />
+            </div>
+          )}
 
           {/* Navigation Buttons */}
           <div className="flex justify-between items-center gap-4 pt-6 border-t border-gray-200">
