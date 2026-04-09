@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react';
+import { vi } from "vitest";import { renderHook, act } from '@testing-library/react';
 import { useInstructionRefinement } from '../useInstructionRefinement';
 
 global.fetch = jest.fn(() =>
@@ -6,11 +6,11 @@ global.fetch = jest.fn(() =>
     ok: true,
     json: () => Promise.resolve({ refinements: [{ stepIndex: 0, original: 'Mix', refined: 'Mix well', changesSummary: 'Added "well"' }] })
   })
-) as jest.Mock;
+) as vi.Mock;
 
 describe('useInstructionRefinement', () => {
   it('refines a single step', async () => {
-    const updateInstruction = jest.fn();
+    const updateInstruction = vi.fn();
     const { result } = renderHook(() => useInstructionRefinement(updateInstruction));
     await act(async () => {
       await result.current.refineSingle(0, 'Mix');
@@ -20,7 +20,7 @@ describe('useInstructionRefinement', () => {
   });
 
   it('accepts a refinement', async () => {
-    const updateInstruction = jest.fn();
+    const updateInstruction = vi.fn();
     const { result } = renderHook(() => useInstructionRefinement(updateInstruction));
     await act(async () => {
       await result.current.refineSingle(0, 'Mix');
@@ -33,7 +33,7 @@ describe('useInstructionRefinement', () => {
   });
 
   it('rejects a refinement', async () => {
-    const updateInstruction = jest.fn();
+    const updateInstruction = vi.fn();
     const { result } = renderHook(() => useInstructionRefinement(updateInstruction));
     await act(async () => {
       await result.current.refineSingle(0, 'Mix');
@@ -45,8 +45,8 @@ describe('useInstructionRefinement', () => {
   });
 
   it('handles API failure gracefully', async () => {
-    (global.fetch as jest.Mock).mockImplementationOnce(() => Promise.reject(new Error('API down')));
-    const updateInstruction = jest.fn();
+    (global.fetch as vi.Mock).mockImplementationOnce(() => Promise.reject(new Error('API down')));
+    const updateInstruction = vi.fn();
     const { result } = renderHook(() => useInstructionRefinement(updateInstruction));
     await act(async () => {
       await result.current.refineSingle(0, 'Mix');
@@ -56,7 +56,7 @@ describe('useInstructionRefinement', () => {
   });
 
   it('refines all steps', async () => {
-    const updateInstruction = jest.fn();
+    const updateInstruction = vi.fn();
     const { result } = renderHook(() => useInstructionRefinement(updateInstruction));
     await act(async () => {
       await result.current.refineAll(['Mix', 'Bake']);
@@ -65,7 +65,7 @@ describe('useInstructionRefinement', () => {
   });
 
   it('accepts all refinements', async () => {
-    const updateInstruction = jest.fn();
+    const updateInstruction = vi.fn();
     const { result } = renderHook(() => useInstructionRefinement(updateInstruction));
     await act(async () => {
       await result.current.refineAll(['Mix', 'Bake']);
@@ -77,7 +77,7 @@ describe('useInstructionRefinement', () => {
   });
 
   it('rejects all refinements', async () => {
-    const updateInstruction = jest.fn();
+    const updateInstruction = vi.fn();
     const { result } = renderHook(() => useInstructionRefinement(updateInstruction));
     await act(async () => {
       await result.current.refineAll(['Mix', 'Bake']);
@@ -89,7 +89,7 @@ describe('useInstructionRefinement', () => {
   });
 
   it('clears refinements', async () => {
-    const updateInstruction = jest.fn();
+    const updateInstruction = vi.fn();
     const { result } = renderHook(() => useInstructionRefinement(updateInstruction));
     await act(async () => {
       await result.current.refineSingle(0, 'Mix');
