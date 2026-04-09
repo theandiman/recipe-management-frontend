@@ -82,7 +82,7 @@ export const NutritionEstimatePanel: React.FC<NutritionEstimatePanelProps> = ({
     return (
       <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700">
         <p className="text-sm text-yellow-700 dark:text-yellow-400">
-          Could not estimate nutrition. Please try again.
+          {error ?? 'Could not estimate nutrition.'} Please try again.
         </p>
         <button
           type="button"
