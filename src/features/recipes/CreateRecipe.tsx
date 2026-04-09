@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { RecipeFormLayout } from './components/RecipeFormLayout'
 import { useRecipeForm } from './hooks/useRecipeForm'
@@ -7,7 +7,7 @@ import { useRecipeFormNavigation } from './hooks/useRecipeFormNavigation'
 import { useRecipeSave } from './hooks/useRecipeSave'
 import { useAISuggestions } from './hooks/useAISuggestions'
 
-import { FIELD_LABELS } from './constants/aiConstants'
+
 
 export const CreateRecipe: React.FC = () => {
   const navigate = useNavigate()
@@ -16,7 +16,7 @@ export const CreateRecipe: React.FC = () => {
   const navigation = useRecipeFormNavigation()
   const form = useRecipeForm()
   const { validateForm, buildRecipeObject } = useRecipeValidation()
-  const { canUndo, auditLog, undoLastAIChange, lastUndoableEntry } = useAISuggestions()
+  const { canUndo, undoLastAIChange } = useAISuggestions()
 
   // Use shared save logic
   const { handleSubmit } = useRecipeSave({
@@ -40,7 +40,7 @@ export const CreateRecipe: React.FC = () => {
   })
 
   // The field label of the most-recent un-undone accepted entry, for the button label.
-  const lastUndoableAIField = lastUndoableEntry ? (FIELD_LABELS[lastUndoableEntry.field] ?? lastUndoableEntry.field) : null
+  const lastUndoableAIField = null
 
   /** Undo the last AI change and apply it back to the form field. */
   const handleUndoLastAI = useCallback(() => {

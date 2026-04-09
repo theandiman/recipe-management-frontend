@@ -1,8 +1,8 @@
 import React from 'react'
 import { StepIndicator } from './StepIndicator'
 import { RecipeFormSteps } from './RecipeFormSteps'
-import { useInstructionRefinement } from '../hooks/useInstructionRefinement'
-import { InstructionDiffView } from './InstructionDiffView'
+
+
 import { RecipePreview } from './RecipePreview'
 import type { Ingredient } from '../../../types/nutrition'
 
@@ -129,7 +129,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   lastUndoableAIField,
 }) => {
   // --- AI Instruction Refinement Hook ---
-  const instructionRefinement = useInstructionRefinement(updateInstruction);
+
 
   const handlePreviousStepClick = () => {
     if (saveError) {
@@ -285,7 +285,6 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 removeDietaryRestriction={removeDietaryRestriction}
                 fieldErrors={fieldErrors}
                 clearFieldError={clearFieldError}
-                instructionRefinement={instructionRefinement}
                 recipeName={title}
               />
           </div>

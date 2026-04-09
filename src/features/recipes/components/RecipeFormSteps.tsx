@@ -4,7 +4,7 @@ import { UI_STYLES } from '../../../utils/uiStyles'
 import { clampedNumericHandler } from '../../../utils/formUtils'
 import type { Ingredient } from '../../../types/nutrition'
 
-import type { UseInstructionRefinementReturn } from '../hooks/useInstructionRefinement'
+
 
 interface RecipeFormStepsProps {
   currentStep: number
@@ -46,11 +46,10 @@ interface RecipeFormStepsProps {
   fieldErrors: Record<string, string>
   clearFieldError: (fieldName: string, stepNumber: number) => void
   // AI Instruction Refinement
-  instructionRefinement: UseInstructionRefinementReturn
   recipeName: string
 }
 
-import { InstructionDiffView } from './InstructionDiffView'
+
 
 export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
   currentStep,
@@ -237,105 +236,48 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   </svg>
                   <span>Add Step</span>
                 </button>
-                <button
-                  type="button"
-                  className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-200 border border-emerald-200 flex items-center gap-1"
-                  onClick={() => instructionRefinement.refineAll(instructions, recipeName)}
-                  disabled={instructionRefinement.loadingState === 'loading'}
-                  title="Refine all steps"
-                >
-                  <span role="img" aria-label="magic">✨</span> Refine all steps
-                  {instructionRefinement.loadingState === 'loading' && <span className="ml-1 animate-spin">⏳</span>}
-                </button>
-                {instructionRefinement.hasPendingRefinements && (
-                  <>
-                    <button
-                      type="button"
-                      className="px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700 border border-emerald-700"
-                      onClick={instructionRefinement.acceptAll}
-                    >
-                      ✓ Accept all
-                    </button>
-                    <button
-                      type="button"
-                      className="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 border border-gray-300"
-                      onClick={instructionRefinement.rejectAll}
-                    >
-                      ✗ Reject all
-                    </button>
-                  </>
-                )}
+                
               </div>
             </div>
 
             <div className="space-y-3">
               {instructions.map((instruction, index) => {
-                const refinement = instructionRefinement.stepStates.get(index);
-                const isPending = refinement && refinement.status === 'pending';
-                return (
-                  <div key={index} className="flex items-start space-x-3">
-                    <span className="flex-shrink-0 w-8 h-10 flex items-center justify-center">
-                      <span className="w-7 h-7 flex items-center justify-center rounded-full bg-emerald-600 text-white text-sm font-bold">
-                        {index + 1}
-                      </span>
-                    </span>
-                    <div className="flex-1">
-                      {isPending ? (
-                        <InstructionDiffView
-                          original={refinement.original}
-                          refined={refinement.refined}
-                          onAccept={() => instructionRefinement.acceptStep(index)}
-                          onReject={() => instructionRefinement.rejectStep(index)}
-                          isLoading={instructionRefinement.loadingState === 'loading'}
-                        />
-                      ) : (
-                        <textarea
-                          value={instruction}
-                          onChange={(e) => updateInstruction(index, e.target.value)}
-                          placeholder="Describe this step in detail..."
-                          required={index === 0}
-                          rows={2}
-                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
-                        />
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <button
-                        type="button"
-                        className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-200 border border-emerald-200 text-xs flex items-center gap-1"
-                        onClick={() => instructionRefinement.refineSingle(index, instruction, recipeName)}
-                        disabled={instructionRefinement.loadingState === 'loading'}
-                        title="Refine this step"
-                      >
-                        <span role="img" aria-label="magic">✨</span> Refine
-                      </button>
-                      {instructions.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeInstruction(index)}
-                          className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+  return (
+    <div key={index} className="flex items-start space-x-3">
+      <span className="flex-shrink-0 w-8 h-10 flex items-center justify-center">
+        <span className="w-7 h-7 flex items-center justify-center rounded-full bg-emerald-600 text-white text-sm font-bold">
+          {index + 1}
+        </span>
+      </span>
+      <div className="flex-1">
+        <textarea
+          value={instruction}
+          onChange={(e) => updateInstruction(index, e.target.value)}
+          placeholder="Describe this step in detail..."
+          required={index === 0}
+          rows={2}
+          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+        />
+      </div>
+      <div className="flex flex-col gap-1">
+        {instructions.length > 1 && (
+          <button
+            type="button"
+            onClick={() => removeInstruction(index)}
+            className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+})}
             </div>
 
-            {instructionRefinement.error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start" role="alert">
-                <svg className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-red-800">{instructionRefinement.error}</p>
-                </div>
-              </div>
-            )}
+            
             {fieldErrors.instructions && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start" role="alert">
                 <svg className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">

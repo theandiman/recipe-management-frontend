@@ -33,7 +33,7 @@ interface UseAISuggestionsReturn {
   status: SuggestionStatus
   error: string | null
   fetchSuggestions: (request: FieldSuggestionRequest) => Promise<void>
-  applySuggestion: (field: string, applyFn: (value: string) => void, previousValue?: string) => void
+  applySuggestion: (field: string, applyFn: (value: string) => void, previousValue: string) => void
   dismissSuggestion: (field: string) => void
   visibleSuggestions: FieldSuggestion[]
   // Audit trail

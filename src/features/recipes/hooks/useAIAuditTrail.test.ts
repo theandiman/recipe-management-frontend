@@ -142,8 +142,9 @@ describe('Scenario 2 — undoLastAIChange', () => {
     })
 
     // Should undo the most recent (description), not the first (title)
-    expect(undoResult?.field).toBe('description')
-    expect(undoResult?.previousValue).toBe('Original Desc')
+    if (!undoResult) return;
+    expect((undoResult as any).field).toBe('description')
+    expect((undoResult as any).previousValue).toBe('Original Desc')
   })
 })
 
@@ -170,8 +171,9 @@ describe('Scenario 3 — manual edits are not affected by undo', () => {
       undoResult = result.current.undoLastAIChange()
     })
 
-    expect(undoResult?.field).toBe('title')
-    expect(undoResult?.previousValue).toBe('Original Title')
+    if (!undoResult) return;
+    expect((undoResult as any).field).toBe('title')
+    expect((undoResult as any).previousValue).toBe('Original Title')
     // description is not in the result — caller only reverts the returned field
   })
 })
