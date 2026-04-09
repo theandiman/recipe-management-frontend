@@ -30,10 +30,6 @@ export interface AISuggestionValidationResult {
   errors: string[]
 }
 
-/** Pattern stripping script/style elements including their content */
-const SCRIPT_STYLE_PATTERN = /<(script|style)[^>]*>[\s\S]*?<\/\1>/gi
-/** Pattern matching HTML tags for sanitization */
-const HTML_TAG_PATTERN = /<[^>]*>/g
 /** Pattern matching ASCII control characters (null bytes, etc.) */
 const CONTROL_CHAR_PATTERN = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g
 
@@ -87,9 +83,9 @@ export function validateAISuggestionField(
     }
 
     case 'servings': {
-      const num = typeof value === 'string' ? Number(value) : value
-      if (num != null) {
-        if (!Number.isInteger(num) || num < AI_FIELD_LIMITS.servings.min || num > AI_FIELD_LIMITS.servings.max) {
+      const numVal: number = typeof value === 'string' ? Number(value) : typeof value === 'number' ? (value as number) : NaN
+      if (!Number.isFinite(numVal) || !Number.isInteger(numVal) || numVal < AI_FIELD_LIMITS.servings.min || numVal > AI_FIELD_LIMITS.servings.max) {
+        if (value != null) {
           errors.push(`servings must be an integer between ${AI_FIELD_LIMITS.servings.min} and ${AI_FIELD_LIMITS.servings.max}`)
         }
       }
