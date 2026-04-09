@@ -208,18 +208,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   useEffect(() => {
     if (!suggestionFetched.current && title.trim().length > 2) {
       suggestionFetched.current = true
-      fetchSuggestions({
-        recipeName: title || undefined,
-        description: description || undefined,
-        prepTime: prepTime || undefined,
-        cookTime: cookTime || undefined,
-        servings: servings || undefined,
-        tags: tags.length > 0 ? tags : undefined,
-        ingredients: ingredients.filter(i => i.item.trim()).map(i =>
-          [i.quantity, i.unit, i.item].filter(Boolean).join(' ')
-        ),
-        instructions: instructions.filter(i => i.trim()),
-      })
+      fetchSuggestions(buildSuggestionRequest())
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title])
@@ -230,18 +219,29 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     prepTime: setPrepTime,
     cookTime: setCookTime,
     servings: setServings,
+    tags: (tagsArr: string[]) => {
+      // Replace the tags array
+      if (Array.isArray(tagsArr)) setTags(tagsArr)
+    },
   }
+
+  // Shared request builder for AI suggestions
+  const buildSuggestionRequest = () => ({
+    recipeName: title || undefined,
+    description: description || undefined,
+    prepTime: prepTime || undefined,
+    cookTime: cookTime || undefined,
+    servings: servings || undefined,
+    tags: tags.length > 0 ? tags : undefined,
+    ingredients: ingredients.filter(i => i.item.trim()).map(i =>
+      [i.quantity, i.unit, i.item].filter(Boolean).join(' ')
+    ),
+    instructions: instructions.filter(i => i.trim()),
+  })
 
   const handleRetrySuggestions = () => {
     suggestionFetched.current = false
-    fetchSuggestions({
-      recipeName: title || undefined,
-      description: description || undefined,
-      prepTime: prepTime || undefined,
-      cookTime: cookTime || undefined,
-      servings: servings || undefined,
-      tags: tags.length > 0 ? tags : undefined,
-    })
+    fetchSuggestions(buildSuggestionRequest())
   }
 
   return (

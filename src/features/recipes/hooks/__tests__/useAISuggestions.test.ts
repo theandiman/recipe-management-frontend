@@ -172,11 +172,19 @@ describe('useAISuggestions', () => {
       await result.current.fetchSuggestions({ recipeName: 'Test' })
     })
 
+    // Apply suggestion
+    const setter = vi.fn()
+    act(() => {
+      result.current.applySuggestion('description', setter)
+    })
+
+    // Dismiss suggestion (should be no-op since it's already applied, but event should still fire)
     act(() => {
       result.current.dismissSuggestion('description')
     })
 
     expect(events).toContain('ai_suggestions_fetched')
+    expect(events).toContain('ai_suggestion_applied')
     expect(events).toContain('ai_suggestion_dismissed')
 
     window.removeEventListener('ai:suggestions', listener)
