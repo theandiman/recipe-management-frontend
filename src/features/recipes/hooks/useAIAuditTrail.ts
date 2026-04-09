@@ -33,6 +33,7 @@ export interface UndoResult {
 interface UseAIAuditTrailReturn {
   auditLog: AuditEntry[]
   canUndo: boolean
+  lastUndoableEntry: AuditEntry | null
   recordSuggestion: (field: string, suggestedValue: unknown) => void
   recordAccepted: (field: string, previousValue: unknown, newValue: unknown) => void
   recordRejected: (field: string) => void
@@ -62,14 +63,15 @@ function emitAnalytics(entry: AuditEntry): void {
  */
 function computeConsumedIds(log: AuditEntry[]): Set<string> {
   const consumed = new Set<string>()
+  const acceptedByField: Record<string, string[]> = {}
   for (const entry of log) {
-    if (entry.event === 'undone') {
-      for (let i = log.length - 1; i >= 0; i--) {
-        const e = log[i]
-        if (e.event === 'accepted' && e.field === entry.field && !consumed.has(e.id)) {
-          consumed.add(e.id)
-          break
-        }
+    if (entry.event === 'accepted') {
+      if (!acceptedByField[entry.field]) acceptedByField[entry.field] = []
+      acceptedByField[entry.field].push(entry.id)
+    } else if (entry.event === 'undone') {
+      const stack = acceptedByField[entry.field]
+      if (stack && stack.length > 0) {
+        consumed.add(stack.pop()!)
       }
     }
   }
@@ -178,9 +180,21 @@ export function useAIAuditTrail(): UseAIAuditTrailReturn {
     return auditLog.some(e => e.event === 'accepted' && !consumed.has(e.id))
   }, [auditLog])
 
+  const lastUndoableEntry = useMemo(() => {
+    const consumed = computeConsumedIds(auditLog)
+    for (let i = auditLog.length - 1; i >= 0; i--) {
+      const e = auditLog[i]
+      if (e.event === 'accepted' && !consumed.has(e.id)) {
+        return e
+      }
+    }
+    return null
+  }, [auditLog])
+
   return {
     auditLog,
     canUndo,
+    lastUndoableEntry,
     recordSuggestion,
     recordAccepted,
     recordRejected,

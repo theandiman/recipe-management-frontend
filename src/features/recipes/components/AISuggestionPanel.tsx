@@ -12,14 +12,7 @@ interface AISuggestionPanelProps {
   onRetry?: () => void
 }
 
-const FIELD_LABELS: Record<string, string> = {
-  recipeName: 'Recipe Name',
-  description: 'Description',
-  prepTime: 'Prep Time (min)',
-  cookTime: 'Cook Time (min)',
-  servings: 'Servings',
-  tags: 'Tags',
-}
+import { FIELD_LABELS } from '../constants/aiConstants'
 
 /**
  * Collapsible panel that displays AI-generated field suggestions.

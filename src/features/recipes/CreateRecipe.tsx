@@ -7,14 +7,7 @@ import { useRecipeFormNavigation } from './hooks/useRecipeFormNavigation'
 import { useRecipeSave } from './hooks/useRecipeSave'
 import { useAISuggestions } from './hooks/useAISuggestions'
 
-const FIELD_LABELS: Record<string, string> = {
-  recipeName: 'Recipe Name',
-  description: 'Description',
-  prepTime: 'Prep Time',
-  cookTime: 'Cook Time',
-  servings: 'Servings',
-  tags: 'Tags',
-}
+import { FIELD_LABELS } from './constants/aiConstants'
 
 export const CreateRecipe: React.FC = () => {
   const navigate = useNavigate()
@@ -23,7 +16,7 @@ export const CreateRecipe: React.FC = () => {
   const navigation = useRecipeFormNavigation()
   const form = useRecipeForm()
   const { validateForm, buildRecipeObject } = useRecipeValidation()
-  const { canUndo, auditLog, undoLastAIChange } = useAISuggestions()
+  const { canUndo, auditLog, undoLastAIChange, lastUndoableEntry } = useAISuggestions()
 
   // Use shared save logic
   const { handleSubmit } = useRecipeSave({
@@ -46,28 +39,8 @@ export const CreateRecipe: React.FC = () => {
     goToStep: navigation.goToStep
   })
 
-  /** The field label of the most-recent un-undone accepted entry, for the button label. */
-  const lastUndoableAIField = useMemo(() => {
-    const consumed = new Set<string>()
-    for (const e of auditLog) {
-      if (e.event === 'undone') {
-        for (let i = auditLog.length - 1; i >= 0; i--) {
-          const a = auditLog[i]
-          if (a.event === 'accepted' && a.field === e.field && !consumed.has(a.id)) {
-            consumed.add(a.id)
-            break
-          }
-        }
-      }
-    }
-    for (let i = auditLog.length - 1; i >= 0; i--) {
-      const e = auditLog[i]
-      if (e.event === 'accepted' && !consumed.has(e.id)) {
-        return FIELD_LABELS[e.field] ?? e.field
-      }
-    }
-    return null
-  }, [auditLog])
+  // The field label of the most-recent un-undone accepted entry, for the button label.
+  const lastUndoableAIField = lastUndoableEntry ? (FIELD_LABELS[lastUndoableEntry.field] ?? lastUndoableEntry.field) : null
 
   /** Undo the last AI change and apply it back to the form field. */
   const handleUndoLastAI = useCallback(() => {

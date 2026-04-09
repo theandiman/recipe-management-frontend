@@ -96,9 +96,9 @@ export function useAISuggestions(): UseAISuggestionsReturn {
       setStatus('error')
       console.warn('[AI Suggestions] fetch failed:', msg)
     }
-  }, [])
+  }, [recordSuggestion])
 
-  const applySuggestion = useCallback((field: string, applyFn: (value: string) => void, previousValue = '') => {
+  const applySuggestion = useCallback((field: string, applyFn: (value: string) => void, previousValue: string) => {
     const suggestion = suggestions.find(s => s.field === field)
     if (!suggestion) return
 

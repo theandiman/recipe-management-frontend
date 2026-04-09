@@ -290,7 +290,7 @@ describe('Scenario 5 — analytics events', () => {
 
   it('CustomEvent detail contains field and timestamp', () => {
     const events: CustomEvent[] = []
-    window.addEventListener('ai-audit', (e) => events.push(e as CustomEvent))
+    window.addEventListener('ai-audit', (e) => events.push(e as CustomEvent), { once: true })
 
     const { result } = renderHook(() => useAIAuditTrail())
 
@@ -351,6 +351,39 @@ describe('Scenario 6 — canUndo', () => {
 
 // ---------------------------------------------------------------------------
 // Scenario 7: Double-undo does not corrupt state
+
+// Regression: accept → undo → accept again on same field
+
+describe('Regression: accept → undo → accept again on same field', () => {
+  it('canUndo remains true, undo undoes the latest accepted entry', () => {
+    const { result } = renderHook(() => useAIAuditTrail())
+    act(() => {
+      result.current.recordAccepted('title', 'Original', 'AI1')
+    })
+    act(() => {
+      result.current.undoLastAIChange()
+    })
+    act(() => {
+      result.current.recordAccepted('title', 'AI1', 'AI2')
+    })
+    // Should be undoable
+    expect(result.current.canUndo).toBe(true)
+    let undoResult: UndoResult | null = null
+    act(() => {
+      undoResult = result.current.undoLastAIChange()
+    })
+    expect(undoResult).toEqual({ field: 'title', previousValue: 'AI1' })
+    // The audit log should show two accepted, two undone
+    const accepted = result.current.auditLog.filter(e => e.event === 'accepted')
+    const undone = result.current.auditLog.filter(e => e.event === 'undone')
+    expect(accepted).toHaveLength(2)
+    expect(undone).toHaveLength(2)
+    // The last undone should correspond to the second accepted
+    expect(undone[1].previousValue).toBe('AI2')
+    expect(undone[1].newValue).toBe('AI1')
+  })
+})
+
 // ---------------------------------------------------------------------------
 describe('Scenario 7 — double-undo safety', () => {
   it('returns null on the second undo attempt', () => {
