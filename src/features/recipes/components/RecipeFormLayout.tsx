@@ -66,6 +66,11 @@ interface RecipeFormLayoutProps {
   // Handlers
   handleSubmit: (e?: React.FormEvent) => void
   handleCancel: () => void
+
+  // AI Audit Trail (optional — only present when AI suggestions are enabled)
+  canUndoAI?: boolean
+  onUndoLastAI?: () => void
+  lastUndoableAIField?: string | null
 }
 
 export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
@@ -118,7 +123,10 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   saveError,
   setSaveError,
   handleSubmit,
-  handleCancel
+  handleCancel,
+  canUndoAI = false,
+  onUndoLastAI,
+  lastUndoableAIField,
 }) => {
   const handlePreviousStepClick = () => {
     if (saveError) {
@@ -354,6 +362,17 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
             </button>
 
             <div className="flex items-center space-x-4">
+              {canUndoAI && onUndoLastAI && (
+                <button
+                  type="button"
+                  onClick={onUndoLastAI}
+                  aria-label={lastUndoableAIField ? `Undo AI change to ${lastUndoableAIField}` : 'Undo last AI change'}
+                  className="px-4 py-2 text-sm border border-amber-400 text-amber-700 rounded-lg font-medium hover:bg-amber-50 transition-colors flex items-center gap-1"
+                >
+                  ↩ {lastUndoableAIField ? `Undo AI: ${lastUndoableAIField}` : 'Undo AI change'}
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={handleCancel}
