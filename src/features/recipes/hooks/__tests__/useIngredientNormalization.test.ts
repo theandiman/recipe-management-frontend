@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useIngredientNormalization } from '../useIngredientNormalization'
 import type { Ingredient } from '../../../../types/nutrition'
+import type { AxiosResponse } from 'axios'
 
 vi.mock('../../../../utils/authApi', () => ({
   postWithAuth: vi.fn(),
@@ -22,7 +23,7 @@ describe('useIngredientNormalization', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUpdateIngredient = vi.fn()
+    mockUpdateIngredient = vi.fn() as unknown as (index: number, field: keyof Ingredient, value: string) => void
     vi.spyOn(console, 'warn').mockImplementation(() => {})
   })
 
@@ -53,7 +54,8 @@ describe('useIngredientNormalization', () => {
           },
         ],
       },
-    })
+      status: 200, statusText: 'OK', headers: {}, config: { headers: {} as any },
+    } as AxiosResponse)
 
     const { result } = renderHook(() =>
       useIngredientNormalization(mockUpdateIngredient)
@@ -88,7 +90,8 @@ describe('useIngredientNormalization', () => {
           },
         ],
       },
-    })
+      status: 200, statusText: 'OK', headers: {}, config: { headers: {} as any },
+    } as AxiosResponse)
 
     const { result } = renderHook(() =>
       useIngredientNormalization(mockUpdateIngredient)
@@ -122,7 +125,8 @@ describe('useIngredientNormalization', () => {
           },
         ],
       },
-    })
+      status: 200, statusText: 'OK', headers: {}, config: { headers: {} as any },
+    } as AxiosResponse)
 
     const { result } = renderHook(() =>
       useIngredientNormalization(mockUpdateIngredient)
@@ -184,7 +188,8 @@ describe('useIngredientNormalization', () => {
           },
         ],
       },
-    })
+      status: 200, statusText: 'OK', headers: {}, config: { headers: {} as any },
+    } as AxiosResponse)
 
     const { result } = renderHook(() =>
       useIngredientNormalization(mockUpdateIngredient)

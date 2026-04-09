@@ -25,7 +25,6 @@ export const CreateRecipe: React.FC = () => {
   const { canUndo, auditLog, undoLastAIChange } = useAISuggestions()
   const {
     normalizationStates,
-    normalizeAll,
     applyNormalization,
     dismissNormalization,
   } = useIngredientNormalization(form.updateIngredient)
@@ -86,10 +85,6 @@ export const CreateRecipe: React.FC = () => {
     const setter = setters[field]
     if (setter) setter(String(previousValue ?? ''))
   }, [undoLastAIChange, form.setTitle, form.setDescription, form.setPrepTime, form.setCookTime, form.setServings])
-
-  const handleNormalizeIngredients = useCallback(() => {
-    normalizeAll(form.ingredients, form.title)
-  }, [normalizeAll, form.ingredients, form.title])
 
   const handleCancel = useCallback(() => {
     navigate('/dashboard/recipes')
