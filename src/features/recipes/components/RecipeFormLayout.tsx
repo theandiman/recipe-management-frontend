@@ -214,10 +214,6 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     fetchSuggestions,
     applySuggestion,
     dismissSuggestion,
-    auditLog,
-    canUndo,
-    undoLastAIChange,
-    undoFieldAIChange,
   } = useAISuggestions()
 
   // Fetch suggestions once when the recipe title is available (first meaningful state)
