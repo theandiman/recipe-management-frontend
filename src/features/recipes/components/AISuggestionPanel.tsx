@@ -96,11 +96,7 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
           )}
 
           {/* Suggestion cards */}
-<<<<<<< HEAD
-          {hasSuggestions && (
-=======
           {status === 'success' && hasSuggestions && (
->>>>>>> origin/main
             <ul className="space-y-2 mt-1" role="list">
               {suggestions.map(suggestion => {
                 const setter = fieldSetters[suggestion.field]
@@ -132,7 +128,7 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
                           onClick={() => {
                             // Get the current value for audit trail
                             let previousValue = ''
-                            if (suggestion.field === 'recipeName') previousValue = (setter as any).currentValue || ''
+                            if ('currentValue' in setter) previousValue = (setter as any).currentValue || ''
                             // For other fields, pass empty string or implement as needed
                             onApply(suggestion.field, setter, previousValue)
                           }}
