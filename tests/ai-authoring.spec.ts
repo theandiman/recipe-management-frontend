@@ -25,8 +25,6 @@ const SUGGEST_FIELDS_RESPONSE = {
   ],
 }
 
-const SUGGEST_FIELDS_EMPTY = { suggestions: [] }
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Mock the suggest-fields endpoint with a successful response containing one description suggestion. */
@@ -54,7 +52,14 @@ async function mockRefineInstructionsSuccess(page: Page) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        refinements: [{ index: 0, original: 'mix', refined: 'Mix all ingredients together until smooth' }],
+        refinements: [
+          {
+            stepIndex: 0,
+            original: 'mix',
+            refined: 'Mix all ingredients together until smooth',
+            changesSummary: 'Expanded the step with clearer mixing instructions.',
+          },
+        ],
       }),
     })
   })
