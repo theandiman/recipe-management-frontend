@@ -48,8 +48,9 @@ export function useAISuggestions(): UseAISuggestionsReturn {
   const [error, setError] = useState<string | null>(null)
 
   const fetchSuggestions = useCallback(async (request: FieldSuggestionRequest) => {
-    setStatus('loading')
     setSuggestions([])
+    setDismissedFields(new Set())
+    setStatus('loading')
     setError(null)
     const startTime = Date.now()
 
@@ -71,6 +72,7 @@ export function useAISuggestions(): UseAISuggestionsReturn {
       const msg = err instanceof Error ? err.message : 'Failed to fetch AI suggestions'
       setError(msg)
       setSuggestions([])
+      setDismissedFields(new Set())
       setStatus('error')
       console.warn('[AI Suggestions] fetch failed:', msg)
     }
