@@ -62,9 +62,22 @@ describe('NutritionEstimatePanel', () => {
         onDismiss={onDismiss}
       />
     )
-    expect(screen.getByText(/could not estimate nutrition/i)).toBeInTheDocument()
+    expect(screen.getByText(/network failed/i)).toBeInTheDocument()
     fireEvent.click(screen.getByText(/dismiss/i))
     expect(onDismiss).toHaveBeenCalled()
+  })
+
+  it('shows fallback error message when error prop is null', () => {
+    render(
+      <NutritionEstimatePanel
+        estimate={null}
+        loadingState="error"
+        error={null}
+        onAccept={vi.fn()}
+        onDismiss={vi.fn()}
+      />
+    )
+    expect(screen.getByText(/could not estimate nutrition/i)).toBeInTheDocument()
   })
 
   it('renders nutrient table with per-serving and whole-recipe values', () => {
