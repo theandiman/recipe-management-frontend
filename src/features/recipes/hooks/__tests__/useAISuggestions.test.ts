@@ -7,8 +7,11 @@ vi.mock('../../../../utils/authApi', () => ({
   postWithAuth: vi.fn(),
 }))
 vi.mock('../../../../utils/apiUtils', () => ({
-  buildApiUrl: (_base: string, endpoint: string) => endpoint,
+  buildApiUrl: vi.fn((_base: string, endpoint: string) => endpoint),
 }))
+
+import { buildApiUrl } from '../../../../utils/apiUtils'
+const mockBuildApiUrl = vi.mocked(buildApiUrl)
 
 import { postWithAuth } from '../../../../utils/authApi'
 
@@ -188,5 +191,34 @@ describe('useAISuggestions', () => {
     expect(events).toContain('ai_suggestions_fetched')
 
     window.removeEventListener('ai:suggestions', listener)
+  })
+
+  describe('API base URL resolution', () => {
+    it('uses VITE_AI_API_URL when set, preferring it over VITE_API_URL', async () => {
+      vi.stubEnv('VITE_AI_API_URL', 'https://ai.example.com')
+
+      mockPostWithAuth.mockResolvedValueOnce({ data: { suggestions: [] } } as any)
+
+      const { result } = renderHook(() => useAISuggestions())
+      await act(async () => {
+        await result.current.fetchSuggestions({ recipeName: 'Test' })
+      })
+
+      expect(mockBuildApiUrl).toHaveBeenCalledWith('https://ai.example.com', '/api/recipes/suggest-fields')
+      vi.unstubAllEnvs()
+    })
+
+    it('falls back to VITE_API_URL when VITE_AI_API_URL is absent', async () => {
+      // VITE_AI_API_URL is not set in the test environment, so the hook falls back to VITE_API_URL
+      mockPostWithAuth.mockResolvedValueOnce({ data: { suggestions: [] } } as any)
+
+      const { result } = renderHook(() => useAISuggestions())
+      await act(async () => {
+        await result.current.fetchSuggestions({ recipeName: 'Test' })
+      })
+
+      const expectedBase = import.meta.env.VITE_API_URL || ''
+      expect(mockBuildApiUrl).toHaveBeenCalledWith(expectedBase, '/api/recipes/suggest-fields')
+    })
   })
 })
