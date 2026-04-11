@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useRecipeForm } from './hooks/useRecipeForm'
 import { useRecipeValidation } from './hooks/useRecipeValidation'
@@ -65,13 +65,21 @@ export const SimpleCreateRecipe: React.FC = () => {
     instructions: form.instructions.filter(i => i.trim()),
   })
 
-  const fieldSetters: Partial<Record<string, (value: string) => void>> = {
-    recipeName: Object.assign(form.setTitle, { currentValue: form.title }),
-    description: Object.assign(form.setDescription, { currentValue: form.description }),
-    prepTime: Object.assign(form.setPrepTime, { currentValue: form.prepTime }),
-    cookTime: Object.assign(form.setCookTime, { currentValue: form.cookTime }),
-    servings: Object.assign(form.setServings, { currentValue: form.servings }),
-  }
+  const fieldSetters: Partial<Record<string, (value: string) => void>> = useMemo(() => ({
+    recipeName: form.setTitle,
+    description: form.setDescription,
+    prepTime: form.setPrepTime,
+    cookTime: form.setCookTime,
+    servings: form.setServings,
+  }), [form.setTitle, form.setDescription, form.setPrepTime, form.setCookTime, form.setServings])
+
+  const currentValues: Partial<Record<string, string>> = useMemo(() => ({
+    recipeName: form.title,
+    description: form.description,
+    prepTime: form.prepTime,
+    cookTime: form.cookTime,
+    servings: form.servings,
+  }), [form.title, form.description, form.prepTime, form.cookTime, form.servings])
 
   const handleEnhanceWithAI = () => {
     fetchSuggestions(buildSuggestionRequest())
@@ -164,6 +172,7 @@ export const SimpleCreateRecipe: React.FC = () => {
         onApply={applySuggestion}
         onDismiss={dismissSuggestion}
         fieldSetters={fieldSetters}
+        currentValues={currentValues}
         onRetry={handleEnhanceWithAI}
       />
 
