@@ -281,12 +281,12 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   }, [title])
 
   // Wrap setters to allow passing previousValue for audit trail
-  const fieldSetters: Partial<Record<string, (value: string) => void> & { currentValue?: string }> = {
-    recipeName: Object.assign(setTitle, { currentValue: title }),
-    description: Object.assign(setDescription, { currentValue: description }),
-    prepTime: Object.assign(setPrepTime, { currentValue: prepTime }),
-    cookTime: Object.assign(setCookTime, { currentValue: cookTime }),
-    servings: Object.assign(setServings, { currentValue: servings }),
+  const fieldSetters: Partial<Record<string, (value: string) => void>> = {
+    recipeName: setTitle,
+    description: setDescription,
+    prepTime: setPrepTime,
+    cookTime: setCookTime,
+    servings: setServings,
   }
 
   // Internal undo handler: uses the local audit trail (from RecipeFormLayout's own hook)
@@ -364,6 +364,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
             prepTime,
             cookTime,
             servings,
+            tags: tags.join(', '),
           }}
           onRetry={handleRetrySuggestions}
         />
