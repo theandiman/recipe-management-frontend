@@ -232,3 +232,26 @@ describe('SimpleCreateRecipe', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/dashboard/recipes')
   })
 })
+
+// ─── AI Enhancement (issue #36) ──────────────────────────────────────────────
+
+describe('AI Enhancement', () => {
+  beforeEach(() => {
+    vi.mock('../../utils/authApi', () => ({
+      postWithAuth: vi.fn(),
+    }))
+    vi.mock('../../utils/apiUtils', () => ({
+      buildApiUrl: vi.fn((_base: string, endpoint: string) => endpoint),
+    }))
+  })
+
+  it('renders the "Enhance with AI" button', () => {
+    renderWithRouter(<SimpleCreateRecipe />)
+    expect(screen.getByRole('button', { name: /Enhance recipe with AI/i })).toBeInTheDocument()
+  })
+
+  it('does NOT show the AI suggestion panel before the button is clicked', () => {
+    renderWithRouter(<SimpleCreateRecipe />)
+    expect(screen.queryByRole('region', { name: /AI field suggestions/i })).not.toBeInTheDocument()
+  })
+})
