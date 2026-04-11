@@ -6,6 +6,7 @@ import { RecipeFormSteps } from './RecipeFormSteps'
 import { RecipePreview } from './RecipePreview'
 import { AISuggestionPanel } from './AISuggestionPanel'
 import { useAISuggestions } from '../hooks/useAISuggestions'
+import { useInstructionRefinement } from '../hooks/useInstructionRefinement'
 import { FIELD_LABELS } from '../constants/aiConstants'
 import { useNutritionEstimate } from '../hooks/useNutritionEstimate'
 import { NutritionEstimatePanel } from './NutritionEstimatePanel'
@@ -140,7 +141,25 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   onDismissNormalization,
 }) => {
   // --- AI Instruction Refinement Hook ---
+  const {
+    stepStates: instructionRefinementStates,
+    loadingState: instructionRefinementLoading,
+    refineSingle: refineSingleInstruction,
+    refineAll: refineAllInstructions,
+    acceptStep: acceptInstructionRefinement,
+    rejectStep: rejectInstructionRefinement,
+  } = useInstructionRefinement(updateInstruction)
 
+  const handleRefineInstruction = useCallback(
+    (index: number, instruction: string) => {
+      refineSingleInstruction(index, instruction, title || undefined)
+    },
+    [refineSingleInstruction, title]
+  )
+
+  const handleRefineAllInstructions = useCallback(() => {
+    refineAllInstructions(instructions, title || undefined)
+  }, [refineAllInstructions, instructions, title])
   // --- Nutrition Estimate Hook ---
   const {
     estimate: nutritionEstimate,
@@ -401,6 +420,12 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 fieldErrors={fieldErrors}
                 clearFieldError={clearFieldError}
                 recipeName={title}
+                onRefineInstruction={handleRefineInstruction}
+                onRefineAllInstructions={handleRefineAllInstructions}
+                instructionRefinementStates={instructionRefinementStates}
+                onAcceptInstructionRefinement={acceptInstructionRefinement}
+                onRejectInstructionRefinement={rejectInstructionRefinement}
+                instructionRefinementLoading={instructionRefinementLoading}
                 normalizationStates={normalizationStates}
                 onApplyNormalization={onApplyNormalization}
                 onDismissNormalization={onDismissNormalization}

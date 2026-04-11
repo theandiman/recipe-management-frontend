@@ -3,7 +3,8 @@ import { IngredientInput } from '../../../components/IngredientInput'
 import { UI_STYLES } from '../../../utils/uiStyles'
 import { clampedNumericHandler } from '../../../utils/formUtils'
 import type { Ingredient } from '../../../types/nutrition'
-
+import type { StepRefinementState, RefinementLoadingState } from '../hooks/useInstructionRefinement'
+import { InstructionDiffView } from './InstructionDiffView'
 
 
 interface RecipeFormStepsProps {
@@ -47,6 +48,12 @@ interface RecipeFormStepsProps {
   clearFieldError: (fieldName: string, stepNumber: number) => void
   // AI Instruction Refinement
   recipeName: string
+  onRefineInstruction?: (index: number, instruction: string) => void
+  onRefineAllInstructions?: () => void
+  instructionRefinementStates?: Map<number, StepRefinementState>
+  onAcceptInstructionRefinement?: (index: number) => void
+  onRejectInstructionRefinement?: (index: number) => void
+  instructionRefinementLoading?: RefinementLoadingState
   // Ingredient Normalization
   normalizationStates?: Map<number, import('../hooks/useIngredientNormalization').NormalizationState>
   onApplyNormalization?: (index: number) => void
@@ -90,6 +97,12 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
   removeDietaryRestriction,
   fieldErrors,
   clearFieldError,
+  onRefineInstruction,
+  onRefineAllInstructions,
+  instructionRefinementStates,
+  onAcceptInstructionRefinement,
+  onRejectInstructionRefinement,
+  instructionRefinementLoading,
   normalizationStates,
   onApplyNormalization,
   onDismissNormalization,
@@ -236,6 +249,22 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 Instructions <span className="text-red-500">*</span>
               </h2>
               <div className="flex gap-2">
+                {onRefineAllInstructions && (
+                  <button
+                    type="button"
+                    onClick={onRefineAllInstructions}
+                    disabled={instructionRefinementLoading === 'loading' || !instructions.some(i => i.trim())}
+                    aria-label="Refine all instructions with AI"
+                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {instructionRefinementLoading === 'loading' ? (
+                      <span className="animate-spin">⏳</span>
+                    ) : (
+                      <span aria-hidden="true">✨</span>
+                    )}
+                    Refine all
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={addInstruction}
@@ -252,6 +281,8 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
 
             <div className="space-y-3">
               {instructions.map((instruction, index) => {
+                const refinementState = instructionRefinementStates?.get(index)
+                const isPending = refinementState?.status === 'pending'
   return (
     <div key={index} className="flex items-start space-x-3">
       <span className="flex-shrink-0 w-8 h-10 flex items-center justify-center">
@@ -268,8 +299,31 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
           rows={2}
           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
         />
+        {isPending && refinementState && onAcceptInstructionRefinement && onRejectInstructionRefinement && (
+          <div className="mt-2">
+            <InstructionDiffView
+              original={refinementState.original}
+              refined={refinementState.refined}
+              onAccept={() => onAcceptInstructionRefinement(index)}
+              onReject={() => onRejectInstructionRefinement(index)}
+              isLoading={instructionRefinementLoading === 'loading'}
+            />
+          </div>
+        )}
       </div>
       <div className="flex flex-col gap-1">
+        {onRefineInstruction && instruction.trim() && (
+          <button
+            type="button"
+            onClick={() => onRefineInstruction(index, instruction)}
+            disabled={instructionRefinementLoading === 'loading'}
+            aria-label={`Refine step ${index + 1} with AI`}
+            title="Refine this step with AI"
+            className="w-10 h-10 flex items-center justify-center text-amber-500 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            ✨
+          </button>
+        )}
         {instructions.length > 1 && (
           <button
             type="button"
