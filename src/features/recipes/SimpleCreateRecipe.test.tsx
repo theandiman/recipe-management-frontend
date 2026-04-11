@@ -19,6 +19,14 @@ vi.mock('../../services/recipeStorageApi', () => ({
   ),
 }))
 
+vi.mock('../../utils/authApi', () => ({
+  postWithAuth: vi.fn(),
+}))
+
+vi.mock('../../utils/apiUtils', () => ({
+  buildApiUrl: vi.fn((_base: string, endpoint: string) => endpoint),
+}))
+
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
@@ -230,5 +238,33 @@ describe('SimpleCreateRecipe', () => {
     renderWithRouter(<SimpleCreateRecipe />)
     fireEvent.click(screen.getByRole('button', { name: /Cancel/i }))
     expect(mockNavigate).toHaveBeenCalledWith('/dashboard/recipes')
+  })
+})
+
+// ─── AI Enhancement (issue #36) ──────────────────────────────────────────────
+
+describe('AI Enhancement', () => {
+  it('renders the "Enhance with AI" button', () => {
+    renderWithRouter(<SimpleCreateRecipe />)
+    expect(screen.getByRole('button', { name: /Enhance recipe with AI/i })).toBeInTheDocument()
+  })
+
+  it('does NOT show the AI suggestion panel before the button is clicked', () => {
+    renderWithRouter(<SimpleCreateRecipe />)
+    expect(screen.queryByRole('region', { name: /AI field suggestions/i })).not.toBeInTheDocument()
+  })
+
+  it('shows the AI suggestion panel in loading state when "Enhance with AI" is clicked', async () => {
+    const { postWithAuth } = await import('../../utils/authApi')
+    // Keep the request pending so we can observe the loading state
+    vi.mocked(postWithAuth).mockReturnValue(new Promise(() => {}))
+
+    renderWithRouter(<SimpleCreateRecipe />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Enhance recipe with AI/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('region', { name: /AI field suggestions/i })).toBeInTheDocument()
+    })
   })
 })

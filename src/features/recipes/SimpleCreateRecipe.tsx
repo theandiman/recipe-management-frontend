@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useRecipeForm } from './hooks/useRecipeForm'
 import { useRecipeValidation } from './hooks/useRecipeValidation'
@@ -8,6 +8,8 @@ import { IngredientInput } from '../../components/IngredientInput'
 import { UI_STYLES } from '../../utils/uiStyles'
 import { clampedNumericHandler } from '../../utils/formUtils'
 import { useSimpleCreateSections } from './hooks/useSimpleCreateSections'
+import { useAISuggestions } from './hooks/useAISuggestions'
+import { AISuggestionPanel } from './components/AISuggestionPanel'
 
 export const SimpleCreateRecipe: React.FC = () => {
   const navigate = useNavigate()
@@ -41,12 +43,68 @@ export const SimpleCreateRecipe: React.FC = () => {
     navigate('/dashboard/recipes')
   }, [navigate])
 
+  const {
+    visibleSuggestions,
+    status: suggestionStatus,
+    error: suggestionError,
+    fetchSuggestions,
+    applySuggestion,
+    dismissSuggestion,
+  } = useAISuggestions()
+
+  const buildSuggestionRequest = () => ({
+    recipeName: form.title || undefined,
+    description: form.description || undefined,
+    prepTime: form.prepTime || undefined,
+    cookTime: form.cookTime || undefined,
+    servings: form.servings || undefined,
+    tags: form.tags.length > 0 ? form.tags : undefined,
+    ingredients: form.ingredients.filter(i => i.item.trim()).map(i =>
+      [i.quantity, i.unit, i.item].filter(Boolean).join(' ')
+    ),
+    instructions: form.instructions.filter(i => i.trim()),
+  })
+
+  const fieldSetters: Partial<Record<string, (value: string) => void>> = useMemo(() => ({
+    recipeName: form.setTitle,
+    description: form.setDescription,
+    prepTime: form.setPrepTime,
+    cookTime: form.setCookTime,
+    servings: form.setServings,
+  }), [form.setTitle, form.setDescription, form.setPrepTime, form.setCookTime, form.setServings])
+
+  const currentValues: Partial<Record<string, string>> = useMemo(() => ({
+    recipeName: form.title,
+    description: form.description,
+    prepTime: form.prepTime,
+    cookTime: form.cookTime,
+    servings: form.servings,
+  }), [form.title, form.description, form.prepTime, form.cookTime, form.servings])
+
+  const handleEnhanceWithAI = () => {
+    fetchSuggestions(buildSuggestionRequest())
+  }
+
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
       {/* Header */}
       <div className="mb-6 sm:mb-8">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Create Recipe</h1>
+          <button
+            type="button"
+            onClick={handleEnhanceWithAI}
+            disabled={suggestionStatus === 'loading'}
+            aria-label="Enhance recipe with AI"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {suggestionStatus === 'loading' ? (
+              <span className="animate-spin">⏳</span>
+            ) : (
+              <span aria-hidden="true">✨</span>
+            )}
+            Enhance with AI
+          </button>
         </div>
 
         {/* Entry-point mode toggle */}
@@ -106,6 +164,17 @@ export const SimpleCreateRecipe: React.FC = () => {
           </button>
         </div>
       )}
+
+      <AISuggestionPanel
+        suggestions={visibleSuggestions}
+        status={suggestionStatus}
+        error={suggestionError}
+        onApply={applySuggestion}
+        onDismiss={dismissSuggestion}
+        fieldSetters={fieldSetters}
+        currentValues={currentValues}
+        onRetry={handleEnhanceWithAI}
+      />
 
       <form onSubmit={handleSubmit} noValidate className="space-y-6">
         {/* ─── Required: Title ─── */}

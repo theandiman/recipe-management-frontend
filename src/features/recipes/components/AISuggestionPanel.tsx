@@ -10,6 +10,8 @@ interface AISuggestionPanelProps {
   onDismiss: (field: string) => void
   /** Maps field names to their corresponding form setter functions */
   fieldSetters: Partial<Record<string, (value: string) => void>>
+  /** Current form values keyed by field name — used to record "before" state for the audit trail */
+  currentValues?: Partial<Record<string, string>>
   onRetry?: () => void
 }
 
@@ -29,6 +31,7 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
   onApply,
   onDismiss,
   fieldSetters,
+  currentValues,
   onRetry,
 }) => {
   const [isExpanded, setIsExpanded] = React.useState(true)
@@ -126,10 +129,7 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
                         <button
                           type="button"
                           onClick={() => {
-                            // Get the current value for audit trail
-                            let previousValue = ''
-                            if ('currentValue' in setter) previousValue = (setter as any).currentValue || ''
-                            // For other fields, pass empty string or implement as needed
+                            const previousValue = currentValues?.[suggestion.field] ?? ''
                             onApply(suggestion.field, setter, previousValue)
                           }}
                           className="px-3 py-1.5 text-xs font-semibold rounded-md bg-amber-500 hover:bg-amber-600 text-white transition-colors"
