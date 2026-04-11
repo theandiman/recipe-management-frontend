@@ -205,3 +205,70 @@ describe('AISuggestionPanel', () => {
     expect(screen.getByRole('button', { name: /dismiss/i })).toBeInTheDocument()
   })
 })
+
+// ─── Before/After comparison (issue #38) ─────────────────────────────────────
+
+describe('Before/after comparison', () => {
+  it('shows current value when currentValues prop is provided', () => {
+    render(
+      <AISuggestionPanel
+        suggestions={[mockSuggestions[0]]}
+        status="success"
+        error={null}
+        onApply={vi.fn()}
+        onDismiss={vi.fn()}
+        fieldSetters={{ description: vi.fn() }}
+        currentValues={{ description: 'Old description text' }}
+      />
+    )
+    expect(screen.getByLabelText(/Current value: Old description text/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Suggested value: A delicious pasta dish/i)).toBeInTheDocument()
+  })
+
+  it('does NOT show current value row when currentValues is absent', () => {
+    render(
+      <AISuggestionPanel
+        suggestions={[mockSuggestions[0]]}
+        status="success"
+        error={null}
+        onApply={vi.fn()}
+        onDismiss={vi.fn()}
+        fieldSetters={{ description: vi.fn() }}
+      />
+    )
+    expect(screen.queryByLabelText(/Current value:/i)).not.toBeInTheDocument()
+  })
+
+  it('does NOT show current value row when value for that field is empty string', () => {
+    render(
+      <AISuggestionPanel
+        suggestions={[mockSuggestions[0]]}
+        status="success"
+        error={null}
+        onApply={vi.fn()}
+        onDismiss={vi.fn()}
+        fieldSetters={{ description: vi.fn() }}
+        currentValues={{ description: '' }}
+      />
+    )
+    expect(screen.queryByLabelText(/Current value:/i)).not.toBeInTheDocument()
+  })
+
+  it('passes current value as previousValue to onApply for audit trail', () => {
+    const setter = vi.fn()
+    const onApply = vi.fn()
+    render(
+      <AISuggestionPanel
+        suggestions={[mockSuggestions[0]]}
+        status="success"
+        error={null}
+        onApply={onApply}
+        onDismiss={vi.fn()}
+        fieldSetters={{ description: setter }}
+        currentValues={{ description: 'My current description' }}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: /apply ai suggestion for description/i }))
+    expect(onApply).toHaveBeenCalledWith('description', setter, 'My current description')
+  })
+})
