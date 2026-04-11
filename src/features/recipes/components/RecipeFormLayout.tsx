@@ -358,6 +358,13 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
           onApply={applySuggestion}
           onDismiss={dismissSuggestion}
           fieldSetters={fieldSetters}
+          currentValues={{
+            recipeName: title,
+            description,
+            prepTime,
+            cookTime,
+            servings,
+          }}
           onRetry={handleRetrySuggestions}
         />
       )}

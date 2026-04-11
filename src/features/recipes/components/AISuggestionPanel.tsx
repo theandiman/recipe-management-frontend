@@ -10,7 +10,7 @@ interface AISuggestionPanelProps {
   onDismiss: (field: string) => void
   /** Maps field names to their corresponding form setter functions */
   fieldSetters: Partial<Record<string, (value: string) => void>>
-  /** Current form values keyed by field name — used to record "before" state for the audit trail */
+  /** Current form values keyed by field name — used to record "before" state for the audit trail and to show before/after comparison */
   currentValues?: Partial<Record<string, string>>
   onRetry?: () => void
 }
@@ -18,8 +18,10 @@ interface AISuggestionPanelProps {
 /**
  * Collapsible panel that displays AI-generated field suggestions.
  *
- * - Shows suggestions only for fields the user hasn't yet filled.
+ * - Renders all suggestions passed in via the `suggestions` prop.
  * - Each suggestion has an Apply and Dismiss button.
+ * - Shows the current field value alongside the suggestion for before/after
+ *   comparison when `currentValues` is provided.
  * - Visually distinguished with amber styling and ✨ icon.
  * - If the AI call fails the panel shows an error/retry state but does NOT
  *   block form submission.
@@ -104,7 +106,8 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
               {suggestions.map(suggestion => {
                 const setter = fieldSetters[suggestion.field]
                 const label = FIELD_LABELS[suggestion.field] ?? suggestion.field
-                // For audit trail: require previousValue for apply
+                const currentValue = currentValues?.[suggestion.field]
+                const previousValue = currentValue ?? ''
                 return (
                   <li
                     key={suggestion.field}
@@ -113,7 +116,15 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
                     aria-label={`AI suggestion for ${label}`}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-amber-700 mb-0.5">{label}</p>
+                      <p className="text-xs font-semibold text-amber-700 mb-1">{label}</p>
+                      {currentValue && (
+                        <p
+                          className="text-xs text-gray-500 break-words bg-gray-50 rounded px-2 py-1 border border-gray-100 mb-1 line-through"
+                          aria-label={`Current value: ${currentValue}`}
+                        >
+                          {currentValue}
+                        </p>
+                      )}
                       <p
                         className="text-sm text-gray-800 break-words bg-amber-50 rounded px-2 py-1 border border-amber-100"
                         aria-label={`Suggested value: ${suggestion.suggestedValue}`}
@@ -128,10 +139,8 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
                       {setter && (
                         <button
                           type="button"
-                          onClick={() => {
-                            const previousValue = currentValues?.[suggestion.field] ?? ''
-                            onApply(suggestion.field, setter, previousValue)
-                          }}
+<<<<<<< HEAD
+                          onClick={() => onApply(suggestion.field, setter, previousValue)}
                           className="px-3 py-1.5 text-xs font-semibold rounded-md bg-amber-500 hover:bg-amber-600 text-white transition-colors"
                           aria-label={`Apply AI suggestion for ${label}`}
                         >
