@@ -253,7 +253,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   <button
                     type="button"
                     onClick={onRefineAllInstructions}
-                    disabled={instructionRefinementLoading === 'loading'}
+                    disabled={instructionRefinementLoading === 'loading' || !instructions.some(i => i.trim())}
                     aria-label="Refine all instructions with AI"
                     className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
@@ -299,13 +299,13 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
           rows={2}
           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
         />
-        {isPending && refinementState && (
+        {isPending && refinementState && onAcceptInstructionRefinement && onRejectInstructionRefinement && (
           <div className="mt-2">
             <InstructionDiffView
               original={refinementState.original}
               refined={refinementState.refined}
-              onAccept={() => onAcceptInstructionRefinement?.(index)}
-              onReject={() => onRejectInstructionRefinement?.(index)}
+              onAccept={() => onAcceptInstructionRefinement(index)}
+              onReject={() => onRejectInstructionRefinement(index)}
               isLoading={instructionRefinementLoading === 'loading'}
             />
           </div>

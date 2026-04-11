@@ -158,7 +158,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   )
 
   const handleRefineAllInstructions = useCallback(() => {
-    refineAllInstructions(instructions.filter(i => i.trim()), title || undefined)
+    refineAllInstructions(instructions, title || undefined)
   }, [refineAllInstructions, instructions, title])
   // --- Nutrition Estimate Hook ---
   const {
