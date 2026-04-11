@@ -1,7 +1,14 @@
-import React from 'react'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { StepIndicator } from './StepIndicator'
 import { RecipeFormSteps } from './RecipeFormSteps'
+
+
 import { RecipePreview } from './RecipePreview'
+import { AISuggestionPanel } from './AISuggestionPanel'
+import { useAISuggestions } from '../hooks/useAISuggestions'
+import { FIELD_LABELS } from '../constants/aiConstants'
+import { useNutritionEstimate } from '../hooks/useNutritionEstimate'
+import { NutritionEstimatePanel } from './NutritionEstimatePanel'
 import type { Ingredient } from '../../../types/nutrition'
 
 interface RecipeFormLayoutProps {
@@ -64,6 +71,14 @@ interface RecipeFormLayoutProps {
   // Handlers
   handleSubmit: (e?: React.FormEvent) => void
   handleCancel: () => void
+
+  // AI Audit Trail (optional — only present when AI suggestions are enabled)
+  canUndoAI?: boolean
+  onUndoLastAI?: () => void
+  lastUndoableAIField?: string | null
+  normalizationStates?: Map<number, import('../hooks/useIngredientNormalization').NormalizationState>
+  onApplyNormalization?: (index: number) => void
+  onDismissNormalization?: (index: number) => void
 }
 
 export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
@@ -116,8 +131,29 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   saveError,
   setSaveError,
   handleSubmit,
-  handleCancel
+  handleCancel,
+  canUndoAI: _canUndoAI = false,
+  onUndoLastAI,
+  lastUndoableAIField: _lastUndoableAIField,
+  normalizationStates,
+  onApplyNormalization,
+  onDismissNormalization,
 }) => {
+  // --- AI Instruction Refinement Hook ---
+
+  // --- Nutrition Estimate Hook ---
+  const {
+    estimate: nutritionEstimate,
+    loadingState: nutritionLoadingState,
+    error: nutritionError,
+    estimateNutrition,
+    clearEstimate: clearNutritionEstimate,
+    acceptEstimate: acceptNutritionEstimate,
+  } = useNutritionEstimate()
+
+  const hasIngredients = ingredients.some((i) => i.item.trim())
+
+
   const handlePreviousStepClick = () => {
     if (saveError) {
       setSaveError(null)
@@ -191,6 +227,85 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     goToStep(targetStep)
   }
 
+  // AI suggestion integration
+  const {
+    visibleSuggestions,
+    status: suggestionStatus,
+    error: suggestionError,
+    fetchSuggestions,
+    applySuggestion,
+    dismissSuggestion,
+    canUndo: localCanUndo,
+    undoLastAIChange: localUndoLastAIChange,
+    auditLog: localAuditLog,
+  } = useAISuggestions()
+
+  // Derive the last undoable AI field name from the local audit trail
+  const localLastUndoableAIField = useMemo<string | null>(() => {
+    for (let i = localAuditLog.length - 1; i >= 0; i--) {
+      const e = localAuditLog[i]
+      if (e.event === 'accepted') {
+        return FIELD_LABELS[e.field] ?? e.field
+      }
+    }
+    return null
+  }, [localAuditLog])
+
+  // Fetch suggestions once when the recipe title is available (first meaningful state)
+  const suggestionFetched = useRef(false)
+  useEffect(() => {
+    if (!suggestionFetched.current && title.trim().length > 2) {
+      suggestionFetched.current = true
+      fetchSuggestions(buildSuggestionRequest())
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title])
+
+  // Wrap setters to allow passing previousValue for audit trail
+  const fieldSetters: Partial<Record<string, (value: string) => void> & { currentValue?: string }> = {
+    recipeName: Object.assign(setTitle, { currentValue: title }),
+    description: Object.assign(setDescription, { currentValue: description }),
+    prepTime: Object.assign(setPrepTime, { currentValue: prepTime }),
+    cookTime: Object.assign(setCookTime, { currentValue: cookTime }),
+    servings: Object.assign(setServings, { currentValue: servings }),
+  }
+
+  // Internal undo handler: uses the local audit trail (from RecipeFormLayout's own hook)
+  const handleLocalUndo = useCallback(() => {
+    const result = localUndoLastAIChange()
+    if (!result) return
+    const setterMap: Record<string, (v: string) => void> = {
+      recipeName: setTitle,
+      description: setDescription,
+      prepTime: setPrepTime,
+      cookTime: setCookTime,
+      servings: setServings,
+    }
+    const setter = setterMap[result.field]
+    if (setter) setter(String(result.previousValue ?? ''))
+    // Also invoke the parent's undo handler if provided (for synchronisation)
+    if (onUndoLastAI) onUndoLastAI()
+  }, [localUndoLastAIChange, setTitle, setDescription, setPrepTime, setCookTime, setServings, onUndoLastAI])
+
+  // Shared request builder for AI suggestions
+  const buildSuggestionRequest = () => ({
+    recipeName: title || undefined,
+    description: description || undefined,
+    prepTime: prepTime || undefined,
+    cookTime: cookTime || undefined,
+    servings: servings || undefined,
+    tags: tags.length > 0 ? tags : undefined,
+    ingredients: ingredients.filter(i => i.item.trim()).map(i =>
+      [i.quantity, i.unit, i.item].filter(Boolean).join(' ')
+    ),
+    instructions: instructions.filter(i => i.trim()),
+  })
+
+  const handleRetrySuggestions = () => {
+    suggestionFetched.current = false
+    fetchSuggestions(buildSuggestionRequest())
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Header with Step Indicator */}
@@ -214,6 +329,19 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
           stepsWithErrors={stepsWithErrors}
         />
       </div>
+
+      {/* AI Suggestion Panel — shown on non-preview steps */}
+      {currentStep !== 5 && (
+        <AISuggestionPanel
+          suggestions={visibleSuggestions}
+          status={suggestionStatus}
+          error={suggestionError}
+          onApply={applySuggestion}
+          onDismiss={dismissSuggestion}
+          fieldSetters={fieldSetters}
+          onRetry={handleRetrySuggestions}
+        />
+      )}
 
       {/* Preview Step */}
       {currentStep === 5 ? (
@@ -272,8 +400,35 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 removeDietaryRestriction={removeDietaryRestriction}
                 fieldErrors={fieldErrors}
                 clearFieldError={clearFieldError}
+                recipeName={title}
+                normalizationStates={normalizationStates}
+                onApplyNormalization={onApplyNormalization}
+                onDismissNormalization={onDismissNormalization}
               />
           </div>
+
+          {/* Nutrition Estimate — shown on step 2 (Ingredients) */}
+          {currentStep === 2 && (
+            <div className="mt-4">
+              <button
+                type="button"
+                disabled={!hasIngredients || nutritionLoadingState === 'loading'}
+                onClick={() =>
+                  estimateNutrition(ingredients, parseInt(servings, 10) || 1, title)
+                }
+                className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {nutritionLoadingState === 'loading' ? 'Estimating…' : 'Recalculate Nutrition'}
+              </button>
+              <NutritionEstimatePanel
+                estimate={nutritionEstimate}
+                loadingState={nutritionLoadingState}
+                error={nutritionError}
+                onAccept={() => acceptNutritionEstimate(() => {})}
+                onDismiss={clearNutritionEstimate}
+              />
+            </div>
+          )}
 
           {/* Navigation Buttons */}
           <div className="flex justify-between items-center gap-4 pt-6 border-t border-gray-200">
@@ -291,6 +446,17 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
             </button>
 
             <div className="flex items-center space-x-4">
+              {localCanUndo && (
+                <button
+                  type="button"
+                  onClick={handleLocalUndo}
+                  aria-label={localLastUndoableAIField ? `Undo AI change to ${localLastUndoableAIField}` : 'Undo last AI change'}
+                  className="px-4 py-2 text-sm border border-amber-400 text-amber-700 rounded-lg font-medium hover:bg-amber-50 transition-colors flex items-center gap-1"
+                >
+                  ↩ {localLastUndoableAIField ? `Undo AI: ${localLastUndoableAIField}` : 'Undo AI change'}
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={handleCancel}

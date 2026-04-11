@@ -1,4 +1,5 @@
 import React from 'react'
+import type { NormalizationState } from '../features/recipes/hooks/useIngredientNormalization'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Ingredient } from '../types/nutrition'
 
@@ -7,6 +8,9 @@ interface IngredientInputProps {
   onAddIngredient: () => void
   onUpdateIngredient: (index: number, field: keyof Ingredient, value: string) => void
   onRemoveIngredient: (index: number) => void
+  normalizationStates?: Map<number, NormalizationState>
+  onApplyNormalization?: (index: number) => void
+  onDismissNormalization?: (index: number) => void
 }
 
 const COMMON_UNITS = [
@@ -37,6 +41,9 @@ export const IngredientInput: React.FC<IngredientInputProps> = ({
   onAddIngredient,
   onUpdateIngredient,
   onRemoveIngredient,
+  normalizationStates,
+  onApplyNormalization,
+  onDismissNormalization,
 }) => {
   return (
     <div className="space-y-4">
@@ -74,8 +81,8 @@ export const IngredientInput: React.FC<IngredientInputProps> = ({
         {/* Ingredient rows */}
         <AnimatePresence initial={false}>
           {ingredients.map((ingredient, index) => (
+            <React.Fragment key={index}>
             <motion.div 
-              key={index}
               initial={{ opacity: 0, height: 0, scale: 0.95 }}
               animate={{ opacity: 1, height: 'auto', scale: 1 }}
               exit={{ opacity: 0, height: 0, scale: 0.95, overflow: 'hidden' }}
@@ -140,6 +147,42 @@ export const IngredientInput: React.FC<IngredientInputProps> = ({
                 </button>
               )}
             </motion.div>
+            {/* Ingredient normalization suggestion */}
+            {normalizationStates?.get(index)?.status === 'pending' && (
+              <div
+                data-testid={`normalization-suggestion-${index}`}
+                className="mt-1 ml-2 p-2.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-lg text-sm"
+              >
+                <div className="flex items-start gap-2">
+                  <span className="text-amber-600 dark:text-amber-400 text-xs font-semibold uppercase tracking-wide shrink-0 mt-0.5">
+                    AI Suggestion
+                  </span>
+                  <span className="text-gray-800 dark:text-gray-200 flex-1">
+                    {normalizationStates.get(index)!.normalized}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-0">
+                  {normalizationStates.get(index)!.reason}
+                </p>
+                <div className="flex gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => onApplyNormalization?.(index)}
+                    className="px-2.5 py-1 text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-md hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors"
+                  >
+                    Apply
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDismissNormalization?.(index)}
+                    className="px-2.5 py-1 text-xs font-medium bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 rounded-md hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
+            </React.Fragment>
           ))}
         </AnimatePresence>
       </div>

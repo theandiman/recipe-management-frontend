@@ -4,6 +4,8 @@ import { UI_STYLES } from '../../../utils/uiStyles'
 import { clampedNumericHandler } from '../../../utils/formUtils'
 import type { Ingredient } from '../../../types/nutrition'
 
+
+
 interface RecipeFormStepsProps {
   currentStep: number
   // Basic Info
@@ -43,7 +45,15 @@ interface RecipeFormStepsProps {
   // Validation
   fieldErrors: Record<string, string>
   clearFieldError: (fieldName: string, stepNumber: number) => void
+  // AI Instruction Refinement
+  recipeName: string
+  // Ingredient Normalization
+  normalizationStates?: Map<number, import('../hooks/useIngredientNormalization').NormalizationState>
+  onApplyNormalization?: (index: number) => void
+  onDismissNormalization?: (index: number) => void
 }
+
+
 
 export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
   currentStep,
@@ -79,7 +89,10 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
   addDietaryRestriction,
   removeDietaryRestriction,
   fieldErrors,
-  clearFieldError
+  clearFieldError,
+  normalizationStates,
+  onApplyNormalization,
+  onDismissNormalization,
 }) => {
   return (
     <div className="space-y-8">
@@ -196,6 +209,9 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
             onAddIngredient={addIngredient}
             onUpdateIngredient={updateIngredient}
             onRemoveIngredient={removeIngredient}
+            normalizationStates={normalizationStates}
+            onApplyNormalization={onApplyNormalization}
+            onDismissNormalization={onDismissNormalization}
           />
           {fieldErrors.ingredients && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
@@ -219,49 +235,59 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               <h2 className="text-xl font-semibold text-gray-900">
                 Instructions <span className="text-red-500">*</span>
               </h2>
-              <button
-                type="button"
-                onClick={addInstruction}
-                className={UI_STYLES.addButton}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Add Step</span>
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={addInstruction}
+                  className={UI_STYLES.addButton}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>Add Step</span>
+                </button>
+                
+              </div>
             </div>
 
             <div className="space-y-3">
-              {instructions.map((instruction, index) => (
-                <div key={index} className="flex items-start space-x-3">
-                  <span className="flex-shrink-0 w-8 h-10 flex items-center justify-center">
-                    <span className="w-7 h-7 flex items-center justify-center rounded-full bg-emerald-600 text-white text-sm font-bold">
-                      {index + 1}
-                    </span>
-                  </span>
-                  <textarea
-                    value={instruction}
-                    onChange={(e) => updateInstruction(index, e.target.value)}
-                    placeholder="Describe this step in detail..."
-                    required={index === 0}
-                    rows={2}
-                    className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
-                  />
-                  {instructions.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeInstruction(index)}
-                      className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              ))}
+              {instructions.map((instruction, index) => {
+  return (
+    <div key={index} className="flex items-start space-x-3">
+      <span className="flex-shrink-0 w-8 h-10 flex items-center justify-center">
+        <span className="w-7 h-7 flex items-center justify-center rounded-full bg-emerald-600 text-white text-sm font-bold">
+          {index + 1}
+        </span>
+      </span>
+      <div className="flex-1">
+        <textarea
+          value={instruction}
+          onChange={(e) => updateInstruction(index, e.target.value)}
+          placeholder="Describe this step in detail..."
+          required={index === 0}
+          rows={2}
+          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+        />
+      </div>
+      <div className="flex flex-col gap-1">
+        {instructions.length > 1 && (
+          <button
+            type="button"
+            onClick={() => removeInstruction(index)}
+            className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+})}
             </div>
 
+            
             {fieldErrors.instructions && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start" role="alert">
                 <svg className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">

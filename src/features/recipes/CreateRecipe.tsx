@@ -1,20 +1,34 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { RecipeFormLayout } from './components/RecipeFormLayout'
 import { useRecipeForm } from './hooks/useRecipeForm'
 import { useRecipeValidation } from './hooks/useRecipeValidation'
 import { useRecipeFormNavigation } from './hooks/useRecipeFormNavigation'
 import { useRecipeSave } from './hooks/useRecipeSave'
+import { useAISuggestions } from './hooks/useAISuggestions'
+import { useIngredientNormalization } from './hooks/useIngredientNormalization'
+
+const FIELD_LABELS: Record<string, string> = {
+  recipeName: 'Recipe Name',
+  description: 'Description',
+  prepTime: 'Prep Time',
+  cookTime: 'Cook Time',
+  servings: 'Servings',
+}
 
 export const CreateRecipe: React.FC = () => {
   const navigate = useNavigate()
-  
-  // Use custom hooks
+
   const navigation = useRecipeFormNavigation()
   const form = useRecipeForm()
   const { validateForm, buildRecipeObject } = useRecipeValidation()
-  
-  // Use shared save logic
+  const { canUndo, auditLog, undoLastAIChange } = useAISuggestions()
+  const {
+    normalizationStates,
+    applyNormalization,
+    dismissNormalization,
+  } = useIngredientNormalization(form.updateIngredient)
+
   const { handleSubmit } = useRecipeSave({
     title: form.title,
     description: form.description,
@@ -34,6 +48,43 @@ export const CreateRecipe: React.FC = () => {
     buildRecipeObject,
     goToStep: navigation.goToStep
   })
+
+  const lastUndoableAIField = useMemo(() => {
+    const consumed = new Set<string>()
+    for (const e of auditLog) {
+      if (e.event === 'undone') {
+        for (let i = auditLog.length - 1; i >= 0; i--) {
+          const a = auditLog[i]
+          if (a.event === 'accepted' && a.field === e.field && !consumed.has(a.id)) {
+            consumed.add(a.id)
+            break
+          }
+        }
+      }
+    }
+    for (let i = auditLog.length - 1; i >= 0; i--) {
+      const e = auditLog[i]
+      if (e.event === 'accepted' && !consumed.has(e.id)) {
+        return FIELD_LABELS[e.field] ?? e.field
+      }
+    }
+    return null
+  }, [auditLog])
+
+  const handleUndoLastAI = useCallback(() => {
+    const result = undoLastAIChange()
+    if (!result) return
+    const { field, previousValue } = result
+    const setters: Record<string, (v: string) => void> = {
+      recipeName: form.setTitle,
+      description: form.setDescription,
+      prepTime: form.setPrepTime,
+      cookTime: form.setCookTime,
+      servings: form.setServings,
+    }
+    const setter = setters[field]
+    if (setter) setter(String(previousValue ?? ''))
+  }, [undoLastAIChange, form.setTitle, form.setDescription, form.setPrepTime, form.setCookTime, form.setServings])
 
   const handleCancel = useCallback(() => {
     navigate('/dashboard/recipes')
@@ -72,6 +123,12 @@ export const CreateRecipe: React.FC = () => {
         {...form}
         handleSubmit={handleSubmit}
         handleCancel={handleCancel}
+        canUndoAI={canUndo}
+        onUndoLastAI={handleUndoLastAI}
+        lastUndoableAIField={lastUndoableAIField}
+        normalizationStates={normalizationStates}
+        onApplyNormalization={applyNormalization}
+        onDismissNormalization={dismissNormalization}
       />
     </div>
   )

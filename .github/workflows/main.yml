@@ -620,7 +620,7 @@ jobs:
     needs: [lint, type-check, unit-tests, e2e-tests, build, security-scan, dependency-review]
     steps:
       - name: Check job statuses
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const jobs = [
