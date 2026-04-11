@@ -139,7 +139,6 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
                       {setter && (
                         <button
                           type="button"
-<<<<<<< HEAD
                           onClick={() => onApply(suggestion.field, setter, previousValue)}
                           className="px-3 py-1.5 text-xs font-semibold rounded-md bg-amber-500 hover:bg-amber-600 text-white transition-colors"
                           aria-label={`Apply AI suggestion for ${label}`}
