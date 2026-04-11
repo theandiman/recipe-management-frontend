@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Check update type
         id: check-type
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const body = context.payload.pull_request.body || '';
@@ -32,7 +32,7 @@ jobs:
 
       - name: Disable automerge and dismiss approvals for major updates
         if: steps.check-type.outputs.should-automerge == 'false'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -92,7 +92,7 @@ jobs:
 
       - name: Enable automerge
         if: steps.check-type.outputs.should-automerge == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
