@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { StepIndicator } from './StepIndicator'
 import { RecipeFormSteps } from './RecipeFormSteps'
 
@@ -270,16 +270,6 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     return null
   }, [localAuditLog])
 
-  // Fetch suggestions once when the recipe title is available (first meaningful state)
-  const suggestionFetched = useRef(false)
-  useEffect(() => {
-    if (!suggestionFetched.current && title.trim().length > 2) {
-      suggestionFetched.current = true
-      fetchSuggestions(buildSuggestionRequest())
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title])
-
   // Wrap setters to allow passing previousValue for audit trail
   const fieldSetters: Partial<Record<string, (value: string) => void>> = {
     recipeName: setTitle,
@@ -320,8 +310,11 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     instructions: instructions.filter(i => i.trim()),
   })
 
+  const handleEnhanceWithAI = () => {
+    fetchSuggestions(buildSuggestionRequest())
+  }
+
   const handleRetrySuggestions = () => {
-    suggestionFetched.current = false
     fetchSuggestions(buildSuggestionRequest())
   }
 
@@ -338,6 +331,22 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
               Step {currentStep} of {totalSteps}: {steps[currentStep - 1].title}
             </p>
           </div>
+          {currentStep !== 5 && (
+            <button
+              type="button"
+              onClick={handleEnhanceWithAI}
+              disabled={suggestionStatus === 'loading'}
+              aria-label="Enhance recipe with AI"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {suggestionStatus === 'loading' ? (
+                <span className="animate-spin">⏳</span>
+              ) : (
+                <span aria-hidden="true">✨</span>
+              )}
+              Enhance with AI
+            </button>
+          )}
         </div>
 
         {/* Step Progress Indicator - Horizontal scroll on mobile */}
