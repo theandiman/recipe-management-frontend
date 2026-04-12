@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from 'react'
 import { StepIndicator } from './StepIndicator'
 import { RecipeFormSteps } from './RecipeFormSteps'
+import { AISpinnerIcon } from './AISpinnerIcon'
 
 
 import { RecipePreview } from './RecipePreview'
@@ -287,6 +288,10 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     return null
   }, [localAuditLog])
 
+  // Effective undo state: prefer local audit trail; fall back to parent-supplied props
+  const effectiveCanUndo = localCanUndo || canUndoAI
+  const effectiveUndoField = localLastUndoableAIField ?? lastUndoableAIField ?? null
+
   // Wrap setters to allow passing previousValue for audit trail
   const fieldSetters: Partial<Record<string, (value: string) => void>> = useMemo(() => ({
     recipeName: setTitle,
@@ -372,7 +377,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
           {currentStep !== 5 && (
             <div className="flex items-center gap-2">
               <AIUndoButton
-                lastField={localCanUndo ? localLastUndoableAIField : null}
+                lastField={effectiveCanUndo ? effectiveUndoField : null}
                 onUndo={handleLocalUndo}
                 fieldLabels={FIELD_LABELS}
               />
@@ -384,7 +389,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {suggestionStatus === 'loading' ? (
-                  <span className="animate-spin">⏳</span>
+                  <AISpinnerIcon />
                 ) : (
                   <span aria-hidden="true">✨</span>
                 )}

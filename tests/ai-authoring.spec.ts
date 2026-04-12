@@ -200,7 +200,7 @@ test.describe('AI-assisted authoring — field suggestions', () => {
     await expect(descriptionField).toHaveValue(SUGGEST_FIELDS_RESPONSE.suggestions[0].suggestedValue)
 
     // The undo button should now appear
-    const undoBtn = page.getByRole('button', { name: /Undo AI/i })
+    const undoBtn = page.getByRole('button', { name: /Undo: Description/i })
     await expect(undoBtn).toBeVisible({ timeout: 3000 })
 
     // Undo the change
