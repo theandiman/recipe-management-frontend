@@ -13,6 +13,8 @@ import type { StringFieldKey } from './hooks/useAISuggestions'
 import { AISuggestionPanel } from './components/AISuggestionPanel'
 import { FieldAIEnhanceButton } from './components/FieldAIEnhanceButton'
 import { FieldAISuggestionChip } from './components/FieldAISuggestionChip'
+import { AIUndoButton } from './components/AIUndoButton'
+import { FIELD_LABELS } from './constants/aiConstants'
 
 export const SimpleCreateRecipe: React.FC = () => {
   const navigate = useNavigate()
@@ -55,6 +57,9 @@ export const SimpleCreateRecipe: React.FC = () => {
     fieldStatus,
     applySuggestion,
     dismissSuggestion,
+    canUndo,
+    undoLastAIChange,
+    auditLog,
   } = useAISuggestions()
 
   const buildSuggestionRequest = () => ({
@@ -105,26 +110,46 @@ export const SimpleCreateRecipe: React.FC = () => {
     fetchSuggestions(buildSuggestionRequest())
   }
 
+  const lastUndoableAIField = useMemo<string | null>(() => {
+    const latestEntry = auditLog[auditLog.length - 1]
+    return latestEntry?.event === 'accepted' ? latestEntry.field : null
+  }, [auditLog])
+
+  const handleUndo = useCallback(() => {
+    const result = undoLastAIChange()
+    if (!result) return
+    const setter = fieldSetters[result.field]
+    if (setter) setter(String(result.previousValue ?? ''))
+  }, [undoLastAIChange, fieldSetters])
+
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
       {/* Header */}
       <div className="mb-6 sm:mb-8">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Create Recipe</h1>
-          <button
-            type="button"
-            onClick={handleEnhanceWithAI}
-            disabled={suggestionStatus === 'loading'}
-            aria-label="Enhance recipe with AI"
-            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {suggestionStatus === 'loading' ? (
-              <span className="animate-spin">⏳</span>
-            ) : (
-              <span aria-hidden="true">✨</span>
-            )}
-            Enhance with AI
-          </button>
+          <div className="flex items-center gap-2">
+            <AIUndoButton
+              key={auditLog.length}
+              lastField={canUndo ? lastUndoableAIField : null}
+              onUndo={handleUndo}
+              fieldLabels={FIELD_LABELS}
+            />
+            <button
+              type="button"
+              onClick={handleEnhanceWithAI}
+              disabled={suggestionStatus === 'loading'}
+              aria-label="Enhance recipe with AI"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {suggestionStatus === 'loading' ? (
+                <span className="animate-spin">⏳</span>
+              ) : (
+                <span aria-hidden="true">✨</span>
+              )}
+              Enhance with AI
+            </button>
+          </div>
         </div>
 
         {/* Entry-point mode toggle */}

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { SimpleCreateRecipe } from './SimpleCreateRecipe'
 
@@ -265,6 +265,86 @@ describe('AI Enhancement', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('region', { name: /AI field suggestions/i })).toBeInTheDocument()
+    })
+  })
+})
+
+// ─── AI Undo Affordance (issue #42) ──────────────────────────────────────────
+
+describe('AI Undo Affordance', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('does not show undo button before any AI suggestion is applied', () => {
+    renderWithRouter(<SimpleCreateRecipe />)
+    expect(screen.queryByRole('button', { name: /Undo:/i })).not.toBeInTheDocument()
+  })
+
+  it('shows undo button after accepting an AI suggestion', async () => {
+    const { postWithAuth } = await import('../../utils/authApi')
+    vi.mocked(postWithAuth).mockResolvedValueOnce({
+      data: {
+        suggestions: [
+          { field: 'description', suggestedValue: 'Delicious pasta', reason: 'Better description' },
+        ],
+      },
+    } as any)
+
+    renderWithRouter(<SimpleCreateRecipe />)
+    fireEvent.click(screen.getByRole('button', { name: /Enhance recipe with AI/i }))
+
+    // Wait for the suggestion panel, then click its Apply button
+    await waitFor(() => {
+      expect(screen.getByRole('region', { name: /AI field suggestions/i })).toBeInTheDocument()
+    })
+    const panel = screen.getByRole('region', { name: /AI field suggestions/i })
+    await waitFor(() => {
+      expect(within(panel).getByRole('button', { name: /Apply AI suggestion/i })).toBeInTheDocument()
+    })
+    fireEvent.click(within(panel).getByRole('button', { name: /Apply AI suggestion/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Undo: Description/i })).toBeInTheDocument()
+    })
+  })
+
+  it('hides undo button after it is clicked (undo reverts field)', async () => {
+    const { postWithAuth } = await import('../../utils/authApi')
+    vi.mocked(postWithAuth).mockResolvedValueOnce({
+      data: {
+        suggestions: [
+          { field: 'description', suggestedValue: 'Delicious pasta', reason: 'Better description' },
+        ],
+      },
+    } as any)
+
+    renderWithRouter(<SimpleCreateRecipe />)
+    fireEvent.click(screen.getByRole('button', { name: /Enhance recipe with AI/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('region', { name: /AI field suggestions/i })).toBeInTheDocument()
+    })
+    const panel = screen.getByRole('region', { name: /AI field suggestions/i })
+    await waitFor(() => {
+      expect(within(panel).getByRole('button', { name: /Apply AI suggestion/i })).toBeInTheDocument()
+    })
+    fireEvent.click(within(panel).getByRole('button', { name: /Apply AI suggestion/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Undo: Description/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /Undo: Description/i }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: /Undo: Description/i })).not.toBeInTheDocument()
     })
   })
 })

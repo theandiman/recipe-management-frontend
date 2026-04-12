@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { RecipeFormLayout } from '../RecipeFormLayout'
@@ -152,5 +152,44 @@ describe('RecipeFormLayout — on-demand AI enhancement (issue #35)', () => {
 
     resolvePost!({ data: { suggestions: [] } })
     await waitFor(() => expect(btn).not.toBeDisabled())
+  })
+})
+
+describe('RecipeFormLayout — AI undo affordance (issue #42)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('does not show undo button before any suggestion is applied', () => {
+    renderWithRouter(makeProps())
+    expect(screen.queryByRole('button', { name: /Undo:/i })).not.toBeInTheDocument()
+  })
+
+  it('shows undo button in header after a suggestion is applied', async () => {
+    mockPostWithAuth.mockResolvedValueOnce({
+      data: {
+        suggestions: [
+          { field: 'description', suggestedValue: 'A tasty pasta dish', reason: 'Improve description' },
+        ],
+      },
+    } as any)
+
+    renderWithRouter(makeProps({ title: 'Pasta' }))
+    fireEvent.click(screen.getByRole('button', { name: /Enhance recipe with AI/i }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Apply AI suggestion for Description/i })).toBeInTheDocument()
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Apply AI suggestion for Description/i }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Undo: Description/i })).toBeInTheDocument()
+    )
   })
 })

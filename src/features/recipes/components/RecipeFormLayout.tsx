@@ -10,6 +10,7 @@ import { useAISuggestions } from '../hooks/useAISuggestions'
 import { useInstructionRefinement } from '../hooks/useInstructionRefinement'
 import { useAIImageGeneration } from '../hooks/useAIImageGeneration'
 import { FIELD_LABELS } from '../constants/aiConstants'
+import { AIUndoButton } from './AIUndoButton'
 import { useNutritionEstimate } from '../hooks/useNutritionEstimate'
 import { NutritionEstimatePanel } from './NutritionEstimatePanel'
 import type { Ingredient } from '../../../types/nutrition'
@@ -137,9 +138,9 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   setSaveError,
   handleSubmit,
   handleCancel,
-  canUndoAI: _canUndoAI = false,
+  canUndoAI = false,
   onUndoLastAI,
-  lastUndoableAIField: _lastUndoableAIField,
+  lastUndoableAIField,
   normalizationStates,
   onApplyNormalization,
   onDismissNormalization,
@@ -276,16 +277,17 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     auditLog: localAuditLog,
   } = useAISuggestions()
 
-  // Derive the last undoable AI field name from the local audit trail
+  // Derive the last undoable AI field from the most recent accepted entry.
+  // After an undo the latest entry may no longer be 'accepted', so returning
+  // the field only for the last entry when it is 'accepted' avoids stale labels.
   const localLastUndoableAIField = useMemo<string | null>(() => {
-    for (let i = localAuditLog.length - 1; i >= 0; i--) {
-      const e = localAuditLog[i]
-      if (e.event === 'accepted') {
-        return FIELD_LABELS[e.field] ?? e.field
-      }
-    }
-    return null
+    const latestEntry = localAuditLog[localAuditLog.length - 1]
+    return latestEntry?.event === 'accepted' ? latestEntry.field : null
   }, [localAuditLog])
+
+  // Effective undo state: prefer local audit trail; fall back to parent-supplied props
+  const effectiveCanUndo = localCanUndo || canUndoAI
+  const effectiveUndoField = localLastUndoableAIField ?? lastUndoableAIField ?? null
 
   // Wrap setters to allow passing previousValue for audit trail
   const fieldSetters: Partial<Record<string, (value: string) => void>> = useMemo(() => ({
@@ -369,22 +371,30 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
               Step {currentStep} of {totalSteps}: {steps[currentStep - 1].title}
             </p>
           </div>
-          {currentStep !== 5 && (
-            <button
-              type="button"
-              onClick={handleEnhanceWithAI}
-              disabled={suggestionStatus === 'loading'}
-              aria-label="Enhance recipe with AI"
-              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {suggestionStatus === 'loading' ? (
-                <AISpinnerIcon />
-              ) : (
-                <span aria-hidden="true">✨</span>
+          <div className="flex items-center gap-2">
+              <AIUndoButton
+                key={localAuditLog.length}
+                lastField={effectiveCanUndo ? effectiveUndoField : null}
+                onUndo={handleLocalUndo}
+                fieldLabels={FIELD_LABELS}
+              />
+              {currentStep !== 5 && (
+              <button
+                type="button"
+                onClick={handleEnhanceWithAI}
+                disabled={suggestionStatus === 'loading'}
+                aria-label="Enhance recipe with AI"
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {suggestionStatus === 'loading' ? (
+                  <AISpinnerIcon />
+                ) : (
+                  <span aria-hidden="true">✨</span>
+                )}
+                Enhance with AI
+              </button>
               )}
-              Enhance with AI
-            </button>
-          )}
+            </div>
         </div>
 
         {/* Step Progress Indicator - Horizontal scroll on mobile */}
@@ -535,17 +545,6 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
             </button>
 
             <div className="flex items-center space-x-4">
-              {localCanUndo && (
-                <button
-                  type="button"
-                  onClick={handleLocalUndo}
-                  aria-label={localLastUndoableAIField ? `Undo AI change to ${localLastUndoableAIField}` : 'Undo last AI change'}
-                  className="px-4 py-2 text-sm border border-amber-400 text-amber-700 rounded-lg font-medium hover:bg-amber-50 transition-colors flex items-center gap-1"
-                >
-                  ↩ {localLastUndoableAIField ? `Undo AI: ${localLastUndoableAIField}` : 'Undo AI change'}
-                </button>
-              )}
-
               <button
                 type="button"
                 onClick={handleCancel}
