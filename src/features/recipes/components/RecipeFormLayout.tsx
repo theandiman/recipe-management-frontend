@@ -7,6 +7,7 @@ import { RecipePreview } from './RecipePreview'
 import { AISuggestionPanel } from './AISuggestionPanel'
 import { useAISuggestions } from '../hooks/useAISuggestions'
 import { useInstructionRefinement } from '../hooks/useInstructionRefinement'
+import { useAIImageGeneration } from '../hooks/useAIImageGeneration'
 import { FIELD_LABELS } from '../constants/aiConstants'
 import { useNutritionEstimate } from '../hooks/useNutritionEstimate'
 import { NutritionEstimatePanel } from './NutritionEstimatePanel'
@@ -41,6 +42,7 @@ interface RecipeFormLayoutProps {
   imagePreview: string | null
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
   removeImage: () => void
+  setImagePreview?: (value: string | null) => void
   ingredients: Ingredient[]
   addIngredient: () => void
   updateIngredient: (index: number, field: keyof Ingredient, value: string) => void
@@ -106,6 +108,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   imagePreview,
   handleImageUpload,
   removeImage,
+  setImagePreview,
   ingredients,
   addIngredient,
   updateIngredient,
@@ -149,6 +152,17 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     acceptStep: acceptInstructionRefinement,
     rejectStep: rejectInstructionRefinement,
   } = useInstructionRefinement(updateInstruction)
+
+  // --- AI Image Generation Hook ---
+  const { status: aiImageStatus, error: aiImageError, generateImage } = useAIImageGeneration()
+
+  const handleGenerateAIImage = useCallback(
+    async (recipeName: string, description?: string) => {
+      const url = await generateImage(recipeName, description)
+      if (url && setImagePreview) setImagePreview(url)
+    },
+    [generateImage, setImagePreview]
+  )
 
   const handleRefineInstruction = useCallback(
     (index: number, instruction: string) => {
@@ -474,6 +488,9 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 fieldSuggestions={visibleSuggestions}
                 onApplyFieldSuggestion={handleApplyFieldSuggestion}
                 onDismissFieldSuggestion={dismissSuggestion}
+                onGenerateAIImage={setImagePreview ? handleGenerateAIImage : undefined}
+                generatingAIImage={aiImageStatus === 'loading'}
+                aiImageError={aiImageError}
               />
           </div>
 

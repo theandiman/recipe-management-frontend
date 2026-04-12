@@ -232,3 +232,76 @@ describe('RecipeFormSteps — per-field AI enhance (issue #40)', () => {
     expect(onDismiss).toHaveBeenCalledWith('recipeName')
   })
 })
+
+describe('RecipeFormSteps — AI image generation (issue #41)', () => {
+  function makeStep1Props(overrides: Partial<ComponentProps<typeof RecipeFormSteps>> = {}) {
+    return makeProps({ currentStep: 1, ...overrides })
+  }
+
+  it('shows "Generate image" button when onGenerateAIImage prop provided and imagePreview is null', () => {
+    render(<RecipeFormSteps {...makeStep1Props({ onGenerateAIImage: vi.fn() })} />)
+    expect(screen.getByRole('button', { name: /Generate image/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Generate image/i })).toHaveTextContent('Generate image')
+  })
+
+  it('does NOT show AI generate button when onGenerateAIImage prop is absent', () => {
+    render(<RecipeFormSteps {...makeStep1Props()} />)
+    expect(screen.queryByRole('button', { name: /Generate image/i })).not.toBeInTheDocument()
+  })
+
+  it('shows "Regenerate image" button when imagePreview is set', () => {
+    render(
+      <RecipeFormSteps
+        {...makeStep1Props({
+          onGenerateAIImage: vi.fn(),
+          imagePreview: 'https://example.com/image.jpg',
+        })}
+      />
+    )
+    expect(screen.getByRole('button', { name: /Regenerate image/i })).toBeInTheDocument()
+  })
+
+  it('disables button when recipeName is empty', () => {
+    render(
+      <RecipeFormSteps
+        {...makeStep1Props({
+          onGenerateAIImage: vi.fn(),
+          title: '',
+          recipeName: '',
+        })}
+      />
+    )
+    expect(screen.getByRole('button', { name: /Generate image/i })).toBeDisabled()
+  })
+
+  it('shows loading state when generatingAIImage is true', () => {
+    render(
+      <RecipeFormSteps
+        {...makeStep1Props({
+          onGenerateAIImage: vi.fn(),
+          generatingAIImage: true,
+        })}
+      />
+    )
+    const btn = screen.getByRole('button', { name: /Generating/i })
+    expect(btn).toBeDisabled()
+    expect(btn).toHaveTextContent('Generating...')
+  })
+
+  it('calls onGenerateAIImage with recipeName and description when clicked', () => {
+    const onGenerate = vi.fn()
+    render(
+      <RecipeFormSteps
+        {...makeStep1Props({
+          onGenerateAIImage: onGenerate,
+          title: 'Pasta',
+          recipeName: 'Pasta',
+          description: 'Delicious pasta',
+        })}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Generate image/i }))
+    expect(onGenerate).toHaveBeenCalledWith('Pasta', 'Delicious pasta')
+
+  })
+})
