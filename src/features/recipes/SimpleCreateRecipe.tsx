@@ -111,11 +111,8 @@ export const SimpleCreateRecipe: React.FC = () => {
   }
 
   const lastUndoableAIField = useMemo<string | null>(() => {
-    for (let i = auditLog.length - 1; i >= 0; i--) {
-      const e = auditLog[i]
-      if (e.event === 'accepted') return e.field
-    }
-    return null
+    const latestEntry = auditLog[auditLog.length - 1]
+    return latestEntry?.event === 'accepted' ? latestEntry.field : null
   }, [auditLog])
 
   const handleUndo = useCallback(() => {
@@ -133,6 +130,7 @@ export const SimpleCreateRecipe: React.FC = () => {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Create Recipe</h1>
           <div className="flex items-center gap-2">
             <AIUndoButton
+              key={auditLog.length}
               lastField={canUndo ? lastUndoableAIField : null}
               onUndo={handleUndo}
               fieldLabels={FIELD_LABELS}

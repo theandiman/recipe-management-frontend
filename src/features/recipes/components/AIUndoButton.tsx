@@ -31,7 +31,7 @@ export const AIUndoButton: React.FC<AIUndoButtonProps> = ({ lastField, onUndo, f
       aria-label={`Undo: ${label}`}
       className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors"
     >
-      ↩ Undo: {label}
+      <span aria-hidden="true">↩</span> Undo: {label}
     </button>
   )
 }
