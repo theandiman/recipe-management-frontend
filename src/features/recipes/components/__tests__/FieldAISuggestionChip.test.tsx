@@ -76,7 +76,7 @@ describe('FieldAISuggestionChip', () => {
   })
 
   it('does not show strikethrough when currentValue is empty', () => {
-    render(
+    const { container } = render(
       <FieldAISuggestionChip
         field="recipeName"
         suggestion="New pasta dish"
@@ -85,7 +85,7 @@ describe('FieldAISuggestionChip', () => {
         onDismiss={vi.fn()}
       />
     )
-    expect(screen.queryByText('', { selector: 's' })).not.toBeInTheDocument()
+    expect(container.querySelector('s')).not.toBeInTheDocument()
     expect(screen.getByText('New pasta dish')).toBeInTheDocument()
   })
 })
