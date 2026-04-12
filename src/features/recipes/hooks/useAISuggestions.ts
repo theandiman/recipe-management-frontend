@@ -27,12 +27,17 @@ export interface FieldSuggestionRequest {
 
 export type SuggestionStatus = 'idle' | 'loading' | 'success' | 'error'
 
+/** String-valued keys of FieldSuggestionRequest (excludes array-typed fields like tags/ingredients/instructions). */
+export type StringFieldKey = Exclude<keyof FieldSuggestionRequest, 'tags' | 'ingredients' | 'instructions'>
+
 interface UseAISuggestionsReturn {
   suggestions: FieldSuggestion[]
   dismissedFields: Set<string>
   status: SuggestionStatus
   error: string | null
   fetchSuggestions: (request: FieldSuggestionRequest) => Promise<void>
+  fetchFieldSuggestion: (field: StringFieldKey, currentValue: string, context?: Partial<FieldSuggestionRequest>) => Promise<void>
+  fieldStatus: Map<string, SuggestionStatus>
   applySuggestion: (field: string, applyFn: (value: string) => void, previousValue: string) => void
   dismissSuggestion: (field: string) => void
   visibleSuggestions: FieldSuggestion[]
@@ -55,6 +60,7 @@ export function useAISuggestions(): UseAISuggestionsReturn {
   const [dismissedFields, setDismissedFields] = useState<Set<string>>(new Set())
   const [status, setStatus] = useState<SuggestionStatus>('idle')
   const [error, setError] = useState<string | null>(null)
+  const [fieldStatus, setFieldStatus] = useState<Map<string, SuggestionStatus>>(new Map())
 
   const {
     auditLog,
@@ -69,6 +75,7 @@ export function useAISuggestions(): UseAISuggestionsReturn {
   const fetchSuggestions = useCallback(async (request: FieldSuggestionRequest) => {
     setSuggestions([])
     setDismissedFields(new Set())
+    setFieldStatus(new Map())
     setStatus('loading')
     setError(null)
     const startTime = Date.now()
@@ -97,6 +104,46 @@ export function useAISuggestions(): UseAISuggestionsReturn {
       setError(msg)
       setStatus('error')
       console.warn('[AI Suggestions] fetch failed:', msg)
+    }
+  }, [recordSuggestion])
+
+  const fetchFieldSuggestion = useCallback(async (
+    field: StringFieldKey,
+    currentValue: string,
+    context?: Partial<FieldSuggestionRequest>
+  ) => {
+    setFieldStatus(prev => new Map(prev).set(field, 'loading'))
+    setError(null)
+
+    const request: FieldSuggestionRequest = { ...context, [field]: currentValue }
+
+    try {
+      const apiBase = import.meta.env.VITE_AI_API_URL ?? import.meta.env.VITE_API_URL ?? ''
+      const url = buildApiUrl(apiBase, '/api/recipes/suggest-fields')
+      const res = await postWithAuth(url, request)
+      const data = res.data as { suggestions: FieldSuggestion[] }
+      const fetched = data?.suggestions ?? []
+      const fieldSuggestions = fetched.filter(s => s.field === field)
+
+      setSuggestions(prev => {
+        const withoutField = prev.filter(s => s.field !== field)
+        return [...withoutField, ...fieldSuggestions]
+      })
+      setDismissedFields(prev => {
+        const next = new Set(prev)
+        next.delete(field)
+        return next
+      })
+      setFieldStatus(prev => new Map(prev).set(field, 'success'))
+
+      for (const s of fieldSuggestions) {
+        recordSuggestion(s.field, s.suggestedValue)
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to fetch AI suggestion'
+      setError(msg)
+      setFieldStatus(prev => new Map(prev).set(field, 'error'))
+      console.warn('[AI Suggestions] fetchFieldSuggestion failed:', msg)
     }
   }, [recordSuggestion])
 
@@ -132,6 +179,8 @@ export function useAISuggestions(): UseAISuggestionsReturn {
     status,
     error,
     fetchSuggestions,
+    fetchFieldSuggestion,
+    fieldStatus,
     applySuggestion,
     dismissSuggestion,
     visibleSuggestions,
