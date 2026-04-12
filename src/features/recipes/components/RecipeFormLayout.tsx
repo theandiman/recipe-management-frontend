@@ -248,10 +248,13 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
 
   // AI suggestion integration
   const {
+    suggestions,
     visibleSuggestions,
     status: suggestionStatus,
     error: suggestionError,
     fetchSuggestions,
+    fetchFieldSuggestion,
+    fieldStatus,
     applySuggestion,
     dismissSuggestion,
     canUndo: localCanUndo,
@@ -271,13 +274,13 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   }, [localAuditLog])
 
   // Wrap setters to allow passing previousValue for audit trail
-  const fieldSetters: Partial<Record<string, (value: string) => void>> = {
+  const fieldSetters: Partial<Record<string, (value: string) => void>> = useMemo(() => ({
     recipeName: setTitle,
     description: setDescription,
     prepTime: setPrepTime,
     cookTime: setCookTime,
     servings: setServings,
-  }
+  }), [setTitle, setDescription, setPrepTime, setCookTime, setServings])
 
   // Internal undo handler: uses the local audit trail (from RecipeFormLayout's own hook)
   const handleLocalUndo = useCallback(() => {
@@ -295,6 +298,29 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     // Also invoke the parent's undo handler if provided (for synchronisation)
     if (onUndoLastAI) onUndoLastAI()
   }, [localUndoLastAIChange, setTitle, setDescription, setPrepTime, setCookTime, setServings, onUndoLastAI])
+
+  const handleEnhanceField = useCallback((field: string, currentValue: string) => {
+    fetchFieldSuggestion(field as import('../hooks/useAISuggestions').StringFieldKey, currentValue, {
+      recipeName: title,
+      description: description,
+    })
+  }, [fetchFieldSuggestion, title, description])
+
+  const handleApplyFieldSuggestion = useCallback((field: string, value: string) => {
+    const setter = fieldSetters[field]
+    const previousValue = {
+      recipeName: title,
+      description,
+      prepTime,
+      cookTime,
+      servings,
+    }[field] ?? ''
+    if (setter) {
+      setter(value)
+      // Record in the audit trail using a no-op fn since we've already applied
+      applySuggestion(field, () => { /* already applied via setter(value) above */ }, previousValue)
+    }
+  }, [fieldSetters, title, description, prepTime, cookTime, servings, applySuggestion])
 
   // Shared request builder for AI suggestions
   const buildSuggestionRequest = () => ({
@@ -446,6 +472,11 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 normalizationStates={normalizationStates}
                 onApplyNormalization={onApplyNormalization}
                 onDismissNormalization={onDismissNormalization}
+                onEnhanceField={handleEnhanceField}
+                fieldStatus={fieldStatus}
+                fieldSuggestions={suggestions}
+                onApplyFieldSuggestion={handleApplyFieldSuggestion}
+                onDismissFieldSuggestion={dismissSuggestion}
               />
           </div>
 

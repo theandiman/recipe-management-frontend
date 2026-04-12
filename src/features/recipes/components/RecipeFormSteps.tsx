@@ -5,6 +5,9 @@ import { clampedNumericHandler } from '../../../utils/formUtils'
 import type { Ingredient } from '../../../types/nutrition'
 import type { StepRefinementState, RefinementLoadingState } from '../hooks/useInstructionRefinement'
 import { InstructionDiffView } from './InstructionDiffView'
+import { FieldAIEnhanceButton } from './FieldAIEnhanceButton'
+import { FieldAISuggestionChip } from './FieldAISuggestionChip'
+import type { FieldSuggestion, SuggestionStatus } from '../hooks/useAISuggestions'
 
 
 interface RecipeFormStepsProps {
@@ -58,6 +61,12 @@ interface RecipeFormStepsProps {
   normalizationStates?: Map<number, import('../hooks/useIngredientNormalization').NormalizationState>
   onApplyNormalization?: (index: number) => void
   onDismissNormalization?: (index: number) => void
+  // Per-field AI enhance
+  onEnhanceField?: (field: string, currentValue: string) => void
+  fieldStatus?: Map<string, SuggestionStatus>
+  fieldSuggestions?: FieldSuggestion[]
+  onApplyFieldSuggestion?: (field: string, value: string) => void
+  onDismissFieldSuggestion?: (field: string) => void
 }
 
 
@@ -106,7 +115,18 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
   normalizationStates,
   onApplyNormalization,
   onDismissNormalization,
+  onEnhanceField,
+  fieldStatus,
+  fieldSuggestions,
+  onApplyFieldSuggestion,
+  onDismissFieldSuggestion,
 }) => {
+  const getFieldStatus = (field: string): SuggestionStatus =>
+    fieldStatus?.get(field) ?? 'idle'
+
+  const getFieldSuggestion = (field: string): FieldSuggestion | undefined =>
+    fieldSuggestions?.find(s => s.field === field)
+
   return (
     <div className="space-y-8">
       {/* Step 1: Basic Info */}
@@ -118,8 +138,16 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
 
           {/* Recipe Name */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
               Recipe Name <span className="text-red-500">*</span>
+              {onEnhanceField && (
+                <FieldAIEnhanceButton
+                  field="recipeName"
+                  currentValue={title}
+                  status={getFieldStatus('recipeName')}
+                  onEnhance={() => onEnhanceField('recipeName', title)}
+                />
+              )}
             </label>
             <input
               type="text"
@@ -149,12 +177,32 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 {fieldErrors.title}
               </p>
             )}
+            {onEnhanceField && (() => {
+              const s = getFieldSuggestion('recipeName')
+              return s ? (
+                <FieldAISuggestionChip
+                  field="recipeName"
+                  suggestion={s.suggestedValue}
+                  currentValue={title}
+                  onApply={() => onApplyFieldSuggestion?.('recipeName', s.suggestedValue)}
+                  onDismiss={() => onDismissFieldSuggestion?.('recipeName')}
+                />
+              ) : null
+            })()}
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
               Description
+              {onEnhanceField && (
+                <FieldAIEnhanceButton
+                  field="description"
+                  currentValue={description}
+                  status={getFieldStatus('description')}
+                  onEnhance={() => onEnhanceField('description', description)}
+                />
+              )}
             </label>
             <textarea
               value={description}
@@ -163,6 +211,18 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               placeholder="Brief description of your recipe..."
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             />
+            {onEnhanceField && (() => {
+              const s = getFieldSuggestion('description')
+              return s ? (
+                <FieldAISuggestionChip
+                  field="description"
+                  suggestion={s.suggestedValue}
+                  currentValue={description}
+                  onApply={() => onApplyFieldSuggestion?.('description', s.suggestedValue)}
+                  onDismiss={() => onDismissFieldSuggestion?.('description')}
+                />
+              ) : null
+            })()}
           </div>
 
           {/* Recipe Image Upload */}
@@ -367,8 +427,16 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
           {/* Time and Servings Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
                 Prep Time (min)
+                {onEnhanceField && (
+                  <FieldAIEnhanceButton
+                    field="prepTime"
+                    currentValue={prepTime}
+                    status={getFieldStatus('prepTime')}
+                    onEnhance={() => onEnhanceField('prepTime', prepTime)}
+                  />
+                )}
               </label>
               <input
                 type="number"
@@ -383,10 +451,30 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               {fieldErrors.prepTime && (
                 <p className="mt-1 text-sm text-red-600" role="alert">{fieldErrors.prepTime}</p>
               )}
+              {onEnhanceField && (() => {
+                const s = getFieldSuggestion('prepTime')
+                return s ? (
+                  <FieldAISuggestionChip
+                    field="prepTime"
+                    suggestion={s.suggestedValue}
+                    currentValue={prepTime}
+                    onApply={() => onApplyFieldSuggestion?.('prepTime', s.suggestedValue)}
+                    onDismiss={() => onDismissFieldSuggestion?.('prepTime')}
+                  />
+                ) : null
+              })()}
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
                 Cook Time (min)
+                {onEnhanceField && (
+                  <FieldAIEnhanceButton
+                    field="cookTime"
+                    currentValue={cookTime}
+                    status={getFieldStatus('cookTime')}
+                    onEnhance={() => onEnhanceField('cookTime', cookTime)}
+                  />
+                )}
               </label>
               <input
                 type="number"
@@ -401,10 +489,30 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               {fieldErrors.cookTime && (
                 <p className="mt-1 text-sm text-red-600" role="alert">{fieldErrors.cookTime}</p>
               )}
+              {onEnhanceField && (() => {
+                const s = getFieldSuggestion('cookTime')
+                return s ? (
+                  <FieldAISuggestionChip
+                    field="cookTime"
+                    suggestion={s.suggestedValue}
+                    currentValue={cookTime}
+                    onApply={() => onApplyFieldSuggestion?.('cookTime', s.suggestedValue)}
+                    onDismiss={() => onDismissFieldSuggestion?.('cookTime')}
+                  />
+                ) : null
+              })()}
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
                 Servings
+                {onEnhanceField && (
+                  <FieldAIEnhanceButton
+                    field="servings"
+                    currentValue={servings}
+                    status={getFieldStatus('servings')}
+                    onEnhance={() => onEnhanceField('servings', servings)}
+                  />
+                )}
               </label>
               <input
                 type="number"
@@ -419,13 +527,33 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               {fieldErrors.servings && (
                 <p className="mt-1 text-sm text-red-600" role="alert">{fieldErrors.servings}</p>
               )}
+              {onEnhanceField && (() => {
+                const s = getFieldSuggestion('servings')
+                return s ? (
+                  <FieldAISuggestionChip
+                    field="servings"
+                    suggestion={s.suggestedValue}
+                    currentValue={servings}
+                    onApply={() => onApplyFieldSuggestion?.('servings', s.suggestedValue)}
+                    onDismiss={() => onDismissFieldSuggestion?.('servings')}
+                  />
+                ) : null
+              })()}
             </div>
           </div>
 
           {/* Tags Section */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-1.5">
               Tags (Optional)
+              {onEnhanceField && (
+                <FieldAIEnhanceButton
+                  field="tags"
+                  currentValue={tags.join(', ')}
+                  status={getFieldStatus('tags')}
+                  onEnhance={() => onEnhanceField('tags', tags.join(', '))}
+                />
+              )}
             </h3>
 
             <div className="flex items-center space-x-2">
