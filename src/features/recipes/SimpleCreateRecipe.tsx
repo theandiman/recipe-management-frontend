@@ -9,7 +9,10 @@ import { UI_STYLES } from '../../utils/uiStyles'
 import { clampedNumericHandler } from '../../utils/formUtils'
 import { useSimpleCreateSections } from './hooks/useSimpleCreateSections'
 import { useAISuggestions } from './hooks/useAISuggestions'
+import type { StringFieldKey } from './hooks/useAISuggestions'
 import { AISuggestionPanel } from './components/AISuggestionPanel'
+import { FieldAIEnhanceButton } from './components/FieldAIEnhanceButton'
+import { FieldAISuggestionChip } from './components/FieldAISuggestionChip'
 
 export const SimpleCreateRecipe: React.FC = () => {
   const navigate = useNavigate()
@@ -48,6 +51,8 @@ export const SimpleCreateRecipe: React.FC = () => {
     status: suggestionStatus,
     error: suggestionError,
     fetchSuggestions,
+    fetchFieldSuggestion,
+    fieldStatus,
     applySuggestion,
     dismissSuggestion,
   } = useAISuggestions()
@@ -80,6 +85,21 @@ export const SimpleCreateRecipe: React.FC = () => {
     cookTime: form.cookTime,
     servings: form.servings,
   }), [form.title, form.description, form.prepTime, form.cookTime, form.servings])
+
+  const handleEnhanceField = useCallback((field: string, currentValue: string) => {
+    fetchFieldSuggestion(field as StringFieldKey, currentValue, {
+      recipeName: form.title,
+      description: form.description,
+    })
+  }, [fetchFieldSuggestion, form.title, form.description])
+
+  const handleApplyFieldSuggestion = useCallback((field: string, value: string) => {
+    const setter = fieldSetters[field]
+    const previous = currentValues[field] ?? ''
+    if (setter) {
+      applySuggestion(field, () => setter(value), previous)
+    }
+  }, [fieldSetters, currentValues, applySuggestion])
 
   const handleEnhanceWithAI = () => {
     fetchSuggestions(buildSuggestionRequest())
@@ -185,9 +205,17 @@ export const SimpleCreateRecipe: React.FC = () => {
 
           {/* Recipe Name */}
           <div className="mb-4">
-            <label htmlFor="simple-title" className="block text-sm font-semibold text-gray-700 mb-2">
-              Recipe Name <span className="text-red-500">*</span>
-            </label>
+            <div className="flex items-center gap-1.5 mb-2">
+              <label htmlFor="simple-title" className="text-sm font-semibold text-gray-700">
+                Recipe Name <span className="text-red-500">*</span>
+              </label>
+              <FieldAIEnhanceButton
+                field="recipeName"
+                currentValue={form.title}
+                status={fieldStatus.get('recipeName') ?? 'idle'}
+                onEnhance={() => handleEnhanceField('recipeName', form.title)}
+              />
+            </div>
             <input
               id="simple-title"
               type="text"
@@ -227,16 +255,33 @@ export const SimpleCreateRecipe: React.FC = () => {
                 {form.fieldErrors.title}
               </p>
             )}
+            {(() => {
+              const s = visibleSuggestions.find(x => x.field === 'recipeName')
+              return s ? (
+                <FieldAISuggestionChip
+                  field="recipeName"
+                  suggestion={s.suggestedValue}
+                  currentValue={form.title}
+                  onApply={() => handleApplyFieldSuggestion('recipeName', s.suggestedValue)}
+                  onDismiss={() => dismissSuggestion('recipeName')}
+                />
+              ) : null
+            })()}
           </div>
 
           {/* Description */}
           <div>
-            <label
-              htmlFor="simple-description"
-              className="block text-sm font-semibold text-gray-700 mb-2"
-            >
-              Description
-            </label>
+            <div className="flex items-center gap-1.5 mb-2">
+              <label htmlFor="simple-description" className="text-sm font-semibold text-gray-700">
+                Description
+              </label>
+              <FieldAIEnhanceButton
+                field="description"
+                currentValue={form.description}
+                status={fieldStatus.get('description') ?? 'idle'}
+                onEnhance={() => handleEnhanceField('description', form.description)}
+              />
+            </div>
             <textarea
               id="simple-description"
               value={form.description}
@@ -245,6 +290,18 @@ export const SimpleCreateRecipe: React.FC = () => {
               placeholder="Brief description of your recipe..."
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             />
+            {(() => {
+              const s = visibleSuggestions.find(x => x.field === 'description')
+              return s ? (
+                <FieldAISuggestionChip
+                  field="description"
+                  suggestion={s.suggestedValue}
+                  currentValue={form.description}
+                  onApply={() => handleApplyFieldSuggestion('description', s.suggestedValue)}
+                  onDismiss={() => dismissSuggestion('description')}
+                />
+              ) : null
+            })()}
           </div>
         </div>
 

@@ -160,3 +160,75 @@ describe('RecipeFormSteps — instruction refinement (issue #37)', () => {
     expect(screen.queryByRole('button', { name: /✓ Accept/i })).not.toBeInTheDocument()
   })
 })
+
+describe('RecipeFormSteps — per-field AI enhance (issue #40)', () => {
+  it('shows FieldAIEnhanceButton for recipeName when onEnhanceField prop provided', () => {
+    render(
+      <RecipeFormSteps
+        {...makeProps({ currentStep: 1, onEnhanceField: vi.fn() })}
+      />
+    )
+    const buttons = screen.getAllByRole('button', { name: /complete with ai|enhance with ai/i })
+    expect(buttons.length).toBeGreaterThan(0)
+  })
+
+  it('calls onEnhanceField with field name and current value when icon clicked', () => {
+    const onEnhanceField = vi.fn()
+    render(
+      <RecipeFormSteps
+        {...makeProps({ currentStep: 1, title: 'My Recipe', onEnhanceField })}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: /enhance with ai/i }))
+    expect(onEnhanceField).toHaveBeenCalledWith('recipeName', 'My Recipe')
+  })
+
+  it('shows FieldAISuggestionChip when suggestion available for that field', () => {
+    render(
+      <RecipeFormSteps
+        {...makeProps({
+          currentStep: 1,
+          onEnhanceField: vi.fn(),
+          fieldSuggestions: [{ field: 'recipeName', suggestedValue: 'Amazing Pasta', reason: 'Sounds great' }],
+          onApplyFieldSuggestion: vi.fn(),
+          onDismissFieldSuggestion: vi.fn(),
+        })}
+      />
+    )
+    expect(screen.getByText('Amazing Pasta')).toBeInTheDocument()
+  })
+
+  it('calls onApplyFieldSuggestion when Apply clicked on chip', () => {
+    const onApply = vi.fn()
+    render(
+      <RecipeFormSteps
+        {...makeProps({
+          currentStep: 1,
+          onEnhanceField: vi.fn(),
+          fieldSuggestions: [{ field: 'recipeName', suggestedValue: 'Amazing Pasta', reason: 'Sounds great' }],
+          onApplyFieldSuggestion: onApply,
+          onDismissFieldSuggestion: vi.fn(),
+        })}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: /apply/i }))
+    expect(onApply).toHaveBeenCalledWith('recipeName', 'Amazing Pasta')
+  })
+
+  it('calls onDismissFieldSuggestion when Dismiss clicked on chip', () => {
+    const onDismiss = vi.fn()
+    render(
+      <RecipeFormSteps
+        {...makeProps({
+          currentStep: 1,
+          onEnhanceField: vi.fn(),
+          fieldSuggestions: [{ field: 'recipeName', suggestedValue: 'Amazing Pasta', reason: 'Sounds great' }],
+          onApplyFieldSuggestion: vi.fn(),
+          onDismissFieldSuggestion: onDismiss,
+        })}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: /dismiss/i }))
+    expect(onDismiss).toHaveBeenCalledWith('recipeName')
+  })
+})
