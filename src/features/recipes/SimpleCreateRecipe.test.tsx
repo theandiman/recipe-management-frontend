@@ -295,7 +295,7 @@ describe('AI Undo Affordance', () => {
           { field: 'description', suggestedValue: 'Delicious pasta', reason: 'Better description' },
         ],
       },
-    })
+    } as any)
 
     renderWithRouter(<SimpleCreateRecipe />)
     fireEvent.click(screen.getByRole('button', { name: /Enhance recipe with AI/i }))
@@ -323,7 +323,7 @@ describe('AI Undo Affordance', () => {
           { field: 'description', suggestedValue: 'Delicious pasta', reason: 'Better description' },
         ],
       },
-    })
+    } as any)
 
     renderWithRouter(<SimpleCreateRecipe />)
     fireEvent.click(screen.getByRole('button', { name: /Enhance recipe with AI/i }))
