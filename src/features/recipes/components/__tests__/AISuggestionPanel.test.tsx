@@ -69,7 +69,7 @@ describe('AISuggestionPanel', () => {
     expect(onRetry).toHaveBeenCalledOnce()
   })
 
-  it('shows "all fields look good" when status is success and no suggestions', () => {
+  it('auto-collapses (shows only header) when status is success and no suggestions', () => {
     render(
       <AISuggestionPanel
         suggestions={[]}
@@ -80,7 +80,8 @@ describe('AISuggestionPanel', () => {
         fieldSetters={{}}
       />
     )
-    expect(screen.getByText(/all fields look good/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /AI Suggestions/i })).toBeInTheDocument()
+    expect(screen.queryByText(/all fields look good/i)).not.toBeInTheDocument()
   })
 
   it('renders suggestion cards with apply and dismiss buttons', () => {
@@ -270,5 +271,90 @@ describe('Before/after comparison', () => {
     )
     fireEvent.click(screen.getByRole('button', { name: /apply ai suggestion for description/i }))
     expect(onApply).toHaveBeenCalledWith('description', setter, 'My current description')
+  })
+})
+
+// ─── Step-scoped suggestions (issue #45) ─────────────────────────────────────────────
+
+const stepSuggestions: FieldSuggestion[] = [
+  { field: 'recipeName', suggestedValue: 'Better Recipe Name', reason: 'Too generic' },
+  { field: 'description', suggestedValue: 'A rich description', reason: 'Too short' },
+  { field: 'prepTime', suggestedValue: '20', reason: 'Missing prep time' },
+  { field: 'cookTime', suggestedValue: '30', reason: 'Missing cook time' },
+  { field: 'servings', suggestedValue: '4', reason: 'Missing servings' },
+  { field: 'tags', suggestedValue: 'Italian', reason: 'No tags' },
+]
+
+describe('AISuggestionPanel — step scoping', () => {
+  it('filters to step 1 fields (recipeName, description) when currentStep=1', () => {
+    render(
+      <AISuggestionPanel
+        suggestions={stepSuggestions}
+        status="success"
+        error={null}
+        onApply={vi.fn()}
+        onDismiss={vi.fn()}
+        fieldSetters={{}}
+        currentStep={1}
+      />
+    )
+    expect(screen.getByText(/Better Recipe Name/i)).toBeInTheDocument()
+    expect(screen.getByText(/A rich description/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Missing prep time/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Missing cook time/i)).not.toBeInTheDocument()
+  })
+
+  it('shows step 4 fields (prepTime, cookTime, servings, tags) when currentStep=4', () => {
+    render(
+      <AISuggestionPanel
+        suggestions={stepSuggestions}
+        status="success"
+        error={null}
+        onApply={vi.fn()}
+        onDismiss={vi.fn()}
+        fieldSetters={{}}
+        currentStep={4}
+      />
+    )
+    expect(screen.getByText(/Missing prep time/i)).toBeInTheDocument()
+    expect(screen.getByText(/Missing cook time/i)).toBeInTheDocument()
+    expect(screen.getByText(/Missing servings/i)).toBeInTheDocument()
+    expect(screen.getByText(/No tags/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Better Recipe Name/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/A rich description/i)).not.toBeInTheDocument()
+  })
+
+  it('shows all suggestions when currentStep is not provided', () => {
+    render(
+      <AISuggestionPanel
+        suggestions={stepSuggestions}
+        status="success"
+        error={null}
+        onApply={vi.fn()}
+        onDismiss={vi.fn()}
+        fieldSetters={{}}
+      />
+    )
+    expect(screen.getByText(/Better Recipe Name/i)).toBeInTheDocument()
+    expect(screen.getByText(/A rich description/i)).toBeInTheDocument()
+    expect(screen.getByText(/Missing prep time/i)).toBeInTheDocument()
+  })
+
+  it('auto-collapses panel body when success + 0 visible suggestions after step filter', () => {
+    render(
+      <AISuggestionPanel
+        suggestions={[
+          { field: 'prepTime', suggestedValue: '20', reason: 'Missing prep time' },
+        ]}
+        status="success"
+        error={null}
+        onApply={vi.fn()}
+        onDismiss={vi.fn()}
+        fieldSetters={{}}
+        currentStep={1}
+      />
+    )
+    expect(screen.queryByText(/Missing prep time/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /AI Suggestions/i })).toBeInTheDocument()
   })
 })

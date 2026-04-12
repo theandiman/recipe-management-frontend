@@ -8,6 +8,7 @@ import { InstructionDiffView } from './InstructionDiffView'
 import { FieldAIEnhanceButton } from './FieldAIEnhanceButton'
 import { FieldAISuggestionChip } from './FieldAISuggestionChip'
 import type { FieldSuggestion, SuggestionStatus } from '../hooks/useAISuggestions'
+import { AISpinnerIcon } from './AISpinnerIcon'
 
 
 interface RecipeFormStepsProps {
@@ -293,7 +294,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 >
                   {generatingAIImage ? (
                     <>
-                      <span className="animate-spin" aria-hidden="true">⏳</span>
+                      <AISpinnerIcon />
                       Generating...
                     </>
                   ) : (
@@ -358,7 +359,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                     className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {instructionRefinementLoading === 'loading' ? (
-                      <span className="animate-spin">⏳</span>
+                      <AISpinnerIcon />
                     ) : (
                       <span aria-hidden="true">✨</span>
                     )}

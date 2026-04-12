@@ -1,6 +1,7 @@
 import React from 'react'
 import type { FieldSuggestion, SuggestionStatus } from '../hooks/useAISuggestions'
-import { FIELD_LABELS } from '../constants/aiConstants'
+import { FIELD_LABELS, STEP_FIELDS } from '../constants/aiConstants'
+import { AISpinnerIcon } from './AISpinnerIcon'
 
 interface AISuggestionPanelProps {
   suggestions: FieldSuggestion[]
@@ -10,21 +11,20 @@ interface AISuggestionPanelProps {
   onDismiss: (field: string) => void
   /** Maps field names to their corresponding form setter functions */
   fieldSetters: Partial<Record<string, (value: string) => void>>
-  /** Current form values keyed by field name — used to record "before" state for the audit trail and to show before/after comparison */
+  /** Current form values keyed by field name */
   currentValues?: Partial<Record<string, string>>
   onRetry?: () => void
+  /** When provided, only suggestions relevant to that step's fields are shown */
+  currentStep?: number
 }
 
 /**
  * Collapsible panel that displays AI-generated field suggestions.
  *
- * - Renders all suggestions passed in via the `suggestions` prop.
+ * - Renders suggestions filtered to the active form step when currentStep is provided.
  * - Each suggestion has an Apply and Dismiss button.
- * - Shows the current field value alongside the suggestion for before/after
- *   comparison when `currentValues` is provided.
- * - Visually distinguished with amber styling and ✨ icon.
- * - If the AI call fails the panel shows an error/retry state but does NOT
- *   block form submission.
+ * - Auto-collapses when success + no visible suggestions for the current step.
+ * - Auto-expands when loading or error to ensure the user sees status updates.
  */
 export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
   suggestions,
@@ -35,12 +35,32 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
   fieldSetters,
   currentValues,
   onRetry,
+  currentStep,
 }) => {
-  const [isExpanded, setIsExpanded] = React.useState(true)
+  const stepFilteredSuggestions = React.useMemo(() => {
+    if (currentStep === undefined) return suggestions
+    const allowedFields = STEP_FIELDS[currentStep] ?? []
+    // No mapping for this step → show all (steps 2, 3 etc. are not restricted)
+    if (allowedFields.length === 0) return suggestions
+    return suggestions.filter(s => allowedFields.includes(s.field))
+  }, [suggestions, currentStep])
+
+  const autoCollapsed = status === 'success' && stepFilteredSuggestions.length === 0
+  const [isExpanded, setIsExpanded] = React.useState(!autoCollapsed)
+
+  React.useEffect(() => {
+    if (autoCollapsed) {
+      setIsExpanded(false)
+      return
+    }
+    if (status === 'loading' || status === 'error' || (status === 'success' && stepFilteredSuggestions.length > 0)) {
+      setIsExpanded(true)
+    }
+  }, [autoCollapsed, status, stepFilteredSuggestions.length])
 
   if (status === 'idle') return null
 
-  const hasSuggestions = suggestions.length > 0
+  const hasSuggestions = stepFilteredSuggestions.length > 0
 
   return (
     <div
@@ -60,7 +80,7 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
           AI Suggestions
           {hasSuggestions && (
             <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-500 text-white text-xs font-bold">
-              {suggestions.length}
+              {stepFilteredSuggestions.length}
             </span>
           )}
         </span>
@@ -72,7 +92,7 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
           {/* Loading state */}
           {status === 'loading' && (
             <div className="flex items-center gap-2 text-amber-700 text-sm py-2">
-              <span className="animate-spin">⏳</span>
+              <AISpinnerIcon />
               Analysing your recipe for improvement suggestions…
             </div>
           )}
@@ -93,17 +113,10 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
             </div>
           )}
 
-          {/* No suggestions */}
-          {status === 'success' && !hasSuggestions && (
-            <p className="text-sm text-amber-700 py-2">
-              ✅ All fields look good — no suggestions needed.
-            </p>
-          )}
-
           {/* Suggestion cards */}
           {status === 'success' && hasSuggestions && (
             <ul className="space-y-2 mt-1" role="list">
-              {suggestions.map(suggestion => {
+              {stepFilteredSuggestions.map(suggestion => {
                 const setter = fieldSetters[suggestion.field]
                 const label = FIELD_LABELS[suggestion.field] ?? suggestion.field
                 const currentValue = currentValues?.[suggestion.field]
