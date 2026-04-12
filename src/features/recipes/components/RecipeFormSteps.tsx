@@ -138,8 +138,10 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
 
           {/* Recipe Name */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
-              Recipe Name <span className="text-red-500">*</span>
+            <div className="flex items-center gap-1.5 mb-2">
+              <label className="text-sm font-semibold text-gray-700">
+                Recipe Name <span className="text-red-500">*</span>
+              </label>
               {onEnhanceField && (
                 <FieldAIEnhanceButton
                   field="recipeName"
@@ -148,7 +150,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   onEnhance={() => onEnhanceField('recipeName', title)}
                 />
               )}
-            </label>
+            </div>
             <input
               type="text"
               value={title}
@@ -193,8 +195,10 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
-              Description
+            <div className="flex items-center gap-1.5 mb-2">
+              <label className="text-sm font-semibold text-gray-700">
+                Description
+              </label>
               {onEnhanceField && (
                 <FieldAIEnhanceButton
                   field="description"
@@ -203,7 +207,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   onEnhance={() => onEnhanceField('description', description)}
                 />
               )}
-            </label>
+            </div>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -427,8 +431,8 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
           {/* Time and Servings Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
-                Prep Time (min)
+              <div className="flex items-center gap-1.5 mb-2">
+                <label className="text-sm font-semibold text-gray-700">Prep Time (min)</label>
                 {onEnhanceField && (
                   <FieldAIEnhanceButton
                     field="prepTime"
@@ -437,7 +441,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                     onEnhance={() => onEnhanceField('prepTime', prepTime)}
                   />
                 )}
-              </label>
+              </div>
               <input
                 type="number"
                 value={prepTime}
@@ -465,8 +469,8 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               })()}
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
-                Cook Time (min)
+              <div className="flex items-center gap-1.5 mb-2">
+                <label className="text-sm font-semibold text-gray-700">Cook Time (min)</label>
                 {onEnhanceField && (
                   <FieldAIEnhanceButton
                     field="cookTime"
@@ -475,7 +479,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                     onEnhance={() => onEnhanceField('cookTime', cookTime)}
                   />
                 )}
-              </label>
+              </div>
               <input
                 type="number"
                 value={cookTime}
@@ -503,8 +507,8 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               })()}
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
-                Servings
+              <div className="flex items-center gap-1.5 mb-2">
+                <label className="text-sm font-semibold text-gray-700">Servings</label>
                 {onEnhanceField && (
                   <FieldAIEnhanceButton
                     field="servings"
@@ -513,7 +517,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                     onEnhance={() => onEnhanceField('servings', servings)}
                   />
                 )}
-              </label>
+              </div>
               <input
                 type="number"
                 value={servings}
@@ -544,16 +548,8 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
 
           {/* Tags Section */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-1.5">
+            <h3 className="text-lg font-semibold text-gray-900">
               Tags (Optional)
-              {onEnhanceField && (
-                <FieldAIEnhanceButton
-                  field="tags"
-                  currentValue={tags.join(', ')}
-                  status={getFieldStatus('tags')}
-                  onEnhance={() => onEnhanceField('tags', tags.join(', '))}
-                />
-              )}
             </h3>
 
             <div className="flex items-center space-x-2">

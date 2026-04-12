@@ -248,7 +248,6 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
 
   // AI suggestion integration
   const {
-    suggestions,
     visibleSuggestions,
     status: suggestionStatus,
     error: suggestionError,
@@ -316,9 +315,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
       servings,
     }[field] ?? ''
     if (setter) {
-      setter(value)
-      // Record in the audit trail using a no-op fn since we've already applied
-      applySuggestion(field, () => { /* already applied via setter(value) above */ }, previousValue)
+      applySuggestion(field, () => setter(value), previousValue)
     }
   }, [fieldSetters, title, description, prepTime, cookTime, servings, applySuggestion])
 
@@ -474,7 +471,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 onDismissNormalization={onDismissNormalization}
                 onEnhanceField={handleEnhanceField}
                 fieldStatus={fieldStatus}
-                fieldSuggestions={suggestions}
+                fieldSuggestions={visibleSuggestions}
                 onApplyFieldSuggestion={handleApplyFieldSuggestion}
                 onDismissFieldSuggestion={dismissSuggestion}
               />
