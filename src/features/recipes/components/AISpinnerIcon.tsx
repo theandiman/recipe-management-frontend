@@ -2,7 +2,7 @@ import React from 'react'
 
 export const AISpinnerIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg
-    className={`animate-spin ${className ?? 'w-4 h-4'}`}
+    className={`animate-spin w-4 h-4${className ? ` ${className}` : ''}`}
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
     viewBox="0 0 24 24"

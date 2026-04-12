@@ -1,12 +1,7 @@
 import React from 'react'
 import type { FieldSuggestion, SuggestionStatus } from '../hooks/useAISuggestions'
-import { FIELD_LABELS } from '../constants/aiConstants'
+import { FIELD_LABELS, STEP_FIELDS } from '../constants/aiConstants'
 import { AISpinnerIcon } from './AISpinnerIcon'
-
-const STEP_FIELDS: Record<number, string[]> = {
-  1: ['recipeName', 'description'],
-  4: ['prepTime', 'cookTime', 'servings', 'tags'],
-}
 
 interface AISuggestionPanelProps {
   suggestions: FieldSuggestion[]
@@ -29,6 +24,7 @@ interface AISuggestionPanelProps {
  * - Renders suggestions filtered to the active form step when currentStep is provided.
  * - Each suggestion has an Apply and Dismiss button.
  * - Auto-collapses when success + no visible suggestions for the current step.
+ * - Auto-expands when loading or error to ensure the user sees status updates.
  */
 export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
   suggestions,
@@ -41,17 +37,26 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
   onRetry,
   currentStep,
 }) => {
-  const stepFilteredSuggestions =
-    currentStep && STEP_FIELDS[currentStep]
-      ? suggestions.filter(s => STEP_FIELDS[currentStep].includes(s.field))
-      : suggestions
+  const stepFilteredSuggestions = React.useMemo(() => {
+    if (currentStep === undefined) return suggestions
+    const allowedFields = STEP_FIELDS[currentStep] ?? []
+    // No mapping for this step → show all (steps 2, 3 etc. are not restricted)
+    if (allowedFields.length === 0) return suggestions
+    return suggestions.filter(s => allowedFields.includes(s.field))
+  }, [suggestions, currentStep])
 
   const autoCollapsed = status === 'success' && stepFilteredSuggestions.length === 0
   const [isExpanded, setIsExpanded] = React.useState(!autoCollapsed)
 
   React.useEffect(() => {
-    if (autoCollapsed) setIsExpanded(false)
-  }, [autoCollapsed])
+    if (autoCollapsed) {
+      setIsExpanded(false)
+      return
+    }
+    if (status === 'loading' || status === 'error' || (status === 'success' && stepFilteredSuggestions.length > 0)) {
+      setIsExpanded(true)
+    }
+  }, [autoCollapsed, status, stepFilteredSuggestions.length])
 
   if (status === 'idle') return null
 

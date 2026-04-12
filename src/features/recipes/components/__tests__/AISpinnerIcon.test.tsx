@@ -20,7 +20,7 @@ describe('AISpinnerIcon', () => {
     expect(svg?.getAttribute('aria-hidden')).toBe('true')
   })
 
-  it('uses default size class when no className given', () => {
+  it('always includes default w-4 h-4 sizing', () => {
     const { container } = render(<AISpinnerIcon />)
     const svg = container.querySelector('svg')
     const cls = svg?.getAttribute('class') ?? ''
@@ -28,11 +28,15 @@ describe('AISpinnerIcon', () => {
     expect(cls).toContain('h-4')
   })
 
-  it('accepts a custom className override', () => {
-    const { container } = render(<AISpinnerIcon className="w-6 h-6" />)
+  it('appends custom className to defaults', () => {
+    const { container } = render(<AISpinnerIcon className="w-3.5 h-3.5" />)
     const svg = container.querySelector('svg')
     const cls = svg?.getAttribute('class') ?? ''
-    expect(cls).toContain('w-6')
-    expect(cls).toContain('h-6')
+    // defaults still present
+    expect(cls).toContain('w-4')
+    expect(cls).toContain('h-4')
+    // override appended
+    expect(cls).toContain('w-3.5')
+    expect(cls).toContain('h-3.5')
   })
 })
