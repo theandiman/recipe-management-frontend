@@ -154,3 +154,38 @@ describe('RecipeFormLayout — on-demand AI enhancement (issue #35)', () => {
     await waitFor(() => expect(btn).not.toBeDisabled())
   })
 })
+
+describe('RecipeFormLayout — AI undo affordance (issue #42)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  it('does not show undo button before any suggestion is applied', () => {
+    renderWithRouter(makeProps())
+    expect(screen.queryByRole('button', { name: /Undo:/i })).not.toBeInTheDocument()
+  })
+
+  it('shows undo button in header after a suggestion is applied', async () => {
+    mockPostWithAuth.mockResolvedValueOnce({
+      data: {
+        suggestions: [
+          { field: 'description', suggestedValue: 'A tasty pasta dish', reason: 'Improve description' },
+        ],
+      },
+    } as any)
+
+    renderWithRouter(makeProps({ title: 'Pasta' }))
+    fireEvent.click(screen.getByRole('button', { name: /Enhance recipe with AI/i }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Apply AI suggestion for Description/i })).toBeInTheDocument()
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Apply AI suggestion for Description/i }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Undo: Description/i })).toBeInTheDocument()
+    )
+  })
+})
