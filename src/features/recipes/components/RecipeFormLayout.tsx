@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo } from 'react'
 import { StepIndicator } from './StepIndicator'
 import { RecipeFormSteps } from './RecipeFormSteps'
-import { AISpinnerIcon } from './AISpinnerIcon'
 
 
 import { RecipePreview } from './RecipePreview'
@@ -389,7 +388,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {suggestionStatus === 'loading' ? (
-                  <AISpinnerIcon />
+                  <span className="animate-spin">⏳</span>
                 ) : (
                   <span aria-hidden="true">✨</span>
                 )}
