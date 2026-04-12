@@ -67,6 +67,10 @@ interface RecipeFormStepsProps {
   fieldSuggestions?: FieldSuggestion[]
   onApplyFieldSuggestion?: (field: string, value: string) => void
   onDismissFieldSuggestion?: (field: string) => void
+  // AI Image Generation
+  onGenerateAIImage?: (recipeName: string, description?: string) => Promise<void>
+  generatingAIImage?: boolean
+  aiImageError?: string | null
 }
 
 
@@ -106,6 +110,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
   removeDietaryRestriction,
   fieldErrors,
   clearFieldError,
+  recipeName,
   onRefineInstruction,
   onRefineAllInstructions,
   instructionRefinementStates,
@@ -120,6 +125,9 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
   fieldSuggestions,
   onApplyFieldSuggestion,
   onDismissFieldSuggestion,
+  onGenerateAIImage,
+  generatingAIImage = false,
+  aiImageError,
 }) => {
   const getFieldStatus = (field: string): SuggestionStatus =>
     fieldStatus?.get(field) ?? 'idle'
@@ -273,6 +281,34 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   </svg>
                 </button>
               </div>
+            )}
+
+            {onGenerateAIImage && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => onGenerateAIImage(recipeName.trim(), description || undefined)}
+                  disabled={!recipeName.trim() || generatingAIImage}
+                  className="mt-3 flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {generatingAIImage ? (
+                    <>
+                      <span className="animate-spin" aria-hidden="true">⏳</span>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <span aria-hidden="true">✨</span>
+                      {imagePreview ? 'Regenerate image' : 'Generate image'}
+                    </>
+                  )}
+                </button>
+                {aiImageError && (
+                  <p className="mt-2 text-xs text-red-600 flex items-center gap-1">
+                    <span aria-hidden="true">⚠️</span> {aiImageError}
+                  </p>
+                )}
+              </>
             )}
           </div>
         </div>
