@@ -27,13 +27,16 @@ export interface FieldSuggestionRequest {
 
 export type SuggestionStatus = 'idle' | 'loading' | 'success' | 'error'
 
+/** String-valued keys of FieldSuggestionRequest (excludes array-typed fields like tags/ingredients/instructions). */
+export type StringFieldKey = Exclude<keyof FieldSuggestionRequest, 'tags' | 'ingredients' | 'instructions'>
+
 interface UseAISuggestionsReturn {
   suggestions: FieldSuggestion[]
   dismissedFields: Set<string>
   status: SuggestionStatus
   error: string | null
   fetchSuggestions: (request: FieldSuggestionRequest) => Promise<void>
-  fetchFieldSuggestion: (field: keyof FieldSuggestionRequest, currentValue: string, context?: Partial<FieldSuggestionRequest>) => Promise<void>
+  fetchFieldSuggestion: (field: StringFieldKey, currentValue: string, context?: Partial<FieldSuggestionRequest>) => Promise<void>
   fieldStatus: Map<string, SuggestionStatus>
   applySuggestion: (field: string, applyFn: (value: string) => void, previousValue: string) => void
   dismissSuggestion: (field: string) => void
@@ -72,6 +75,7 @@ export function useAISuggestions(): UseAISuggestionsReturn {
   const fetchSuggestions = useCallback(async (request: FieldSuggestionRequest) => {
     setSuggestions([])
     setDismissedFields(new Set())
+    setFieldStatus(new Map())
     setStatus('loading')
     setError(null)
     const startTime = Date.now()
@@ -104,11 +108,12 @@ export function useAISuggestions(): UseAISuggestionsReturn {
   }, [recordSuggestion])
 
   const fetchFieldSuggestion = useCallback(async (
-    field: keyof FieldSuggestionRequest,
+    field: StringFieldKey,
     currentValue: string,
     context?: Partial<FieldSuggestionRequest>
   ) => {
     setFieldStatus(prev => new Map(prev).set(field, 'loading'))
+    setError(null)
 
     const request: FieldSuggestionRequest = { ...context, [field]: currentValue }
 
@@ -118,18 +123,25 @@ export function useAISuggestions(): UseAISuggestionsReturn {
       const res = await postWithAuth(url, request)
       const data = res.data as { suggestions: FieldSuggestion[] }
       const fetched = data?.suggestions ?? []
+      const fieldSuggestions = fetched.filter(s => s.field === field)
 
       setSuggestions(prev => {
         const withoutField = prev.filter(s => s.field !== field)
-        return [...withoutField, ...fetched.filter(s => s.field === field)]
+        return [...withoutField, ...fieldSuggestions]
+      })
+      setDismissedFields(prev => {
+        const next = new Set(prev)
+        next.delete(field)
+        return next
       })
       setFieldStatus(prev => new Map(prev).set(field, 'success'))
 
-      for (const s of fetched) {
+      for (const s of fieldSuggestions) {
         recordSuggestion(s.field, s.suggestedValue)
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to fetch AI suggestion'
+      setError(msg)
       setFieldStatus(prev => new Map(prev).set(field, 'error'))
       console.warn('[AI Suggestions] fetchFieldSuggestion failed:', msg)
     }

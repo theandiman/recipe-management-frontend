@@ -197,6 +197,8 @@ describe('useAISuggestions', () => {
     it('should set fieldStatus[field] to loading while fetching', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let resolvePost!: (value: any) => void
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let pending!: Promise<any>
       mockPostWithAuth.mockReturnValueOnce(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         new Promise<any>((resolve) => { resolvePost = resolve })
@@ -205,13 +207,15 @@ describe('useAISuggestions', () => {
       const { result } = renderHook(() => useAISuggestions())
 
       act(() => {
-        result.current.fetchFieldSuggestion('description', '')
+        pending = result.current.fetchFieldSuggestion('description', '')
       })
 
       expect(result.current.fieldStatus.get('description')).toBe('loading')
 
-      // Resolve to avoid unhandled promise
-      resolvePost({ data: { suggestions: [{ field: 'description', suggestedValue: 'x', reason: '' }] } })
+      await act(async () => {
+        resolvePost({ data: { suggestions: [{ field: 'description', suggestedValue: 'x', reason: '' }] } })
+        await pending
+      })
     })
 
     it('should add single-field suggestion to suggestions on success', async () => {
