@@ -1,126 +1,78 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter, Routes, Route } from 'react-router-dom'
-import { RecipeDetail } from '../../features/recipes/RecipeDetail'
-import * as recipeStorageApi from '../../services/recipeStorageApi'
-import type { Recipe } from '../../types/nutrition'
+import { render, screen } from '@testing-library/react'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { DashboardLayout } from './DashboardLayout'
 
-// Mock the API
-vi.mock('../../services/recipeStorageApi', () => ({
-  getRecipes: vi.fn(),
-  getRecipe: vi.fn(),
-  deleteRecipe: vi.fn()
-}))
-
-// Mock SavedRecipesContext
-vi.mock('../../features/recipes/SavedRecipesContext', () => ({
-  useSavedRecipes: () => ({
-    savedIds: new Set<string>(),
-    savedRecipes: [],
-    isSaved: () => false,
-    toggleSave: vi.fn().mockResolvedValue(undefined),
-    isLoading: false,
-    reload: vi.fn().mockResolvedValue(undefined)
-  }),
-  SavedRecipesProvider: ({ children }: { children: unknown }) => children
-}))
-
-// Mock useAuth to provide a dummy user without importing the real module
 vi.mock('../../features/auth/AuthContext', () => ({
   useAuth: () => ({
     user: { email: 'test@example.com', uid: 'test-user' },
-    isAuthenticated: true,
-    isLoading: false,
-    error: null,
-    login: async () => {},
-    loginWithGoogle: async () => {},
-    register: async () => {},
-    logout: async () => {}
+    logout: vi.fn(),
   }),
-  AuthProvider: ({ children }: any) => children
 }))
 
-// Mock BookmarkButton to avoid SavedRecipesContext dependencies
-vi.mock('../../components/BookmarkButton', () => ({
-  default: () => null,
-  BookmarkButton: () => null,
+vi.mock('../Dashboard', () => ({
+  Dashboard: () => <div>DashboardStub</div>,
 }))
 
-// Mock LikeButton to avoid LikeContext dependencies
-vi.mock('../../components/LikeButton', () => ({
-  default: () => null,
-  LikeButton: () => null,
+vi.mock('../ThemeToggle', () => ({
+  ThemeToggle: () => <div>ThemeToggleStub</div>,
 }))
 
-// Mock child components that are not under test
-vi.mock('../../components/Dashboard', async () => ({
-  Dashboard: () => <div>DashboardStub</div>
+vi.mock('../../features/recipes/RecipeLibrary', () => ({
+  RecipeLibrary: () => <div>RecipeLibraryStub</div>,
 }))
 
-vi.mock('../../features/recipes/RecipeLibrary', async () => ({
-  RecipeLibrary: () => <div>RecipeLibraryStub</div>
+vi.mock('../../features/recipes/RecipeDetail', () => ({
+  RecipeDetail: () => <div>RecipeDetailStub</div>,
 }))
 
-vi.mock('../../features/recipes/CreateRecipe', async () => ({
-  CreateRecipe: () => <div>CreateRecipeStub</div>
+vi.mock('../../features/recipes/CreateRecipe', () => ({
+  CreateRecipe: () => <div>CreateRecipeStub</div>,
 }))
 
-vi.mock('../../features/recipes/AIGenerator', async () => ({
-  AIGenerator: () => <div>AIGeneratorStub</div>
+vi.mock('../../features/recipes/SimpleCreateRecipe', () => ({
+  SimpleCreateRecipe: () => <div>SimpleCreateRecipeStub</div>,
 }))
 
-const mockRecipe: Recipe = {
-  id: '1',
-  userId: 'user-123',
-  recipeName: 'Chocolate Cake',
-  description: 'Delicious chocolate cake',
-  prepTimeMinutes: 20,
-  cookTimeMinutes: 40,
-  servings: 8,
-  imageUrl: 'https://example.com/cake.jpg',
-  ingredients: ['2 cups flour', '1 cup sugar'],
-  instructions: ['Mix ingredients', 'Bake at 350F'],
-  tags: ['dessert', 'cake'],
-  source: 'ai-generated',
-  createdAt: '2025-01-01T00:00:00Z',
-  updatedAt: '2025-01-01T00:00:00Z'
-}
+vi.mock('../../features/recipes/AIGenerator', () => ({
+  AIGenerator: () => <div>AIGeneratorStub</div>,
+}))
+
+vi.mock('../../features/help/HelpPage', () => ({
+  HelpPage: () => <div>HelpPageStub</div>,
+}))
+
+vi.mock('../../features/community/CommunityPage', () => ({
+  CommunityPage: () => <div>CommunityPageStub</div>,
+}))
+
+vi.mock('../../features/recipes/SavedRecipesPage', () => ({
+  SavedRecipesPage: () => <div>SavedRecipesPageStub</div>,
+}))
+
+const renderAt = (path: string) =>
+  render(
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route path="/dashboard/*" element={<DashboardLayout />} />
+      </Routes>
+    </MemoryRouter>
+  )
 
 describe('DashboardLayout routing', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    Object.defineProperty(window, 'innerWidth', { value: 1280, writable: true, configurable: true })
   })
 
-  it('renders RecipeDetail when navigating to /dashboard/recipes/:id', async () => {
-    vi.spyOn(recipeStorageApi, 'getRecipe').mockResolvedValue(mockRecipe)
-    vi.spyOn(recipeStorageApi, 'getRecipes').mockResolvedValue([mockRecipe])
+  it('renders recipe detail for /dashboard/recipes/:id', () => {
+    renderAt('/dashboard/recipes/1')
 
-    render(
-      <MemoryRouter initialEntries={["/dashboard/recipes/1"]}>
-        <Routes>
-          <Route path="/dashboard/recipes/:id" element={<RecipeDetail />} />
-        </Routes>
-      </MemoryRouter>
-    )
+    expect(screen.getByText('RecipeDetailStub')).toBeInTheDocument()
+  })
 
-    // Wait for the recipe title to be fetched and rendered
-    await waitFor(() => {
-      expect(screen.getByText('Chocolate Cake')).toBeInTheDocument()
-    })
+  it('renders quick entry UI for /dashboard/recipes/edit/:id', () => {
+    renderAt('/dashboard/recipes/edit/1')
 
-    // Check that description and prep/cook times show
-    expect(screen.getByText('Delicious chocolate cake')).toBeInTheDocument()
-    // Ensure prep & cook times and servings are displayed within their labeled blocks
-    const prepLabel = screen.getByText('Prep Time')
-    expect(prepLabel).toBeTruthy()
-    expect(prepLabel.parentElement?.textContent).toMatch(/20\s*min/)
-
-    const cookLabel = screen.getByText('Cook Time')
-    expect(cookLabel).toBeTruthy()
-    expect(cookLabel.parentElement?.textContent).toMatch(/40\s*min/)
-
-    const servingsLabel = screen.getByText('Servings')
-    expect(servingsLabel).toBeTruthy()
-    expect(servingsLabel.parentElement?.textContent).toMatch(/8/)
+    expect(screen.getByText('SimpleCreateRecipeStub')).toBeInTheDocument()
   })
 })
