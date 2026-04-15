@@ -4,6 +4,8 @@ import type { Recipe } from '../../types/nutrition'
 import { buildApiUrl } from '../../utils/apiUtils'
 import { postWithAuth } from '../../utils/authApi'
 
+const getAiApiBase = () => import.meta.env.VITE_AI_API_URL || import.meta.env.VITE_API_URL || ''
+
 export const generateRecipe = createAsyncThunk(
   'recipe/generate',
   async (payload: { 
@@ -13,13 +15,16 @@ export const generateRecipe = createAsyncThunk(
     dietaryPreferences?: string[]; 
     allergies?: string[]; 
     maxTotalMinutes?: number | null 
-  }, { rejectWithValue }) => {
+  }, { rejectWithValue, signal }) => {
     try {
-      const apiBase = import.meta.env.VITE_AI_API_URL || import.meta.env.VITE_API_URL || ''
+      const apiBase = getAiApiBase()
       const url = buildApiUrl(apiBase, '/api/recipes/generate')
-      const res = await postWithAuth(url, payload)
+      const res = await postWithAuth(url, payload, { signal })
       return res.data
     } catch (err) {
+      if (axios.isCancel(err)) {
+        return rejectWithValue('cancelled')
+      }
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data
         if (typeof data === 'string') return rejectWithValue(data)
@@ -38,7 +43,7 @@ export const generateImage = createAsyncThunk(
   'recipe/generateImage',
   async (payload: { prompt?: string; recipe?: Recipe }, { rejectWithValue, signal }) => {
     try {
-      const apiBase = import.meta.env.VITE_AI_API_URL || import.meta.env.VITE_API_URL || ''
+      const apiBase = getAiApiBase()
       const url = buildApiUrl(apiBase, '/api/recipes/image/generate')
       const res = await postWithAuth(url, payload, { signal })
       return res.data
@@ -112,7 +117,11 @@ const recipeSlice = createSlice({
       })
       .addCase(generateRecipe.rejected, (state, action) => {
         state.loading = false
-        state.error = (action.payload as string) ?? action.error?.message ?? 'Failed to generate recipe'
+        if (action.payload === 'cancelled') {
+          state.error = null
+        } else {
+          state.error = (action.payload as string) ?? action.error?.message ?? 'Failed to generate recipe'
+        }
       })
       .addCase(generateImage.pending, (state) => {
         state.imageLoading = true
