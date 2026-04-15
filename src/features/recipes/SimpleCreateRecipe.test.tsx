@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
-import { BrowserRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { SimpleCreateRecipe } from './SimpleCreateRecipe'
+import * as recipeStorageApi from '../../services/recipeStorageApi'
+import { useAuth } from '../auth/AuthContext'
+import type { Recipe } from '../../types/nutrition'
 
 vi.mock('../../services/recipeStorageApi', () => ({
   saveRecipe: vi.fn(() =>
@@ -17,6 +20,8 @@ vi.mock('../../services/recipeStorageApi', () => ({
       updatedAt: new Date().toISOString(),
     })
   ),
+  updateRecipe: vi.fn(() => Promise.resolve(undefined)),
+  getRecipe: vi.fn(),
 }))
 
 vi.mock('../../utils/authApi', () => ({
@@ -25,6 +30,10 @@ vi.mock('../../utils/authApi', () => ({
 
 vi.mock('../../utils/apiUtils', () => ({
   buildApiUrl: vi.fn((_base: string, endpoint: string) => endpoint),
+}))
+
+vi.mock('../auth/AuthContext', () => ({
+  useAuth: vi.fn(),
 }))
 
 const mockNavigate = vi.fn()
@@ -36,13 +45,65 @@ vi.mock('react-router-dom', async () => {
   }
 })
 
-const renderWithRouter = (component: React.ReactElement) =>
-  render(<BrowserRouter>{component}</BrowserRouter>)
+type MockAuthState = ReturnType<typeof useAuth>
+type EditableMockRecipe = Omit<Recipe, 'prepTime' | 'cookTime'> & {
+  prepTime: number
+  cookTime: number
+}
+
+const mockRecipe = {
+  id: 'test-recipe-123',
+  recipeName: 'Test Recipe',
+  description: 'A quick edit recipe',
+  userId: 'test-user',
+  ingredients: ['1 cup flour', '2 eggs'],
+  instructions: ['Mix ingredients', 'Bake'],
+  servings: 4,
+  prepTime: 10,
+  cookTime: 20,
+  imageUrl: 'https://example.com/image.jpg',
+  tags: ['breakfast', 'easy'],
+  dietaryRestrictions: ['vegetarian'],
+  source: 'ai-generated' as const,
+  nutritionalInfo: { calories: 200 },
+  tips: ['Use room temperature eggs'],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+} as unknown as EditableMockRecipe
+
+const renderWithRouter = (
+  component: React.ReactElement,
+  initialEntry = '/dashboard/create/simple',
+  routePath = '/dashboard/create/simple'
+) =>
+  render(
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <Routes>
+        <Route path={routePath} element={component} />
+      </Routes>
+    </MemoryRouter>
+  )
+
+const setDefaultAuthMock = (overrides: Partial<MockAuthState> = {}) => {
+  vi.mocked(useAuth).mockReturnValue({
+    user: {
+      uid: 'test-user',
+      email: 'test@example.com',
+      displayName: null,
+      photoURL: null,
+    },
+    isLoading: false,
+    ...overrides,
+  } as MockAuthState)
+}
 
 describe('SimpleCreateRecipe', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     sessionStorage.clear()
+    Object.defineProperty(window, 'scrollTo', { value: vi.fn(), writable: true })
+    setDefaultAuthMock()
+    vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipe as unknown as Recipe)
   })
 
   // ─── Layout ──────────────────────────────────────────────────────────────────
@@ -239,11 +300,101 @@ describe('SimpleCreateRecipe', () => {
     fireEvent.click(screen.getByRole('button', { name: /Cancel/i }))
     expect(mockNavigate).toHaveBeenCalledWith('/dashboard/recipes')
   })
+
+  describe('edit mode', () => {
+    const editRoute = '/dashboard/recipes/edit/:id'
+    const editEntry = '/dashboard/recipes/edit/test-recipe-123'
+
+    it('loads existing recipe data into the quick entry form', async () => {
+      renderWithRouter(<SimpleCreateRecipe />, editEntry, editRoute)
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: /Edit Recipe/i })).toBeInTheDocument()
+      })
+
+      expect(recipeStorageApi.getRecipe).toHaveBeenCalledWith('test-recipe-123')
+      expect(screen.getByDisplayValue('Test Recipe')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('A quick edit recipe')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('flour')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('Bake')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Update Recipe/i })).toBeInTheDocument()
+    })
+
+    it('shows a load error state for edit mode', async () => {
+      vi.mocked(recipeStorageApi.getRecipe).mockRejectedValueOnce(new Error('Network error'))
+
+      renderWithRouter(<SimpleCreateRecipe />, editEntry, editRoute)
+
+      await waitFor(() => {
+        expect(screen.getByText('Error loading recipe')).toBeInTheDocument()
+      })
+
+      expect(screen.getByText('Network error')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Back to Library/i })).toBeInTheDocument()
+    })
+
+    it('redirects to recipe detail when the current user does not own the recipe', async () => {
+      setDefaultAuthMock({
+        user: {
+          uid: 'another-user',
+          email: 'test@example.com',
+          displayName: null,
+          photoURL: null,
+        },
+      })
+
+      renderWithRouter(<SimpleCreateRecipe />, editEntry, editRoute)
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/dashboard/recipes/test-recipe-123', { replace: true })
+      })
+    })
+
+    it('updates the recipe and returns to recipe detail on submit', async () => {
+      renderWithRouter(<SimpleCreateRecipe />, editEntry, editRoute)
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Update Recipe/i })).toBeInTheDocument()
+      })
+
+      fireEvent.click(screen.getByRole('button', { name: /Update Recipe/i }))
+
+      await waitFor(() => {
+        expect(recipeStorageApi.updateRecipe).toHaveBeenCalledWith(
+          'test-recipe-123',
+          expect.objectContaining({
+            recipeName: 'Test Recipe',
+            source: 'ai-generated',
+            nutritionalInfo: { calories: 200 },
+            tips: ['Use room temperature eggs'],
+          })
+        )
+      })
+
+      expect(recipeStorageApi.saveRecipe).not.toHaveBeenCalled()
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard/recipes/test-recipe-123')
+    })
+
+    it('returns to recipe detail when Cancel is clicked in edit mode', async () => {
+      renderWithRouter(<SimpleCreateRecipe />, editEntry, editRoute)
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument()
+      })
+
+      fireEvent.click(screen.getByRole('button', { name: /Cancel/i }))
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard/recipes/test-recipe-123')
+    })
+  })
 })
 
 // ─── AI Enhancement (issue #36) ──────────────────────────────────────────────
 
 describe('AI Enhancement', () => {
+  beforeEach(() => {
+    setDefaultAuthMock()
+  })
+
   it('renders the "Enhance with AI" button', () => {
     renderWithRouter(<SimpleCreateRecipe />)
     expect(screen.getByRole('button', { name: /Enhance recipe with AI/i })).toBeInTheDocument()
@@ -276,6 +427,7 @@ describe('AI Undo Affordance', () => {
     vi.resetAllMocks()
     vi.spyOn(console, 'log').mockImplementation(() => {})
     vi.spyOn(console, 'warn').mockImplementation(() => {})
+    setDefaultAuthMock()
   })
 
   afterEach(() => {
@@ -295,7 +447,7 @@ describe('AI Undo Affordance', () => {
           { field: 'description', suggestedValue: 'Delicious pasta', reason: 'Better description' },
         ],
       },
-    } as any)
+    } as Awaited<ReturnType<typeof postWithAuth>>)
 
     renderWithRouter(<SimpleCreateRecipe />)
     fireEvent.click(screen.getByRole('button', { name: /Enhance recipe with AI/i }))
@@ -323,7 +475,7 @@ describe('AI Undo Affordance', () => {
           { field: 'description', suggestedValue: 'Delicious pasta', reason: 'Better description' },
         ],
       },
-    } as any)
+    } as Awaited<ReturnType<typeof postWithAuth>>)
 
     renderWithRouter(<SimpleCreateRecipe />)
     fireEvent.click(screen.getByRole('button', { name: /Enhance recipe with AI/i }))

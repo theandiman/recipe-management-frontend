@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useRecipeForm } from './hooks/useRecipeForm'
 import { useRecipeValidation } from './hooks/useRecipeValidation'
 import { useRecipeSave } from './hooks/useRecipeSave'
@@ -15,15 +15,63 @@ import { FieldAIEnhanceButton } from './components/FieldAIEnhanceButton'
 import { FieldAISuggestionChip } from './components/FieldAISuggestionChip'
 import { AIUndoButton } from './components/AIUndoButton'
 import { FIELD_LABELS } from './constants/aiConstants'
+import { getRecipe } from '../../services/recipeStorageApi'
+import { useAuth } from '../auth/AuthContext'
+import type { Recipe } from '../../types/nutrition'
 
-export const SimpleCreateRecipe: React.FC = () => {
+type RecipeFormInitialState = Parameters<typeof useRecipeForm>[0]
+type EditableRecipe = Omit<Recipe, 'prepTime' | 'cookTime'> & {
+  prepTime?: number
+  cookTime?: number
+}
+
+const EMPTY_INGREDIENT = { quantity: '', unit: '', item: '' }
+
+const mapIngredientStringToFormValue = (ingredient: string) => {
+  const parts = ingredient.split(' ')
+  const quantity = parts[0] || ''
+  const unit = parts[1] || ''
+  const item = parts.slice(2).join(' ') || ingredient
+
+  return { quantity, unit, item }
+}
+
+const getInitialFormState = (recipe: EditableRecipe): RecipeFormInitialState => ({
+  title: recipe.recipeName || '',
+  description: recipe.description || '',
+  prepTime: recipe.prepTime?.toString() || '',
+  cookTime: recipe.cookTime?.toString() || '',
+  servings: recipe.servings?.toString() || '',
+  ingredients: recipe.ingredients?.length
+    ? recipe.ingredients.map(mapIngredientStringToFormValue)
+    : [EMPTY_INGREDIENT],
+  instructions: recipe.instructions?.length ? recipe.instructions : [''],
+  tags: recipe.tags || [],
+  dietaryRestrictions: recipe.dietaryRestrictions || [],
+  imagePreview: recipe.imageUrl || null,
+})
+
+interface QuickEntryRecipeFormProps {
+  isEditMode: boolean
+  recipeId?: string
+  initialState?: RecipeFormInitialState
+  recipeOverrides?: Partial<Recipe>
+}
+
+const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
+  isEditMode,
+  recipeId,
+  initialState,
+  recipeOverrides = {},
+}) => {
   const navigate = useNavigate()
 
-  const form = useRecipeForm()
+  const form = useRecipeForm(initialState)
   const { validateForm, buildRecipeObject } = useRecipeValidation()
   const sections = useSimpleCreateSections()
 
   const { handleSubmit } = useRecipeSave({
+    recipeId,
     title: form.title,
     description: form.description,
     prepTime: form.prepTime,
@@ -34,6 +82,7 @@ export const SimpleCreateRecipe: React.FC = () => {
     tags: form.tags,
     dietaryRestrictions: form.dietaryRestrictions,
     imagePreview: form.imagePreview,
+    recipeOverrides,
     setFieldErrors: form.setFieldErrors,
     setStepsWithErrors: form.setStepsWithErrors,
     setSaveLoading: form.setSaveLoading,
@@ -45,8 +94,8 @@ export const SimpleCreateRecipe: React.FC = () => {
   })
 
   const handleCancel = useCallback(() => {
-    navigate('/dashboard/recipes')
-  }, [navigate])
+    navigate(isEditMode && recipeId ? `/dashboard/recipes/${recipeId}` : '/dashboard/recipes')
+  }, [isEditMode, navigate, recipeId])
 
   const {
     visibleSuggestions,
@@ -124,10 +173,12 @@ export const SimpleCreateRecipe: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-      {/* Header */}
+        {/* Header */}
       <div className="mb-6 sm:mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Create Recipe</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            {isEditMode ? 'Edit Recipe' : 'Create Recipe'}
+          </h1>
           <div className="flex items-center gap-2">
             <AIUndoButton
               key={auditLog.length}
@@ -153,28 +204,31 @@ export const SimpleCreateRecipe: React.FC = () => {
         </div>
 
         {/* Entry-point mode toggle */}
-        <nav
-          className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1 mb-6"
-          aria-label="Recipe creation mode"
-        >
-          <Link
-            to="/dashboard/create"
-            className="px-4 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-white transition-colors"
+        {!isEditMode && (
+          <nav
+            className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1 mb-6"
+            aria-label="Recipe creation mode"
           >
-            🧭 Guided (step-by-step)
-          </Link>
-          <Link
-            to="/dashboard/create/simple"
-            aria-current="page"
-            className="px-4 py-2 rounded-md text-sm font-medium bg-white text-emerald-700 shadow-sm border border-gray-200"
-          >
-            ⚡ Quick entry
-          </Link>
-        </nav>
+            <Link
+              to="/dashboard/create"
+              className="px-4 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-white transition-colors"
+            >
+              🧭 Guided (step-by-step)
+            </Link>
+            <Link
+              to="/dashboard/create/simple"
+              aria-current="page"
+              className="px-4 py-2 rounded-md text-sm font-medium bg-white text-emerald-700 shadow-sm border border-gray-200"
+            >
+              ⚡ Quick entry
+            </Link>
+          </nav>
+        )}
 
         <p className="text-sm text-gray-500">
-          Fill in everything at once. Required fields are always visible; optional sections can be
-          expanded as needed.
+          {isEditMode
+            ? 'Update everything at once. Required fields are always visible; optional sections can be expanded as needed.'
+            : 'Fill in everything at once. Required fields are always visible; optional sections can be expanded as needed.'}
         </p>
       </div>
 
@@ -762,14 +816,118 @@ export const SimpleCreateRecipe: React.FC = () => {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                   />
                 </svg>
-                <span>Saving…</span>
+                <span>{isEditMode ? 'Updating…' : 'Saving…'}</span>
               </span>
             ) : (
-              'Save Recipe'
+              isEditMode ? 'Update Recipe' : 'Save Recipe'
             )}
           </button>
         </div>
       </form>
     </div>
+  )
+}
+
+export const SimpleCreateRecipe: React.FC = () => {
+  const navigate = useNavigate()
+  const { id } = useParams<{ id: string }>()
+  const { user: currentUser, isLoading: isAuthLoading } = useAuth()
+  const isEditMode = Boolean(id)
+  const [loading, setLoading] = useState(isEditMode)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [initialState, setInitialState] = useState<RecipeFormInitialState>()
+  const [recipeOverrides, setRecipeOverrides] = useState<Partial<Recipe>>({})
+
+  useEffect(() => {
+    if (!isEditMode) {
+      setLoading(false)
+      setLoadError(null)
+      setInitialState(undefined)
+      setRecipeOverrides({})
+      return
+    }
+
+    if (!id || isAuthLoading) return
+
+    let isMounted = true
+
+    const fetchRecipeForEdit = async () => {
+      try {
+        setLoading(true)
+        setLoadError(null)
+        const recipe = await getRecipe(id) as EditableRecipe
+
+        if (recipe.userId !== currentUser?.uid) {
+          navigate(`/dashboard/recipes/${id}`, { replace: true })
+          return
+        }
+
+        if (!isMounted) return
+
+        setInitialState(getInitialFormState(recipe))
+        setRecipeOverrides({
+          nutritionalInfo: recipe.nutritionalInfo,
+          tips: recipe.tips,
+          source: recipe.source,
+        })
+      } catch (err: unknown) {
+        if (!isMounted) return
+
+        console.error('Failed to fetch recipe:', err)
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load recipe'
+        const apiError = err as { response?: { data?: { message?: string } } }
+        setLoadError(apiError.response?.data?.message || errorMessage)
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchRecipeForEdit()
+
+    return () => {
+      isMounted = false
+    }
+  }, [currentUser?.uid, id, isAuthLoading, isEditMode, navigate])
+
+  if (isEditMode && loading) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isEditMode && loadError) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <button
+          onClick={() => navigate('/dashboard/recipes')}
+          className="mb-6 text-emerald-600 hover:text-emerald-700 flex items-center transition-colors"
+        >
+          <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Library
+        </button>
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
+          <p className="font-medium">Error loading recipe</p>
+          <p className="text-sm mt-1">{loadError}</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <QuickEntryRecipeForm
+      key={id ?? 'create'}
+      isEditMode={isEditMode}
+      recipeId={id}
+      initialState={initialState}
+      recipeOverrides={recipeOverrides}
+    />
   )
 }

@@ -8,7 +8,6 @@ import { RecipeLibrary } from '../../features/recipes/RecipeLibrary'
 import { RecipeDetail } from '../../features/recipes/RecipeDetail'
 import { CreateRecipe } from '../../features/recipes/CreateRecipe'
 import { SimpleCreateRecipe } from '../../features/recipes/SimpleCreateRecipe'
-import { EditRecipe } from '../../features/recipes/EditRecipe'
 import { AIGenerator } from '../../features/recipes/AIGenerator'
 import { HelpPage } from '../../features/help/HelpPage'
 import { CommunityPage } from '../../features/community/CommunityPage'
@@ -293,7 +292,7 @@ export const DashboardLayout: React.FC = () => {
             <Route index element={<Dashboard />} />
             <Route path="recipes/*" element={<RecipeLibrary />} />
             <Route path="recipes/:id" element={<RecipeDetail />} />
-            <Route path="recipes/edit/:id" element={<EditRecipe />} />
+            <Route path="recipes/edit/:id" element={<SimpleCreateRecipe />} />
             <Route path="create" element={<CreateRecipe />} />
             <Route path="create/simple" element={<SimpleCreateRecipe />} />
             <Route path="generate" element={<AIGenerator />} />
