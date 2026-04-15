@@ -63,7 +63,7 @@ const mockRecipe: Recipe = {
   tags: ['breakfast', 'easy'],
   dietaryRestrictions: ['vegetarian'],
   source: 'ai-generated' as const,
-  nutritionalInfo: { calories: 200 },
+  nutritionalInfo: { perServing: { calories: 200 } },
   tips: { storage: 'Use room temperature eggs' },
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
@@ -367,7 +367,7 @@ describe('SimpleCreateRecipe', () => {
           expect.objectContaining({
             recipeName: 'Test Recipe',
             source: 'ai-generated',
-            nutritionalInfo: { calories: 200 },
+            nutritionalInfo: { perServing: { calories: 200 } },
             tips: { storage: 'Use room temperature eggs' },
           })
         )
