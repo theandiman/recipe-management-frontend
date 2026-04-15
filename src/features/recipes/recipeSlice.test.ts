@@ -20,12 +20,14 @@ describe('recipeSlice', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    // Set default environment variable
-    import.meta.env.VITE_API_URL = 'https://api.example.com'
+    vi.stubEnv('VITE_API_URL', 'https://api.example.com')
+    vi.mocked(axios.isCancel).mockReturnValue(false)
+    vi.mocked(axios.isAxiosError).mockReturnValue(false)
   })
 
   afterEach(() => {
     vi.clearAllMocks()
+    vi.unstubAllEnvs()
   })
 
   it('should return initial state', () => {
@@ -171,8 +173,44 @@ describe('recipeSlice', () => {
       expect(state.error).toBe(null)
       expect(authApi.postWithAuth).toHaveBeenCalledWith(
         'https://api.example.com/api/recipes/generate',
-        payload
+        payload,
+        { signal: expect.any(AbortSignal) }
       )
+    })
+
+    it('prefers VITE_AI_API_URL when generating recipes', async () => {
+      vi.mocked(authApi.postWithAuth).mockResolvedValue({
+        data: { recipeName: 'AI Recipe' },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any
+      })
+      vi.stubEnv('VITE_AI_API_URL', 'https://ai.example.com')
+
+      const store = configureStore({ reducer: { recipe: recipeReducer } })
+      const payload = { prompt: 'test', pantryItems: [] }
+
+      await store.dispatch(generateRecipe(payload))
+
+      expect(authApi.postWithAuth).toHaveBeenCalledWith(
+        'https://ai.example.com/api/recipes/generate',
+        payload,
+        { signal: expect.any(AbortSignal) }
+      )
+    })
+
+    it('should handle cancelled recipe generation requests', async () => {
+      const cancelError = new Error('Request cancelled')
+      vi.mocked(authApi.postWithAuth).mockRejectedValue(cancelError)
+      vi.mocked(axios.isCancel).mockReturnValue(true)
+
+      const store = configureStore({ reducer: { recipe: recipeReducer } })
+      await store.dispatch(generateRecipe({ prompt: 'test', pantryItems: [] }))
+
+      const state = store.getState().recipe
+      expect(state.loading).toBe(false)
+      expect(state.error).toBe(null)
     })
 
     it('should handle axios error with string response', async () => {
@@ -282,6 +320,28 @@ describe('recipeSlice', () => {
       expect(state.imageError).toBe(null)
       expect(authApi.postWithAuth).toHaveBeenCalledWith(
         'https://api.example.com/api/recipes/image/generate',
+        payload,
+        { signal: expect.any(AbortSignal) }
+      )
+    })
+
+    it('prefers VITE_AI_API_URL when generating images', async () => {
+      vi.mocked(authApi.postWithAuth).mockResolvedValue({
+        data: { imageUrl: 'https://example.com/generated-image.jpg' },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any
+      })
+      vi.stubEnv('VITE_AI_API_URL', 'https://ai.example.com')
+
+      const store = configureStore({ reducer: { recipe: recipeReducer } })
+      const payload = { prompt: 'test' }
+
+      await store.dispatch(generateImage(payload))
+
+      expect(authApi.postWithAuth).toHaveBeenCalledWith(
+        'https://ai.example.com/api/recipes/image/generate',
         payload,
         { signal: expect.any(AbortSignal) }
       )
