@@ -15,7 +15,7 @@ export const generateRecipe = createAsyncThunk(
     maxTotalMinutes?: number | null 
   }, { rejectWithValue }) => {
     try {
-      const apiBase = import.meta.env.VITE_API_URL || ''
+      const apiBase = import.meta.env.VITE_AI_API_URL || import.meta.env.VITE_API_URL || ''
       const url = buildApiUrl(apiBase, '/api/recipes/generate')
       const res = await postWithAuth(url, payload)
       return res.data
@@ -38,7 +38,7 @@ export const generateImage = createAsyncThunk(
   'recipe/generateImage',
   async (payload: { prompt?: string; recipe?: Recipe }, { rejectWithValue, signal }) => {
     try {
-      const apiBase = import.meta.env.VITE_API_URL || ''
+      const apiBase = import.meta.env.VITE_AI_API_URL || import.meta.env.VITE_API_URL || ''
       const url = buildApiUrl(apiBase, '/api/recipes/image/generate')
       const res = await postWithAuth(url, payload, { signal })
       return res.data
