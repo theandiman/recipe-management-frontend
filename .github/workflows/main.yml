@@ -201,7 +201,8 @@ jobs:
   sonarcloud:
     name: SonarCloud Analysis
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    # Temporarily disabled while the hosted SonarCloud scan is hanging and blocking CI.
+    if: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
