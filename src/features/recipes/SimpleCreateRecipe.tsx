@@ -4,7 +4,7 @@ import { useRecipeForm } from './hooks/useRecipeForm'
 import { useRecipeValidation } from './hooks/useRecipeValidation'
 import { useRecipeSave } from './hooks/useRecipeSave'
 import { CollapsibleSection } from './components/CollapsibleSection'
-import { IngredientInput } from '../../components/IngredientInput'
+import { COMMON_UNITS, IngredientInput } from '../../components/IngredientInput'
 import { UI_STYLES } from '../../utils/uiStyles'
 import { clampedNumericHandler } from '../../utils/formUtils'
 import { useSimpleCreateSections } from './hooks/useSimpleCreateSections'
@@ -20,27 +20,38 @@ import { useAuth } from '../auth/AuthContext'
 import type { Recipe } from '../../types/nutrition'
 
 type RecipeFormInitialState = Parameters<typeof useRecipeForm>[0]
-type EditableRecipe = Omit<Recipe, 'prepTime' | 'cookTime'> & {
-  prepTime?: number
-  cookTime?: number
-}
 
 const EMPTY_INGREDIENT = { quantity: '', unit: '', item: '' }
+const KNOWN_INGREDIENT_UNITS = new Set(COMMON_UNITS.filter(Boolean))
+const QUANTITY_PATTERN = /^(\d+(?:\.\d+)?|\d+\/\d+|\d+\s+\d+\/\d+|[¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])$/
 
 const mapIngredientStringToFormValue = (ingredient: string) => {
-  const parts = ingredient.split(' ')
-  const quantity = parts[0] || ''
-  const unit = parts[1] || ''
-  const item = parts.slice(2).join(' ') || ingredient
+  const trimmedIngredient = ingredient.trim()
+
+  if (!trimmedIngredient) {
+    return EMPTY_INGREDIENT
+  }
+
+  const parts = trimmedIngredient.split(/\s+/)
+
+  if (parts.length === 1 || !QUANTITY_PATTERN.test(parts[0])) {
+    return { quantity: '', unit: '', item: trimmedIngredient }
+  }
+
+  const quantity = parts[0]
+  const normalizedUnit = parts[1]?.toLowerCase() || ''
+  const hasKnownUnit = KNOWN_INGREDIENT_UNITS.has(normalizedUnit)
+  const unit = hasKnownUnit ? parts[1] : ''
+  const item = hasKnownUnit ? parts.slice(2).join(' ') : parts.slice(1).join(' ')
 
   return { quantity, unit, item }
 }
 
-const getInitialFormState = (recipe: EditableRecipe): RecipeFormInitialState => ({
+const getInitialFormState = (recipe: Recipe): RecipeFormInitialState => ({
   title: recipe.recipeName || '',
   description: recipe.description || '',
-  prepTime: recipe.prepTime?.toString() || '',
-  cookTime: recipe.cookTime?.toString() || '',
+  prepTime: recipe.prepTimeMinutes?.toString() || '',
+  cookTime: recipe.cookTimeMinutes?.toString() || '',
   servings: recipe.servings?.toString() || '',
   ingredients: recipe.ingredients?.length
     ? recipe.ingredients.map(mapIngredientStringToFormValue)
@@ -855,7 +866,7 @@ export const SimpleCreateRecipe: React.FC = () => {
       try {
         setLoading(true)
         setLoadError(null)
-        const recipe = await getRecipe(id) as EditableRecipe
+        const recipe = await getRecipe(id)
 
         if (recipe.userId !== currentUser?.uid) {
           navigate(`/dashboard/recipes/${id}`, { replace: true })

@@ -46,30 +46,28 @@ vi.mock('react-router-dom', async () => {
 })
 
 type MockAuthState = ReturnType<typeof useAuth>
-type EditableMockRecipe = Omit<Recipe, 'prepTime' | 'cookTime'> & {
-  prepTime: number
-  cookTime: number
-}
 
-const mockRecipe = {
+const mockRecipe: Recipe = {
   id: 'test-recipe-123',
   recipeName: 'Test Recipe',
   description: 'A quick edit recipe',
   userId: 'test-user',
-  ingredients: ['1 cup flour', '2 eggs'],
+  ingredients: ['1 cup flour', '2 eggs', 'Salt'],
   instructions: ['Mix ingredients', 'Bake'],
   servings: 4,
-  prepTime: 10,
-  cookTime: 20,
+  prepTime: '10 min',
+  cookTime: '20 min',
+  prepTimeMinutes: 10,
+  cookTimeMinutes: 20,
   imageUrl: 'https://example.com/image.jpg',
   tags: ['breakfast', 'easy'],
   dietaryRestrictions: ['vegetarian'],
   source: 'ai-generated' as const,
   nutritionalInfo: { calories: 200 },
-  tips: ['Use room temperature eggs'],
+  tips: { storage: 'Use room temperature eggs' },
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
-} as unknown as EditableMockRecipe
+}
 
 const renderWithRouter = (
   component: React.ReactElement,
@@ -103,7 +101,7 @@ describe('SimpleCreateRecipe', () => {
     sessionStorage.clear()
     Object.defineProperty(window, 'scrollTo', { value: vi.fn(), writable: true })
     setDefaultAuthMock()
-    vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipe as unknown as Recipe)
+    vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipe)
   })
 
   // ─── Layout ──────────────────────────────────────────────────────────────────
@@ -315,7 +313,11 @@ describe('SimpleCreateRecipe', () => {
       expect(recipeStorageApi.getRecipe).toHaveBeenCalledWith('test-recipe-123')
       expect(screen.getByDisplayValue('Test Recipe')).toBeInTheDocument()
       expect(screen.getByDisplayValue('A quick edit recipe')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('10')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('20')).toBeInTheDocument()
       expect(screen.getByDisplayValue('flour')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('eggs')).toBeInTheDocument()
+      expect(screen.getAllByDisplayValue('Salt')).toHaveLength(1)
       expect(screen.getByDisplayValue('Bake')).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /Update Recipe/i })).toBeInTheDocument()
     })
@@ -366,7 +368,7 @@ describe('SimpleCreateRecipe', () => {
             recipeName: 'Test Recipe',
             source: 'ai-generated',
             nutritionalInfo: { calories: 200 },
-            tips: ['Use room temperature eggs'],
+            tips: { storage: 'Use room temperature eggs' },
           })
         )
       })

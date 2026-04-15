@@ -13,7 +13,7 @@ interface IngredientInputProps {
   onDismissNormalization?: (index: number) => void
 }
 
-const COMMON_UNITS = [
+export const COMMON_UNITS = [
   '',
   'tsp',
   'tbsp',
