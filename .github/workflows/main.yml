@@ -298,8 +298,19 @@ jobs:
   deploy:
     name: Deploy to Firebase Dev
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: [lint, type-check, unit-tests, e2e-tests]
+    # Use explicit needs result checks so skipped optional jobs elsewhere in the workflow
+    # do not prevent main-branch deploys from running.
+    if: >-
+      ${{
+        always() &&
+        github.ref == 'refs/heads/main' &&
+        github.event_name == 'push' &&
+        needs.lint.result == 'success' &&
+        needs.type-check.result == 'success' &&
+        needs.unit-tests.result == 'success' &&
+        needs.e2e-tests.result == 'success'
+      }}
     environment: 
       name: dev
       url: 'https://recipe-mgmt-dev.web.app/'
@@ -359,8 +370,14 @@ jobs:
   post-deploy-tests:
     name: Post-Deployment Tests
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: [deploy]
+    if: >-
+      ${{
+        always() &&
+        github.ref == 'refs/heads/main' &&
+        github.event_name == 'push' &&
+        needs.deploy.result == 'success'
+      }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -491,8 +508,14 @@ jobs:
   multi-user-post-deploy-tests:
     name: Multi-User Post-Deploy Tests
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: [deploy]
+    if: >-
+      ${{
+        always() &&
+        github.ref == 'refs/heads/main' &&
+        github.event_name == 'push' &&
+        needs.deploy.result == 'success'
+      }}
     env:
       FIREBASE_ADMIN_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_ADMIN_SERVICE_ACCOUNT }}
       FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
@@ -555,8 +578,14 @@ jobs:
   owasp-security-scan:
     name: OWASP Security Scan
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: [deploy]
+    if: >-
+      ${{
+        always() &&
+        github.ref == 'refs/heads/main' &&
+        github.event_name == 'push' &&
+        needs.deploy.result == 'success'
+      }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
