@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { RecipeFormLayout } from './components/RecipeFormLayout'
 import { useRecipeForm } from './hooks/useRecipeForm'
@@ -7,6 +7,7 @@ import { useRecipeFormNavigation } from './hooks/useRecipeFormNavigation'
 import { useRecipeSave } from './hooks/useRecipeSave'
 import { useAISuggestions } from './hooks/useAISuggestions'
 import { useIngredientNormalization } from './hooks/useIngredientNormalization'
+import type { Recipe } from '../../types/nutrition'
 
 const FIELD_LABELS: Record<string, string> = {
   recipeName: 'Recipe Name',
@@ -23,6 +24,7 @@ export const CreateRecipe: React.FC = () => {
   const form = useRecipeForm()
   const { validateForm, buildRecipeObject } = useRecipeValidation()
   const { canUndo, auditLog, undoLastAIChange } = useAISuggestions()
+  const [recipeOverrides, setRecipeOverrides] = useState<Partial<Recipe>>({})
   const {
     normalizationStates,
     applyNormalization,
@@ -40,6 +42,7 @@ export const CreateRecipe: React.FC = () => {
     tags: form.tags,
     dietaryRestrictions: form.dietaryRestrictions,
     imagePreview: form.imagePreview,
+    recipeOverrides,
     setFieldErrors: form.setFieldErrors,
     setStepsWithErrors: form.setStepsWithErrors,
     setSaveLoading: form.setSaveLoading,
@@ -126,6 +129,10 @@ export const CreateRecipe: React.FC = () => {
         canUndoAI={canUndo}
         onUndoLastAI={handleUndoLastAI}
         lastUndoableAIField={lastUndoableAIField}
+        nutritionalInfo={recipeOverrides.nutritionalInfo}
+        onNutritionalInfoChange={(nutritionalInfo) =>
+          setRecipeOverrides((prev) => ({ ...prev, nutritionalInfo }))
+        }
         normalizationStates={normalizationStates}
         onApplyNormalization={applyNormalization}
         onDismissNormalization={dismissNormalization}

@@ -12,6 +12,7 @@ const SESSION_KEY = 'simple-create-sections'
 interface SectionState {
   timing: boolean
   serving: boolean
+  nutrition: boolean
   tags: boolean
   photo: boolean
 }
@@ -19,6 +20,7 @@ interface SectionState {
 const DEFAULT_SECTION_STATE: SectionState = {
   timing: false,
   serving: false,
+  nutrition: false,
   tags: false,
   photo: false,
 }
@@ -77,6 +79,11 @@ export function useSimpleCreateSections() {
       isOpen: open.serving,
       toggle: () => toggle('serving'),
       isFilled: (servings: string) => !!servings,
+    },
+    nutrition: {
+      isOpen: open.nutrition,
+      toggle: () => toggle('nutrition'),
+      isFilled: (hasNutrition: boolean) => hasNutrition,
     },
     tags: {
       isOpen: open.tags,

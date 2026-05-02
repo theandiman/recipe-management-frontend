@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { buildApiUrl } from '../../../utils/apiUtils'
 import { postWithAuth } from '../../../utils/authApi'
-import type { Ingredient } from '../../../types/nutrition'
+import type { Ingredient, NutritionalInfo, NutritionValues } from '../../../types/nutrition'
 
 export interface NutrientValue {
   value: number
@@ -23,6 +23,21 @@ export interface NutritionEstimateResponse {
   perServing: NutritionEstimate
   wholeRecipe: NutritionEstimate
 }
+
+const mapNutritionValues = (estimate: NutritionEstimate): NutritionValues => ({
+  calories: estimate.calories.value,
+  protein: estimate.protein.value,
+  carbohydrates: estimate.carbs.value,
+  fat: estimate.fat.value,
+  fiber: estimate.fiber.value,
+})
+
+export const mapEstimateToNutritionalInfo = (
+  estimate: NutritionEstimateResponse
+): NutritionalInfo => ({
+  perServing: mapNutritionValues(estimate.perServing),
+  total: mapNutritionValues(estimate.wholeRecipe),
+})
 
 export type NutritionLoadingState = 'idle' | 'loading' | 'success' | 'error'
 
