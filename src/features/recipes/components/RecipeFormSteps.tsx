@@ -10,7 +10,7 @@ import { FieldAISuggestionChip } from './FieldAISuggestionChip'
 import type { FieldSuggestion, SuggestionStatus } from '../hooks/useAISuggestions'
 import { AISpinnerIcon } from './AISpinnerIcon'
 import { AIBadge } from './AIBadge'
-import { AI_BUTTON_CLASS, AI_BUTTON_COMPACT_CLASS, AI_ICON_BUTTON_CLASS } from './aiStyles'
+import { AI_BUTTON_CLASS, AI_BUTTON_COMPACT_CLASS, AI_STEP_ACTION_BUTTON_CLASS } from './aiStyles'
 
 
 interface RecipeFormStepsProps {
@@ -292,6 +292,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   type="button"
                   onClick={() => onGenerateAIImage(recipeName.trim(), description || undefined)}
                   disabled={!recipeName.trim() || generatingAIImage}
+                  aria-label={imagePreview ? 'Regenerate image with AI' : 'Generate image with AI'}
                   className={`mt-3 ${AI_BUTTON_CLASS}`}
                 >
                   {generatingAIImage ? (
@@ -422,7 +423,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
             disabled={instructionRefinementLoading === 'loading'}
             aria-label={`Refine step ${index + 1} with AI`}
             title="Refine this step with AI"
-            className={`w-10 ${AI_ICON_BUTTON_CLASS}`}
+            className={AI_STEP_ACTION_BUTTON_CLASS}
           >
             <span aria-hidden="true">AI</span>
           </button>

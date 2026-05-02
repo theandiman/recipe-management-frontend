@@ -150,9 +150,11 @@ describe('AISuggestionPanel', () => {
         onApply={vi.fn()}
         onDismiss={vi.fn()}
         fieldSetters={{ description: vi.fn() }}
+        currentValues={{ description: 'Existing description' }}
       />
     )
-    expect(screen.getAllByText('AI').length).toBeGreaterThan(0)
+    expect(screen.getByText(/AI Suggestions/i)).toBeInTheDocument()
+    expect(screen.getByText('Current')).toBeInTheDocument()
     expect(screen.getByText('Suggested')).toBeInTheDocument()
   })
 

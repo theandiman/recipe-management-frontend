@@ -118,21 +118,21 @@ describe('RecipeFormLayout — on-demand AI enhancement (issue #35)', () => {
     expect(mockPostWithAuth).not.toHaveBeenCalled()
   })
 
-  it('renders the "Enhance with AI" button on non-preview steps', () => {
+  it('renders the "Review with AI" button on non-preview steps', () => {
     renderWithRouter(makeProps())
-    expect(screen.getByRole('button', { name: /Enhance recipe with AI/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Review with AI/i })).toBeInTheDocument()
   })
 
-  it('does NOT render the "Enhance with AI" button on step 5 (preview)', () => {
+  it('does NOT render the "Review with AI" button on step 5 (preview)', () => {
     renderWithRouter(makeProps({ currentStep: 5 }))
-    expect(screen.queryByRole('button', { name: /Enhance recipe with AI/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Review with AI/i })).not.toBeInTheDocument()
   })
 
-  it('calls AI suggestions API when "Enhance with AI" is clicked', async () => {
+  it('calls AI suggestions API when "Review with AI" is clicked', async () => {
     mockPostWithAuth.mockResolvedValueOnce({ data: { suggestions: [] } } as any)
 
     renderWithRouter(makeProps({ title: 'Pasta' }))
-    fireEvent.click(screen.getByRole('button', { name: /Enhance recipe with AI/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Review with AI/i }))
 
     await waitFor(() => expect(mockPostWithAuth).toHaveBeenCalledOnce())
     expect(mockPostWithAuth).toHaveBeenCalledWith(
@@ -154,7 +154,7 @@ describe('RecipeFormLayout — on-demand AI enhancement (issue #35)', () => {
     // Panel is hidden before click
     expect(screen.queryByRole('region', { name: /AI field suggestions/i })).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: /Enhance recipe with AI/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Review with AI/i }))
 
     await waitFor(() =>
       expect(screen.getByRole('region', { name: /AI field suggestions/i })).toBeInTheDocument()
@@ -166,7 +166,7 @@ describe('RecipeFormLayout — on-demand AI enhancement (issue #35)', () => {
     mockPostWithAuth.mockImplementationOnce(() => new Promise(r => { resolvePost = r }))
 
     renderWithRouter(makeProps())
-    const btn = screen.getByRole('button', { name: /Enhance recipe with AI/i })
+    const btn = screen.getByRole('button', { name: /Review with AI/i })
     fireEvent.click(btn)
 
     await waitFor(() => expect(btn).toBeDisabled())
@@ -202,7 +202,7 @@ describe('RecipeFormLayout — AI undo affordance (issue #42)', () => {
     } as any)
 
     renderWithRouter(makeProps({ title: 'Pasta' }))
-    fireEvent.click(screen.getByRole('button', { name: /Enhance recipe with AI/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Review with AI/i }))
 
     await waitFor(() =>
       expect(screen.getByRole('button', { name: /Apply AI suggestion for Description/i })).toBeInTheDocument()

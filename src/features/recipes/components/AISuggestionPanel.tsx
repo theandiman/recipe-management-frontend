@@ -80,12 +80,11 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
         type="button"
         onClick={() => setIsExpanded(prev => !prev)}
         className="w-full flex items-center justify-between px-4 py-3 text-left rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-        aria-label="AI Suggestions"
         aria-expanded={isExpanded}
       >
         <span className="flex items-center gap-3 text-sm">
           <AIBadge />
-          <span className="font-semibold text-gray-900">Suggestions</span>
+          <span className="font-semibold text-gray-900">AI Suggestions</span>
           {hasSuggestions && (
             <span className="inline-flex items-center justify-center min-w-5 h-5 rounded-full bg-emerald-100 px-1.5 text-xs font-semibold text-emerald-700">
               {stepFilteredSuggestions.length}
@@ -108,7 +107,10 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
           {/* Error state */}
           {status === 'error' && (
             <div className={`flex items-center justify-between gap-3 text-sm text-rose-700 py-3 px-3 rounded-lg border border-rose-200 bg-rose-50`}>
-              <span>{error ?? 'Could not load suggestions.'}</span>
+              <span>
+                Could not load suggestions.
+                {error ? ` ${error}` : ''}
+              </span>
               {onRetry && (
                 <button
                   type="button"

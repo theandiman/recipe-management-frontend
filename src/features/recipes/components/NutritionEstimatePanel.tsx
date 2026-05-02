@@ -27,11 +27,11 @@ function NutrientRow({
   if (!perServing || !wholeRecipe) return null
   return (
     <tr>
-      <td className="py-1 pr-4 font-medium text-gray-700 dark:text-gray-300">{label}</td>
-      <td className="py-1 pr-4 text-right text-gray-900 dark:text-gray-100">
+      <td className="py-1 pr-4 font-medium text-gray-700">{label}</td>
+      <td className="py-1 pr-4 text-right text-gray-900">
         {formatNutrient(perServing.value, perServing.unit, perServing.estimated)}
       </td>
-      <td className="py-1 text-right text-gray-900 dark:text-gray-100">
+      <td className="py-1 text-right text-gray-900">
         {formatNutrient(wholeRecipe.value, wholeRecipe.unit, wholeRecipe.estimated)}
       </td>
     </tr>
@@ -49,9 +49,9 @@ function NutritionTable({
     <table className="w-full text-sm mt-2">
       <thead>
         <tr>
-          <th className="text-left py-1 pr-4 text-gray-500 dark:text-gray-400 font-normal">Nutrient</th>
-          <th className="text-right py-1 pr-4 text-gray-500 dark:text-gray-400 font-normal">Per Serving</th>
-          <th className="text-right py-1 text-gray-500 dark:text-gray-400 font-normal">Whole Recipe</th>
+          <th className="text-left py-1 pr-4 text-gray-500 font-normal">Nutrient</th>
+          <th className="text-right py-1 pr-4 text-gray-500 font-normal">Per Serving</th>
+          <th className="text-right py-1 text-gray-500 font-normal">Whole Recipe</th>
         </tr>
       </thead>
       <tbody>
@@ -111,6 +111,7 @@ export const NutritionEstimatePanel: React.FC<NutritionEstimatePanelProps> = ({
         <AIBadge />
         <h4 className="text-sm font-semibold text-gray-900">
           Nutrition estimate
+          <span className="sr-only">, AI generated</span>
         </h4>
         {isPartial && (
           <span className="text-xs font-medium text-amber-700">(partial)</span>
