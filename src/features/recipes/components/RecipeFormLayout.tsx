@@ -399,18 +399,17 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 type="button"
                 onClick={handleEnhanceWithAI}
                 disabled={suggestionStatus === 'loading'}
-                aria-label={suggestionStatus === 'loading' ? 'Reviewing with AI' : 'Review with AI'}
                 className={AI_BUTTON_CLASS}
               >
                 {suggestionStatus === 'loading' ? (
                   <>
                     <AISpinnerIcon />
-                    Reviewing...
+                    AI assist...
                   </>
                 ) : (
                   <>
                     <AIBadge />
-                    Review with AI
+                    AI assist
                   </>
                 )}
               </button>
