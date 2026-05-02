@@ -283,7 +283,7 @@ describe('RecipeFormSteps — AI image generation (issue #41)', () => {
         })}
       />
     )
-    const btn = screen.getByRole('button', { name: /Generating/i })
+    const btn = screen.getByRole('button', { name: /Generate image with AI/i })
     expect(btn).toBeDisabled()
     expect(btn).toHaveTextContent('Generating...')
   })

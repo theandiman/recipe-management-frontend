@@ -9,6 +9,8 @@ import { FieldAIEnhanceButton } from './FieldAIEnhanceButton'
 import { FieldAISuggestionChip } from './FieldAISuggestionChip'
 import type { FieldSuggestion, SuggestionStatus } from '../hooks/useAISuggestions'
 import { AISpinnerIcon } from './AISpinnerIcon'
+import { AIBadge } from './AIBadge'
+import { AI_BUTTON_CLASS, AI_BUTTON_COMPACT_CLASS, AI_STEP_ACTION_BUTTON_CLASS } from './aiStyles'
 
 
 interface RecipeFormStepsProps {
@@ -290,7 +292,8 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   type="button"
                   onClick={() => onGenerateAIImage(recipeName.trim(), description || undefined)}
                   disabled={!recipeName.trim() || generatingAIImage}
-                  className="mt-3 flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  aria-label={imagePreview ? 'Regenerate image with AI' : 'Generate image with AI'}
+                  className={`mt-3 ${AI_BUTTON_CLASS}`}
                 >
                   {generatingAIImage ? (
                     <>
@@ -299,7 +302,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                     </>
                   ) : (
                     <>
-                      <span aria-hidden="true">✨</span>
+                      <AIBadge />
                       {imagePreview ? 'Regenerate image' : 'Generate image'}
                     </>
                   )}
@@ -356,12 +359,12 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                     onClick={onRefineAllInstructions}
                     disabled={instructionRefinementLoading === 'loading' || !instructions.some(i => i.trim())}
                     aria-label="Refine all instructions with AI"
-                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className={AI_BUTTON_COMPACT_CLASS}
                   >
                     {instructionRefinementLoading === 'loading' ? (
                       <AISpinnerIcon />
                     ) : (
-                      <span aria-hidden="true">✨</span>
+                      <AIBadge />
                     )}
                     Refine all
                   </button>
@@ -420,9 +423,9 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
             disabled={instructionRefinementLoading === 'loading'}
             aria-label={`Refine step ${index + 1} with AI`}
             title="Refine this step with AI"
-            className="w-10 h-10 flex items-center justify-center text-amber-500 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className={AI_STEP_ACTION_BUTTON_CLASS}
           >
-            ✨
+            <span aria-hidden="true">AI</span>
           </button>
         )}
         {instructions.length > 1 && (

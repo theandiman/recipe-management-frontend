@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { FieldAIEnhanceButton } from '../FieldAIEnhanceButton'
 
 describe('FieldAIEnhanceButton', () => {
-  it('renders a sparkle icon button', () => {
+  it('renders a compact AI button', () => {
     render(
       <FieldAIEnhanceButton
         field="recipeName"
@@ -13,7 +13,7 @@ describe('FieldAIEnhanceButton', () => {
       />
     )
     expect(screen.getByRole('button')).toBeInTheDocument()
-    expect(screen.getByText('✨')).toBeInTheDocument()
+    expect(screen.getByText('AI')).toBeInTheDocument()
   })
 
   it('has aria-label "Complete with AI" when currentValue is empty', () => {

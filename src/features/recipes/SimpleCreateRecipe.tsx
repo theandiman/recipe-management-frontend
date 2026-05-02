@@ -14,6 +14,9 @@ import { AISuggestionPanel } from './components/AISuggestionPanel'
 import { FieldAIEnhanceButton } from './components/FieldAIEnhanceButton'
 import { FieldAISuggestionChip } from './components/FieldAISuggestionChip'
 import { AIUndoButton } from './components/AIUndoButton'
+import { AIBadge } from './components/AIBadge'
+import { AISpinnerIcon } from './components/AISpinnerIcon'
+import { AI_BUTTON_CLASS } from './components/aiStyles'
 import { FIELD_LABELS } from './constants/aiConstants'
 import { getRecipe } from '../../services/recipeStorageApi'
 import { useAuth } from '../auth/AuthContext'
@@ -228,15 +231,19 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
               type="button"
               onClick={handleEnhanceWithAI}
               disabled={suggestionStatus === 'loading'}
-              aria-label="Enhance recipe with AI"
-              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className={AI_BUTTON_CLASS}
             >
               {suggestionStatus === 'loading' ? (
-                <span className="animate-spin">⏳</span>
+                <>
+                  <AISpinnerIcon />
+                  AI assist...
+                </>
               ) : (
-                <span aria-hidden="true">✨</span>
+                <>
+                  <AIBadge />
+                  AI assist
+                </>
               )}
-              Enhance with AI
             </button>
           </div>
         </div>

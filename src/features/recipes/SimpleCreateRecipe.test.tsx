@@ -397,9 +397,9 @@ describe('AI Enhancement', () => {
     setDefaultAuthMock()
   })
 
-  it('renders the "Enhance with AI" button', () => {
+  it('renders the "AI assist" button', () => {
     renderWithRouter(<SimpleCreateRecipe />)
-    expect(screen.getByRole('button', { name: /Enhance recipe with AI/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /AI assist/i })).toBeInTheDocument()
   })
 
   it('does NOT show the AI suggestion panel before the button is clicked', () => {
@@ -407,14 +407,14 @@ describe('AI Enhancement', () => {
     expect(screen.queryByRole('region', { name: /AI field suggestions/i })).not.toBeInTheDocument()
   })
 
-  it('shows the AI suggestion panel in loading state when "Enhance with AI" is clicked', async () => {
+  it('shows the AI suggestion panel in loading state when "AI assist" is clicked', async () => {
     const { postWithAuth } = await import('../../utils/authApi')
     // Keep the request pending so we can observe the loading state
     vi.mocked(postWithAuth).mockReturnValue(new Promise(() => {}))
 
     renderWithRouter(<SimpleCreateRecipe />)
 
-    fireEvent.click(screen.getByRole('button', { name: /Enhance recipe with AI/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^AI assist$/i }))
 
     await waitFor(() => {
       expect(screen.getByRole('region', { name: /AI field suggestions/i })).toBeInTheDocument()
@@ -520,7 +520,7 @@ describe('AI Undo Affordance', () => {
     } as Awaited<ReturnType<typeof postWithAuth>>)
 
     renderWithRouter(<SimpleCreateRecipe />)
-    fireEvent.click(screen.getByRole('button', { name: /Enhance recipe with AI/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^AI assist$/i }))
 
     // Wait for the suggestion panel, then click its Apply button
     await waitFor(() => {
@@ -548,7 +548,7 @@ describe('AI Undo Affordance', () => {
     } as Awaited<ReturnType<typeof postWithAuth>>)
 
     renderWithRouter(<SimpleCreateRecipe />)
-    fireEvent.click(screen.getByRole('button', { name: /Enhance recipe with AI/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^AI assist$/i }))
 
     await waitFor(() => {
       expect(screen.getByRole('region', { name: /AI field suggestions/i })).toBeInTheDocument()
