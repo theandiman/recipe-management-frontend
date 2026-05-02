@@ -34,7 +34,7 @@ describe('AISuggestionPanel', () => {
         fieldSetters={{}}
       />
     )
-    expect(screen.getByText(/analysing your recipe/i)).toBeInTheDocument()
+    expect(screen.getByText(/reviewing fields for suggestions/i)).toBeInTheDocument()
   })
 
   it('shows error message when status is error', () => {
@@ -141,7 +141,7 @@ describe('AISuggestionPanel', () => {
     expect(onDismiss).toHaveBeenCalledWith('description')
   })
 
-  it('shows the ✨ icon to visually distinguish AI suggestions', () => {
+  it('shows AI labels that distinguish current and suggested values', () => {
     render(
       <AISuggestionPanel
         suggestions={[mockSuggestions[0]]}
@@ -152,9 +152,8 @@ describe('AISuggestionPanel', () => {
         fieldSetters={{ description: vi.fn() }}
       />
     )
-    // The panel header has ✨ and each card value also has ✨
-    const sparkles = screen.getAllByText(/✨/)
-    expect(sparkles.length).toBeGreaterThan(0)
+    expect(screen.getAllByText('AI').length).toBeGreaterThan(0)
+    expect(screen.getByText('Suggested')).toBeInTheDocument()
   })
 
   it('collapses and expands on header button click', () => {

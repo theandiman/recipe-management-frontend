@@ -1,5 +1,7 @@
 import React from 'react'
 import type { NutritionEstimate, NutritionEstimateResponse, NutritionLoadingState } from '../hooks/useNutritionEstimate'
+import { AIBadge } from './AIBadge'
+import { AI_MUTED_PANEL_CLASS, AI_PRIMARY_ACTION_CLASS, AI_SECONDARY_ACTION_CLASS } from './aiStyles'
 
 interface NutritionEstimatePanelProps {
   estimate: NutritionEstimateResponse | null
@@ -72,22 +74,25 @@ export const NutritionEstimatePanel: React.FC<NutritionEstimatePanelProps> = ({
 }) => {
   if (loadingState === 'loading') {
     return (
-      <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
-        <p className="text-sm text-blue-600 dark:text-blue-400">Estimating nutrition…</p>
+      <div className={`mt-3 p-3 ${AI_MUTED_PANEL_CLASS}`}>
+        <div className="flex items-center gap-2">
+          <AIBadge />
+          <p className="text-sm text-gray-700">Estimating nutrition...</p>
+        </div>
       </div>
     )
   }
 
   if (loadingState === 'error') {
     return (
-      <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700">
-        <p className="text-sm text-yellow-700 dark:text-yellow-400">
+      <div className="mt-3 p-3 rounded-lg border border-rose-200 bg-rose-50">
+        <p className="text-sm text-rose-700">
           {error ?? 'Could not estimate nutrition.'} Please try again.
         </p>
         <button
           type="button"
           onClick={onDismiss}
-          className="mt-1 text-xs text-yellow-600 dark:text-yellow-400 underline"
+          className="mt-2 text-xs font-medium text-rose-700 underline underline-offset-2"
         >
           Dismiss
         </button>
@@ -101,18 +106,21 @@ export const NutritionEstimatePanel: React.FC<NutritionEstimatePanelProps> = ({
   const isPartial = estimate.perServing.isPartial || estimate.wholeRecipe.isPartial
 
   return (
-    <div className="mt-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
-      <h4 className="text-sm font-semibold text-green-800 dark:text-green-300 mb-1">
-        Nutrition Estimate
+    <div className="mt-3 p-4 rounded-lg border border-gray-200 bg-white">
+      <div className="flex items-center gap-2 mb-2">
+        <AIBadge />
+        <h4 className="text-sm font-semibold text-gray-900">
+          Nutrition estimate
+        </h4>
         {isPartial && (
-          <span className="ml-2 text-xs font-normal text-yellow-600 dark:text-yellow-400">(partial)</span>
+          <span className="text-xs font-medium text-amber-700">(partial)</span>
         )}
-      </h4>
+      </div>
 
       <NutritionTable perServing={estimate.perServing} wholeRecipe={estimate.wholeRecipe} />
 
       {(isPartial || warnings.length > 0) && (
-        <ul className="mt-2 text-xs text-yellow-700 dark:text-yellow-400 list-disc list-inside space-y-0.5">
+        <ul className="mt-3 text-xs text-amber-700 list-disc list-inside space-y-0.5">
           {warnings.map((w, i) => (
             <li key={i}>{w}</li>
           ))}
@@ -126,14 +134,14 @@ export const NutritionEstimatePanel: React.FC<NutritionEstimatePanelProps> = ({
         <button
           type="button"
           onClick={onAccept}
-          className="px-3 py-1 text-xs font-medium bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+          className={AI_PRIMARY_ACTION_CLASS}
         >
           Accept
         </button>
         <button
           type="button"
           onClick={onDismiss}
-          className="px-3 py-1 text-xs font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+          className={AI_SECONDARY_ACTION_CLASS}
         >
           Dismiss
         </button>

@@ -11,8 +11,10 @@ import { useInstructionRefinement } from '../hooks/useInstructionRefinement'
 import { useAIImageGeneration } from '../hooks/useAIImageGeneration'
 import { FIELD_LABELS } from '../constants/aiConstants'
 import { AIUndoButton } from './AIUndoButton'
+import { AIBadge } from './AIBadge'
 import { mapEstimateToNutritionalInfo, useNutritionEstimate } from '../hooks/useNutritionEstimate'
 import { NutritionEstimatePanel } from './NutritionEstimatePanel'
+import { AI_BUTTON_CLASS } from './aiStyles'
 import type { Ingredient, Recipe } from '../../../types/nutrition'
 import NutritionFacts from '../../../components/NutritionFacts'
 
@@ -398,14 +400,19 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 onClick={handleEnhanceWithAI}
                 disabled={suggestionStatus === 'loading'}
                 aria-label="Enhance recipe with AI"
-                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className={AI_BUTTON_CLASS}
               >
                 {suggestionStatus === 'loading' ? (
-                  <AISpinnerIcon />
+                  <>
+                    <AISpinnerIcon />
+                    Reviewing...
+                  </>
                 ) : (
-                  <span aria-hidden="true">✨</span>
+                  <>
+                    <AIBadge />
+                    Review with AI
+                  </>
                 )}
-                Enhance with AI
               </button>
               )}
             </div>

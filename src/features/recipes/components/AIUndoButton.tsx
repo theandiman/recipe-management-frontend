@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react'
+import { AIBadge } from './AIBadge'
+import { AI_BUTTON_COMPACT_CLASS } from './aiStyles'
 
 interface AIUndoButtonProps {
   lastField: string | null
@@ -29,9 +31,11 @@ export const AIUndoButton: React.FC<AIUndoButtonProps> = ({ lastField, onUndo, f
       type="button"
       onClick={onUndo}
       aria-label={`Undo: ${label}`}
-      className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors"
+      className={AI_BUTTON_COMPACT_CLASS}
     >
-      <span aria-hidden="true">↩</span> Undo: {label}
+      <AIBadge />
+      <span aria-hidden="true" className="text-gray-400">/</span>
+      <span className="text-gray-600">Undo {label}</span>
     </button>
   )
 }
