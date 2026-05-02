@@ -85,13 +85,13 @@ async function mockNormalizeIngredients(page: Page) {
   })
 }
 
-/** Fill the recipe title on step 1, then click the Enhance with AI button to trigger suggestions. */
+/** Fill the recipe title on step 1, then click the AI assist button to trigger suggestions. */
 async function fillRecipeTitle(page: Page, title = 'Test Recipe') {
   await page.goto('/dashboard/create')
   await page.waitForLoadState('networkidle')
   await page.getByPlaceholder(/Grandma's Chocolate Chip Cookies/i).fill(title)
   // AI enhancement is now on-demand — click the button to fetch suggestions
-  await page.getByRole('button', { name: /Enhance recipe with AI/i }).click()
+  await page.getByRole('button', { name: /^AI assist$/i }).click()
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -227,8 +227,8 @@ test.describe('AI-assisted authoring — field suggestions', () => {
     await expect(page.getByText(/Step 1 of 5/i)).toBeVisible()
 
     await page.getByPlaceholder(/Grandma's Chocolate Chip Cookies/i).fill('My Test Cake')
-    // Click Enhance with AI to request suggestions (on-demand trigger)
-    await page.getByRole('button', { name: /Enhance recipe with AI/i }).click()
+    // Click AI assist to request suggestions (on-demand trigger)
+    await page.getByRole('button', { name: /^AI assist$/i }).click()
     // Wait for the AI suggestion panel to load
     const panel = page.getByRole('region', { name: /AI field suggestions/i })
     await expect(panel).toBeVisible({ timeout: 8000 })
@@ -280,9 +280,9 @@ test.describe('AI-assisted authoring — edit flow', () => {
     await page.goto('/dashboard/create')
     await page.waitForLoadState('networkidle')
 
-    // Fill a title and click Enhance with AI to trigger suggestion fetch
+    // Fill a title and click AI assist to trigger suggestion fetch
     await page.getByPlaceholder(/Grandma's Chocolate Chip Cookies/i).fill('Existing Cake')
-    await page.getByRole('button', { name: /Enhance recipe with AI/i }).click()
+    await page.getByRole('button', { name: /^AI assist$/i }).click()
     const panel = page.getByRole('region', { name: /AI field suggestions/i })
     await expect(panel).toBeVisible({ timeout: 8000 })
 
