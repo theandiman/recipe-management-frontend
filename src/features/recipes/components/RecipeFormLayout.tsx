@@ -11,9 +11,10 @@ import { useInstructionRefinement } from '../hooks/useInstructionRefinement'
 import { useAIImageGeneration } from '../hooks/useAIImageGeneration'
 import { FIELD_LABELS } from '../constants/aiConstants'
 import { AIUndoButton } from './AIUndoButton'
-import { useNutritionEstimate } from '../hooks/useNutritionEstimate'
+import { mapEstimateToNutritionalInfo, useNutritionEstimate } from '../hooks/useNutritionEstimate'
 import { NutritionEstimatePanel } from './NutritionEstimatePanel'
-import type { Ingredient } from '../../../types/nutrition'
+import type { Ingredient, Recipe } from '../../../types/nutrition'
+import NutritionFacts from '../../../components/NutritionFacts'
 
 interface RecipeFormLayoutProps {
   // Mode
@@ -81,6 +82,8 @@ interface RecipeFormLayoutProps {
   canUndoAI?: boolean
   onUndoLastAI?: () => void
   lastUndoableAIField?: string | null
+  nutritionalInfo?: Recipe['nutritionalInfo']
+  onNutritionalInfoChange?: (nutritionalInfo: Recipe['nutritionalInfo'] | undefined) => void
   normalizationStates?: Map<number, import('../hooks/useIngredientNormalization').NormalizationState>
   onApplyNormalization?: (index: number) => void
   onDismissNormalization?: (index: number) => void
@@ -141,6 +144,8 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   canUndoAI = false,
   onUndoLastAI,
   lastUndoableAIField,
+  nutritionalInfo,
+  onNutritionalInfoChange,
   normalizationStates,
   onApplyNormalization,
   onDismissNormalization,
@@ -187,6 +192,15 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   } = useNutritionEstimate()
 
   const hasIngredients = ingredients.some((i) => i.item.trim())
+  const hasSavedNutrition = Boolean(nutritionalInfo?.perServing)
+
+  const handleAcceptNutritionEstimate = useCallback(() => {
+    if (!onNutritionalInfoChange) return
+
+    acceptNutritionEstimate((estimate) => {
+      onNutritionalInfoChange(mapEstimateToNutritionalInfo(estimate))
+    })
+  }, [acceptNutritionEstimate, onNutritionalInfoChange])
 
 
   const handlePreviousStepClick = () => {
@@ -509,23 +523,35 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
           {/* Nutrition Estimate — shown on step 2 (Ingredients) */}
           {currentStep === 2 && (
             <div className="mt-4">
-              <button
-                type="button"
-                disabled={!hasIngredients || nutritionLoadingState === 'loading'}
+                <button
+                  type="button"
+                  disabled={!hasIngredients || nutritionLoadingState === 'loading'}
                 onClick={() =>
                   estimateNutrition(ingredients, parseInt(servings, 10) || 1, title)
                 }
                 className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {nutritionLoadingState === 'loading' ? 'Estimating…' : 'Recalculate Nutrition'}
+                {nutritionLoadingState === 'loading'
+                  ? 'Estimating…'
+                  : hasSavedNutrition
+                    ? 'Recalculate Nutrition with AI'
+                    : 'Calculate Missing Nutrition with AI'}
               </button>
               <NutritionEstimatePanel
                 estimate={nutritionEstimate}
                 loadingState={nutritionLoadingState}
                 error={nutritionError}
-                onAccept={() => acceptNutritionEstimate(() => {})}
+                onAccept={handleAcceptNutritionEstimate}
                 onDismiss={clearNutritionEstimate}
               />
+              {hasSavedNutrition && nutritionalInfo && (
+                <div className="mt-4 space-y-3">
+                  <p className="text-sm text-gray-600">
+                    AI nutrition values will be saved with this recipe unless you recalculate or dismiss them.
+                  </p>
+                  <NutritionFacts nutritionalInfo={nutritionalInfo} />
+                </div>
+              )}
             </div>
           )}
 

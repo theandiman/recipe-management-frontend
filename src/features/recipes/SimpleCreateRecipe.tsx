@@ -18,6 +18,9 @@ import { FIELD_LABELS } from './constants/aiConstants'
 import { getRecipe } from '../../services/recipeStorageApi'
 import { useAuth } from '../auth/AuthContext'
 import type { Recipe } from '../../types/nutrition'
+import { mapEstimateToNutritionalInfo, useNutritionEstimate } from './hooks/useNutritionEstimate'
+import { NutritionEstimatePanel } from './components/NutritionEstimatePanel'
+import NutritionFacts from '../../components/NutritionFacts'
 
 type RecipeFormInitialState = Parameters<typeof useRecipeForm>[0]
 
@@ -76,10 +79,15 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
   recipeOverrides = {},
 }) => {
   const navigate = useNavigate()
+  const [activeRecipeOverrides, setActiveRecipeOverrides] = useState<Partial<Recipe>>(recipeOverrides)
 
   const form = useRecipeForm(initialState)
   const { validateForm, buildRecipeObject } = useRecipeValidation()
   const sections = useSimpleCreateSections()
+
+  useEffect(() => {
+    setActiveRecipeOverrides(recipeOverrides)
+  }, [recipeOverrides])
 
   const { handleSubmit } = useRecipeSave({
     recipeId,
@@ -93,7 +101,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     tags: form.tags,
     dietaryRestrictions: form.dietaryRestrictions,
     imagePreview: form.imagePreview,
-    recipeOverrides,
+    recipeOverrides: activeRecipeOverrides,
     setFieldErrors: form.setFieldErrors,
     setStepsWithErrors: form.setStepsWithErrors,
     setSaveLoading: form.setSaveLoading,
@@ -121,6 +129,14 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     undoLastAIChange,
     auditLog,
   } = useAISuggestions()
+  const {
+    estimate: nutritionEstimate,
+    loadingState: nutritionLoadingState,
+    error: nutritionError,
+    estimateNutrition,
+    clearEstimate: clearNutritionEstimate,
+    acceptEstimate: acceptNutritionEstimate,
+  } = useNutritionEstimate()
 
   const buildSuggestionRequest = () => ({
     recipeName: form.title || undefined,
@@ -181,6 +197,17 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     const setter = fieldSetters[result.field]
     if (setter) setter(String(result.previousValue ?? ''))
   }, [undoLastAIChange, fieldSetters])
+  const hasIngredients = form.ingredients.some((ingredient) => ingredient.item.trim())
+  const hasSavedNutrition = Boolean(activeRecipeOverrides.nutritionalInfo?.perServing)
+
+  const handleAcceptNutritionEstimate = useCallback(() => {
+    acceptNutritionEstimate((estimate) => {
+      setActiveRecipeOverrides((prev) => ({
+        ...prev,
+        nutritionalInfo: mapEstimateToNutritionalInfo(estimate),
+      }))
+    })
+  }, [acceptNutritionEstimate])
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
@@ -534,12 +561,20 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label
-                  htmlFor="simple-prep-time"
-                  className="block text-sm font-semibold text-gray-700 mb-2"
-                >
-                  Prep Time (min)
-                </label>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <label
+                    htmlFor="simple-prep-time"
+                    className="block text-sm font-semibold text-gray-700"
+                  >
+                    Prep Time (min)
+                  </label>
+                  <FieldAIEnhanceButton
+                    field="prepTime"
+                    currentValue={form.prepTime}
+                    status={fieldStatus.get('prepTime') ?? 'idle'}
+                    onEnhance={() => handleEnhanceField('prepTime', form.prepTime)}
+                  />
+                </div>
                 <input
                   id="simple-prep-time"
                   type="number"
@@ -551,14 +586,34 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                   placeholder="15"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
+                {(() => {
+                  const s = visibleSuggestions.find(x => x.field === 'prepTime')
+                  return s ? (
+                    <FieldAISuggestionChip
+                      field="prepTime"
+                      suggestion={s.suggestedValue}
+                      currentValue={form.prepTime}
+                      onApply={() => handleApplyFieldSuggestion('prepTime', s.suggestedValue)}
+                      onDismiss={() => dismissSuggestion('prepTime')}
+                    />
+                  ) : null
+                })()}
               </div>
               <div>
-                <label
-                  htmlFor="simple-cook-time"
-                  className="block text-sm font-semibold text-gray-700 mb-2"
-                >
-                  Cook Time (min)
-                </label>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <label
+                    htmlFor="simple-cook-time"
+                    className="block text-sm font-semibold text-gray-700"
+                  >
+                    Cook Time (min)
+                  </label>
+                  <FieldAIEnhanceButton
+                    field="cookTime"
+                    currentValue={form.cookTime}
+                    status={fieldStatus.get('cookTime') ?? 'idle'}
+                    onEnhance={() => handleEnhanceField('cookTime', form.cookTime)}
+                  />
+                </div>
                 <input
                   id="simple-cook-time"
                   type="number"
@@ -570,6 +625,18 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                   placeholder="30"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
+                {(() => {
+                  const s = visibleSuggestions.find(x => x.field === 'cookTime')
+                  return s ? (
+                    <FieldAISuggestionChip
+                      field="cookTime"
+                      suggestion={s.suggestedValue}
+                      currentValue={form.cookTime}
+                      onApply={() => handleApplyFieldSuggestion('cookTime', s.suggestedValue)}
+                      onDismiss={() => dismissSuggestion('cookTime')}
+                    />
+                  ) : null
+                })()}
               </div>
             </div>
           </CollapsibleSection>
@@ -584,12 +651,20 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
             data-testid="section-serving"
           >
             <div>
-              <label
-                htmlFor="simple-servings"
-                className="block text-sm font-semibold text-gray-700 mb-2"
-              >
-                Servings
-              </label>
+              <div className="flex items-center gap-1.5 mb-2">
+                <label
+                  htmlFor="simple-servings"
+                  className="block text-sm font-semibold text-gray-700"
+                >
+                  Servings
+                </label>
+                <FieldAIEnhanceButton
+                  field="servings"
+                  currentValue={form.servings}
+                  status={fieldStatus.get('servings') ?? 'idle'}
+                  onEnhance={() => handleEnhanceField('servings', form.servings)}
+                />
+              </div>
               <input
                 id="simple-servings"
                 type="number"
@@ -601,6 +676,62 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                 placeholder="4"
                 className="w-full sm:w-40 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
+              {(() => {
+                const s = visibleSuggestions.find(x => x.field === 'servings')
+                return s ? (
+                  <FieldAISuggestionChip
+                    field="servings"
+                    suggestion={s.suggestedValue}
+                    currentValue={form.servings}
+                    onApply={() => handleApplyFieldSuggestion('servings', s.suggestedValue)}
+                    onDismiss={() => dismissSuggestion('servings')}
+                  />
+                ) : null
+              })()}
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="Nutrition"
+            icon="🥗"
+            isOpen={sections.nutrition.isOpen}
+            isFilled={sections.nutrition.isFilled(hasSavedNutrition)}
+            onToggle={sections.nutrition.toggle}
+            data-testid="section-nutrition"
+          >
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Let AI calculate nutrition when your recipe does not already include it.
+              </p>
+              <button
+                type="button"
+                disabled={!hasIngredients || nutritionLoadingState === 'loading'}
+                onClick={() =>
+                  estimateNutrition(form.ingredients, parseInt(form.servings, 10) || 1, form.title)
+                }
+                className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {nutritionLoadingState === 'loading'
+                  ? 'Estimating…'
+                  : hasSavedNutrition
+                    ? 'Recalculate Nutrition with AI'
+                    : 'Calculate Missing Nutrition with AI'}
+              </button>
+              <NutritionEstimatePanel
+                estimate={nutritionEstimate}
+                loadingState={nutritionLoadingState}
+                error={nutritionError}
+                onAccept={handleAcceptNutritionEstimate}
+                onDismiss={clearNutritionEstimate}
+              />
+              {hasSavedNutrition && activeRecipeOverrides.nutritionalInfo && (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">
+                    AI nutrition values will be saved with this recipe unless you recalculate or dismiss them.
+                  </p>
+                  <NutritionFacts nutritionalInfo={activeRecipeOverrides.nutritionalInfo} />
+                </div>
+              )}
             </div>
           </CollapsibleSection>
 

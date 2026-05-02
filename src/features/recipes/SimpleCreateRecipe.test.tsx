@@ -420,6 +420,74 @@ describe('AI Enhancement', () => {
       expect(screen.getByRole('region', { name: /AI field suggestions/i })).toBeInTheDocument()
     })
   })
+
+  it('saves accepted AI nutrition estimates with the recipe', async () => {
+    const { postWithAuth } = await import('../../utils/authApi')
+    vi.mocked(postWithAuth).mockResolvedValueOnce({
+      data: {
+        perServing: {
+          calories: { value: 220, unit: 'kcal', estimated: true },
+          protein: { value: 8, unit: 'g', estimated: true },
+          carbs: { value: 30, unit: 'g', estimated: true },
+          fat: { value: 6, unit: 'g', estimated: true },
+          fiber: { value: 4, unit: 'g', estimated: true },
+          warnings: [],
+          isPartial: false,
+        },
+        wholeRecipe: {
+          calories: { value: 880, unit: 'kcal', estimated: true },
+          protein: { value: 32, unit: 'g', estimated: true },
+          carbs: { value: 120, unit: 'g', estimated: true },
+          fat: { value: 24, unit: 'g', estimated: true },
+          fiber: { value: 16, unit: 'g', estimated: true },
+          warnings: [],
+          isPartial: false,
+        },
+      },
+    } as Awaited<ReturnType<typeof postWithAuth>>)
+
+    renderWithRouter(<SimpleCreateRecipe />)
+
+    fireEvent.change(screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i), {
+      target: { value: 'AI Nutrition Pasta' },
+    })
+    fireEvent.change(screen.getByPlaceholderText(/all-purpose flour/i), {
+      target: { value: 'flour' },
+    })
+    fireEvent.change(screen.getByPlaceholderText(/Describe this step in detail/i), {
+      target: { value: 'Mix everything together.' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /Nutrition/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Calculate Missing Nutrition with AI/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Accept/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /Accept/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Save Recipe/i }))
+
+    await waitFor(() => {
+      expect(recipeStorageApi.saveRecipe).toHaveBeenCalledWith(expect.objectContaining({
+        nutritionalInfo: {
+          perServing: {
+            calories: 220,
+            protein: 8,
+            carbohydrates: 30,
+            fat: 6,
+            fiber: 4,
+          },
+          total: {
+            calories: 880,
+            protein: 32,
+            carbohydrates: 120,
+            fat: 24,
+            fiber: 16,
+          },
+        },
+      }))
+    })
+  })
 })
 
 // ─── AI Undo Affordance (issue #42) ──────────────────────────────────────────

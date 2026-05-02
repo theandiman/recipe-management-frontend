@@ -82,6 +82,27 @@ function makeProps(overrides: Partial<ComponentProps<typeof RecipeFormLayout>> =
 const renderWithRouter = (props: ComponentProps<typeof RecipeFormLayout>) =>
   render(<BrowserRouter><RecipeFormLayout {...props} /></BrowserRouter>)
 
+const mockNutritionEstimate = {
+  perServing: {
+    calories: { value: 220, unit: 'kcal', estimated: true },
+    protein: { value: 8, unit: 'g', estimated: true },
+    carbs: { value: 30, unit: 'g', estimated: true },
+    fat: { value: 6, unit: 'g', estimated: true },
+    fiber: { value: 4, unit: 'g', estimated: true },
+    warnings: [],
+    isPartial: false,
+  },
+  wholeRecipe: {
+    calories: { value: 880, unit: 'kcal', estimated: true },
+    protein: { value: 32, unit: 'g', estimated: true },
+    carbs: { value: 120, unit: 'g', estimated: true },
+    fat: { value: 24, unit: 'g', estimated: true },
+    fiber: { value: 16, unit: 'g', estimated: true },
+    warnings: [],
+    isPartial: false,
+  },
+}
+
 describe('RecipeFormLayout — on-demand AI enhancement (issue #35)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -191,5 +212,52 @@ describe('RecipeFormLayout — AI undo affordance (issue #42)', () => {
     await waitFor(() =>
       expect(screen.getByRole('button', { name: /Undo: Description/i })).toBeInTheDocument()
     )
+  })
+})
+
+describe('RecipeFormLayout — AI nutrition completion', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('persists accepted nutrition estimates for saving', async () => {
+    mockPostWithAuth.mockResolvedValueOnce({ data: mockNutritionEstimate } as any)
+    const onNutritionalInfoChange = vi.fn()
+
+    renderWithRouter(makeProps({
+      currentStep: 2,
+      ingredients: [{ quantity: '1', unit: 'cup', item: 'flour' }],
+      onNutritionalInfoChange,
+    }))
+
+    fireEvent.click(screen.getByRole('button', { name: /Calculate Missing Nutrition with AI/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Accept/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /Accept/i }))
+
+    expect(onNutritionalInfoChange).toHaveBeenCalledWith({
+      perServing: {
+        calories: 220,
+        protein: 8,
+        carbohydrates: 30,
+        fat: 6,
+        fiber: 4,
+      },
+      total: {
+        calories: 880,
+        protein: 32,
+        carbohydrates: 120,
+        fat: 24,
+        fiber: 16,
+      },
+    })
   })
 })
