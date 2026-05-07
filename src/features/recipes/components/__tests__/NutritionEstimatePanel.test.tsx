@@ -95,6 +95,21 @@ describe('NutritionEstimatePanel', () => {
     expect(screen.getByText('700kcal')).toBeInTheDocument()
   })
 
+  it('includes dark mode styles on the success panel', () => {
+    const { container } = render(
+      <NutritionEstimatePanel
+        estimate={makeEstimate()}
+        loadingState="success"
+        error={null}
+        onAccept={vi.fn()}
+        onDismiss={vi.fn()}
+      />
+    )
+
+    expect(container.firstChild).toHaveClass('dark:bg-gray-900', 'dark:border-gray-700')
+    expect(screen.getByText('Calories')).toHaveClass('dark:text-gray-300')
+  })
+
   it('shows partial indicator and warnings when isPartial is true', () => {
     render(
       <NutritionEstimatePanel

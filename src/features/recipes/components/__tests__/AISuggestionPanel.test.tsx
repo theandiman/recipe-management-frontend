@@ -158,6 +158,22 @@ describe('AISuggestionPanel', () => {
     expect(screen.getByText('Suggested')).toBeInTheDocument()
   })
 
+  it('includes dark mode classes on the panel and suggestion cards', () => {
+    render(
+      <AISuggestionPanel
+        suggestions={[mockSuggestions[0]]}
+        status="success"
+        error={null}
+        onApply={vi.fn()}
+        onDismiss={vi.fn()}
+        fieldSetters={{ description: vi.fn() }}
+      />
+    )
+
+    expect(screen.getByRole('region', { name: /AI field suggestions/i })).toHaveClass('dark:bg-gray-900')
+    expect(screen.getByRole('listitem', { name: /AI suggestion for Description/i })).toHaveClass('dark:bg-gray-800/60')
+  })
+
   it('collapses and expands on header button click', () => {
     render(
       <AISuggestionPanel

@@ -16,6 +16,18 @@ describe('FieldAIEnhanceButton', () => {
     expect(screen.getByText('AI')).toBeInTheDocument()
   })
 
+  it('includes dark mode styles on the button', () => {
+    render(
+      <FieldAIEnhanceButton
+        field="recipeName"
+        currentValue=""
+        status="idle"
+        onEnhance={vi.fn()}
+      />
+    )
+    expect(screen.getByRole('button')).toHaveClass('dark:bg-gray-900', 'dark:text-gray-300')
+  })
+
   it('has aria-label "Complete with AI" when currentValue is empty', () => {
     render(
       <FieldAIEnhanceButton
