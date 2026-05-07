@@ -34,8 +34,8 @@ export const AIUndoButton: React.FC<AIUndoButtonProps> = ({ lastField, onUndo, f
       className={AI_BUTTON_COMPACT_CLASS}
     >
       <AIBadge />
-      <span aria-hidden="true" className="text-gray-400">/</span>
-      <span className="text-gray-600">Undo {label}</span>
+      <span aria-hidden="true" className="text-gray-400 dark:text-gray-500">/</span>
+      <span className="text-gray-600 dark:text-gray-200">Undo {label}</span>
     </button>
   )
 }
