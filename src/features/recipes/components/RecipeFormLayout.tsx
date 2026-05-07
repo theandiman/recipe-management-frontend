@@ -1,15 +1,22 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { StepIndicator } from './StepIndicator'
 import { RecipeFormSteps } from './RecipeFormSteps'
+import { AISpinnerIcon } from './AISpinnerIcon'
 
 
 import { RecipePreview } from './RecipePreview'
 import { AISuggestionPanel } from './AISuggestionPanel'
 import { useAISuggestions } from '../hooks/useAISuggestions'
+import { useInstructionRefinement } from '../hooks/useInstructionRefinement'
+import { useAIImageGeneration } from '../hooks/useAIImageGeneration'
 import { FIELD_LABELS } from '../constants/aiConstants'
-import { useNutritionEstimate } from '../hooks/useNutritionEstimate'
+import { AIUndoButton } from './AIUndoButton'
+import { AIBadge } from './AIBadge'
+import { mapEstimateToNutritionalInfo, useNutritionEstimate } from '../hooks/useNutritionEstimate'
 import { NutritionEstimatePanel } from './NutritionEstimatePanel'
-import type { Ingredient } from '../../../types/nutrition'
+import { AI_BUTTON_CLASS } from './aiStyles'
+import type { Ingredient, Recipe } from '../../../types/nutrition'
+import NutritionFacts from '../../../components/NutritionFacts'
 
 interface RecipeFormLayoutProps {
   // Mode
@@ -40,6 +47,7 @@ interface RecipeFormLayoutProps {
   imagePreview: string | null
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
   removeImage: () => void
+  setImagePreview?: (value: string | null) => void
   ingredients: Ingredient[]
   addIngredient: () => void
   updateIngredient: (index: number, field: keyof Ingredient, value: string) => void
@@ -76,6 +84,8 @@ interface RecipeFormLayoutProps {
   canUndoAI?: boolean
   onUndoLastAI?: () => void
   lastUndoableAIField?: string | null
+  nutritionalInfo?: Recipe['nutritionalInfo']
+  onNutritionalInfoChange?: (nutritionalInfo: Recipe['nutritionalInfo'] | undefined) => void
   normalizationStates?: Map<number, import('../hooks/useIngredientNormalization').NormalizationState>
   onApplyNormalization?: (index: number) => void
   onDismissNormalization?: (index: number) => void
@@ -105,6 +115,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   imagePreview,
   handleImageUpload,
   removeImage,
+  setImagePreview,
   ingredients,
   addIngredient,
   updateIngredient,
@@ -132,15 +143,46 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   setSaveError,
   handleSubmit,
   handleCancel,
-  canUndoAI: _canUndoAI = false,
+  canUndoAI = false,
   onUndoLastAI,
-  lastUndoableAIField: _lastUndoableAIField,
+  lastUndoableAIField,
+  nutritionalInfo,
+  onNutritionalInfoChange,
   normalizationStates,
   onApplyNormalization,
   onDismissNormalization,
 }) => {
   // --- AI Instruction Refinement Hook ---
+  const {
+    stepStates: instructionRefinementStates,
+    loadingState: instructionRefinementLoading,
+    refineSingle: refineSingleInstruction,
+    refineAll: refineAllInstructions,
+    acceptStep: acceptInstructionRefinement,
+    rejectStep: rejectInstructionRefinement,
+  } = useInstructionRefinement(updateInstruction)
 
+  // --- AI Image Generation Hook ---
+  const { status: aiImageStatus, error: aiImageError, generateImage } = useAIImageGeneration()
+
+  const handleGenerateAIImage = useCallback(
+    async (recipeName: string, description?: string) => {
+      const url = await generateImage(recipeName, description)
+      if (url && setImagePreview) setImagePreview(url)
+    },
+    [generateImage, setImagePreview]
+  )
+
+  const handleRefineInstruction = useCallback(
+    (index: number, instruction: string) => {
+      refineSingleInstruction(index, instruction, title || undefined)
+    },
+    [refineSingleInstruction, title]
+  )
+
+  const handleRefineAllInstructions = useCallback(() => {
+    refineAllInstructions(instructions, title || undefined)
+  }, [refineAllInstructions, instructions, title])
   // --- Nutrition Estimate Hook ---
   const {
     estimate: nutritionEstimate,
@@ -152,6 +194,15 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   } = useNutritionEstimate()
 
   const hasIngredients = ingredients.some((i) => i.item.trim())
+  const hasSavedNutrition = Boolean(nutritionalInfo?.perServing)
+
+  const handleAcceptNutritionEstimate = useCallback(() => {
+    if (!onNutritionalInfoChange) return
+
+    acceptNutritionEstimate((estimate) => {
+      onNutritionalInfoChange(mapEstimateToNutritionalInfo(estimate))
+    })
+  }, [acceptNutritionEstimate, onNutritionalInfoChange])
 
 
   const handlePreviousStepClick = () => {
@@ -233,6 +284,8 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     status: suggestionStatus,
     error: suggestionError,
     fetchSuggestions,
+    fetchFieldSuggestion,
+    fieldStatus,
     applySuggestion,
     dismissSuggestion,
     canUndo: localCanUndo,
@@ -240,35 +293,26 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     auditLog: localAuditLog,
   } = useAISuggestions()
 
-  // Derive the last undoable AI field name from the local audit trail
+  // Derive the last undoable AI field from the most recent accepted entry.
+  // After an undo the latest entry may no longer be 'accepted', so returning
+  // the field only for the last entry when it is 'accepted' avoids stale labels.
   const localLastUndoableAIField = useMemo<string | null>(() => {
-    for (let i = localAuditLog.length - 1; i >= 0; i--) {
-      const e = localAuditLog[i]
-      if (e.event === 'accepted') {
-        return FIELD_LABELS[e.field] ?? e.field
-      }
-    }
-    return null
+    const latestEntry = localAuditLog[localAuditLog.length - 1]
+    return latestEntry?.event === 'accepted' ? latestEntry.field : null
   }, [localAuditLog])
 
-  // Fetch suggestions once when the recipe title is available (first meaningful state)
-  const suggestionFetched = useRef(false)
-  useEffect(() => {
-    if (!suggestionFetched.current && title.trim().length > 2) {
-      suggestionFetched.current = true
-      fetchSuggestions(buildSuggestionRequest())
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title])
+  // Effective undo state: prefer local audit trail; fall back to parent-supplied props
+  const effectiveCanUndo = localCanUndo || canUndoAI
+  const effectiveUndoField = localLastUndoableAIField ?? lastUndoableAIField ?? null
 
   // Wrap setters to allow passing previousValue for audit trail
-  const fieldSetters: Partial<Record<string, (value: string) => void> & { currentValue?: string }> = {
-    recipeName: Object.assign(setTitle, { currentValue: title }),
-    description: Object.assign(setDescription, { currentValue: description }),
-    prepTime: Object.assign(setPrepTime, { currentValue: prepTime }),
-    cookTime: Object.assign(setCookTime, { currentValue: cookTime }),
-    servings: Object.assign(setServings, { currentValue: servings }),
-  }
+  const fieldSetters: Partial<Record<string, (value: string) => void>> = useMemo(() => ({
+    recipeName: setTitle,
+    description: setDescription,
+    prepTime: setPrepTime,
+    cookTime: setCookTime,
+    servings: setServings,
+  }), [setTitle, setDescription, setPrepTime, setCookTime, setServings])
 
   // Internal undo handler: uses the local audit trail (from RecipeFormLayout's own hook)
   const handleLocalUndo = useCallback(() => {
@@ -287,6 +331,27 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     if (onUndoLastAI) onUndoLastAI()
   }, [localUndoLastAIChange, setTitle, setDescription, setPrepTime, setCookTime, setServings, onUndoLastAI])
 
+  const handleEnhanceField = useCallback((field: string, currentValue: string) => {
+    fetchFieldSuggestion(field as import('../hooks/useAISuggestions').StringFieldKey, currentValue, {
+      recipeName: title,
+      description: description,
+    })
+  }, [fetchFieldSuggestion, title, description])
+
+  const handleApplyFieldSuggestion = useCallback((field: string, value: string) => {
+    const setter = fieldSetters[field]
+    const previousValue = {
+      recipeName: title,
+      description,
+      prepTime,
+      cookTime,
+      servings,
+    }[field] ?? ''
+    if (setter) {
+      applySuggestion(field, () => setter(value), previousValue)
+    }
+  }, [fieldSetters, title, description, prepTime, cookTime, servings, applySuggestion])
+
   // Shared request builder for AI suggestions
   const buildSuggestionRequest = () => ({
     recipeName: title || undefined,
@@ -301,8 +366,11 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     instructions: instructions.filter(i => i.trim()),
   })
 
+  const handleEnhanceWithAI = () => {
+    fetchSuggestions(buildSuggestionRequest())
+  }
+
   const handleRetrySuggestions = () => {
-    suggestionFetched.current = false
     fetchSuggestions(buildSuggestionRequest())
   }
 
@@ -319,6 +387,34 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
               Step {currentStep} of {totalSteps}: {steps[currentStep - 1].title}
             </p>
           </div>
+          <div className="flex items-center gap-2">
+              <AIUndoButton
+                key={localAuditLog.length}
+                lastField={effectiveCanUndo ? effectiveUndoField : null}
+                onUndo={handleLocalUndo}
+                fieldLabels={FIELD_LABELS}
+              />
+              {currentStep !== 5 && (
+              <button
+                type="button"
+                onClick={handleEnhanceWithAI}
+                disabled={suggestionStatus === 'loading'}
+                className={AI_BUTTON_CLASS}
+              >
+                {suggestionStatus === 'loading' ? (
+                  <>
+                    <AISpinnerIcon />
+                    AI assist...
+                  </>
+                ) : (
+                  <>
+                    <AIBadge />
+                    AI assist
+                  </>
+                )}
+              </button>
+              )}
+            </div>
         </div>
 
         {/* Step Progress Indicator - Horizontal scroll on mobile */}
@@ -339,7 +435,16 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
           onApply={applySuggestion}
           onDismiss={dismissSuggestion}
           fieldSetters={fieldSetters}
+          currentValues={{
+            recipeName: title,
+            description,
+            prepTime,
+            cookTime,
+            servings,
+            tags: tags.join(', '),
+          }}
           onRetry={handleRetrySuggestions}
+          currentStep={currentStep}
         />
       )}
 
@@ -401,32 +506,58 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 fieldErrors={fieldErrors}
                 clearFieldError={clearFieldError}
                 recipeName={title}
+                onRefineInstruction={handleRefineInstruction}
+                onRefineAllInstructions={handleRefineAllInstructions}
+                instructionRefinementStates={instructionRefinementStates}
+                onAcceptInstructionRefinement={acceptInstructionRefinement}
+                onRejectInstructionRefinement={rejectInstructionRefinement}
+                instructionRefinementLoading={instructionRefinementLoading}
                 normalizationStates={normalizationStates}
                 onApplyNormalization={onApplyNormalization}
                 onDismissNormalization={onDismissNormalization}
+                onEnhanceField={handleEnhanceField}
+                fieldStatus={fieldStatus}
+                fieldSuggestions={visibleSuggestions}
+                onApplyFieldSuggestion={handleApplyFieldSuggestion}
+                onDismissFieldSuggestion={dismissSuggestion}
+                onGenerateAIImage={setImagePreview ? handleGenerateAIImage : undefined}
+                generatingAIImage={aiImageStatus === 'loading'}
+                aiImageError={aiImageError}
               />
           </div>
 
           {/* Nutrition Estimate — shown on step 2 (Ingredients) */}
           {currentStep === 2 && (
             <div className="mt-4">
-              <button
-                type="button"
-                disabled={!hasIngredients || nutritionLoadingState === 'loading'}
+                <button
+                  type="button"
+                  disabled={!hasIngredients || nutritionLoadingState === 'loading'}
                 onClick={() =>
                   estimateNutrition(ingredients, parseInt(servings, 10) || 1, title)
                 }
                 className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {nutritionLoadingState === 'loading' ? 'Estimating…' : 'Recalculate Nutrition'}
+                {nutritionLoadingState === 'loading'
+                  ? 'Estimating…'
+                  : hasSavedNutrition
+                    ? 'Recalculate Nutrition with AI'
+                    : 'Calculate Missing Nutrition with AI'}
               </button>
               <NutritionEstimatePanel
                 estimate={nutritionEstimate}
                 loadingState={nutritionLoadingState}
                 error={nutritionError}
-                onAccept={() => acceptNutritionEstimate(() => {})}
+                onAccept={handleAcceptNutritionEstimate}
                 onDismiss={clearNutritionEstimate}
               />
+              {hasSavedNutrition && nutritionalInfo && (
+                <div className="mt-4 space-y-3">
+                  <p className="text-sm text-gray-600">
+                    AI nutrition values will be saved with this recipe unless you recalculate or dismiss them.
+                  </p>
+                  <NutritionFacts nutritionalInfo={nutritionalInfo} />
+                </div>
+              )}
             </div>
           )}
 
@@ -446,17 +577,6 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
             </button>
 
             <div className="flex items-center space-x-4">
-              {localCanUndo && (
-                <button
-                  type="button"
-                  onClick={handleLocalUndo}
-                  aria-label={localLastUndoableAIField ? `Undo AI change to ${localLastUndoableAIField}` : 'Undo last AI change'}
-                  className="px-4 py-2 text-sm border border-amber-400 text-amber-700 rounded-lg font-medium hover:bg-amber-50 transition-colors flex items-center gap-1"
-                >
-                  ↩ {localLastUndoableAIField ? `Undo AI: ${localLastUndoableAIField}` : 'Undo AI change'}
-                </button>
-              )}
-
               <button
                 type="button"
                 onClick={handleCancel}

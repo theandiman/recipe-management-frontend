@@ -227,7 +227,7 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       fireEvent.click(nextButton) // → step 2
       const itemInput = screen.getAllByPlaceholderText('e.g., all-purpose flour')[0]
       fireEvent.change(itemInput, { target: { value: 'flour' } })
-      const step3Button = screen.getByRole('button', { name: /Instructions/i })
+      const step3Button = screen.getByRole('button', { name: /Go to step 3: Instructions/i })
       fireEvent.click(step3Button) // step 2 valid → step 3
     })
 
@@ -614,7 +614,7 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         fireEvent.change(itemInput, { target: { value: 'flour' } })
         
         // Add instruction
-        const step3Button = screen.getByRole('button', { name: /Instructions/i })
+        const step3Button = screen.getByRole('button', { name: /Go to step 3: Instructions/i })
         fireEvent.click(step3Button)
         
         const instructionInput = screen.getAllByPlaceholderText(/Describe this step in detail/i)[0]
@@ -675,7 +675,7 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         
         
         // Step 3 should have red ring
-        const step3Button = screen.getByRole('button', { name: /Instructions/i })
+        const step3Button = screen.getByRole('button', { name: /Go to step 3: Instructions/i })
         const step3Icon = step3Button.querySelector('div')
         expect(step3Icon).toHaveClass('ring-2', 'ring-red-500')
       })
@@ -726,7 +726,7 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         // All error steps should be marked in progress indicator
         const step1Button = screen.getByRole('button', { name: /Basic Info/i })
         const step2Button = screen.getByRole('button', { name: /Ingredients/i })
-        const step3Button = screen.getByRole('button', { name: /Instructions/i })
+        const step3Button = screen.getByRole('button', { name: /Go to step 3: Instructions/i })
         
         expect(step1Button.querySelector('.ring-red-500')).toBeInTheDocument()
         expect(step2Button.querySelector('.ring-red-500')).toBeInTheDocument()
@@ -761,7 +761,7 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         // All steps should have errors
         let step1Button = screen.getByRole('button', { name: /Basic Info/i })
         let step2Button = screen.getByRole('button', { name: /Ingredients/i })
-        let step3Button = screen.getByRole('button', { name: /Instructions/i })
+        let step3Button = screen.getByRole('button', { name: /Go to step 3: Instructions/i })
         
         expect(step1Button.querySelector('.ring-red-500')).toBeInTheDocument()
         expect(step2Button.querySelector('.ring-red-500')).toBeInTheDocument()
@@ -787,7 +787,7 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
         expect(step2Button.querySelector('.ring-red-500')).not.toBeInTheDocument()
         
         // Step 3 should still have error
-        step3Button = screen.getByRole('button', { name: /Instructions/i })
+        step3Button = screen.getByRole('button', { name: /Go to step 3: Instructions/i })
         expect(step3Button.querySelector('.ring-red-500')).toBeInTheDocument()
       })
     })

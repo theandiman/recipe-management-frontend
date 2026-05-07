@@ -193,6 +193,166 @@ describe('useAISuggestions', () => {
     window.removeEventListener('ai:suggestions', listener)
   })
 
+  describe('fetchFieldSuggestion', () => {
+    it('should set fieldStatus[field] to loading while fetching', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let resolvePost!: (value: any) => void
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let pending!: Promise<any>
+      mockPostWithAuth.mockReturnValueOnce(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        new Promise<any>((resolve) => { resolvePost = resolve })
+      )
+
+      const { result } = renderHook(() => useAISuggestions())
+
+      act(() => {
+        pending = result.current.fetchFieldSuggestion('description', '')
+      })
+
+      expect(result.current.fieldStatus.get('description')).toBe('loading')
+
+      await act(async () => {
+        resolvePost({ data: { suggestions: [{ field: 'description', suggestedValue: 'x', reason: '' }] } })
+        await pending
+      })
+    })
+
+    it('should add single-field suggestion to suggestions on success', async () => {
+      mockPostWithAuth.mockResolvedValueOnce({
+        data: {
+          suggestions: [{ field: 'description', suggestedValue: 'A delicious meal', reason: 'No description' }],
+        },
+      } as any)
+
+      const { result } = renderHook(() => useAISuggestions())
+
+      await act(async () => {
+        await result.current.fetchFieldSuggestion('description', '')
+      })
+
+      expect(result.current.suggestions).toHaveLength(1)
+      expect(result.current.suggestions[0].field).toBe('description')
+      expect(result.current.suggestions[0].suggestedValue).toBe('A delicious meal')
+    })
+
+    it('should set fieldStatus[field] to success after fetch', async () => {
+      mockPostWithAuth.mockResolvedValueOnce({
+        data: {
+          suggestions: [{ field: 'prepTime', suggestedValue: '15 minutes', reason: '' }],
+        },
+      } as any)
+
+      const { result } = renderHook(() => useAISuggestions())
+
+      await act(async () => {
+        await result.current.fetchFieldSuggestion('prepTime', '')
+      })
+
+      expect(result.current.fieldStatus.get('prepTime')).toBe('success')
+    })
+
+    it('should set fieldStatus[field] to error if fetch fails', async () => {
+      mockPostWithAuth.mockRejectedValueOnce(new Error('API error'))
+
+      const { result } = renderHook(() => useAISuggestions())
+
+      await act(async () => {
+        await result.current.fetchFieldSuggestion('cookTime', '')
+      })
+
+      expect(result.current.fieldStatus.get('cookTime')).toBe('error')
+    })
+
+    it('should not affect fieldStatus or suggestions for other fields', async () => {
+      // Pre-populate suggestions for another field via fetchSuggestions
+      mockPostWithAuth.mockResolvedValueOnce({
+        data: {
+          suggestions: [{ field: 'prepTime', suggestedValue: '10 min', reason: '' }],
+        },
+      } as any)
+
+      const { result } = renderHook(() => useAISuggestions())
+
+      await act(async () => {
+        await result.current.fetchSuggestions({ recipeName: 'Pasta' })
+      })
+
+      // Now fetch for a different field
+      mockPostWithAuth.mockResolvedValueOnce({
+        data: {
+          suggestions: [{ field: 'description', suggestedValue: 'Tasty', reason: '' }],
+        },
+      } as any)
+
+      await act(async () => {
+        await result.current.fetchFieldSuggestion('description', '')
+      })
+
+      // prepTime suggestion should still be present
+      const prepTimeSuggestion = result.current.suggestions.find(s => s.field === 'prepTime')
+      expect(prepTimeSuggestion).toBeDefined()
+      expect(prepTimeSuggestion?.suggestedValue).toBe('10 min')
+
+      // fieldStatus for description should be success, prepTime unaffected
+      expect(result.current.fieldStatus.get('description')).toBe('success')
+      expect(result.current.fieldStatus.get('prepTime')).toBeUndefined()
+    })
+
+    it('should pass currentValue in the targeted request to the API', async () => {
+      mockPostWithAuth.mockResolvedValueOnce({
+        data: { suggestions: [] },
+      } as any)
+
+      const { result } = renderHook(() => useAISuggestions())
+
+      await act(async () => {
+        await result.current.fetchFieldSuggestion('description', 'partial desc', { recipeName: 'Test Recipe' })
+      })
+
+      expect(mockPostWithAuth).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ description: 'partial desc', recipeName: 'Test Recipe' })
+      )
+    })
+
+    it('should not reset existing suggestions for other fields', async () => {
+      mockPostWithAuth.mockResolvedValueOnce({
+        data: {
+          suggestions: [
+            { field: 'prepTime', suggestedValue: '10 min', reason: '' },
+            { field: 'cookTime', suggestedValue: '20 min', reason: '' },
+          ],
+        },
+      } as any)
+
+      const { result } = renderHook(() => useAISuggestions())
+
+      await act(async () => {
+        await result.current.fetchSuggestions({ recipeName: 'Pasta' })
+      })
+
+      expect(result.current.suggestions).toHaveLength(2)
+
+      // Fetch only for description
+      mockPostWithAuth.mockResolvedValueOnce({
+        data: {
+          suggestions: [{ field: 'description', suggestedValue: 'A tasty dish', reason: '' }],
+        },
+      } as any)
+
+      await act(async () => {
+        await result.current.fetchFieldSuggestion('description', '')
+      })
+
+      // All three fields should be present
+      expect(result.current.suggestions).toHaveLength(3)
+      expect(result.current.suggestions.map(s => s.field)).toContain('prepTime')
+      expect(result.current.suggestions.map(s => s.field)).toContain('cookTime')
+      expect(result.current.suggestions.map(s => s.field)).toContain('description')
+    })
+  })
+
   describe('API base URL resolution', () => {
     it('uses VITE_AI_API_URL when set, preferring it over VITE_API_URL', async () => {
       vi.stubEnv('VITE_AI_API_URL', 'https://ai.example.com')

@@ -1,22 +1,99 @@
-import React, { useCallback } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useRecipeForm } from './hooks/useRecipeForm'
 import { useRecipeValidation } from './hooks/useRecipeValidation'
 import { useRecipeSave } from './hooks/useRecipeSave'
 import { CollapsibleSection } from './components/CollapsibleSection'
-import { IngredientInput } from '../../components/IngredientInput'
+import { COMMON_UNITS, IngredientInput } from '../../components/IngredientInput'
 import { UI_STYLES } from '../../utils/uiStyles'
 import { clampedNumericHandler } from '../../utils/formUtils'
 import { useSimpleCreateSections } from './hooks/useSimpleCreateSections'
+import { useAISuggestions } from './hooks/useAISuggestions'
+import type { StringFieldKey } from './hooks/useAISuggestions'
+import { AISuggestionPanel } from './components/AISuggestionPanel'
+import { FieldAIEnhanceButton } from './components/FieldAIEnhanceButton'
+import { FieldAISuggestionChip } from './components/FieldAISuggestionChip'
+import { AIUndoButton } from './components/AIUndoButton'
+import { AIBadge } from './components/AIBadge'
+import { AISpinnerIcon } from './components/AISpinnerIcon'
+import { AI_BUTTON_CLASS } from './components/aiStyles'
+import { FIELD_LABELS } from './constants/aiConstants'
+import { getRecipe } from '../../services/recipeStorageApi'
+import { useAuth } from '../auth/AuthContext'
+import type { Recipe } from '../../types/nutrition'
+import { mapEstimateToNutritionalInfo, useNutritionEstimate } from './hooks/useNutritionEstimate'
+import { NutritionEstimatePanel } from './components/NutritionEstimatePanel'
+import NutritionFacts from '../../components/NutritionFacts'
 
-export const SimpleCreateRecipe: React.FC = () => {
+type RecipeFormInitialState = Parameters<typeof useRecipeForm>[0]
+
+const EMPTY_INGREDIENT = { quantity: '', unit: '', item: '' }
+const KNOWN_INGREDIENT_UNITS = new Set(COMMON_UNITS.filter(Boolean))
+const QUANTITY_PATTERN = /^(\d+(?:\.\d+)?|\d+\/\d+|\d+\s+\d+\/\d+|[¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])$/
+
+const mapIngredientStringToFormValue = (ingredient: string) => {
+  const trimmedIngredient = ingredient.trim()
+
+  if (!trimmedIngredient) {
+    return EMPTY_INGREDIENT
+  }
+
+  const parts = trimmedIngredient.split(/\s+/)
+
+  if (parts.length === 1 || !QUANTITY_PATTERN.test(parts[0])) {
+    return { quantity: '', unit: '', item: trimmedIngredient }
+  }
+
+  const quantity = parts[0]
+  const normalizedUnit = parts[1]?.toLowerCase() || ''
+  const hasKnownUnit = KNOWN_INGREDIENT_UNITS.has(normalizedUnit)
+  const unit = hasKnownUnit ? parts[1] : ''
+  const item = hasKnownUnit ? parts.slice(2).join(' ') : parts.slice(1).join(' ')
+
+  return { quantity, unit, item }
+}
+
+const getInitialFormState = (recipe: Recipe): RecipeFormInitialState => ({
+  title: recipe.recipeName || '',
+  description: recipe.description || '',
+  prepTime: recipe.prepTimeMinutes?.toString() || '',
+  cookTime: recipe.cookTimeMinutes?.toString() || '',
+  servings: recipe.servings?.toString() || '',
+  ingredients: recipe.ingredients?.length
+    ? recipe.ingredients.map(mapIngredientStringToFormValue)
+    : [EMPTY_INGREDIENT],
+  instructions: recipe.instructions?.length ? recipe.instructions : [''],
+  tags: recipe.tags || [],
+  dietaryRestrictions: recipe.dietaryRestrictions || [],
+  imagePreview: recipe.imageUrl || null,
+})
+
+interface QuickEntryRecipeFormProps {
+  isEditMode: boolean
+  recipeId?: string
+  initialState?: RecipeFormInitialState
+  recipeOverrides?: Partial<Recipe>
+}
+
+const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
+  isEditMode,
+  recipeId,
+  initialState,
+  recipeOverrides = {},
+}) => {
   const navigate = useNavigate()
+  const [activeRecipeOverrides, setActiveRecipeOverrides] = useState<Partial<Recipe>>(recipeOverrides)
 
-  const form = useRecipeForm()
+  const form = useRecipeForm(initialState)
   const { validateForm, buildRecipeObject } = useRecipeValidation()
   const sections = useSimpleCreateSections()
 
+  useEffect(() => {
+    setActiveRecipeOverrides(recipeOverrides)
+  }, [recipeOverrides])
+
   const { handleSubmit } = useRecipeSave({
+    recipeId,
     title: form.title,
     description: form.description,
     prepTime: form.prepTime,
@@ -27,6 +104,7 @@ export const SimpleCreateRecipe: React.FC = () => {
     tags: form.tags,
     dietaryRestrictions: form.dietaryRestrictions,
     imagePreview: form.imagePreview,
+    recipeOverrides: activeRecipeOverrides,
     setFieldErrors: form.setFieldErrors,
     setStepsWithErrors: form.setStepsWithErrors,
     setSaveLoading: form.setSaveLoading,
@@ -38,40 +116,164 @@ export const SimpleCreateRecipe: React.FC = () => {
   })
 
   const handleCancel = useCallback(() => {
-    navigate('/dashboard/recipes')
-  }, [navigate])
+    navigate(isEditMode && recipeId ? `/dashboard/recipes/${recipeId}` : '/dashboard/recipes')
+  }, [isEditMode, navigate, recipeId])
+
+  const {
+    visibleSuggestions,
+    status: suggestionStatus,
+    error: suggestionError,
+    fetchSuggestions,
+    fetchFieldSuggestion,
+    fieldStatus,
+    applySuggestion,
+    dismissSuggestion,
+    canUndo,
+    undoLastAIChange,
+    auditLog,
+  } = useAISuggestions()
+  const {
+    estimate: nutritionEstimate,
+    loadingState: nutritionLoadingState,
+    error: nutritionError,
+    estimateNutrition,
+    clearEstimate: clearNutritionEstimate,
+    acceptEstimate: acceptNutritionEstimate,
+  } = useNutritionEstimate()
+
+  const buildSuggestionRequest = () => ({
+    recipeName: form.title || undefined,
+    description: form.description || undefined,
+    prepTime: form.prepTime || undefined,
+    cookTime: form.cookTime || undefined,
+    servings: form.servings || undefined,
+    tags: form.tags.length > 0 ? form.tags : undefined,
+    ingredients: form.ingredients.filter(i => i.item.trim()).map(i =>
+      [i.quantity, i.unit, i.item].filter(Boolean).join(' ')
+    ),
+    instructions: form.instructions.filter(i => i.trim()),
+  })
+
+  const fieldSetters: Partial<Record<string, (value: string) => void>> = useMemo(() => ({
+    recipeName: form.setTitle,
+    description: form.setDescription,
+    prepTime: form.setPrepTime,
+    cookTime: form.setCookTime,
+    servings: form.setServings,
+  }), [form.setTitle, form.setDescription, form.setPrepTime, form.setCookTime, form.setServings])
+
+  const currentValues: Partial<Record<string, string>> = useMemo(() => ({
+    recipeName: form.title,
+    description: form.description,
+    prepTime: form.prepTime,
+    cookTime: form.cookTime,
+    servings: form.servings,
+  }), [form.title, form.description, form.prepTime, form.cookTime, form.servings])
+
+  const handleEnhanceField = useCallback((field: string, currentValue: string) => {
+    fetchFieldSuggestion(field as StringFieldKey, currentValue, {
+      recipeName: form.title,
+      description: form.description,
+    })
+  }, [fetchFieldSuggestion, form.title, form.description])
+
+  const handleApplyFieldSuggestion = useCallback((field: string, value: string) => {
+    const setter = fieldSetters[field]
+    const previous = currentValues[field] ?? ''
+    if (setter) {
+      applySuggestion(field, () => setter(value), previous)
+    }
+  }, [fieldSetters, currentValues, applySuggestion])
+
+  const handleEnhanceWithAI = () => {
+    fetchSuggestions(buildSuggestionRequest())
+  }
+
+  const lastUndoableAIField = useMemo<string | null>(() => {
+    const latestEntry = auditLog[auditLog.length - 1]
+    return latestEntry?.event === 'accepted' ? latestEntry.field : null
+  }, [auditLog])
+
+  const handleUndo = useCallback(() => {
+    const result = undoLastAIChange()
+    if (!result) return
+    const setter = fieldSetters[result.field]
+    if (setter) setter(String(result.previousValue ?? ''))
+  }, [undoLastAIChange, fieldSetters])
+  const hasIngredients = form.ingredients.some((ingredient) => ingredient.item.trim())
+  const hasSavedNutrition = Boolean(activeRecipeOverrides.nutritionalInfo?.perServing)
+
+  const handleAcceptNutritionEstimate = useCallback(() => {
+    acceptNutritionEstimate((estimate) => {
+      setActiveRecipeOverrides((prev) => ({
+        ...prev,
+        nutritionalInfo: mapEstimateToNutritionalInfo(estimate),
+      }))
+    })
+  }, [acceptNutritionEstimate])
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-      {/* Header */}
+        {/* Header */}
       <div className="mb-6 sm:mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Create Recipe</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            {isEditMode ? 'Edit Recipe' : 'Create Recipe'}
+          </h1>
+          <div className="flex items-center gap-2">
+            <AIUndoButton
+              key={auditLog.length}
+              lastField={canUndo ? lastUndoableAIField : null}
+              onUndo={handleUndo}
+              fieldLabels={FIELD_LABELS}
+            />
+            <button
+              type="button"
+              onClick={handleEnhanceWithAI}
+              disabled={suggestionStatus === 'loading'}
+              className={AI_BUTTON_CLASS}
+            >
+              {suggestionStatus === 'loading' ? (
+                <>
+                  <AISpinnerIcon />
+                  AI assist...
+                </>
+              ) : (
+                <>
+                  <AIBadge />
+                  AI assist
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Entry-point mode toggle */}
-        <nav
-          className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1 mb-6"
-          aria-label="Recipe creation mode"
-        >
-          <Link
-            to="/dashboard/create"
-            className="px-4 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-white transition-colors"
+        {!isEditMode && (
+          <nav
+            className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1 mb-6"
+            aria-label="Recipe creation mode"
           >
-            🧭 Guided (step-by-step)
-          </Link>
-          <Link
-            to="/dashboard/create/simple"
-            aria-current="page"
-            className="px-4 py-2 rounded-md text-sm font-medium bg-white text-emerald-700 shadow-sm border border-gray-200"
-          >
-            ⚡ Quick entry
-          </Link>
-        </nav>
+            <Link
+              to="/dashboard/create"
+              className="px-4 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-white transition-colors"
+            >
+              🧭 Guided (step-by-step)
+            </Link>
+            <Link
+              to="/dashboard/create/simple"
+              aria-current="page"
+              className="px-4 py-2 rounded-md text-sm font-medium bg-white text-emerald-700 shadow-sm border border-gray-200"
+            >
+              ⚡ Quick entry
+            </Link>
+          </nav>
+        )}
 
         <p className="text-sm text-gray-500">
-          Fill in everything at once. Required fields are always visible; optional sections can be
-          expanded as needed.
+          {isEditMode
+            ? 'Update everything at once. Required fields are always visible; optional sections can be expanded as needed.'
+            : 'Fill in everything at once. Required fields are always visible; optional sections can be expanded as needed.'}
         </p>
       </div>
 
@@ -107,6 +309,17 @@ export const SimpleCreateRecipe: React.FC = () => {
         </div>
       )}
 
+      <AISuggestionPanel
+        suggestions={visibleSuggestions}
+        status={suggestionStatus}
+        error={suggestionError}
+        onApply={applySuggestion}
+        onDismiss={dismissSuggestion}
+        fieldSetters={fieldSetters}
+        currentValues={currentValues}
+        onRetry={handleEnhanceWithAI}
+      />
+
       <form onSubmit={handleSubmit} noValidate className="space-y-6">
         {/* ─── Required: Title ─── */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -116,9 +329,17 @@ export const SimpleCreateRecipe: React.FC = () => {
 
           {/* Recipe Name */}
           <div className="mb-4">
-            <label htmlFor="simple-title" className="block text-sm font-semibold text-gray-700 mb-2">
-              Recipe Name <span className="text-red-500">*</span>
-            </label>
+            <div className="flex items-center gap-1.5 mb-2">
+              <label htmlFor="simple-title" className="text-sm font-semibold text-gray-700">
+                Recipe Name <span className="text-red-500">*</span>
+              </label>
+              <FieldAIEnhanceButton
+                field="recipeName"
+                currentValue={form.title}
+                status={fieldStatus.get('recipeName') ?? 'idle'}
+                onEnhance={() => handleEnhanceField('recipeName', form.title)}
+              />
+            </div>
             <input
               id="simple-title"
               type="text"
@@ -158,16 +379,33 @@ export const SimpleCreateRecipe: React.FC = () => {
                 {form.fieldErrors.title}
               </p>
             )}
+            {(() => {
+              const s = visibleSuggestions.find(x => x.field === 'recipeName')
+              return s ? (
+                <FieldAISuggestionChip
+                  field="recipeName"
+                  suggestion={s.suggestedValue}
+                  currentValue={form.title}
+                  onApply={() => handleApplyFieldSuggestion('recipeName', s.suggestedValue)}
+                  onDismiss={() => dismissSuggestion('recipeName')}
+                />
+              ) : null
+            })()}
           </div>
 
           {/* Description */}
           <div>
-            <label
-              htmlFor="simple-description"
-              className="block text-sm font-semibold text-gray-700 mb-2"
-            >
-              Description
-            </label>
+            <div className="flex items-center gap-1.5 mb-2">
+              <label htmlFor="simple-description" className="text-sm font-semibold text-gray-700">
+                Description
+              </label>
+              <FieldAIEnhanceButton
+                field="description"
+                currentValue={form.description}
+                status={fieldStatus.get('description') ?? 'idle'}
+                onEnhance={() => handleEnhanceField('description', form.description)}
+              />
+            </div>
             <textarea
               id="simple-description"
               value={form.description}
@@ -176,6 +414,18 @@ export const SimpleCreateRecipe: React.FC = () => {
               placeholder="Brief description of your recipe..."
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             />
+            {(() => {
+              const s = visibleSuggestions.find(x => x.field === 'description')
+              return s ? (
+                <FieldAISuggestionChip
+                  field="description"
+                  suggestion={s.suggestedValue}
+                  currentValue={form.description}
+                  onApply={() => handleApplyFieldSuggestion('description', s.suggestedValue)}
+                  onDismiss={() => dismissSuggestion('description')}
+                />
+              ) : null
+            })()}
           </div>
         </div>
 
@@ -318,12 +568,20 @@ export const SimpleCreateRecipe: React.FC = () => {
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label
-                  htmlFor="simple-prep-time"
-                  className="block text-sm font-semibold text-gray-700 mb-2"
-                >
-                  Prep Time (min)
-                </label>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <label
+                    htmlFor="simple-prep-time"
+                    className="block text-sm font-semibold text-gray-700"
+                  >
+                    Prep Time (min)
+                  </label>
+                  <FieldAIEnhanceButton
+                    field="prepTime"
+                    currentValue={form.prepTime}
+                    status={fieldStatus.get('prepTime') ?? 'idle'}
+                    onEnhance={() => handleEnhanceField('prepTime', form.prepTime)}
+                  />
+                </div>
                 <input
                   id="simple-prep-time"
                   type="number"
@@ -335,14 +593,34 @@ export const SimpleCreateRecipe: React.FC = () => {
                   placeholder="15"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
+                {(() => {
+                  const s = visibleSuggestions.find(x => x.field === 'prepTime')
+                  return s ? (
+                    <FieldAISuggestionChip
+                      field="prepTime"
+                      suggestion={s.suggestedValue}
+                      currentValue={form.prepTime}
+                      onApply={() => handleApplyFieldSuggestion('prepTime', s.suggestedValue)}
+                      onDismiss={() => dismissSuggestion('prepTime')}
+                    />
+                  ) : null
+                })()}
               </div>
               <div>
-                <label
-                  htmlFor="simple-cook-time"
-                  className="block text-sm font-semibold text-gray-700 mb-2"
-                >
-                  Cook Time (min)
-                </label>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <label
+                    htmlFor="simple-cook-time"
+                    className="block text-sm font-semibold text-gray-700"
+                  >
+                    Cook Time (min)
+                  </label>
+                  <FieldAIEnhanceButton
+                    field="cookTime"
+                    currentValue={form.cookTime}
+                    status={fieldStatus.get('cookTime') ?? 'idle'}
+                    onEnhance={() => handleEnhanceField('cookTime', form.cookTime)}
+                  />
+                </div>
                 <input
                   id="simple-cook-time"
                   type="number"
@@ -354,6 +632,18 @@ export const SimpleCreateRecipe: React.FC = () => {
                   placeholder="30"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
+                {(() => {
+                  const s = visibleSuggestions.find(x => x.field === 'cookTime')
+                  return s ? (
+                    <FieldAISuggestionChip
+                      field="cookTime"
+                      suggestion={s.suggestedValue}
+                      currentValue={form.cookTime}
+                      onApply={() => handleApplyFieldSuggestion('cookTime', s.suggestedValue)}
+                      onDismiss={() => dismissSuggestion('cookTime')}
+                    />
+                  ) : null
+                })()}
               </div>
             </div>
           </CollapsibleSection>
@@ -368,12 +658,20 @@ export const SimpleCreateRecipe: React.FC = () => {
             data-testid="section-serving"
           >
             <div>
-              <label
-                htmlFor="simple-servings"
-                className="block text-sm font-semibold text-gray-700 mb-2"
-              >
-                Servings
-              </label>
+              <div className="flex items-center gap-1.5 mb-2">
+                <label
+                  htmlFor="simple-servings"
+                  className="block text-sm font-semibold text-gray-700"
+                >
+                  Servings
+                </label>
+                <FieldAIEnhanceButton
+                  field="servings"
+                  currentValue={form.servings}
+                  status={fieldStatus.get('servings') ?? 'idle'}
+                  onEnhance={() => handleEnhanceField('servings', form.servings)}
+                />
+              </div>
               <input
                 id="simple-servings"
                 type="number"
@@ -385,6 +683,62 @@ export const SimpleCreateRecipe: React.FC = () => {
                 placeholder="4"
                 className="w-full sm:w-40 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
+              {(() => {
+                const s = visibleSuggestions.find(x => x.field === 'servings')
+                return s ? (
+                  <FieldAISuggestionChip
+                    field="servings"
+                    suggestion={s.suggestedValue}
+                    currentValue={form.servings}
+                    onApply={() => handleApplyFieldSuggestion('servings', s.suggestedValue)}
+                    onDismiss={() => dismissSuggestion('servings')}
+                  />
+                ) : null
+              })()}
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title="Nutrition"
+            icon="🥗"
+            isOpen={sections.nutrition.isOpen}
+            isFilled={sections.nutrition.isFilled(hasSavedNutrition)}
+            onToggle={sections.nutrition.toggle}
+            data-testid="section-nutrition"
+          >
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Let AI calculate nutrition when your recipe does not already include it.
+              </p>
+              <button
+                type="button"
+                disabled={!hasIngredients || nutritionLoadingState === 'loading'}
+                onClick={() =>
+                  estimateNutrition(form.ingredients, parseInt(form.servings, 10) || 1, form.title)
+                }
+                className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {nutritionLoadingState === 'loading'
+                  ? 'Estimating…'
+                  : hasSavedNutrition
+                    ? 'Recalculate Nutrition with AI'
+                    : 'Calculate Missing Nutrition with AI'}
+              </button>
+              <NutritionEstimatePanel
+                estimate={nutritionEstimate}
+                loadingState={nutritionLoadingState}
+                error={nutritionError}
+                onAccept={handleAcceptNutritionEstimate}
+                onDismiss={clearNutritionEstimate}
+              />
+              {hasSavedNutrition && activeRecipeOverrides.nutritionalInfo && (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">
+                    AI nutrition values will be saved with this recipe unless you recalculate or dismiss them.
+                  </p>
+                  <NutritionFacts nutritionalInfo={activeRecipeOverrides.nutritionalInfo} />
+                </div>
+              )}
             </div>
           </CollapsibleSection>
 
@@ -611,14 +965,118 @@ export const SimpleCreateRecipe: React.FC = () => {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                   />
                 </svg>
-                <span>Saving…</span>
+                <span>{isEditMode ? 'Updating…' : 'Saving…'}</span>
               </span>
             ) : (
-              'Save Recipe'
+              isEditMode ? 'Update Recipe' : 'Save Recipe'
             )}
           </button>
         </div>
       </form>
     </div>
+  )
+}
+
+export const SimpleCreateRecipe: React.FC = () => {
+  const navigate = useNavigate()
+  const { id } = useParams<{ id: string }>()
+  const { user: currentUser, isLoading: isAuthLoading } = useAuth()
+  const isEditMode = Boolean(id)
+  const [loading, setLoading] = useState(isEditMode)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [initialState, setInitialState] = useState<RecipeFormInitialState>()
+  const [recipeOverrides, setRecipeOverrides] = useState<Partial<Recipe>>({})
+
+  useEffect(() => {
+    if (!isEditMode) {
+      setLoading(false)
+      setLoadError(null)
+      setInitialState(undefined)
+      setRecipeOverrides({})
+      return
+    }
+
+    if (!id || isAuthLoading) return
+
+    let isMounted = true
+
+    const fetchRecipeForEdit = async () => {
+      try {
+        setLoading(true)
+        setLoadError(null)
+        const recipe = await getRecipe(id)
+
+        if (recipe.userId !== currentUser?.uid) {
+          navigate(`/dashboard/recipes/${id}`, { replace: true })
+          return
+        }
+
+        if (!isMounted) return
+
+        setInitialState(getInitialFormState(recipe))
+        setRecipeOverrides({
+          nutritionalInfo: recipe.nutritionalInfo,
+          tips: recipe.tips,
+          source: recipe.source,
+        })
+      } catch (err: unknown) {
+        if (!isMounted) return
+
+        console.error('Failed to fetch recipe:', err)
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load recipe'
+        const apiError = err as { response?: { data?: { message?: string } } }
+        setLoadError(apiError.response?.data?.message || errorMessage)
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchRecipeForEdit()
+
+    return () => {
+      isMounted = false
+    }
+  }, [currentUser?.uid, id, isAuthLoading, isEditMode, navigate])
+
+  if (isEditMode && loading) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isEditMode && loadError) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <button
+          onClick={() => navigate('/dashboard/recipes')}
+          className="mb-6 text-emerald-600 hover:text-emerald-700 flex items-center transition-colors"
+        >
+          <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Library
+        </button>
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
+          <p className="font-medium">Error loading recipe</p>
+          <p className="text-sm mt-1">{loadError}</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <QuickEntryRecipeForm
+      key={id ?? 'create'}
+      isEditMode={isEditMode}
+      recipeId={id}
+      initialState={initialState}
+      recipeOverrides={recipeOverrides}
+    />
   )
 }
