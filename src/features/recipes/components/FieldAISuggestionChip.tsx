@@ -21,11 +21,11 @@ export const FieldAISuggestionChip: React.FC<FieldAISuggestionChipProps> = ({
       <AIBadge className="mt-0.5 shrink-0" />
       <div className="flex-1 min-w-0">
         {currentValue && (
-          <p className="text-gray-500 text-xs mb-1">
+          <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
             <s>{currentValue}</s>
           </p>
         )}
-        <p className="text-gray-800 leading-5">{suggestion}</p>
+        <p className="leading-5 text-gray-800 dark:text-gray-100">{suggestion}</p>
       </div>
       <div className="flex items-center gap-1.5 shrink-0">
         <button

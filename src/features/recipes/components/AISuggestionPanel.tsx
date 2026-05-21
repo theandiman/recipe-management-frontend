@@ -84,21 +84,21 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
       >
         <span className="flex items-center gap-3 text-sm">
           <AIBadge />
-          <span className="font-semibold text-gray-900">AI Suggestions</span>
+          <span className="font-semibold text-gray-900 dark:text-gray-100">AI Suggestions</span>
           {hasSuggestions && (
-            <span className="inline-flex items-center justify-center min-w-5 h-5 rounded-full bg-emerald-100 px-1.5 text-xs font-semibold text-emerald-700">
+            <span className="inline-flex items-center justify-center min-w-5 h-5 rounded-full bg-emerald-100 px-1.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/70 dark:text-emerald-200">
               {stepFilteredSuggestions.length}
             </span>
           )}
         </span>
-        <span className="text-xs text-gray-500">{isExpanded ? 'Hide' : 'Show'}</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">{isExpanded ? 'Hide' : 'Show'}</span>
       </button>
 
       {isExpanded && (
         <div className="px-4 pb-4">
           {/* Loading state */}
           {status === 'loading' && (
-            <div className={`flex items-center gap-2 text-sm text-gray-600 py-3 px-3 ${AI_MUTED_PANEL_CLASS}`}>
+            <div className={`flex items-center gap-2 py-3 px-3 text-sm text-gray-600 dark:text-gray-300 ${AI_MUTED_PANEL_CLASS}`}>
               <AISpinnerIcon />
               Reviewing fields for suggestions...
             </div>
@@ -106,7 +106,7 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
 
           {/* Error state */}
           {status === 'error' && (
-            <div className={`flex items-center justify-between gap-3 text-sm text-rose-700 py-3 px-3 rounded-lg border border-rose-200 bg-rose-50`}>
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-rose-200 bg-rose-50 py-3 px-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200">
               <span>
                 Could not load suggestions.
                 {error ? ` ${error}` : ''}
@@ -134,33 +134,33 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
                 return (
                   <li
                     key={suggestion.field}
-                    className="rounded-lg border border-gray-200 bg-gray-50/70 p-3 flex flex-col sm:flex-row sm:items-center gap-3"
+                    className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-gray-50/70 p-3 dark:border-gray-700 dark:bg-gray-800/60 sm:flex-row sm:items-center"
                     role="listitem"
                     aria-label={`AI suggestion for ${label}`}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <p className="text-xs font-semibold text-gray-700">{label}</p>
+                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">{label}</p>
                         <AIBadge />
                       </div>
                       {currentValue && (
                         <p
-                          className="text-xs text-gray-500 break-words rounded-md px-2 py-1 border border-gray-200 bg-white mb-2"
+                          className="mb-2 break-words rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
                           aria-label={`Current value: ${currentValue}`}
                         >
-                          <span className="mr-1 font-medium text-gray-400">Current</span>
+                          <span className="mr-1 font-medium text-gray-400 dark:text-gray-500">Current</span>
                           <s>{currentValue}</s>
                         </p>
                       )}
                       <p
-                        className="text-sm text-gray-800 break-words rounded-md px-2 py-1.5 border border-emerald-100 bg-emerald-50"
+                        className="break-words rounded-md border border-emerald-100 bg-emerald-50 px-2 py-1.5 text-sm text-gray-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-gray-100"
                         aria-label={`Suggested value: ${suggestion.suggestedValue}`}
                       >
-                        <span className="mr-1 font-medium text-emerald-700">Suggested</span>
+                        <span className="mr-1 font-medium text-emerald-700 dark:text-emerald-200">Suggested</span>
                         {suggestion.suggestedValue}
                       </p>
                       {suggestion.reason && (
-                        <p className="text-xs text-gray-500 mt-0.5 italic">{suggestion.reason}</p>
+                        <p className="mt-0.5 text-xs italic text-gray-500 dark:text-gray-400">{suggestion.reason}</p>
                       )}
                     </div>
                     <div className="flex gap-2 shrink-0">
