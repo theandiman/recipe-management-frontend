@@ -11,6 +11,7 @@ import type { FieldSuggestion, SuggestionStatus } from '../hooks/useAISuggestion
 import { AISpinnerIcon } from './AISpinnerIcon'
 import { AIBadge } from './AIBadge'
 import { AI_BUTTON_CLASS, AI_BUTTON_COMPACT_CLASS, AI_STEP_ACTION_BUTTON_CLASS } from './aiStyles'
+import { stringifySuggestionList } from '../utils/aiSuggestionValueUtils'
 
 
 interface RecipeFormStepsProps {
@@ -584,9 +585,19 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
 
           {/* Tags Section */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Tags (Optional)
-            </h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Tags (Optional)
+              </h3>
+              {onEnhanceField && (
+                <FieldAIEnhanceButton
+                  field="tags"
+                  currentValue={stringifySuggestionList(tags)}
+                  status={getFieldStatus('tags')}
+                  onEnhance={() => onEnhanceField('tags', stringifySuggestionList(tags))}
+                />
+              )}
+            </div>
 
             <div className="flex items-center space-x-2">
               <input
@@ -630,12 +641,36 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 ))}
               </div>
             )}
+            {onEnhanceField && (() => {
+              const s = getFieldSuggestion('tags')
+              return s ? (
+                <FieldAISuggestionChip
+                  field="tags"
+                  suggestion={s.suggestedValue}
+                  currentValue={stringifySuggestionList(tags)}
+                  onApply={() => onApplyFieldSuggestion?.('tags', s.suggestedValue)}
+                  onDismiss={() => onDismissFieldSuggestion?.('tags')}
+                />
+              ) : null
+            })()}
           </div>
           {/* Dietary Restrictions Section */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Dietary Restrictions (Optional)
-            </h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Dietary Restrictions (Optional)
+              </h3>
+              {onEnhanceField && (
+                <FieldAIEnhanceButton
+                  field="dietaryRestrictions"
+                  currentValue={stringifySuggestionList(dietaryRestrictions)}
+                  status={getFieldStatus('dietaryRestrictions')}
+                  onEnhance={() =>
+                    onEnhanceField('dietaryRestrictions', stringifySuggestionList(dietaryRestrictions))
+                  }
+                />
+              )}
+            </div>
 
             <div className="flex items-center space-x-2">
               <input
@@ -679,6 +714,18 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 ))}
               </div>
             )}
+            {onEnhanceField && (() => {
+              const s = getFieldSuggestion('dietaryRestrictions')
+              return s ? (
+                <FieldAISuggestionChip
+                  field="dietaryRestrictions"
+                  suggestion={s.suggestedValue}
+                  currentValue={stringifySuggestionList(dietaryRestrictions)}
+                  onApply={() => onApplyFieldSuggestion?.('dietaryRestrictions', s.suggestedValue)}
+                  onDismiss={() => onDismissFieldSuggestion?.('dietaryRestrictions')}
+                />
+              ) : null
+            })()}
           </div>
         </div>
       )}

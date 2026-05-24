@@ -24,6 +24,11 @@ import type { Recipe } from '../../types/nutrition'
 import { mapEstimateToNutritionalInfo, useNutritionEstimate } from './hooks/useNutritionEstimate'
 import { NutritionEstimatePanel } from './components/NutritionEstimatePanel'
 import NutritionFacts from '../../components/NutritionFacts'
+import {
+  normalizeSuggestionListValue,
+  parseSuggestedList,
+  stringifySuggestionList,
+} from './utils/aiSuggestionValueUtils'
 
 type RecipeFormInitialState = Parameters<typeof useRecipeForm>[0]
 
@@ -148,6 +153,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     cookTime: form.cookTime || undefined,
     servings: form.servings || undefined,
     tags: form.tags.length > 0 ? form.tags : undefined,
+    dietaryRestrictions: form.dietaryRestrictions.length > 0 ? form.dietaryRestrictions : undefined,
     ingredients: form.ingredients.filter(i => i.item.trim()).map(i =>
       [i.quantity, i.unit, i.item].filter(Boolean).join(' ')
     ),
@@ -160,7 +166,17 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     prepTime: form.setPrepTime,
     cookTime: form.setCookTime,
     servings: form.setServings,
-  }), [form.setTitle, form.setDescription, form.setPrepTime, form.setCookTime, form.setServings])
+    tags: (value: string) => form.setTags(parseSuggestedList(value)),
+    dietaryRestrictions: (value: string) => form.setDietaryRestrictions(parseSuggestedList(value)),
+  }), [
+    form.setTitle,
+    form.setDescription,
+    form.setPrepTime,
+    form.setCookTime,
+    form.setServings,
+    form.setTags,
+    form.setDietaryRestrictions,
+  ])
 
   const currentValues: Partial<Record<string, string>> = useMemo(() => ({
     recipeName: form.title,
@@ -168,14 +184,38 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     prepTime: form.prepTime,
     cookTime: form.cookTime,
     servings: form.servings,
-  }), [form.title, form.description, form.prepTime, form.cookTime, form.servings])
+    tags: stringifySuggestionList(form.tags),
+    dietaryRestrictions: stringifySuggestionList(form.dietaryRestrictions),
+  }), [
+    form.title,
+    form.description,
+    form.prepTime,
+    form.cookTime,
+    form.servings,
+    form.tags,
+    form.dietaryRestrictions,
+  ])
 
   const handleEnhanceField = useCallback((field: string, currentValue: string) => {
     fetchFieldSuggestion(field as StringFieldKey, currentValue, {
       recipeName: form.title,
       description: form.description,
+      tags: form.tags.length > 0 ? form.tags : undefined,
+      dietaryRestrictions: form.dietaryRestrictions.length > 0 ? form.dietaryRestrictions : undefined,
+      ingredients: form.ingredients.filter(i => i.item.trim()).map(i =>
+        [i.quantity, i.unit, i.item].filter(Boolean).join(' ')
+      ),
+      instructions: form.instructions.filter(i => i.trim()),
     })
-  }, [fetchFieldSuggestion, form.title, form.description])
+  }, [
+    fetchFieldSuggestion,
+    form.title,
+    form.description,
+    form.tags,
+    form.dietaryRestrictions,
+    form.ingredients,
+    form.instructions,
+  ])
 
   const handleApplyFieldSuggestion = useCallback((field: string, value: string) => {
     const setter = fieldSetters[field]
@@ -197,9 +237,17 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
   const handleUndo = useCallback(() => {
     const result = undoLastAIChange()
     if (!result) return
+    if (result.field === 'tags') {
+      form.setTags(normalizeSuggestionListValue(result.previousValue))
+      return
+    }
+    if (result.field === 'dietaryRestrictions') {
+      form.setDietaryRestrictions(normalizeSuggestionListValue(result.previousValue))
+      return
+    }
     const setter = fieldSetters[result.field]
     if (setter) setter(String(result.previousValue ?? ''))
-  }, [undoLastAIChange, fieldSetters])
+  }, [undoLastAIChange, fieldSetters, form.setTags, form.setDietaryRestrictions])
   const hasIngredients = form.ingredients.some((ingredient) => ingredient.item.trim())
   const hasSavedNutrition = Boolean(activeRecipeOverrides.nutritionalInfo?.perServing)
 
@@ -754,9 +802,17 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
             <div className="space-y-6">
               {/* Tags */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Tags (Optional)
-                </label>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Tags (Optional)
+                  </label>
+                  <FieldAIEnhanceButton
+                    field="tags"
+                    currentValue={stringifySuggestionList(form.tags)}
+                    status={fieldStatus.get('tags') ?? 'idle'}
+                    onEnhance={() => handleEnhanceField('tags', stringifySuggestionList(form.tags))}
+                  />
+                </div>
                 <div className="flex items-center space-x-2">
                   <input
                     type="text"
@@ -799,13 +855,38 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                     ))}
                   </div>
                 )}
+                {(() => {
+                  const s = visibleSuggestions.find(x => x.field === 'tags')
+                  return s ? (
+                    <FieldAISuggestionChip
+                      field="tags"
+                      suggestion={s.suggestedValue}
+                      currentValue={stringifySuggestionList(form.tags)}
+                      onApply={() => handleApplyFieldSuggestion('tags', s.suggestedValue)}
+                      onDismiss={() => dismissSuggestion('tags')}
+                    />
+                  ) : null
+                })()}
               </div>
 
               {/* Dietary restrictions */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Dietary Restrictions (Optional)
-                </label>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Dietary Restrictions (Optional)
+                  </label>
+                  <FieldAIEnhanceButton
+                    field="dietaryRestrictions"
+                    currentValue={stringifySuggestionList(form.dietaryRestrictions)}
+                    status={fieldStatus.get('dietaryRestrictions') ?? 'idle'}
+                    onEnhance={() =>
+                      handleEnhanceField(
+                        'dietaryRestrictions',
+                        stringifySuggestionList(form.dietaryRestrictions)
+                      )
+                    }
+                  />
+                </div>
                 <div className="flex items-center space-x-2">
                   <input
                     type="text"
@@ -848,6 +929,18 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                     ))}
                   </div>
                 )}
+                {(() => {
+                  const s = visibleSuggestions.find(x => x.field === 'dietaryRestrictions')
+                  return s ? (
+                    <FieldAISuggestionChip
+                      field="dietaryRestrictions"
+                      suggestion={s.suggestedValue}
+                      currentValue={stringifySuggestionList(form.dietaryRestrictions)}
+                      onApply={() => handleApplyFieldSuggestion('dietaryRestrictions', s.suggestedValue)}
+                      onDismiss={() => dismissSuggestion('dietaryRestrictions')}
+                    />
+                  ) : null
+                })()}
               </div>
             </div>
           </CollapsibleSection>

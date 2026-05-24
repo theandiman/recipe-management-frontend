@@ -7,10 +7,11 @@ export const FIELD_LABELS: Record<string, string> = {
   cookTime: 'Cook Time (min)',
   servings: 'Servings',
   tags: 'Tags',
+  dietaryRestrictions: 'Dietary Restrictions',
 };
 
 /** Maps form step numbers to the field names shown on that step. */
 export const STEP_FIELDS: Record<number, string[]> = {
   1: ['recipeName', 'description'],
-  4: ['prepTime', 'cookTime', 'servings', 'tags'],
+  4: ['prepTime', 'cookTime', 'servings', 'tags', 'dietaryRestrictions'],
 };

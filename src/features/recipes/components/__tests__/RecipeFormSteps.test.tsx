@@ -231,6 +231,44 @@ describe('RecipeFormSteps — per-field AI enhance (issue #40)', () => {
     fireEvent.click(screen.getByRole('button', { name: /dismiss/i }))
     expect(onDismiss).toHaveBeenCalledWith('recipeName')
   })
+
+  it('shows AI enhance buttons for tags and dietary restrictions on step 4', () => {
+    render(
+      <RecipeFormSteps
+        {...makeProps({
+          currentStep: 4,
+          tags: ['quick'],
+          dietaryRestrictions: ['vegetarian'],
+          onEnhanceField: vi.fn(),
+        })}
+      />
+    )
+
+    expect(screen.getAllByRole('button', { name: /complete with ai|enhance with ai/i }).length).toBeGreaterThanOrEqual(2)
+    expect(screen.getByText(/Tags \(Optional\)/i)).toBeInTheDocument()
+    expect(screen.getByText(/Dietary Restrictions \(Optional\)/i)).toBeInTheDocument()
+  })
+
+  it('renders dietary restriction suggestion chip on step 4 and applies it', () => {
+    const onApply = vi.fn()
+    render(
+      <RecipeFormSteps
+        {...makeProps({
+          currentStep: 4,
+          onEnhanceField: vi.fn(),
+          fieldSuggestions: [
+            { field: 'dietaryRestrictions', suggestedValue: 'gluten-free, dairy-free', reason: 'Matches ingredients' },
+          ],
+          onApplyFieldSuggestion: onApply,
+          onDismissFieldSuggestion: vi.fn(),
+        })}
+      />
+    )
+
+    expect(screen.getByText('gluten-free, dairy-free')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /apply/i }))
+    expect(onApply).toHaveBeenCalledWith('dietaryRestrictions', 'gluten-free, dairy-free')
+  })
 })
 
 describe('RecipeFormSteps — AI image generation (issue #41)', () => {
