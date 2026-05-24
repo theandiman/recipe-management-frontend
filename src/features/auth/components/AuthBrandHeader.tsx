@@ -26,7 +26,7 @@ export const AuthBrandHeader: React.FC<AuthBrandHeaderProps> = ({ title, subtitl
         <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full"></div>
       </motion.div>
       <motion.h1 
-        className="text-3xl font-bold text-gray-800 mb-1"
+        className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-1"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.4 }}
@@ -34,7 +34,7 @@ export const AuthBrandHeader: React.FC<AuthBrandHeaderProps> = ({ title, subtitl
         CookFlow
       </motion.h1>
       <motion.p 
-        className="text-sm text-gray-500 mb-4"
+        className="text-sm text-gray-500 dark:text-gray-400 mb-4"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.5 }}
@@ -42,7 +42,7 @@ export const AuthBrandHeader: React.FC<AuthBrandHeaderProps> = ({ title, subtitl
         Seamlessly Organized. Deliciously Simple.
       </motion.p>
       <motion.h2 
-        className="text-2xl font-semibold text-gray-700"
+        className="text-2xl font-semibold text-gray-700 dark:text-gray-200"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.6 }}
@@ -50,7 +50,7 @@ export const AuthBrandHeader: React.FC<AuthBrandHeaderProps> = ({ title, subtitl
         {title}
       </motion.h2>
       <motion.p 
-        className="mt-2 text-sm text-gray-600"
+        className="mt-2 text-sm text-gray-600 dark:text-gray-300"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.7 }}

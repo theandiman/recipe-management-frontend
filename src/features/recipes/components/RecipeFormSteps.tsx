@@ -143,14 +143,14 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
       {/* Step 1: Basic Info */}
       {currentStep === 1 && (
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900 pb-2 border-b border-gray-200">
+          <h2 className={`text-xl font-semibold pb-2 border-b border-gray-200 dark:border-slate-700 ${UI_STYLES.heading}`}>
             Basic Information
           </h2>
 
           {/* Recipe Name */}
           <div>
             <div className="flex items-center gap-1.5 mb-2">
-              <label className="text-sm font-semibold text-gray-700">
+              <label className={UI_STYLES.label}>
                 Recipe Name <span className="text-red-500">*</span>
               </label>
               {onEnhanceField && (
@@ -176,11 +176,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               placeholder="e.g., Grandma's Chocolate Chip Cookies"
               aria-invalid={!!fieldErrors.title}
               aria-describedby={fieldErrors.title ? 'title-error' : undefined}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
-                fieldErrors.title
-                  ? 'border-red-500 focus:ring-red-500'
-                  : 'border-gray-300 focus:ring-emerald-500'
-              }`}
+              className={fieldErrors.title ? UI_STYLES.inputError : UI_STYLES.input}
             />
             {fieldErrors.title && (
               <p id="title-error" className="mt-1 text-sm text-red-600 flex items-center" role="alert">
@@ -207,7 +203,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
           {/* Description */}
           <div>
             <div className="flex items-center gap-1.5 mb-2">
-              <label className="text-sm font-semibold text-gray-700">
+              <label className={UI_STYLES.label}>
                 Description
               </label>
               {onEnhanceField && (
@@ -224,7 +220,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               placeholder="Brief description of your recipe..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className={UI_STYLES.input}
             />
             {onEnhanceField && (() => {
               const s = getFieldSuggestion('description')
@@ -242,21 +238,21 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
 
           {/* Recipe Image Upload */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className={`block mb-2 ${UI_STYLES.label}`}>
               Recipe Image
             </label>
 
             {!imagePreview ? (
               <div className="flex items-center justify-center w-full">
-                <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 dark:border-slate-600 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-slate-900 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <svg className="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-10 h-10 mb-3 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <p className="mb-2 text-sm text-gray-500">
+                    <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
                       <span className="font-semibold">Click to upload</span> or drag and drop
                     </p>
-                    <p className="text-xs text-gray-500">PNG, JPG, or WEBP (recommended max size: 5MB)</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">PNG, JPG, or WEBP (recommended max size: 5MB)</p>
                   </div>
                   <input
                     type="file"
@@ -331,12 +327,12 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
             onDismissNormalization={onDismissNormalization}
           />
           {fieldErrors.ingredients && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
+            <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-500/70 rounded-lg flex items-start">
               <svg className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
               <div className="flex-1">
-                <p className="text-sm font-medium text-red-800">{fieldErrors.ingredients}</p>
+                <p className="text-sm font-medium text-red-800 dark:text-red-300">{fieldErrors.ingredients}</p>
               </div>
             </div>
           )}
@@ -348,8 +344,8 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
         <div className="space-y-8">
           {/* Instructions Section */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">
+            <div className="flex items-center justify-between pb-2 border-b border-gray-200 dark:border-slate-700">
+              <h2 className={`text-xl font-semibold ${UI_STYLES.heading}`}>
                 Instructions <span className="text-red-500">*</span>
               </h2>
               <div className="flex gap-2">
@@ -401,7 +397,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
           placeholder="Describe this step in detail..."
           required={index === 0}
           rows={2}
-          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+          className={`${UI_STYLES.input} resize-none`}
         />
         {isPending && refinementState && onAcceptInstructionRefinement && onRejectInstructionRefinement && (
           <div className="mt-2">

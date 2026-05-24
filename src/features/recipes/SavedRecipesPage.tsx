@@ -17,8 +17,8 @@ export const SavedRecipesPage: React.FC = () => {
     return (
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Saved Recipes</h1>
-          <p className="text-gray-600">Your bookmarked recipe collection</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Saved Recipes</h1>
+          <p className="text-gray-600 dark:text-gray-300">Your bookmarked recipe collection</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {Array.from({ length: 6 }).map((_, index) => (
@@ -40,14 +40,14 @@ export const SavedRecipesPage: React.FC = () => {
     return (
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Saved Recipes</h1>
-          <p className="text-gray-600">Your bookmarked recipe collection</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Saved Recipes</h1>
+          <p className="text-gray-600 dark:text-gray-300">Your bookmarked recipe collection</p>
         </div>
         <div
           data-testid="empty-state"
           className="flex flex-col items-center justify-center py-20 text-center"
         >
-          <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center mb-4">
+          <div className="w-20 h-20 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -64,8 +64,8 @@ export const SavedRecipesPage: React.FC = () => {
               />
             </svg>
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">No saved recipes yet</h2>
-          <p className="text-gray-500 mb-6 max-w-sm">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No saved recipes yet</h2>
+          <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
             Save recipes you love by clicking the bookmark icon on any recipe card or detail page.
           </p>
           <button
@@ -82,8 +82,8 @@ export const SavedRecipesPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Saved Recipes</h1>
-        <p className="text-gray-600">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Saved Recipes</h1>
+        <p className="text-gray-600 dark:text-gray-300">
           {savedRecipes.length} {savedRecipes.length === 1 ? 'recipe' : 'recipes'} saved
         </p>
       </div>

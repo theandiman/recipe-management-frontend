@@ -94,9 +94,9 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({ uid, type, onC
                 />
               </div>
             ) : error ? (
-              <p className="text-center text-red-600 py-8 text-sm">{error}</p>
+              <p className="text-center text-red-600 dark:text-red-300 py-8 text-sm">{error}</p>
             ) : users.length === 0 ? (
-              <p className="text-center text-gray-500 py-8 text-sm">
+              <p className="text-center text-gray-500 dark:text-gray-400 py-8 text-sm">
                 {type === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
               </p>
             ) : (
