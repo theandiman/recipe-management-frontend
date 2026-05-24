@@ -23,8 +23,8 @@ export const UI_STYLES = {
   heading: 'text-gray-900 dark:text-gray-100',
   mutedText: 'text-gray-600 dark:text-gray-300',
   label: 'text-sm font-semibold text-gray-700 dark:text-gray-200',
-  input: 'w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors',
-  inputError: 'w-full px-4 py-3 border border-red-500 dark:border-red-500/70 rounded-lg bg-red-50/50 dark:bg-red-950/20 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors',
+  input: 'w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors',
+  inputError: 'w-full px-4 py-3 border border-red-500 dark:border-red-500/70 rounded-lg bg-red-50/50 dark:bg-red-950/20 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-colors',
 
   // Container spacing
   containerSpacing: 'p-6 sm:p-8',

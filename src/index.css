@@ -39,7 +39,7 @@
   input,
   textarea,
   select {
-    @apply bg-white text-gray-900 border-gray-300 transition-colors duration-200;
+    @apply border bg-white text-gray-900 border-gray-300 transition-colors duration-200;
   }
 
   .dark input,

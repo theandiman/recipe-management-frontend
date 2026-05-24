@@ -39,7 +39,7 @@ export const StepIndicator = React.memo<StepIndicatorProps>(({
                     ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300'
                     : 'bg-gray-200 dark:bg-slate-800 text-gray-500 dark:text-gray-400'
               } ${
-                stepsWithErrors.has(step.number) ? 'ring-2 ring-red-500 ring-offset-2' : ''
+                stepsWithErrors.has(step.number) ? 'ring-2 ring-red-500 ring-offset-2 dark:ring-offset-slate-900' : ''
               }`}
             >
               {step.number < currentStep ? '✓' : step.icon}

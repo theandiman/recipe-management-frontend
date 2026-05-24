@@ -568,11 +568,11 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
               type="button"
               onClick={handlePreviousStepClick}
               disabled={!canGoPrevious}
-              className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                !canGoPrevious
-                  ? 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                  : UI_STYLES.backButton
-              }`}
+              className={
+                canGoPrevious
+                  ? UI_STYLES.backButton
+                  : 'px-6 py-3 rounded-lg font-medium transition-colors bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+              }
             >
               ← Back
             </button>
