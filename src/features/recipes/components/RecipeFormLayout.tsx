@@ -15,6 +15,12 @@ import { AIBadge } from './AIBadge'
 import { mapEstimateToNutritionalInfo, useNutritionEstimate } from '../hooks/useNutritionEstimate'
 import { NutritionEstimatePanel } from './NutritionEstimatePanel'
 import { AI_BUTTON_CLASS } from './aiStyles'
+import type { SuggestibleFieldKey, SuggestibleFieldValue } from '../hooks/useAISuggestions'
+import {
+  normalizeSuggestionListValue,
+  parseSuggestedList,
+  stringifySuggestionList,
+} from '../utils/aiSuggestionValueUtils'
 import type { Ingredient, Recipe } from '../../../types/nutrition'
 import NutritionFacts from '../../../components/NutritionFacts'
 import { UI_STYLES } from '../../../utils/uiStyles'
@@ -58,11 +64,13 @@ interface RecipeFormLayoutProps {
   updateInstruction: (index: number, value: string) => void
   removeInstruction: (index: number) => void
   tags: string[]
+  setTags: (value: string[]) => void
   tagInput: string
   setTagInput: (value: string) => void
   addTag: () => void
   removeTag: (index: number) => void
   dietaryRestrictions: string[]
+  setDietaryRestrictions: (value: string[]) => void
   dietaryInput: string
   setDietaryInput: (value: string) => void
   addDietaryRestriction: () => void
@@ -126,11 +134,13 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   updateInstruction,
   removeInstruction,
   tags,
+  setTags,
   tagInput,
   setTagInput,
   addTag,
   removeTag,
   dietaryRestrictions,
+  setDietaryRestrictions,
   dietaryInput,
   setDietaryInput,
   addDietaryRestriction,
@@ -313,12 +323,29 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     prepTime: setPrepTime,
     cookTime: setCookTime,
     servings: setServings,
-  }), [setTitle, setDescription, setPrepTime, setCookTime, setServings])
+    tags: (value: string) => setTags(parseSuggestedList(value)),
+    dietaryRestrictions: (value: string) => setDietaryRestrictions(parseSuggestedList(value)),
+  }), [setTitle, setDescription, setPrepTime, setCookTime, setServings, setTags, setDietaryRestrictions])
+
+  const listFieldUndoSetters = useMemo(
+    () => ({
+      tags: setTags,
+      dietaryRestrictions: setDietaryRestrictions,
+    }),
+    [setTags, setDietaryRestrictions]
+  )
 
   // Internal undo handler: uses the local audit trail (from RecipeFormLayout's own hook)
   const handleLocalUndo = useCallback(() => {
     const result = localUndoLastAIChange()
     if (!result) return
+    const listFieldSetter =
+      listFieldUndoSetters[result.field as keyof typeof listFieldUndoSetters]
+    if (listFieldSetter) {
+      listFieldSetter(normalizeSuggestionListValue(result.previousValue))
+      if (onUndoLastAI) onUndoLastAI()
+      return
+    }
     const setterMap: Record<string, (v: string) => void> = {
       recipeName: setTitle,
       description: setDescription,
@@ -330,14 +357,20 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     if (setter) setter(String(result.previousValue ?? ''))
     // Also invoke the parent's undo handler if provided (for synchronisation)
     if (onUndoLastAI) onUndoLastAI()
-  }, [localUndoLastAIChange, setTitle, setDescription, setPrepTime, setCookTime, setServings, onUndoLastAI])
+  }, [localUndoLastAIChange, listFieldUndoSetters, setTitle, setDescription, setPrepTime, setCookTime, setServings, onUndoLastAI])
 
-  const handleEnhanceField = useCallback((field: string, currentValue: string) => {
-    fetchFieldSuggestion(field as import('../hooks/useAISuggestions').StringFieldKey, currentValue, {
+  const handleEnhanceField = useCallback(<K extends SuggestibleFieldKey>(field: K, currentValue: SuggestibleFieldValue<K>) => {
+    fetchFieldSuggestion(field, currentValue, {
       recipeName: title,
       description: description,
+      tags: tags.length > 0 ? tags : undefined,
+      dietaryRestrictions: dietaryRestrictions.length > 0 ? dietaryRestrictions : undefined,
+      ingredients: ingredients.filter(i => i.item.trim()).map(i =>
+        [i.quantity, i.unit, i.item].filter(Boolean).join(' ')
+      ),
+      instructions: instructions.filter(i => i.trim()),
     })
-  }, [fetchFieldSuggestion, title, description])
+  }, [fetchFieldSuggestion, title, description, tags, dietaryRestrictions, ingredients, instructions])
 
   const handleApplyFieldSuggestion = useCallback((field: string, value: string) => {
     const setter = fieldSetters[field]
@@ -347,11 +380,13 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
       prepTime,
       cookTime,
       servings,
+      tags,
+      dietaryRestrictions,
     }[field] ?? ''
     if (setter) {
       applySuggestion(field, () => setter(value), previousValue)
     }
-  }, [fieldSetters, title, description, prepTime, cookTime, servings, applySuggestion])
+  }, [fieldSetters, title, description, prepTime, cookTime, servings, tags, dietaryRestrictions, applySuggestion])
 
   // Shared request builder for AI suggestions
   const buildSuggestionRequest = () => ({
@@ -361,6 +396,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     cookTime: cookTime || undefined,
     servings: servings || undefined,
     tags: tags.length > 0 ? tags : undefined,
+    dietaryRestrictions: dietaryRestrictions.length > 0 ? dietaryRestrictions : undefined,
     ingredients: ingredients.filter(i => i.item.trim()).map(i =>
       [i.quantity, i.unit, i.item].filter(Boolean).join(' ')
     ),
@@ -442,7 +478,8 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
             prepTime,
             cookTime,
             servings,
-            tags: tags.join(', '),
+            tags: stringifySuggestionList(tags),
+            dietaryRestrictions: stringifySuggestionList(dietaryRestrictions),
           }}
           onRetry={handleRetrySuggestions}
           currentStep={currentStep}
