@@ -170,7 +170,7 @@ export const RecipeDetail: React.FC = () => {
           </svg>
           Back
         </button>
-        <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
+        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/60 text-red-800 dark:text-red-200 rounded-lg p-4">
           <p className="font-medium">Error loading recipe</p>
           <p className="text-sm mt-1">{error || 'Recipe not found'}</p>
         </div>
@@ -215,7 +215,7 @@ export const RecipeDetail: React.FC = () => {
                 aria-label={isTogglingShare ? 'Updating…' : 'More options'}
                 title="More options"
                 disabled={isTogglingShare}
-                className="flex items-center justify-center w-9 h-9 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="flex items-center justify-center w-9 h-9 rounded-full text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isTogglingShare ? (
                   <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
@@ -231,7 +231,7 @@ export const RecipeDetail: React.FC = () => {
                   id="recipe-options-menu"
                   role="menu"
                   aria-labelledby="recipe-options-button"
-                  className="absolute right-0 mt-1.5 w-48 rounded-xl bg-white dark:bg-gray-900 shadow-lg ring-1 ring-black/5 dark:ring-white/10 py-1 z-20 animate-[fadeIn_0.1s_ease]"
+                  className="absolute right-0 mt-1.5 w-48 rounded-xl bg-white dark:bg-slate-800 shadow-lg ring-1 ring-black/5 dark:ring-white/10 border border-gray-200 dark:border-slate-700 py-1 z-20 animate-[fadeIn_0.1s_ease]"
                 >
                   {isOwner && (
                     <button
@@ -280,7 +280,7 @@ export const RecipeDetail: React.FC = () => {
           {/* Primary CTA */}
           <button
             onClick={() => setIsCookingMode(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 font-medium text-sm transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2"
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 font-medium text-sm transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -315,13 +315,13 @@ export const RecipeDetail: React.FC = () => {
       )}
 
       {/* Recipe title */}
-      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">{recipe.recipeName}</h1>
+      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">{recipe.recipeName}</h1>
 
       {/* Author link */}
       {recipe.userId ? (
         <Link
           to={`/user/${recipe.userId}`}
-          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-emerald-600 transition-colors mb-6"
+          className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors mb-6"
         >
           <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-semibold">
             {(recipe.userId[0] || '?').toUpperCase()}
@@ -345,7 +345,7 @@ export const RecipeDetail: React.FC = () => {
       )}
 
       {/* Recipe details */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 sm:p-8 transition-colors duration-300">
         <RecipeBody recipe={recipe} />
       </div>
 
@@ -358,15 +358,15 @@ export const RecipeDetail: React.FC = () => {
       {fallbackUrl && (
         <div
           role="alert"
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-emerald-600 rounded-lg shadow-lg px-6 py-4 flex items-start gap-4 max-w-sm w-full"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-slate-800 border border-emerald-600 dark:border-emerald-500/70 rounded-lg shadow-lg px-6 py-4 flex items-start gap-4 max-w-sm w-full transition-colors duration-300"
         >
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900 mb-1">Copy this link manually:</p>
-            <p className="text-sm text-gray-600 break-all">{fallbackUrl}</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Copy this link manually:</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300 break-all">{fallbackUrl}</p>
           </div>
           <button
             onClick={() => setFallbackUrl(null)}
-            className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex-shrink-0"
             aria-label="Dismiss"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

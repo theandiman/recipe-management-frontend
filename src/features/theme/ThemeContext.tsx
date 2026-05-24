@@ -35,6 +35,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } else {
       root.classList.remove('dark');
     }
+    root.dataset.theme = theme
+    root.style.colorScheme = theme
     
     try {
       window.localStorage.setItem('theme', theme);

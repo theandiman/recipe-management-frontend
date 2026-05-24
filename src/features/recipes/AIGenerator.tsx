@@ -149,20 +149,20 @@ export const AIGenerator: React.FC = () => {
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
         <div className="flex items-center space-x-3 mb-2">
-          <h1 className="text-3xl font-bold text-gray-900">AI Recipe Generator</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">AI Recipe Generator</h1>
           <span className="px-3 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100 rounded-full">
             POWERED BY AI
           </span>
         </div>
-        <p className="text-gray-600">Generate custom recipes based on your preferences and ingredients</p>
+        <p className="text-gray-600 dark:text-gray-300">Generate custom recipes based on your preferences and ingredients</p>
       </div>
 
       {!result && (
-        <form onSubmit={handleGenerate} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
+        <form onSubmit={handleGenerate} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 sm:p-8">
           <div className="space-y-6">
             {/* Description/Prompt */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                 What would you like to make? (Optional)
               </label>
               <textarea
@@ -170,13 +170,13 @@ export const AIGenerator: React.FC = () => {
                 onChange={(e) => setPrompt(e.target.value)}
                 rows={2}
                 placeholder="e.g., 'a quick weeknight dinner', 'something spicy', 'healthy lunch'"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
 
             {/* Pantry Items */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                 Available Ingredients ({pantryItems.length})
               </label>
               <div className="relative">
@@ -191,7 +191,7 @@ export const AIGenerator: React.FC = () => {
                     }
                   }}
                   placeholder="Add ingredients..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
               </div>
               {pantryItems.length > 0 && (
@@ -199,13 +199,13 @@ export const AIGenerator: React.FC = () => {
                   {pantryItems.map((item, idx) => (
                     <span
                       key={idx}
-                      className="inline-flex items-center px-3 py-1 bg-amber-100 text-amber-800 text-sm rounded-full"
+                      className="inline-flex items-center px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-sm rounded-full"
                     >
                       {item}
                       <button
                         type="button"
                         onClick={() => handleRemoveIngredient(idx)}
-                        className="ml-2 text-amber-600 hover:text-amber-800"
+                        className="ml-2 text-amber-600 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200"
                       >
                         ×
                       </button>
@@ -217,7 +217,7 @@ export const AIGenerator: React.FC = () => {
 
             {/* Dietary Preferences */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">
                 Dietary Preferences (Optional)
               </label>
               <div className="flex flex-wrap gap-2">
@@ -229,7 +229,7 @@ export const AIGenerator: React.FC = () => {
                     className={`px-4 py-2 border rounded-full text-sm font-medium transition-colors ${
                       selectedDiets.includes(diet)
                         ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        : 'border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700'
                     }`}
                   >
                     {diet}
@@ -240,13 +240,13 @@ export const AIGenerator: React.FC = () => {
 
             {/* Error Message */}
             {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+              <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-500/40 rounded-lg text-red-700 dark:text-red-300">
                 {error}
               </div>
             )}
 
             {/* Generate Button */}
-            <div className="pt-6 border-t border-gray-200">
+            <div className="pt-6 border-t border-gray-200 dark:border-slate-700">
               <motion.button
                 type="submit"
                 disabled={loading}
@@ -276,12 +276,12 @@ export const AIGenerator: React.FC = () => {
       {/* Recipe Result */}
       {result && parsedRecipe && (
         <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-6">
               <div className="flex-1">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">{parsedRecipe.recipeName}</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{parsedRecipe.recipeName}</h2>
                 {parsedRecipe.description && (
-                  <p className="mt-2 text-gray-600">{parsedRecipe.description}</p>
+                  <p className="mt-2 text-gray-600 dark:text-gray-300">{parsedRecipe.description}</p>
                 )}
                 {saveSuccess && (
                   <span className="inline-block mt-2 text-sm text-emerald-700 font-medium">✓ Saved to library</span>
@@ -327,11 +327,11 @@ export const AIGenerator: React.FC = () => {
                   disabled={loading}
                   aria-label="Regenerate recipe"
                   title="Regenerate recipe"
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 >
                   {loading ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700" />
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 dark:border-gray-200" />
                       <span>Generating...</span>
                     </>
                   ) : (
@@ -378,15 +378,15 @@ export const AIGenerator: React.FC = () => {
                   </button>
                 </figure>
               ) : (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
+                <div className="border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-lg p-8 text-center bg-gray-50 dark:bg-slate-900">
                   {imageLoading ? (
                     <div className="flex flex-col items-center">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mb-4" />
-                      <p className="text-gray-600 font-medium">Generating recipe image...</p>
+                      <p className="text-gray-600 dark:text-gray-300 font-medium">Generating recipe image...</p>
                     </div>
                   ) : (
                     <>
-                      <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                       <button
@@ -399,7 +399,7 @@ export const AIGenerator: React.FC = () => {
                         <span>Generate Recipe Image</span>
                       </button>
                       {imageError && (
-                        <p className="mt-4 text-sm text-red-600 bg-red-50 px-4 py-2 rounded-lg inline-block">{imageError}</p>
+                        <p className="mt-4 text-sm text-red-600 dark:text-red-300 bg-red-50 dark:bg-red-950/20 px-4 py-2 rounded-lg inline-block">{imageError}</p>
                       )}
                     </>
                   )}

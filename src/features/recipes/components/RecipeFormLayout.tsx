@@ -17,6 +17,7 @@ import { NutritionEstimatePanel } from './NutritionEstimatePanel'
 import { AI_BUTTON_CLASS } from './aiStyles'
 import type { Ingredient, Recipe } from '../../../types/nutrition'
 import NutritionFacts from '../../../components/NutritionFacts'
+import { UI_STYLES } from '../../../utils/uiStyles'
 
 interface RecipeFormLayoutProps {
   // Mode
@@ -380,10 +381,10 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
       <div className="mb-6 sm:mb-8">
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
+            <h1 className={`text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 ${UI_STYLES.heading}`}>
               {mode === 'create' ? 'Create Recipe' : 'Edit Recipe'}
             </h1>
-            <p className="text-sm sm:text-base text-gray-600">
+            <p className={`text-sm sm:text-base ${UI_STYLES.mutedText}`}>
               Step {currentStep} of {totalSteps}: {steps[currentStep - 1].title}
             </p>
           </div>
@@ -468,7 +469,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
           saveLoading={saveLoading}
         />
       ) : (
-        <form className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
+        <form className={`${UI_STYLES.surfaceCard} p-6 sm:p-8`}>
           <div>
             <RecipeFormSteps
                 currentStep={currentStep}
@@ -552,7 +553,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
               />
               {hasSavedNutrition && nutritionalInfo && (
                 <div className="mt-4 space-y-3">
-                  <p className="text-sm text-gray-600">
+                  <p className={`text-sm ${UI_STYLES.mutedText}`}>
                     AI nutrition values will be saved with this recipe unless you recalculate or dismiss them.
                   </p>
                   <NutritionFacts nutritionalInfo={nutritionalInfo} />
@@ -562,15 +563,15 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
           )}
 
           {/* Navigation Buttons */}
-          <div className="flex justify-between items-center gap-4 pt-6 border-t border-gray-200">
+          <div className="flex justify-between items-center gap-4 pt-6 border-t border-gray-200 dark:border-slate-700">
             <button
               type="button"
               onClick={handlePreviousStepClick}
               disabled={!canGoPrevious}
               className={`px-6 py-3 rounded-lg font-medium transition-colors ${
                 !canGoPrevious
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                  : UI_STYLES.backButton
               }`}
             >
               ← Back
@@ -580,7 +581,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                className={UI_STYLES.secondaryButtonNeutral}
               >
                 Cancel
               </button>
