@@ -1,16 +1,16 @@
 const normalizeUniqueList = (items: string[]): string[] => {
   const seen = new Set<string>()
-
-  return items.filter((item) => {
+  return items.reduce<string[]>((normalizedItems, item) => {
     const normalized = item.trim()
-    if (!normalized) return false
+    if (!normalized) return normalizedItems
 
     const key = normalized.toLowerCase()
-    if (seen.has(key)) return false
+    if (seen.has(key)) return normalizedItems
 
     seen.add(key)
-    return true
-  })
+    normalizedItems.push(normalized)
+    return normalizedItems
+  }, [])
 }
 
 export const parseSuggestedList = (value: string): string[] =>

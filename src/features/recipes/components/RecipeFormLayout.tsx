@@ -15,6 +15,7 @@ import { AIBadge } from './AIBadge'
 import { mapEstimateToNutritionalInfo, useNutritionEstimate } from '../hooks/useNutritionEstimate'
 import { NutritionEstimatePanel } from './NutritionEstimatePanel'
 import { AI_BUTTON_CLASS } from './aiStyles'
+import type { SuggestibleFieldKey, SuggestibleFieldValue } from '../hooks/useAISuggestions'
 import {
   normalizeSuggestionListValue,
   parseSuggestedList,
@@ -326,17 +327,22 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     dietaryRestrictions: (value: string) => setDietaryRestrictions(parseSuggestedList(value)),
   }), [setTitle, setDescription, setPrepTime, setCookTime, setServings, setTags, setDietaryRestrictions])
 
+  const listFieldUndoSetters = useMemo(
+    () => ({
+      tags: setTags,
+      dietaryRestrictions: setDietaryRestrictions,
+    }),
+    [setTags, setDietaryRestrictions]
+  )
+
   // Internal undo handler: uses the local audit trail (from RecipeFormLayout's own hook)
   const handleLocalUndo = useCallback(() => {
     const result = localUndoLastAIChange()
     if (!result) return
-    if (result.field === 'tags') {
-      setTags(normalizeSuggestionListValue(result.previousValue))
-      if (onUndoLastAI) onUndoLastAI()
-      return
-    }
-    if (result.field === 'dietaryRestrictions') {
-      setDietaryRestrictions(normalizeSuggestionListValue(result.previousValue))
+    const listFieldSetter =
+      listFieldUndoSetters[result.field as keyof typeof listFieldUndoSetters]
+    if (listFieldSetter) {
+      listFieldSetter(normalizeSuggestionListValue(result.previousValue))
       if (onUndoLastAI) onUndoLastAI()
       return
     }
@@ -351,10 +357,10 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     if (setter) setter(String(result.previousValue ?? ''))
     // Also invoke the parent's undo handler if provided (for synchronisation)
     if (onUndoLastAI) onUndoLastAI()
-  }, [localUndoLastAIChange, setTitle, setDescription, setPrepTime, setCookTime, setServings, setTags, setDietaryRestrictions, onUndoLastAI])
+  }, [localUndoLastAIChange, listFieldUndoSetters, setTitle, setDescription, setPrepTime, setCookTime, setServings, onUndoLastAI])
 
-  const handleEnhanceField = useCallback((field: string, currentValue: string) => {
-    fetchFieldSuggestion(field as import('../hooks/useAISuggestions').SuggestibleFieldKey, currentValue, {
+  const handleEnhanceField = useCallback(<K extends SuggestibleFieldKey>(field: K, currentValue: SuggestibleFieldValue<K>) => {
+    fetchFieldSuggestion(field, currentValue, {
       recipeName: title,
       description: description,
       tags: tags.length > 0 ? tags : undefined,

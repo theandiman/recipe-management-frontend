@@ -30,7 +30,10 @@ export type SuggestionStatus = 'idle' | 'loading' | 'success' | 'error'
 
 /** Suggestible keys of FieldSuggestionRequest (excludes context-only array fields like ingredients/instructions). */
 export type SuggestibleFieldKey = Exclude<keyof FieldSuggestionRequest, 'ingredients' | 'instructions'>
-export type StringFieldKey = SuggestibleFieldKey
+export type ListSuggestibleFieldKey = Extract<SuggestibleFieldKey, 'tags' | 'dietaryRestrictions'>
+export type ScalarSuggestibleFieldKey = Exclude<SuggestibleFieldKey, ListSuggestibleFieldKey>
+export type SuggestibleFieldValue<K extends SuggestibleFieldKey = SuggestibleFieldKey> =
+  K extends ListSuggestibleFieldKey ? string[] : string
 
 interface UseAISuggestionsReturn {
   suggestions: FieldSuggestion[]
@@ -38,9 +41,9 @@ interface UseAISuggestionsReturn {
   status: SuggestionStatus
   error: string | null
   fetchSuggestions: (request: FieldSuggestionRequest) => Promise<void>
-  fetchFieldSuggestion: (
-    field: SuggestibleFieldKey,
-    currentValue: string | string[],
+  fetchFieldSuggestion: <K extends SuggestibleFieldKey>(
+    field: K,
+    currentValue: SuggestibleFieldValue<K>,
     context?: Partial<FieldSuggestionRequest>
   ) => Promise<void>
   fieldStatus: Map<string, SuggestionStatus>
@@ -121,7 +124,16 @@ export function useAISuggestions(): UseAISuggestionsReturn {
     setFieldStatus(prev => new Map(prev).set(field, 'loading'))
     setError(null)
 
-    const request: FieldSuggestionRequest = { ...context, [field]: currentValue }
+    const request: FieldSuggestionRequest =
+      field === 'tags' || field === 'dietaryRestrictions'
+        ? {
+            ...context,
+            [field]: Array.isArray(currentValue) ? currentValue : [],
+          }
+        : {
+            ...context,
+            [field]: typeof currentValue === 'string' ? currentValue : '',
+          }
 
     try {
       const apiBase = import.meta.env.VITE_AI_API_URL ?? import.meta.env.VITE_API_URL ?? ''

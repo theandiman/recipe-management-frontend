@@ -9,7 +9,7 @@ import { UI_STYLES } from '../../utils/uiStyles'
 import { clampedNumericHandler } from '../../utils/formUtils'
 import { useSimpleCreateSections } from './hooks/useSimpleCreateSections'
 import { useAISuggestions } from './hooks/useAISuggestions'
-import type { StringFieldKey } from './hooks/useAISuggestions'
+import type { SuggestibleFieldKey, SuggestibleFieldValue } from './hooks/useAISuggestions'
 import { AISuggestionPanel } from './components/AISuggestionPanel'
 import { FieldAIEnhanceButton } from './components/FieldAIEnhanceButton'
 import { FieldAISuggestionChip } from './components/FieldAISuggestionChip'
@@ -196,8 +196,26 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     form.dietaryRestrictions,
   ])
 
-  const handleEnhanceField = useCallback((field: string, currentValue: string) => {
-    fetchFieldSuggestion(field as StringFieldKey, currentValue, {
+  const previousSuggestionValues = useMemo<Record<string, unknown>>(() => ({
+    recipeName: form.title,
+    description: form.description,
+    prepTime: form.prepTime,
+    cookTime: form.cookTime,
+    servings: form.servings,
+    tags: form.tags,
+    dietaryRestrictions: form.dietaryRestrictions,
+  }), [
+    form.title,
+    form.description,
+    form.prepTime,
+    form.cookTime,
+    form.servings,
+    form.tags,
+    form.dietaryRestrictions,
+  ])
+
+  const handleEnhanceField = useCallback(<K extends SuggestibleFieldKey>(field: K, currentValue: SuggestibleFieldValue<K>) => {
+    fetchFieldSuggestion(field, currentValue, {
       recipeName: form.title,
       description: form.description,
       tags: form.tags.length > 0 ? form.tags : undefined,
@@ -219,11 +237,11 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
 
   const handleApplyFieldSuggestion = useCallback((field: string, value: string) => {
     const setter = fieldSetters[field]
-    const previous = currentValues[field] ?? ''
+    const previous = previousSuggestionValues[field] ?? ''
     if (setter) {
       applySuggestion(field, () => setter(value), previous)
     }
-  }, [fieldSetters, currentValues, applySuggestion])
+  }, [fieldSetters, previousSuggestionValues, applySuggestion])
 
   const handleEnhanceWithAI = () => {
     fetchSuggestions(buildSuggestionRequest())
@@ -237,12 +255,13 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
   const handleUndo = useCallback(() => {
     const result = undoLastAIChange()
     if (!result) return
-    if (result.field === 'tags') {
-      form.setTags(normalizeSuggestionListValue(result.previousValue))
-      return
-    }
-    if (result.field === 'dietaryRestrictions') {
-      form.setDietaryRestrictions(normalizeSuggestionListValue(result.previousValue))
+    const listFieldSetter =
+      {
+        tags: form.setTags,
+        dietaryRestrictions: form.setDietaryRestrictions,
+      }[result.field]
+    if (listFieldSetter) {
+      listFieldSetter(normalizeSuggestionListValue(result.previousValue))
       return
     }
     const setter = fieldSetters[result.field]
@@ -810,7 +829,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                     field="tags"
                     currentValue={stringifySuggestionList(form.tags)}
                     status={fieldStatus.get('tags') ?? 'idle'}
-                    onEnhance={() => handleEnhanceField('tags', stringifySuggestionList(form.tags))}
+                    onEnhance={() => handleEnhanceField('tags', form.tags)}
                   />
                 </div>
                 <div className="flex items-center space-x-2">
@@ -879,12 +898,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                     field="dietaryRestrictions"
                     currentValue={stringifySuggestionList(form.dietaryRestrictions)}
                     status={fieldStatus.get('dietaryRestrictions') ?? 'idle'}
-                    onEnhance={() =>
-                      handleEnhanceField(
-                        'dietaryRestrictions',
-                        stringifySuggestionList(form.dietaryRestrictions)
-                      )
-                    }
+                    onEnhance={() => handleEnhanceField('dietaryRestrictions', form.dietaryRestrictions)}
                   />
                 </div>
                 <div className="flex items-center space-x-2">

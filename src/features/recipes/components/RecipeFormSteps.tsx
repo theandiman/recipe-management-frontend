@@ -7,7 +7,12 @@ import type { StepRefinementState, RefinementLoadingState } from '../hooks/useIn
 import { InstructionDiffView } from './InstructionDiffView'
 import { FieldAIEnhanceButton } from './FieldAIEnhanceButton'
 import { FieldAISuggestionChip } from './FieldAISuggestionChip'
-import type { FieldSuggestion, SuggestionStatus } from '../hooks/useAISuggestions'
+import type {
+  FieldSuggestion,
+  SuggestionStatus,
+  SuggestibleFieldKey,
+  SuggestibleFieldValue,
+} from '../hooks/useAISuggestions'
 import { AISpinnerIcon } from './AISpinnerIcon'
 import { AIBadge } from './AIBadge'
 import { AI_BUTTON_CLASS, AI_BUTTON_COMPACT_CLASS, AI_STEP_ACTION_BUTTON_CLASS } from './aiStyles'
@@ -66,7 +71,7 @@ interface RecipeFormStepsProps {
   onApplyNormalization?: (index: number) => void
   onDismissNormalization?: (index: number) => void
   // Per-field AI enhance
-  onEnhanceField?: (field: string, currentValue: string) => void
+  onEnhanceField?: <K extends SuggestibleFieldKey>(field: K, currentValue: SuggestibleFieldValue<K>) => void
   fieldStatus?: Map<string, SuggestionStatus>
   fieldSuggestions?: FieldSuggestion[]
   onApplyFieldSuggestion?: (field: string, value: string) => void
@@ -594,7 +599,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   field="tags"
                   currentValue={stringifySuggestionList(tags)}
                   status={getFieldStatus('tags')}
-                  onEnhance={() => onEnhanceField('tags', stringifySuggestionList(tags))}
+                  onEnhance={() => onEnhanceField('tags', tags)}
                 />
               )}
             </div>
@@ -665,9 +670,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   field="dietaryRestrictions"
                   currentValue={stringifySuggestionList(dietaryRestrictions)}
                   status={getFieldStatus('dietaryRestrictions')}
-                  onEnhance={() =>
-                    onEnhanceField('dietaryRestrictions', stringifySuggestionList(dietaryRestrictions))
-                  }
+                  onEnhance={() => onEnhanceField('dietaryRestrictions', dietaryRestrictions)}
                 />
               )}
             </div>
