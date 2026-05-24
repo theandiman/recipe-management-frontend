@@ -8,6 +8,7 @@ import { useRecipeSave } from './hooks/useRecipeSave'
 import { useAISuggestions } from './hooks/useAISuggestions'
 import { useIngredientNormalization } from './hooks/useIngredientNormalization'
 import type { Recipe } from '../../types/nutrition'
+import { UI_STYLES } from '../../utils/uiStyles'
 
 const FIELD_LABELS: Record<string, string> = {
   recipeName: 'Recipe Name',
@@ -95,18 +96,18 @@ export const CreateRecipe: React.FC = () => {
 
   const modeToggle = (
     <nav
-      className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1 mb-6"
+      className="inline-flex rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-1 mb-6"
       aria-label="Recipe creation mode"
     >
       <span
         aria-current="page"
-        className="px-4 py-2 rounded-md text-sm font-medium bg-white text-emerald-700 shadow-sm border border-gray-200"
+        className="px-4 py-2 rounded-md text-sm font-medium bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 shadow-sm border border-gray-200 dark:border-slate-600"
       >
         🧭 Guided (step-by-step)
       </span>
       <Link
         to="/dashboard/create/simple"
-        className="px-4 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-white transition-colors"
+        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-white dark:hover:bg-slate-900 ${UI_STYLES.mutedText} hover:text-gray-900 dark:hover:text-gray-100`}
       >
         ⚡ Quick entry
       </Link>

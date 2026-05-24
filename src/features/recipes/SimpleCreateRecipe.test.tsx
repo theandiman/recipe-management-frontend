@@ -394,6 +394,7 @@ describe('SimpleCreateRecipe', () => {
 
 describe('AI Enhancement', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     setDefaultAuthMock()
   })
 
@@ -419,6 +420,57 @@ describe('AI Enhancement', () => {
     await waitFor(() => {
       expect(screen.getByRole('region', { name: /AI field suggestions/i })).toBeInTheDocument()
     })
+  })
+
+  it('includes dietary restrictions in AI assist requests for quick entry', async () => {
+    const { postWithAuth } = await import('../../utils/authApi')
+    vi.mocked(postWithAuth).mockResolvedValueOnce({ data: { suggestions: [] } } as Awaited<ReturnType<typeof postWithAuth>>)
+
+    renderWithRouter(<SimpleCreateRecipe />)
+    fireEvent.click(screen.getByRole('button', { name: /Tags & Dietary/i }))
+    fireEvent.change(screen.getByPlaceholderText(/e.g., 'vegan', 'gluten-free', 'nut-free'/i), {
+      target: { value: 'vegan' },
+    })
+    fireEvent.keyDown(screen.getByPlaceholderText(/e.g., 'vegan', 'gluten-free', 'nut-free'/i), {
+      key: 'Enter',
+      code: 'Enter',
+    })
+    fireEvent.click(screen.getByRole('button', { name: /^AI assist$/i }))
+
+    await waitFor(() => {
+      expect(postWithAuth).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ dietaryRestrictions: ['vegan'] })
+      )
+    })
+  })
+
+  it('applies dietary restriction suggestions in quick entry mode', async () => {
+    const { postWithAuth } = await import('../../utils/authApi')
+    vi.mocked(postWithAuth).mockResolvedValueOnce({
+      data: {
+        suggestions: [
+          {
+            field: 'dietaryRestrictions',
+            suggestedValue: 'gluten-free, dairy-free',
+            reason: 'Matches the ingredients',
+          },
+        ],
+      },
+    } as Awaited<ReturnType<typeof postWithAuth>>)
+
+    renderWithRouter(<SimpleCreateRecipe />)
+    fireEvent.click(screen.getByRole('button', { name: /Tags & Dietary/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^AI assist$/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Apply AI suggestion for Dietary Restrictions/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /Apply AI suggestion for Dietary Restrictions/i }))
+
+    expect(screen.getByText('gluten-free')).toBeInTheDocument()
+    expect(screen.getByText('dairy-free')).toBeInTheDocument()
   })
 
   it('saves accepted AI nutrition estimates with the recipe', async () => {

@@ -193,8 +193,8 @@ export const RecipeLibrary: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Recipe Library</h1>
-        <p className="text-sm md:text-base text-gray-600">Showing {filtered.length} of {recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'} in your collection</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Recipe Library</h1>
+        <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">Showing {filtered.length} of {recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'} in your collection</p>
         <div className="mt-4 flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center">
           <label htmlFor="search" className="sr-only">Search recipes</label>
           <input
@@ -202,7 +202,7 @@ export const RecipeLibrary: React.FC = () => {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             placeholder="Search by title, description or tag..."
-            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-300"
+            className="flex-1 px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-300"
           />
 
           <label htmlFor="tag-filter" className="sr-only">Filter by tag</label>
@@ -210,7 +210,7 @@ export const RecipeLibrary: React.FC = () => {
             id="tag-filter"
             value={selectedTag || ''}
             onChange={(e) => setSelectedTag(e.target.value || null)}
-            className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-300"
+            className="px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-300"
           >
             <option value="">All tags</option>
             {tags.map(tag => (
@@ -254,13 +254,13 @@ export const RecipeLibrary: React.FC = () => {
 
               {/* Empty filtered state */}
               {filtered.length === 0 && (
-                <div className="mt-6 text-center text-gray-600">No recipes match your search or selected tag.</div>
+                <div className="mt-6 text-center text-gray-600 dark:text-gray-300">No recipes match your search or selected tag.</div>
               )}
 
             {/* Pagination controls */}
             {filtered.length > pageSize && (
               <div className="mt-6 flex items-center justify-between">
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
                   Showing {Math.min(start + 1, total)} - {Math.min(end, total)} of {total}
                 </div>
 
@@ -268,7 +268,7 @@ export const RecipeLibrary: React.FC = () => {
                   <button
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="px-3 py-1 bg-gray-100 rounded disabled:opacity-50"
+                    className="px-3 py-1 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200 rounded disabled:opacity-50"
                     aria-label="Previous page"
                   >
                     Previous
@@ -280,7 +280,7 @@ export const RecipeLibrary: React.FC = () => {
                       key={p}
                       onClick={() => setCurrentPage(p)}
                       aria-current={p === currentPage}
-                      className={`px-3 py-1 rounded ${p === currentPage ? 'bg-emerald-600 text-white' : 'bg-gray-100'}`}
+                      className={`px-3 py-1 rounded ${p === currentPage ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200'}`}
                       aria-label={`Go to page ${p}`}
                     >
                       {p}
@@ -290,7 +290,7 @@ export const RecipeLibrary: React.FC = () => {
                   <button
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-1 bg-gray-100 rounded disabled:opacity-50"
+                    className="px-3 py-1 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200 rounded disabled:opacity-50"
                     aria-label="Next page"
                   >
                     Next
@@ -313,7 +313,7 @@ export const RecipeLibrary: React.FC = () => {
             transition={{ duration: 0.2 }}
           >
             <motion.div 
-              className="bg-white rounded-lg max-w-md w-full p-4 sm:p-6"
+              className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg max-w-md w-full p-4 sm:p-6"
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -326,12 +326,12 @@ export const RecipeLibrary: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Delete Recipe</h3>
-                <p className="text-xs sm:text-sm text-gray-600 mt-1">This action cannot be undone</p>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">Delete Recipe</h3>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1">This action cannot be undone</p>
               </div>
             </div>
 
-            <p className="text-sm sm:text-base text-gray-700 mb-6">
+            <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200 mb-6">
               Are you sure you want to delete <strong>"{deleteConfirm.title}"</strong>?
             </p>
 
@@ -339,7 +339,7 @@ export const RecipeLibrary: React.FC = () => {
               <button
                 onClick={handleDeleteCancel}
                 disabled={deleting}
-                className="px-4 py-2.5 sm:py-2 text-sm sm:text-base text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 active:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed min-w-[80px]"
+                className="px-4 py-2.5 sm:py-2 text-sm sm:text-base text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-slate-700 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 active:bg-gray-300 dark:active:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed min-w-[80px]"
               >
                 Cancel
               </button>

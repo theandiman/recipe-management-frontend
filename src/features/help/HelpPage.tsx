@@ -32,7 +32,7 @@ const helpSections: HelpSection[] = [
       </svg>
     ),
     content: (
-      <div className="space-y-3 text-gray-600">
+      <div className="space-y-3 text-gray-600 dark:text-gray-300">
         <p>
           Welcome to <strong>CookFlow</strong> — your personal recipe management app. Here's a quick overview of
           what you can do:
@@ -67,7 +67,7 @@ const helpSections: HelpSection[] = [
       </svg>
     ),
     content: (
-      <div className="space-y-3 text-gray-600">
+      <div className="space-y-3 text-gray-600 dark:text-gray-300">
         <p>
           The <strong>Browse Recipes</strong> page shows all the recipes you've saved. You can:
         </p>
@@ -102,7 +102,7 @@ const helpSections: HelpSection[] = [
       </svg>
     ),
     content: (
-      <div className="space-y-3 text-gray-600">
+      <div className="space-y-3 text-gray-600 dark:text-gray-300">
         <p>
           Click <strong>Create Recipe</strong> in the sidebar to open the step-by-step recipe builder. The form
           is split into four steps:
@@ -139,7 +139,7 @@ const helpSections: HelpSection[] = [
       </svg>
     ),
     content: (
-      <div className="space-y-3 text-gray-600">
+      <div className="space-y-3 text-gray-600 dark:text-gray-300">
         <p>To edit an existing recipe:</p>
         <ol className="list-decimal list-inside space-y-2 ml-2">
           <li>Open the recipe from <strong>Browse Recipes</strong> or the Dashboard.</li>
@@ -154,7 +154,7 @@ const helpSections: HelpSection[] = [
           <li>A confirmation dialog will appear — click <strong>Delete</strong> to confirm, or{' '}
             <strong>Cancel</strong> to go back.</li>
         </ul>
-        <p className="text-amber-600 text-sm">⚠ Deletion is permanent and cannot be undone.</p>
+        <p className="text-amber-600 dark:text-amber-400 text-sm">⚠ Deletion is permanent and cannot be undone.</p>
       </div>
     ),
   },
@@ -167,7 +167,7 @@ const helpSections: HelpSection[] = [
       </svg>
     ),
     content: (
-      <div className="space-y-3 text-gray-600">
+      <div className="space-y-3 text-gray-600 dark:text-gray-300">
         <p>
           The <strong>AI Generator</strong> creates recipe ideas for you automatically. To use it:
         </p>
@@ -198,7 +198,7 @@ const helpSections: HelpSection[] = [
       </svg>
     ),
     content: (
-      <div className="space-y-3 text-gray-600">
+      <div className="space-y-3 text-gray-600 dark:text-gray-300">
         <p>
           <strong>Cooking Mode</strong> presents a distraction-free, step-by-step view of a recipe while you
           cook.
@@ -223,7 +223,7 @@ const helpSections: HelpSection[] = [
       </svg>
     ),
     content: (
-      <div className="space-y-3 text-gray-600">
+      <div className="space-y-3 text-gray-600 dark:text-gray-300">
         <p>
           Your account email is shown at the bottom of the sidebar. All recipes are stored privately and linked
           to your account.
@@ -260,16 +260,16 @@ const AccordionItem: React.FC<{
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay: index * 0.05, duration: 0.3 }}
-    className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+    className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden"
   >
     <button
       onClick={onToggle}
-      className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+      className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 dark:hover:bg-slate-700/70 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
       aria-expanded={isOpen}
     >
       <div className="flex items-center space-x-3">
         <div className="text-emerald-600">{section.icon}</div>
-        <span className="font-medium text-gray-900">{section.title}</span>
+        <span className="font-medium text-gray-900 dark:text-gray-100">{section.title}</span>
       </div>
       <ChevronIcon isOpen={isOpen} />
     </button>
@@ -284,7 +284,7 @@ const AccordionItem: React.FC<{
           transition={{ duration: 0.25, ease: 'easeInOut' }}
           className="overflow-hidden"
         >
-          <div className="px-5 pb-5 pt-1 border-t border-gray-100">{section.content}</div>
+          <div className="px-5 pb-5 pt-1 border-t border-gray-100 dark:border-slate-700">{section.content}</div>
         </motion.div>
       )}
     </AnimatePresence>
@@ -346,9 +346,9 @@ export const HelpPage: React.FC = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4, duration: 0.3 }}
-        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center"
+        className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6 text-center"
       >
-        <p className="text-gray-600 mb-4">Ready to get cooking?</p>
+        <p className="text-gray-600 dark:text-gray-300 mb-4">Ready to get cooking?</p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -362,7 +362,7 @@ export const HelpPage: React.FC = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate('/dashboard/recipes')}
-            className="px-6 py-2.5 bg-white text-emerald-700 border border-emerald-300 rounded-lg font-medium hover:bg-emerald-50 transition-colors"
+            className="px-6 py-2.5 bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 rounded-lg font-medium hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
           >
             Browse Recipes
           </motion.button>

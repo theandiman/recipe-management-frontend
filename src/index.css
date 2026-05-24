@@ -18,6 +18,14 @@
 }
 
 @layer base {
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
   body {
     @apply font-sans antialiased bg-gray-50 text-gray-900 transition-colors duration-300;
     margin: 0;
@@ -26,5 +34,27 @@
   
   .dark body {
     @apply bg-slate-900 text-gray-100;
+  }
+
+  input,
+  textarea,
+  select {
+    @apply border bg-white text-gray-900 border-gray-300 transition-colors duration-200;
+  }
+
+  .dark input,
+  .dark textarea,
+  .dark select {
+    @apply bg-slate-900 text-gray-100 border-slate-600;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-gray-400;
+  }
+
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    @apply text-gray-500;
   }
 }

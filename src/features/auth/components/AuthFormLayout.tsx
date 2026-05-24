@@ -4,6 +4,7 @@ import { AuthBrandHeader } from './AuthBrandHeader'
 import { ErrorAlert } from './ErrorAlert'
 import { GoogleSignInButton } from './GoogleSignInButton'
 import { AuthDivider } from './AuthDivider'
+import { UI_STYLES } from '../../../utils/uiStyles'
 
 interface AuthFormLayoutProps {
   // Header
@@ -48,7 +49,7 @@ export const AuthFormLayout: React.FC<AuthFormLayoutProps> = ({
   bottomButtonAction,
 }) => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-teal-50 px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/40 px-4 py-12 transition-colors">
       <motion.div 
         className="max-w-md w-full"
         initial={{ opacity: 0, y: 20 }}
@@ -58,7 +59,7 @@ export const AuthFormLayout: React.FC<AuthFormLayoutProps> = ({
         <AuthBrandHeader title={title} subtitle={subtitle} />
         
         <motion.div 
-          className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100"
+          className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-slate-700"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.8 }}
@@ -109,11 +110,11 @@ export const AuthFormLayout: React.FC<AuthFormLayoutProps> = ({
           </div>
           
           <div className="mt-8 text-center text-sm font-medium">
-            <span className="text-gray-600">{bottomDividerText}</span>{' '}
+            <span className={UI_STYLES.mutedText}>{bottomDividerText}</span>{' '}
             <button
               type="button"
               onClick={bottomButtonAction}
-              className="text-emerald-600 hover:text-emerald-500 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 rounded px-1 -mx-1"
+              className="text-emerald-600 hover:text-emerald-500 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-800 focus:ring-emerald-500 rounded px-1 -mx-1"
             >
               {bottomButtonText}
             </button>
@@ -121,7 +122,7 @@ export const AuthFormLayout: React.FC<AuthFormLayoutProps> = ({
         </motion.div>
         
         <motion.p 
-          className="mt-8 text-center text-xs text-gray-500"
+          className="mt-8 text-center text-xs text-gray-500 dark:text-gray-400"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}

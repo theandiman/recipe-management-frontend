@@ -123,7 +123,7 @@ export const DashboardLayout: React.FC = () => {
             className="fixed inset-y-4 left-4 z-50 w-64 h-[calc(100vh-2rem)] bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border border-gray-200 dark:border-slate-700 rounded-3xl shadow-2xl transition-colors duration-300 overflow-hidden flex flex-col"
           >
           {/* Logo/Brand */}
-          <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 dark:border-slate-700">
             <motion.div
               className="flex items-center space-x-3"
               initial={{ opacity: 0, y: -10 }}
@@ -151,7 +151,7 @@ export const DashboardLayout: React.FC = () => {
             </motion.div>
             <motion.button
               onClick={() => setIsSidebarOpen(false)}
-              className="lg:hidden text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="lg:hidden text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
               whileHover={{ scale: 1.1, rotate: 90 }}
               whileTap={{ scale: 0.9 }}
               transition={{ duration: 0.2 }}
@@ -206,7 +206,7 @@ export const DashboardLayout: React.FC = () => {
                       <motion.span
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="px-2 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100 rounded-full"
+                        className="px-2 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/30 rounded-full"
                       >
                         {item.badge}
                       </motion.span>
@@ -243,7 +243,7 @@ export const DashboardLayout: React.FC = () => {
             </div>
             <motion.button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors"
               whileHover={{ scale: 1.02, backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
               whileTap={{ scale: 0.98 }}
               transition={{ duration: 0.2 }}

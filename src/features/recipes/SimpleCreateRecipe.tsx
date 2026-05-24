@@ -9,7 +9,7 @@ import { UI_STYLES } from '../../utils/uiStyles'
 import { clampedNumericHandler } from '../../utils/formUtils'
 import { useSimpleCreateSections } from './hooks/useSimpleCreateSections'
 import { useAISuggestions } from './hooks/useAISuggestions'
-import type { StringFieldKey } from './hooks/useAISuggestions'
+import type { SuggestibleFieldKey, SuggestibleFieldValue } from './hooks/useAISuggestions'
 import { AISuggestionPanel } from './components/AISuggestionPanel'
 import { FieldAIEnhanceButton } from './components/FieldAIEnhanceButton'
 import { FieldAISuggestionChip } from './components/FieldAISuggestionChip'
@@ -24,6 +24,11 @@ import type { Recipe } from '../../types/nutrition'
 import { mapEstimateToNutritionalInfo, useNutritionEstimate } from './hooks/useNutritionEstimate'
 import { NutritionEstimatePanel } from './components/NutritionEstimatePanel'
 import NutritionFacts from '../../components/NutritionFacts'
+import {
+  normalizeSuggestionListValue,
+  parseSuggestedList,
+  stringifySuggestionList,
+} from './utils/aiSuggestionValueUtils'
 
 type RecipeFormInitialState = Parameters<typeof useRecipeForm>[0]
 
@@ -148,6 +153,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     cookTime: form.cookTime || undefined,
     servings: form.servings || undefined,
     tags: form.tags.length > 0 ? form.tags : undefined,
+    dietaryRestrictions: form.dietaryRestrictions.length > 0 ? form.dietaryRestrictions : undefined,
     ingredients: form.ingredients.filter(i => i.item.trim()).map(i =>
       [i.quantity, i.unit, i.item].filter(Boolean).join(' ')
     ),
@@ -160,7 +166,17 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     prepTime: form.setPrepTime,
     cookTime: form.setCookTime,
     servings: form.setServings,
-  }), [form.setTitle, form.setDescription, form.setPrepTime, form.setCookTime, form.setServings])
+    tags: (value: string) => form.setTags(parseSuggestedList(value)),
+    dietaryRestrictions: (value: string) => form.setDietaryRestrictions(parseSuggestedList(value)),
+  }), [
+    form.setTitle,
+    form.setDescription,
+    form.setPrepTime,
+    form.setCookTime,
+    form.setServings,
+    form.setTags,
+    form.setDietaryRestrictions,
+  ])
 
   const currentValues: Partial<Record<string, string>> = useMemo(() => ({
     recipeName: form.title,
@@ -168,22 +184,64 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     prepTime: form.prepTime,
     cookTime: form.cookTime,
     servings: form.servings,
-  }), [form.title, form.description, form.prepTime, form.cookTime, form.servings])
+    tags: stringifySuggestionList(form.tags),
+    dietaryRestrictions: stringifySuggestionList(form.dietaryRestrictions),
+  }), [
+    form.title,
+    form.description,
+    form.prepTime,
+    form.cookTime,
+    form.servings,
+    form.tags,
+    form.dietaryRestrictions,
+  ])
 
-  const handleEnhanceField = useCallback((field: string, currentValue: string) => {
-    fetchFieldSuggestion(field as StringFieldKey, currentValue, {
+  const previousSuggestionValues = useMemo<Record<string, unknown>>(() => ({
+    recipeName: form.title,
+    description: form.description,
+    prepTime: form.prepTime,
+    cookTime: form.cookTime,
+    servings: form.servings,
+    tags: form.tags,
+    dietaryRestrictions: form.dietaryRestrictions,
+  }), [
+    form.title,
+    form.description,
+    form.prepTime,
+    form.cookTime,
+    form.servings,
+    form.tags,
+    form.dietaryRestrictions,
+  ])
+
+  const handleEnhanceField = useCallback(<K extends SuggestibleFieldKey>(field: K, currentValue: SuggestibleFieldValue<K>) => {
+    fetchFieldSuggestion(field, currentValue, {
       recipeName: form.title,
       description: form.description,
+      tags: form.tags.length > 0 ? form.tags : undefined,
+      dietaryRestrictions: form.dietaryRestrictions.length > 0 ? form.dietaryRestrictions : undefined,
+      ingredients: form.ingredients.filter(i => i.item.trim()).map(i =>
+        [i.quantity, i.unit, i.item].filter(Boolean).join(' ')
+      ),
+      instructions: form.instructions.filter(i => i.trim()),
     })
-  }, [fetchFieldSuggestion, form.title, form.description])
+  }, [
+    fetchFieldSuggestion,
+    form.title,
+    form.description,
+    form.tags,
+    form.dietaryRestrictions,
+    form.ingredients,
+    form.instructions,
+  ])
 
   const handleApplyFieldSuggestion = useCallback((field: string, value: string) => {
     const setter = fieldSetters[field]
-    const previous = currentValues[field] ?? ''
+    const previous = previousSuggestionValues[field] ?? ''
     if (setter) {
       applySuggestion(field, () => setter(value), previous)
     }
-  }, [fieldSetters, currentValues, applySuggestion])
+  }, [fieldSetters, previousSuggestionValues, applySuggestion])
 
   const handleEnhanceWithAI = () => {
     fetchSuggestions(buildSuggestionRequest())
@@ -197,9 +255,18 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
   const handleUndo = useCallback(() => {
     const result = undoLastAIChange()
     if (!result) return
+    const listFieldSetter =
+      {
+        tags: form.setTags,
+        dietaryRestrictions: form.setDietaryRestrictions,
+      }[result.field]
+    if (listFieldSetter) {
+      listFieldSetter(normalizeSuggestionListValue(result.previousValue))
+      return
+    }
     const setter = fieldSetters[result.field]
     if (setter) setter(String(result.previousValue ?? ''))
-  }, [undoLastAIChange, fieldSetters])
+  }, [undoLastAIChange, fieldSetters, form.setTags, form.setDietaryRestrictions])
   const hasIngredients = form.ingredients.some((ingredient) => ingredient.item.trim())
   const hasSavedNutrition = Boolean(activeRecipeOverrides.nutritionalInfo?.perServing)
 
@@ -217,7 +284,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
         {/* Header */}
       <div className="mb-6 sm:mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
             {isEditMode ? 'Edit Recipe' : 'Create Recipe'}
           </h1>
           <div className="flex items-center gap-2">
@@ -251,19 +318,19 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
         {/* Entry-point mode toggle */}
         {!isEditMode && (
           <nav
-            className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1 mb-6"
+            className="inline-flex rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-1 mb-6"
             aria-label="Recipe creation mode"
           >
             <Link
               to="/dashboard/create"
-              className="px-4 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-white transition-colors"
+              className="px-4 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-white dark:hover:bg-slate-900 transition-colors"
             >
               🧭 Guided (step-by-step)
             </Link>
             <Link
               to="/dashboard/create/simple"
               aria-current="page"
-              className="px-4 py-2 rounded-md text-sm font-medium bg-white text-emerald-700 shadow-sm border border-gray-200"
+              className="px-4 py-2 rounded-md text-sm font-medium bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 shadow-sm border border-gray-200 dark:border-slate-600"
             >
               ⚡ Quick entry
             </Link>
@@ -322,8 +389,8 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
 
       <form onSubmit={handleSubmit} noValidate className="space-y-6">
         {/* ─── Required: Title ─── */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-slate-700">
             Basic Info
           </h2>
 
@@ -430,8 +497,8 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
         </div>
 
         {/* ─── Required: Ingredients ─── */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b border-gray-100 dark:border-slate-700">
             Ingredients <span className="text-red-500">*</span>
           </h2>
           <IngredientInput
@@ -463,9 +530,9 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
         </div>
 
         {/* ─── Required: Instructions ─── */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
           <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               Instructions <span className="text-red-500">*</span>
             </h2>
             <button type="button" onClick={form.addInstruction} className={UI_STYLES.addButton}>
@@ -707,7 +774,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
             data-testid="section-nutrition"
           >
             <div className="space-y-4">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
                 Let AI calculate nutrition when your recipe does not already include it.
               </p>
               <button
@@ -733,7 +800,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
               />
               {hasSavedNutrition && activeRecipeOverrides.nutritionalInfo && (
                 <div className="space-y-3">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     AI nutrition values will be saved with this recipe unless you recalculate or dismiss them.
                   </p>
                   <NutritionFacts nutritionalInfo={activeRecipeOverrides.nutritionalInfo} />
@@ -754,9 +821,17 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
             <div className="space-y-6">
               {/* Tags */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Tags (Optional)
-                </label>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Tags (Optional)
+                  </label>
+                  <FieldAIEnhanceButton
+                    field="tags"
+                    currentValue={stringifySuggestionList(form.tags)}
+                    status={fieldStatus.get('tags') ?? 'idle'}
+                    onEnhance={() => handleEnhanceField('tags', form.tags)}
+                  />
+                </div>
                 <div className="flex items-center space-x-2">
                   <input
                     type="text"
@@ -799,13 +874,33 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                     ))}
                   </div>
                 )}
+                {(() => {
+                  const s = visibleSuggestions.find(x => x.field === 'tags')
+                  return s ? (
+                    <FieldAISuggestionChip
+                      field="tags"
+                      suggestion={s.suggestedValue}
+                      currentValue={stringifySuggestionList(form.tags)}
+                      onApply={() => handleApplyFieldSuggestion('tags', s.suggestedValue)}
+                      onDismiss={() => dismissSuggestion('tags')}
+                    />
+                  ) : null
+                })()}
               </div>
 
               {/* Dietary restrictions */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Dietary Restrictions (Optional)
-                </label>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Dietary Restrictions (Optional)
+                  </label>
+                  <FieldAIEnhanceButton
+                    field="dietaryRestrictions"
+                    currentValue={stringifySuggestionList(form.dietaryRestrictions)}
+                    status={fieldStatus.get('dietaryRestrictions') ?? 'idle'}
+                    onEnhance={() => handleEnhanceField('dietaryRestrictions', form.dietaryRestrictions)}
+                  />
+                </div>
                 <div className="flex items-center space-x-2">
                   <input
                     type="text"
@@ -848,6 +943,18 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                     ))}
                   </div>
                 )}
+                {(() => {
+                  const s = visibleSuggestions.find(x => x.field === 'dietaryRestrictions')
+                  return s ? (
+                    <FieldAISuggestionChip
+                      field="dietaryRestrictions"
+                      suggestion={s.suggestedValue}
+                      currentValue={stringifySuggestionList(form.dietaryRestrictions)}
+                      onApply={() => handleApplyFieldSuggestion('dietaryRestrictions', s.suggestedValue)}
+                      onDismiss={() => dismissSuggestion('dietaryRestrictions')}
+                    />
+                  ) : null
+                })()}
               </div>
             </div>
           </CollapsibleSection>
@@ -863,7 +970,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
           >
             {!form.imagePreview ? (
               <div className="flex items-center justify-center w-full">
-                <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 dark:border-slate-600 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-slate-900 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <svg
                       className="w-10 h-10 mb-3 text-gray-400"
@@ -926,11 +1033,11 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
         </div>
 
         {/* ─── Action bar ─── */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 rounded-b-xl px-6 py-4 flex items-center justify-between gap-4 shadow-lg">
+        <div className="sticky bottom-0 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 rounded-b-xl px-6 py-4 flex items-center justify-between gap-4 shadow-lg">
           <button
             type="button"
             onClick={handleCancel}
-            className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+            className="px-6 py-3 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
           >
             Cancel
           </button>

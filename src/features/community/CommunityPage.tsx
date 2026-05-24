@@ -72,16 +72,16 @@ export const CommunityPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Community Recipes</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">Community Recipes</h1>
 
         {user && (
-          <div className="flex border-b border-gray-200 mb-4">
+          <div className="flex border-b border-gray-200 dark:border-slate-700 mb-4">
             <button
               onClick={() => handleTabChange('community')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'community'
                   ? 'border-emerald-500 text-emerald-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-slate-600'
               }`}
             >
               Community
@@ -91,7 +91,7 @@ export const CommunityPage: React.FC = () => {
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'following'
                   ? 'border-emerald-500 text-emerald-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-slate-600'
               }`}
             >
               Following
@@ -99,7 +99,7 @@ export const CommunityPage: React.FC = () => {
           </div>
         )}
 
-        <p className="text-sm md:text-base text-gray-600">
+        <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">
           {hasRecipes
             ? `Showing ${filtered.length} of ${recipes.length} ${recipes.length === 1 ? 'recipe' : 'recipes'} from the ${activeTab === 'following' ? 'cooks you follow' : 'community'}`
             : activeTab === 'following'
@@ -115,17 +115,17 @@ export const CommunityPage: React.FC = () => {
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 placeholder="Search by recipe name..."
-                className="w-full sm:max-w-sm px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                className="w-full sm:max-w-sm px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-300"
               />
             </div>
             {activeTab === 'community' && (
               <div className="flex items-center gap-2">
-                <label htmlFor="community-sort" className="text-sm text-gray-600 whitespace-nowrap">Sort by:</label>
+                <label htmlFor="community-sort" className="text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">Sort by:</label>
                 <select
                   id="community-sort"
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value as SortOption)}
-                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 bg-white"
+                  className="px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
                 >
                   <option value="recent">Most recent</option>
                   <option value="most-liked">Most liked</option>
@@ -177,7 +177,7 @@ export const CommunityPage: React.FC = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
           </motion.svg>
           <motion.h3
-            className="mt-4 text-base sm:text-lg font-medium text-gray-900"
+            className="mt-4 text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.4 }}
@@ -185,7 +185,7 @@ export const CommunityPage: React.FC = () => {
             No community recipes yet
           </motion.h3>
           <motion.p
-            className="mt-2 text-sm sm:text-base text-gray-600"
+            className="mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.5 }}
@@ -214,7 +214,7 @@ export const CommunityPage: React.FC = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
           </motion.svg>
           <motion.h3
-            className="mt-4 text-base sm:text-lg font-medium text-gray-900"
+            className="mt-4 text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.4 }}
@@ -222,7 +222,7 @@ export const CommunityPage: React.FC = () => {
             No recipes from followed cooks yet
           </motion.h3>
           <motion.p
-            className="mt-2 text-sm sm:text-base text-gray-600"
+            className="mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.5 }}
@@ -262,7 +262,7 @@ export const CommunityPage: React.FC = () => {
       )}
 
       {hasRecipes && filtered.length === 0 && (
-        <div className="mt-6 text-center text-gray-600">No recipes match your search.</div>
+        <div className="mt-6 text-center text-gray-600 dark:text-gray-300">No recipes match your search.</div>
       )}
     </div>
   )

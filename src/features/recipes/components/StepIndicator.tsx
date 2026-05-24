@@ -36,10 +36,10 @@ export const StepIndicator = React.memo<StepIndicatorProps>(({
                 step.number === currentStep
                   ? 'bg-emerald-600 text-white shadow-lg'
                   : step.number < currentStep
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'bg-gray-200 text-gray-500'
+                    ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300'
+                    : 'bg-gray-200 dark:bg-slate-800 text-gray-500 dark:text-gray-400'
               } ${
-                stepsWithErrors.has(step.number) ? 'ring-2 ring-red-500 ring-offset-2' : ''
+                stepsWithErrors.has(step.number) ? 'ring-2 ring-red-500 ring-offset-2 dark:ring-offset-slate-900' : ''
               }`}
             >
               {step.number < currentStep ? '✓' : step.icon}
@@ -50,14 +50,14 @@ export const StepIndicator = React.memo<StepIndicatorProps>(({
               )}
             </div>
             <span className={`text-xs sm:text-sm font-medium whitespace-nowrap ${
-              step.number === currentStep ? 'text-gray-900' : stepsWithErrors.has(step.number) ? 'text-red-600' : 'text-gray-500'
+              step.number === currentStep ? 'text-gray-900 dark:text-gray-100' : stepsWithErrors.has(step.number) ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
             }`}>
               {step.title}
             </span>
           </button>
           {index < steps.length - 1 && (
             <div className={`flex-1 h-1 mx-2 rounded ${
-              step.number < currentStep ? 'bg-emerald-600' : 'bg-gray-200'
+              step.number < currentStep ? 'bg-emerald-600' : 'bg-gray-200 dark:bg-slate-800'
             }`} />
           )}
         </React.Fragment>

@@ -15,8 +15,15 @@ import { AIBadge } from './AIBadge'
 import { mapEstimateToNutritionalInfo, useNutritionEstimate } from '../hooks/useNutritionEstimate'
 import { NutritionEstimatePanel } from './NutritionEstimatePanel'
 import { AI_BUTTON_CLASS } from './aiStyles'
+import type { SuggestibleFieldKey, SuggestibleFieldValue } from '../hooks/useAISuggestions'
+import {
+  normalizeSuggestionListValue,
+  parseSuggestedList,
+  stringifySuggestionList,
+} from '../utils/aiSuggestionValueUtils'
 import type { Ingredient, Recipe } from '../../../types/nutrition'
 import NutritionFacts from '../../../components/NutritionFacts'
+import { UI_STYLES } from '../../../utils/uiStyles'
 
 interface RecipeFormLayoutProps {
   // Mode
@@ -57,11 +64,13 @@ interface RecipeFormLayoutProps {
   updateInstruction: (index: number, value: string) => void
   removeInstruction: (index: number) => void
   tags: string[]
+  setTags: (value: string[]) => void
   tagInput: string
   setTagInput: (value: string) => void
   addTag: () => void
   removeTag: (index: number) => void
   dietaryRestrictions: string[]
+  setDietaryRestrictions: (value: string[]) => void
   dietaryInput: string
   setDietaryInput: (value: string) => void
   addDietaryRestriction: () => void
@@ -125,11 +134,13 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   updateInstruction,
   removeInstruction,
   tags,
+  setTags,
   tagInput,
   setTagInput,
   addTag,
   removeTag,
   dietaryRestrictions,
+  setDietaryRestrictions,
   dietaryInput,
   setDietaryInput,
   addDietaryRestriction,
@@ -312,12 +323,29 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     prepTime: setPrepTime,
     cookTime: setCookTime,
     servings: setServings,
-  }), [setTitle, setDescription, setPrepTime, setCookTime, setServings])
+    tags: (value: string) => setTags(parseSuggestedList(value)),
+    dietaryRestrictions: (value: string) => setDietaryRestrictions(parseSuggestedList(value)),
+  }), [setTitle, setDescription, setPrepTime, setCookTime, setServings, setTags, setDietaryRestrictions])
+
+  const listFieldUndoSetters = useMemo(
+    () => ({
+      tags: setTags,
+      dietaryRestrictions: setDietaryRestrictions,
+    }),
+    [setTags, setDietaryRestrictions]
+  )
 
   // Internal undo handler: uses the local audit trail (from RecipeFormLayout's own hook)
   const handleLocalUndo = useCallback(() => {
     const result = localUndoLastAIChange()
     if (!result) return
+    const listFieldSetter =
+      listFieldUndoSetters[result.field as keyof typeof listFieldUndoSetters]
+    if (listFieldSetter) {
+      listFieldSetter(normalizeSuggestionListValue(result.previousValue))
+      if (onUndoLastAI) onUndoLastAI()
+      return
+    }
     const setterMap: Record<string, (v: string) => void> = {
       recipeName: setTitle,
       description: setDescription,
@@ -329,14 +357,20 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     if (setter) setter(String(result.previousValue ?? ''))
     // Also invoke the parent's undo handler if provided (for synchronisation)
     if (onUndoLastAI) onUndoLastAI()
-  }, [localUndoLastAIChange, setTitle, setDescription, setPrepTime, setCookTime, setServings, onUndoLastAI])
+  }, [localUndoLastAIChange, listFieldUndoSetters, setTitle, setDescription, setPrepTime, setCookTime, setServings, onUndoLastAI])
 
-  const handleEnhanceField = useCallback((field: string, currentValue: string) => {
-    fetchFieldSuggestion(field as import('../hooks/useAISuggestions').StringFieldKey, currentValue, {
+  const handleEnhanceField = useCallback(<K extends SuggestibleFieldKey>(field: K, currentValue: SuggestibleFieldValue<K>) => {
+    fetchFieldSuggestion(field, currentValue, {
       recipeName: title,
       description: description,
+      tags: tags.length > 0 ? tags : undefined,
+      dietaryRestrictions: dietaryRestrictions.length > 0 ? dietaryRestrictions : undefined,
+      ingredients: ingredients.filter(i => i.item.trim()).map(i =>
+        [i.quantity, i.unit, i.item].filter(Boolean).join(' ')
+      ),
+      instructions: instructions.filter(i => i.trim()),
     })
-  }, [fetchFieldSuggestion, title, description])
+  }, [fetchFieldSuggestion, title, description, tags, dietaryRestrictions, ingredients, instructions])
 
   const handleApplyFieldSuggestion = useCallback((field: string, value: string) => {
     const setter = fieldSetters[field]
@@ -346,11 +380,13 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
       prepTime,
       cookTime,
       servings,
+      tags,
+      dietaryRestrictions,
     }[field] ?? ''
     if (setter) {
       applySuggestion(field, () => setter(value), previousValue)
     }
-  }, [fieldSetters, title, description, prepTime, cookTime, servings, applySuggestion])
+  }, [fieldSetters, title, description, prepTime, cookTime, servings, tags, dietaryRestrictions, applySuggestion])
 
   // Shared request builder for AI suggestions
   const buildSuggestionRequest = () => ({
@@ -360,6 +396,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     cookTime: cookTime || undefined,
     servings: servings || undefined,
     tags: tags.length > 0 ? tags : undefined,
+    dietaryRestrictions: dietaryRestrictions.length > 0 ? dietaryRestrictions : undefined,
     ingredients: ingredients.filter(i => i.item.trim()).map(i =>
       [i.quantity, i.unit, i.item].filter(Boolean).join(' ')
     ),
@@ -380,10 +417,10 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
       <div className="mb-6 sm:mb-8">
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
+            <h1 className={`text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 ${UI_STYLES.heading}`}>
               {mode === 'create' ? 'Create Recipe' : 'Edit Recipe'}
             </h1>
-            <p className="text-sm sm:text-base text-gray-600">
+            <p className={`text-sm sm:text-base ${UI_STYLES.mutedText}`}>
               Step {currentStep} of {totalSteps}: {steps[currentStep - 1].title}
             </p>
           </div>
@@ -441,7 +478,8 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
             prepTime,
             cookTime,
             servings,
-            tags: tags.join(', '),
+            tags: stringifySuggestionList(tags),
+            dietaryRestrictions: stringifySuggestionList(dietaryRestrictions),
           }}
           onRetry={handleRetrySuggestions}
           currentStep={currentStep}
@@ -468,7 +506,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
           saveLoading={saveLoading}
         />
       ) : (
-        <form className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
+        <form className={`${UI_STYLES.surfaceCard} p-6 sm:p-8`}>
           <div>
             <RecipeFormSteps
                 currentStep={currentStep}
@@ -552,7 +590,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
               />
               {hasSavedNutrition && nutritionalInfo && (
                 <div className="mt-4 space-y-3">
-                  <p className="text-sm text-gray-600">
+                  <p className={`text-sm ${UI_STYLES.mutedText}`}>
                     AI nutrition values will be saved with this recipe unless you recalculate or dismiss them.
                   </p>
                   <NutritionFacts nutritionalInfo={nutritionalInfo} />
@@ -562,16 +600,16 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
           )}
 
           {/* Navigation Buttons */}
-          <div className="flex justify-between items-center gap-4 pt-6 border-t border-gray-200">
+          <div className="flex justify-between items-center gap-4 pt-6 border-t border-gray-200 dark:border-slate-700">
             <button
               type="button"
               onClick={handlePreviousStepClick}
               disabled={!canGoPrevious}
-              className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                !canGoPrevious
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              className={
+                canGoPrevious
+                  ? UI_STYLES.backButton
+                  : 'px-6 py-3 rounded-lg font-medium transition-colors bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+              }
             >
               ← Back
             </button>
@@ -580,7 +618,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                className={UI_STYLES.secondaryButtonNeutral}
               >
                 Cancel
               </button>

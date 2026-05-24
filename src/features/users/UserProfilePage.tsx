@@ -73,9 +73,9 @@ export const UserProfilePage: React.FC = () => {
           Go Back
         </button>
         <div className="text-center py-16">
-          <div className="text-6xl font-bold text-gray-300 mb-4">404</div>
-          <h2 className="text-2xl font-semibold text-gray-700 mb-2">User not found</h2>
-          <p className="text-gray-500">The profile you're looking for doesn't exist or has been removed.</p>
+          <div className="text-6xl font-bold text-gray-300 dark:text-gray-600 mb-4">404</div>
+          <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-100 mb-2">User not found</h2>
+          <p className="text-gray-500 dark:text-gray-400">The profile you're looking for doesn't exist or has been removed.</p>
         </div>
       </div>
     )
@@ -118,7 +118,7 @@ export const UserProfilePage: React.FC = () => {
 
       {/* Profile header */}
       <motion.div
-        className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-8"
+        className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 sm:p-8 mb-8"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -139,7 +139,7 @@ export const UserProfilePage: React.FC = () => {
 
           {/* Info */}
           <div className="flex-1 text-center sm:text-left">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">
               {profile.displayName}
             </h1>
 
@@ -154,9 +154,9 @@ export const UserProfilePage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setFollowModal('followers')}
-                      className="text-sm text-gray-600 hover:text-emerald-600 transition-colors focus:outline-none"
+                      className="text-sm text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors focus:outline-none"
                     >
-                      <span className="font-semibold text-gray-900">{displayFollowerCount}</span>
+                      <span className="font-semibold text-gray-900 dark:text-gray-100">{displayFollowerCount}</span>
                       {' '}
                       {displayFollowerCount === 1 ? 'follower' : 'followers'}
                     </button>
@@ -165,9 +165,9 @@ export const UserProfilePage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setFollowModal('following')}
-                      className="text-sm text-gray-600 hover:text-emerald-600 transition-colors focus:outline-none"
+                      className="text-sm text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors focus:outline-none"
                     >
-                      <span className="font-semibold text-gray-900">{profile.followingCount}</span>
+                      <span className="font-semibold text-gray-900 dark:text-gray-100">{profile.followingCount}</span>
                       {' '}
                       following
                     </button>
@@ -177,9 +177,9 @@ export const UserProfilePage: React.FC = () => {
             })()}
 
             {profile.bio && (
-              <p className="text-gray-600 mb-3">{profile.bio}</p>
+              <p className="text-gray-600 dark:text-gray-300 mb-3">{profile.bio}</p>
             )}
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               {profile.publicRecipeCount}{' '}
               {profile.publicRecipeCount === 1 ? 'public recipe' : 'public recipes'}
             </p>
@@ -191,11 +191,11 @@ export const UserProfilePage: React.FC = () => {
       </motion.div>
 
       {/* Public recipes grid */}
-      <h2 className="text-xl font-bold text-gray-900 mb-4">Public Recipes</h2>
+      <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Public Recipes</h2>
 
       {profile.publicRecipes.length === 0 ? (
         <motion.div
-          className="text-center py-12 text-gray-500"
+          className="text-center py-12 text-gray-500 dark:text-gray-400"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
@@ -238,14 +238,14 @@ export const UserProfilePage: React.FC = () => {
 
 export const UserProfilePageSkeleton: React.FC = () => (
   <div className="max-w-4xl mx-auto px-4 py-8">
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-8 animate-pulse">
+    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 sm:p-8 mb-8 animate-pulse">
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-200 flex-shrink-0" />
+        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-200 dark:bg-slate-700 flex-shrink-0" />
         <div className="flex-1 space-y-3">
-          <div className="h-7 bg-gray-200 rounded w-48" />
-          <div className="h-4 bg-gray-200 rounded w-64" />
-          <div className="h-4 bg-gray-200 rounded w-24" />
-          <div className="h-9 bg-gray-200 rounded w-24" />
+          <div className="h-7 bg-gray-200 dark:bg-slate-700 rounded w-48" />
+          <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-64" />
+          <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-24" />
+          <div className="h-9 bg-gray-200 dark:bg-slate-700 rounded w-24" />
         </div>
       </div>
     </div>

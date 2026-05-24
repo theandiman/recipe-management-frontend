@@ -57,11 +57,13 @@ function makeProps(overrides: Partial<ComponentProps<typeof RecipeFormLayout>> =
     updateInstruction: vi.fn(),
     removeInstruction: vi.fn(),
     tags: [],
+    setTags: vi.fn(),
     tagInput: '',
     setTagInput: vi.fn(),
     addTag: vi.fn(),
     removeTag: vi.fn(),
     dietaryRestrictions: [],
+    setDietaryRestrictions: vi.fn(),
     dietaryInput: '',
     setDietaryInput: vi.fn(),
     addDietaryRestriction: vi.fn(),
@@ -141,6 +143,26 @@ describe('RecipeFormLayout — on-demand AI enhancement (issue #35)', () => {
     )
   })
 
+  it('includes dietary restrictions in the AI assist request payload', async () => {
+    mockPostWithAuth.mockResolvedValueOnce({ data: { suggestions: [] } } as any)
+
+    renderWithRouter(makeProps({
+      title: 'Pasta',
+      tags: ['quick'],
+      dietaryRestrictions: ['vegetarian'],
+    }))
+    fireEvent.click(screen.getByRole('button', { name: /^AI assist$/i }))
+
+    await waitFor(() => expect(mockPostWithAuth).toHaveBeenCalledOnce())
+    expect(mockPostWithAuth).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        tags: ['quick'],
+        dietaryRestrictions: ['vegetarian'],
+      })
+    )
+  })
+
   it('shows the suggestion panel only after the button is clicked', async () => {
     mockPostWithAuth.mockResolvedValueOnce({
       data: {
@@ -212,6 +234,37 @@ describe('RecipeFormLayout — AI undo affordance (issue #42)', () => {
     await waitFor(() =>
       expect(screen.getByRole('button', { name: /Undo: Description/i })).toBeInTheDocument()
     )
+  })
+
+  it('applies dietary restriction suggestions as list values', async () => {
+    const setDietaryRestrictions = vi.fn()
+    mockPostWithAuth.mockResolvedValueOnce({
+      data: {
+        suggestions: [
+          {
+            field: 'dietaryRestrictions',
+            suggestedValue: 'gluten-free, dairy-free',
+            reason: 'Good fit',
+          },
+        ],
+      },
+    } as any)
+
+    renderWithRouter(makeProps({
+      currentStep: 4,
+      title: 'Soup',
+      ingredients: [{ quantity: '1', unit: 'cup', item: 'broth' }],
+      instructions: ['Simmer'],
+      setDietaryRestrictions,
+    }))
+    fireEvent.click(screen.getByRole('button', { name: /^AI assist$/i }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Apply AI suggestion for Dietary Restrictions/i })).toBeInTheDocument()
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Apply AI suggestion for Dietary Restrictions/i }))
+
+    expect(setDietaryRestrictions).toHaveBeenCalledWith(['gluten-free', 'dairy-free'])
   })
 })
 

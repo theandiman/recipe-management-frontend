@@ -9,8 +9,10 @@ export const ThemeToggle: React.FC = () => {
     <motion.button
       type="button"
       onClick={toggleTheme}
-      className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 overflow-hidden ${
-        theme === 'dark' ? 'bg-slate-700' : 'bg-emerald-100'
+      className={`relative inline-flex h-8 w-14 items-center rounded-full border overflow-hidden transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-gray-50 dark:focus:ring-offset-slate-900 ${
+        theme === 'dark'
+          ? 'border-slate-600 bg-slate-700'
+          : 'border-emerald-200 bg-emerald-100'
       }`}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}

@@ -21,14 +21,19 @@ export interface FieldSuggestionRequest {
   cookTime?: string
   servings?: string
   tags?: string[]
+  dietaryRestrictions?: string[]
   ingredients?: string[]
   instructions?: string[]
 }
 
 export type SuggestionStatus = 'idle' | 'loading' | 'success' | 'error'
 
-/** String-valued keys of FieldSuggestionRequest (excludes array-typed fields like tags/ingredients/instructions). */
-export type StringFieldKey = Exclude<keyof FieldSuggestionRequest, 'tags' | 'ingredients' | 'instructions'>
+/** Suggestible keys of FieldSuggestionRequest (excludes context-only array fields like ingredients/instructions). */
+export type SuggestibleFieldKey = Exclude<keyof FieldSuggestionRequest, 'ingredients' | 'instructions'>
+export type ListSuggestibleFieldKey = Extract<SuggestibleFieldKey, 'tags' | 'dietaryRestrictions'>
+export type ScalarSuggestibleFieldKey = Exclude<SuggestibleFieldKey, ListSuggestibleFieldKey>
+export type SuggestibleFieldValue<K extends SuggestibleFieldKey = SuggestibleFieldKey> =
+  K extends ListSuggestibleFieldKey ? string[] : string
 
 interface UseAISuggestionsReturn {
   suggestions: FieldSuggestion[]
@@ -36,9 +41,13 @@ interface UseAISuggestionsReturn {
   status: SuggestionStatus
   error: string | null
   fetchSuggestions: (request: FieldSuggestionRequest) => Promise<void>
-  fetchFieldSuggestion: (field: StringFieldKey, currentValue: string, context?: Partial<FieldSuggestionRequest>) => Promise<void>
+  fetchFieldSuggestion: <K extends SuggestibleFieldKey>(
+    field: K,
+    currentValue: SuggestibleFieldValue<K>,
+    context?: Partial<FieldSuggestionRequest>
+  ) => Promise<void>
   fieldStatus: Map<string, SuggestionStatus>
-  applySuggestion: (field: string, applyFn: (value: string) => void, previousValue: string) => void
+  applySuggestion: (field: string, applyFn: (value: string) => void, previousValue: unknown) => void
   dismissSuggestion: (field: string) => void
   visibleSuggestions: FieldSuggestion[]
   // Audit trail
@@ -108,14 +117,23 @@ export function useAISuggestions(): UseAISuggestionsReturn {
   }, [recordSuggestion])
 
   const fetchFieldSuggestion = useCallback(async (
-    field: StringFieldKey,
-    currentValue: string,
+    field: SuggestibleFieldKey,
+    currentValue: string | string[],
     context?: Partial<FieldSuggestionRequest>
   ) => {
     setFieldStatus(prev => new Map(prev).set(field, 'loading'))
     setError(null)
 
-    const request: FieldSuggestionRequest = { ...context, [field]: currentValue }
+    const request: FieldSuggestionRequest =
+      field === 'tags' || field === 'dietaryRestrictions'
+        ? {
+            ...context,
+            [field]: Array.isArray(currentValue) ? currentValue : [],
+          }
+        : {
+            ...context,
+            [field]: typeof currentValue === 'string' ? currentValue : '',
+          }
 
     try {
       const apiBase = import.meta.env.VITE_AI_API_URL ?? import.meta.env.VITE_API_URL ?? ''
@@ -147,7 +165,7 @@ export function useAISuggestions(): UseAISuggestionsReturn {
     }
   }, [recordSuggestion])
 
-  const applySuggestion = useCallback((field: string, applyFn: (value: string) => void, previousValue: string) => {
+  const applySuggestion = useCallback((field: string, applyFn: (value: string) => void, previousValue: unknown) => {
     const suggestion = suggestions.find(s => s.field === field)
     if (!suggestion) return
 
