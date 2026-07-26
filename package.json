@@ -20,7 +20,7 @@
     "@theandiman/recipe-management-shared": "1.0.16",
     "axios": "^1.13.2",
     "firebase": "^12.5.0",
-    "framer-motion": "^12.23.24",
+    "motion": "^12.23.24",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-redux": "^9.2.0",
