@@ -337,11 +337,29 @@ jobs:
 
       - name: Verify required secrets
         run: |
+          trim_url() {
+            printf '%s' "${1%/}"
+          }
+
           if [ -z "$VITE_MANAGEMENT_API_URL" ]; then
             echo "::error::VITE_MANAGEMENT_API_URL secret is not set. Aborting deploy to prevent a miswired bundle."
             exit 1
           fi
+
+          AI_API_URL="${VITE_AI_API_URL:-$VITE_API_URL}"
+
+          if [ -z "$AI_API_URL" ]; then
+            echo "::error::Set VITE_AI_API_URL (preferred) or VITE_API_URL for AI features before deploying."
+            exit 1
+          fi
+
+          if [ "$(trim_url "$AI_API_URL")" = "$(trim_url "$VITE_MANAGEMENT_API_URL")" ]; then
+            echo "::error::AI and management API URLs point to the same service. Check VITE_AI_API_URL/VITE_API_URL and VITE_MANAGEMENT_API_URL secrets."
+            exit 1
+          fi
         env:
+          VITE_AI_API_URL: ${{ secrets.VITE_AI_API_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_MANAGEMENT_API_URL: ${{ secrets.VITE_MANAGEMENT_API_URL }}
 
       - name: Build for production with environment secrets
@@ -353,6 +371,7 @@ jobs:
           VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_AI_API_URL: ${{ secrets.VITE_AI_API_URL }}
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_MANAGEMENT_API_URL: ${{ secrets.VITE_MANAGEMENT_API_URL }}
 
@@ -426,8 +445,11 @@ jobs:
         run: |
           echo "Testing API health..."
           # Test AI service health (if available)
-          if [ -n "${{ secrets.VITE_API_URL }}" ]; then
-            api_url="${{ secrets.VITE_API_URL }}"
+          if [ -n "${{ secrets.VITE_AI_API_URL }}" ] || [ -n "${{ secrets.VITE_API_URL }}" ]; then
+            api_url="${{ secrets.VITE_AI_API_URL }}"
+            if [ -z "$api_url" ]; then
+              api_url="${{ secrets.VITE_API_URL }}"
+            fi
             echo "Checking AI service at: $api_url"
             
             # Try health endpoint
@@ -438,7 +460,7 @@ jobs:
               echo "⚠️  AI service health check returned: $response (may be expected if service is down)"
             fi
           else
-            echo "ℹ️  API URL not configured, skipping API health check"
+            echo "ℹ️  No AI API URL configured, skipping API health check"
           fi
 
       - name: Test Firebase configuration

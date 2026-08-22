@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { buildApiUrl } from '../../../utils/apiUtils'
+import { resolveAiApiBase } from '../../../utils/aiApi'
 import { postWithAuth } from '../../../utils/authApi'
 import { useAIAuditTrail } from './useAIAuditTrail'
 import type { AuditEntry, UndoResult } from './useAIAuditTrail'
@@ -113,7 +114,7 @@ export function useAISuggestions(): UseAISuggestionsReturn {
     const startTime = Date.now()
 
     try {
-      const apiBase = import.meta.env.VITE_AI_API_URL ?? import.meta.env.VITE_API_URL ?? ''
+      const apiBase = resolveAiApiBase()
       const url = buildApiUrl(apiBase, '/api/recipes/suggest-fields')
       const res = await postWithAuth(url, request)
       const data = res.data as { suggestions: FieldSuggestion[] }
@@ -163,7 +164,7 @@ export function useAISuggestions(): UseAISuggestionsReturn {
           }
 
     try {
-      const apiBase = import.meta.env.VITE_AI_API_URL ?? import.meta.env.VITE_API_URL ?? ''
+      const apiBase = resolveAiApiBase()
       const url = buildApiUrl(apiBase, '/api/recipes/suggest-fields')
       const res = await postWithAuth(url, request)
       const data = res.data as { suggestions: FieldSuggestion[] }

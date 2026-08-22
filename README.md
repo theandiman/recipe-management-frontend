@@ -107,8 +107,9 @@ If you want the frontend to call a locally running AI service (the AI service ru
       - `mvn -DskipTests spring-boot:run`
 
 - Run the frontend dev server and point the app to your local backend:
-   - Copy `.env.local.example` to `.env.local` and edit `VITE_API_URL` to `http://localhost:8080` (or set it in your shell before starting the frontend):
-      - `export VITE_API_URL=http://localhost:8080`
+   - Copy `.env.local.example` to `.env.local` and edit `VITE_AI_API_URL` to `http://localhost:8080` plus `VITE_MANAGEMENT_API_URL` to your storage service (or set them in your shell before starting the frontend):
+      - `export VITE_AI_API_URL=http://localhost:8080`
+      - `export VITE_MANAGEMENT_API_URL=http://localhost:8081`
       - `npm run dev`
 
 The dev server includes a Vite proxy that forwards `/api` -> `http://localhost:8080` so local calls are proxied and CORS is avoided.
@@ -173,4 +174,3 @@ This project uses GitHub Actions for CI/CD:
 - **Security**: Checks for vulnerabilities and secrets
 
 All checks must pass before merging PRs.
-

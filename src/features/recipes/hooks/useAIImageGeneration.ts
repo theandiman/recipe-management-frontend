@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { buildApiUrl } from '../../../utils/apiUtils'
+import { resolveAiApiBase } from '../../../utils/aiApi'
 import { postWithAuth } from '../../../utils/authApi'
 
 export type AIImageGenerationStatus = 'idle' | 'loading' | 'success' | 'error'
@@ -29,9 +30,10 @@ export function useAIImageGeneration(): UseAIImageGenerationReturn {
       setStatus('loading')
       setError(null)
       try {
-        const apiBase = import.meta.env.VITE_AI_API_URL || import.meta.env.VITE_API_URL || ''
+        const apiBase = resolveAiApiBase()
         const url = buildApiUrl(apiBase, '/api/recipes/image/generate')
-        const res = await postWithAuth(url, { recipeName, description })
+        const prompt = [recipeName.trim(), description?.trim()].filter(Boolean).join(': ')
+        const res = await postWithAuth(url, { prompt })
         const data = res.data as { imageUrl?: string; image?: string }
         const imageUrl = data?.imageUrl || data?.image || null
 
