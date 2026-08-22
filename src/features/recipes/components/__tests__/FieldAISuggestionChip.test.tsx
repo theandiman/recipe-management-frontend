@@ -30,6 +30,24 @@ describe('FieldAISuggestionChip', () => {
     expect(screen.getByText('AI suggestion')).toBeInTheDocument()
   })
 
+  it('renders the optional reason below the suggestion', () => {
+    render(
+      <FieldAISuggestionChip
+        field="recipeName"
+        suggestion="A delicious pasta dish"
+        reason="More descriptive title"
+        currentValue=""
+        onApply={vi.fn()}
+        onDismiss={vi.fn()}
+      />
+    )
+
+    const reason = screen.getByText('More descriptive title')
+    expect(reason).toBeInTheDocument()
+    expect(reason.tagName).toBe('P')
+    expect(reason).toHaveClass('italic')
+  })
+
   it('shows Apply and Dismiss buttons', () => {
     render(
       <FieldAISuggestionChip
@@ -101,5 +119,25 @@ describe('FieldAISuggestionChip', () => {
     )
     expect(container.querySelector('s')).not.toBeInTheDocument()
     expect(screen.getByText('New pasta dish')).toBeInTheDocument()
+  })
+
+  it('keeps controls accessible while the entrance animation class is applied', () => {
+    const { container } = render(
+      <FieldAISuggestionChip
+        field="recipeName"
+        suggestion="New pasta dish"
+        reason="Clearer wording"
+        currentValue=""
+        onApply={vi.fn()}
+        onDismiss={vi.fn()}
+      />
+    )
+
+    expect(container.firstChild).toHaveAttribute(
+      'class',
+      expect.stringContaining('animate-field-ai-chip-enter')
+    )
+    expect(screen.getByRole('button', { name: /apply/i })).toBeVisible()
+    expect(screen.getByRole('button', { name: /dismiss/i })).toBeVisible()
   })
 })

@@ -58,3 +58,20 @@
     @apply text-gray-500;
   }
 }
+
+@layer utilities {
+  @keyframes field-ai-chip-enter {
+    from {
+      opacity: 0;
+      transform: translateY(-0.25rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-field-ai-chip-enter {
+    animation: field-ai-chip-enter 180ms ease-out;
+  }
+}

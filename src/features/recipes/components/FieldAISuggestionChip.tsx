@@ -9,6 +9,7 @@ import {
 export interface FieldAISuggestionChipProps {
   field: string
   suggestion: string
+  reason?: string
   currentValue: string
   onApply: () => void
   onDismiss: () => void
@@ -16,12 +17,13 @@ export interface FieldAISuggestionChipProps {
 
 export const FieldAISuggestionChip: React.FC<FieldAISuggestionChipProps> = ({
   suggestion,
+  reason,
   currentValue,
   onApply,
   onDismiss,
 }) => {
   return (
-    <div className={`mt-2 px-3 py-3 text-sm flex items-start gap-3 ${AI_MUTED_PANEL_CLASS}`}>
+    <div className={`mt-2 px-3 py-3 text-sm flex items-start gap-3 animate-field-ai-chip-enter ${AI_MUTED_PANEL_CLASS}`}>
       <div className="flex-1 min-w-0">
         <p className={AI_EYEBROW_CLASS}>AI suggestion</p>
         {currentValue && (
@@ -31,6 +33,9 @@ export const FieldAISuggestionChip: React.FC<FieldAISuggestionChipProps> = ({
           </p>
         )}
         <p className="leading-5 text-gray-800 dark:text-gray-100">{suggestion}</p>
+        {reason && (
+          <p className="mt-1 text-xs italic text-gray-500 dark:text-gray-400">{reason}</p>
+        )}
       </div>
       <div className="flex items-center gap-1.5 shrink-0">
         <button
