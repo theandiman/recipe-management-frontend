@@ -6,7 +6,7 @@ import { AISpinnerIcon } from './AISpinnerIcon'
 
 import { RecipePreview } from './RecipePreview'
 import { AISuggestionPanel } from './AISuggestionPanel'
-import { useAISuggestions } from '../hooks/useAISuggestions'
+import { isFieldSuggestion, useAISuggestions } from '../hooks/useAISuggestions'
 import { useInstructionRefinement } from '../hooks/useInstructionRefinement'
 import { useAIImageGeneration } from '../hooks/useAIImageGeneration'
 import { FIELD_LABELS } from '../constants/aiConstants'
@@ -372,8 +372,8 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     })
   }, [fetchFieldSuggestion, title, description, tags, dietaryRestrictions, ingredients, instructions])
 
-  const handleApplyFieldSuggestion = useCallback((field: string, value: string) => {
-    const setter = fieldSetters[field]
+  const handleApplyFieldSuggestion = useCallback((suggestion: import('../hooks/useAISuggestions').FieldSuggestion) => {
+    const setter = fieldSetters[suggestion.field]
     const previousValue = {
       recipeName: title,
       description,
@@ -382,9 +382,9 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
       servings,
       tags,
       dietaryRestrictions,
-    }[field] ?? ''
+    }[suggestion.field] ?? ''
     if (setter) {
-      applySuggestion(field, () => setter(value), previousValue)
+      applySuggestion(suggestion, () => setter(suggestion.suggestedValue), previousValue)
     }
   }, [fieldSetters, title, description, prepTime, cookTime, servings, tags, dietaryRestrictions, applySuggestion])
 
@@ -410,6 +410,11 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   const handleRetrySuggestions = () => {
     fetchSuggestions(buildSuggestionRequest())
   }
+
+  const fieldVisibleSuggestions = useMemo(
+    () => visibleSuggestions.filter(isFieldSuggestion),
+    [visibleSuggestions]
+  )
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -555,7 +560,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 onDismissNormalization={onDismissNormalization}
                 onEnhanceField={handleEnhanceField}
                 fieldStatus={fieldStatus}
-                fieldSuggestions={visibleSuggestions}
+                fieldSuggestions={fieldVisibleSuggestions}
                 onApplyFieldSuggestion={handleApplyFieldSuggestion}
                 onDismissFieldSuggestion={dismissSuggestion}
                 onGenerateAIImage={setImagePreview ? handleGenerateAIImage : undefined}

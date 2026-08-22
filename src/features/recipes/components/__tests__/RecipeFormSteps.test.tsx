@@ -189,7 +189,7 @@ describe('RecipeFormSteps — per-field AI enhance (issue #40)', () => {
         {...makeProps({
           currentStep: 1,
           onEnhanceField: vi.fn(),
-          fieldSuggestions: [{ field: 'recipeName', suggestedValue: 'Amazing Pasta', reason: 'Sounds great' }],
+          fieldSuggestions: [{ field: 'recipeName', suggestedValue: 'Amazing Pasta', reason: 'Sounds great', source: 'field' }],
           onApplyFieldSuggestion: vi.fn(),
           onDismissFieldSuggestion: vi.fn(),
         })}
@@ -205,14 +205,16 @@ describe('RecipeFormSteps — per-field AI enhance (issue #40)', () => {
         {...makeProps({
           currentStep: 1,
           onEnhanceField: vi.fn(),
-          fieldSuggestions: [{ field: 'recipeName', suggestedValue: 'Amazing Pasta', reason: 'Sounds great' }],
+          fieldSuggestions: [{ field: 'recipeName', suggestedValue: 'Amazing Pasta', reason: 'Sounds great', source: 'field' }],
           onApplyFieldSuggestion: onApply,
           onDismissFieldSuggestion: vi.fn(),
         })}
       />
     )
     fireEvent.click(screen.getByRole('button', { name: /apply/i }))
-    expect(onApply).toHaveBeenCalledWith('recipeName', 'Amazing Pasta')
+    expect(onApply).toHaveBeenCalledWith(
+      expect.objectContaining({ field: 'recipeName', suggestedValue: 'Amazing Pasta', source: 'field' })
+    )
   })
 
   it('calls onDismissFieldSuggestion when Dismiss clicked on chip', () => {
@@ -222,14 +224,16 @@ describe('RecipeFormSteps — per-field AI enhance (issue #40)', () => {
         {...makeProps({
           currentStep: 1,
           onEnhanceField: vi.fn(),
-          fieldSuggestions: [{ field: 'recipeName', suggestedValue: 'Amazing Pasta', reason: 'Sounds great' }],
+          fieldSuggestions: [{ field: 'recipeName', suggestedValue: 'Amazing Pasta', reason: 'Sounds great', source: 'field' }],
           onApplyFieldSuggestion: vi.fn(),
           onDismissFieldSuggestion: onDismiss,
         })}
       />
     )
     fireEvent.click(screen.getByRole('button', { name: /dismiss/i }))
-    expect(onDismiss).toHaveBeenCalledWith('recipeName')
+    expect(onDismiss).toHaveBeenCalledWith(
+      expect.objectContaining({ field: 'recipeName', suggestedValue: 'Amazing Pasta', source: 'field' })
+    )
   })
 
   it('shows AI enhance buttons for tags and dietary restrictions on step 4', () => {
@@ -257,7 +261,7 @@ describe('RecipeFormSteps — per-field AI enhance (issue #40)', () => {
           currentStep: 4,
           onEnhanceField: vi.fn(),
           fieldSuggestions: [
-            { field: 'dietaryRestrictions', suggestedValue: 'gluten-free, dairy-free', reason: 'Matches ingredients' },
+            { field: 'dietaryRestrictions', suggestedValue: 'gluten-free, dairy-free', reason: 'Matches ingredients', source: 'field' },
           ],
           onApplyFieldSuggestion: onApply,
           onDismissFieldSuggestion: vi.fn(),
@@ -267,7 +271,29 @@ describe('RecipeFormSteps — per-field AI enhance (issue #40)', () => {
 
     expect(screen.getByText('gluten-free, dairy-free')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /apply/i }))
-    expect(onApply).toHaveBeenCalledWith('dietaryRestrictions', 'gluten-free, dairy-free')
+    expect(onApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        field: 'dietaryRestrictions',
+        suggestedValue: 'gluten-free, dairy-free',
+        source: 'field',
+      })
+    )
+  })
+
+  it('does not render bulk suggestions as inline chips', () => {
+    render(
+      <RecipeFormSteps
+        {...makeProps({
+          currentStep: 1,
+          onEnhanceField: vi.fn(),
+          fieldSuggestions: [{ field: 'recipeName', suggestedValue: 'Bulk title', reason: 'Bulk only' }],
+          onApplyFieldSuggestion: vi.fn(),
+          onDismissFieldSuggestion: vi.fn(),
+        })}
+      />
+    )
+
+    expect(screen.queryByText('Bulk title')).not.toBeInTheDocument()
   })
 })
 

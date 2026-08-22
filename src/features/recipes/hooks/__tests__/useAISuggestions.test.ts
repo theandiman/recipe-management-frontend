@@ -60,6 +60,7 @@ describe('useAISuggestions', () => {
 
     expect(result.current.suggestions).toHaveLength(1)
     expect(result.current.suggestions[0].field).toBe('description')
+    expect(result.current.suggestions[0].source).toBe('bulk')
     expect(result.current.visibleSuggestions).toHaveLength(1)
   })
 
@@ -97,7 +98,7 @@ describe('useAISuggestions', () => {
 
     const setter = vi.fn()
     act(() => {
-      result.current.applySuggestion('description', setter, '')
+      result.current.applySuggestion(result.current.suggestions[0], setter, '')
     })
 
     expect(setter).toHaveBeenCalledWith('A tasty dish')
@@ -122,12 +123,12 @@ describe('useAISuggestions', () => {
     })
 
     act(() => {
-      result.current.dismissSuggestion('description')
+      result.current.dismissSuggestion(result.current.suggestions[0])
     })
 
     expect(result.current.visibleSuggestions).toHaveLength(1)
     expect(result.current.visibleSuggestions[0].field).toBe('prepTime')
-    expect(result.current.dismissedFields.has('description')).toBe(true)
+    expect(result.current.dismissedFields.has('bulk:description')).toBe(true)
   })
 
   it('dismissing one suggestion does not affect other suggestions', async () => {
@@ -148,7 +149,7 @@ describe('useAISuggestions', () => {
     })
 
     act(() => {
-      result.current.dismissSuggestion('prepTime')
+      result.current.dismissSuggestion(result.current.suggestions[0])
     })
 
     const visible = result.current.visibleSuggestions
@@ -178,13 +179,13 @@ describe('useAISuggestions', () => {
         // Apply suggestion
     const setter = vi.fn()
     act(() => {
-      result.current.applySuggestion('description', setter, '')
+      result.current.applySuggestion(result.current.suggestions[0], setter, '')
     })
     expect(events).toContain('ai_suggestion_applied')
 
     // Dismiss suggestion (should be no-op since it's already applied, but event should still fire)
     act(() => {
-      result.current.dismissSuggestion('description')
+      result.current.dismissSuggestion(result.current.suggestions[0])
     })
     expect(events).toContain('ai_suggestion_dismissed')
 
@@ -234,6 +235,7 @@ describe('useAISuggestions', () => {
       expect(result.current.suggestions).toHaveLength(1)
       expect(result.current.suggestions[0].field).toBe('description')
       expect(result.current.suggestions[0].suggestedValue).toBe('A delicious meal')
+      expect(result.current.suggestions[0].source).toBe('field')
     })
 
     it('should set fieldStatus[field] to success after fetch', async () => {
@@ -264,7 +266,7 @@ describe('useAISuggestions', () => {
       expect(result.current.fieldStatus.get('cookTime')).toBe('error')
     })
 
-    it('should not affect fieldStatus or suggestions for other fields', async () => {
+    it('should not affect fieldStatus or bulk suggestions for other fields', async () => {
       // Pre-populate suggestions for another field via fetchSuggestions
       mockPostWithAuth.mockResolvedValueOnce({
         data: {
@@ -289,10 +291,17 @@ describe('useAISuggestions', () => {
         await result.current.fetchFieldSuggestion('description', '')
       })
 
-      // prepTime suggestion should still be present
+      // prepTime bulk suggestion should still be present
       const prepTimeSuggestion = result.current.suggestions.find(s => s.field === 'prepTime')
       expect(prepTimeSuggestion).toBeDefined()
       expect(prepTimeSuggestion?.suggestedValue).toBe('10 min')
+      expect(prepTimeSuggestion?.source).toBe('bulk')
+
+      const descriptionSuggestion = result.current.suggestions.find(
+        s => s.field === 'description' && s.source === 'field'
+      )
+      expect(descriptionSuggestion).toBeDefined()
+      expect(descriptionSuggestion?.suggestedValue).toBe('Tasty')
 
       // fieldStatus for description should be success, prepTime unaffected
       expect(result.current.fieldStatus.get('description')).toBe('success')
@@ -350,6 +359,131 @@ describe('useAISuggestions', () => {
       expect(result.current.suggestions.map(s => s.field)).toContain('prepTime')
       expect(result.current.suggestions.map(s => s.field)).toContain('cookTime')
       expect(result.current.suggestions.map(s => s.field)).toContain('description')
+    })
+
+    it('keeps bulk and field suggestions for the same field side by side', async () => {
+      mockPostWithAuth.mockResolvedValueOnce({
+        data: {
+          suggestions: [{ field: 'description', suggestedValue: 'Bulk description', reason: '' }],
+        },
+      } as any)
+
+      const { result } = renderHook(() => useAISuggestions())
+
+      await act(async () => {
+        await result.current.fetchSuggestions({ recipeName: 'Pasta' })
+      })
+
+      mockPostWithAuth.mockResolvedValueOnce({
+        data: {
+          suggestions: [{ field: 'description', suggestedValue: 'Field description', reason: '' }],
+        },
+      } as any)
+
+      await act(async () => {
+        await result.current.fetchFieldSuggestion('description', '')
+      })
+
+      const descriptionSuggestions = result.current.suggestions.filter(s => s.field === 'description')
+      expect(descriptionSuggestions).toHaveLength(2)
+      expect(descriptionSuggestions).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ suggestedValue: 'Bulk description', source: 'bulk' }),
+          expect.objectContaining({ suggestedValue: 'Field description', source: 'field' }),
+        ])
+      )
+    })
+
+    it('applying a field suggestion uses that suggestion instead of the bulk suggestion for the same field', async () => {
+      mockPostWithAuth.mockResolvedValueOnce({
+        data: {
+          suggestions: [{ field: 'description', suggestedValue: 'Bulk description', reason: '' }],
+        },
+      } as any)
+
+      const { result } = renderHook(() => useAISuggestions())
+
+      await act(async () => {
+        await result.current.fetchSuggestions({ recipeName: 'Pasta' })
+      })
+
+      mockPostWithAuth.mockResolvedValueOnce({
+        data: {
+          suggestions: [{ field: 'description', suggestedValue: 'Field description', reason: '' }],
+        },
+      } as any)
+
+      await act(async () => {
+        await result.current.fetchFieldSuggestion('description', '')
+      })
+
+      const setter = vi.fn()
+      const fieldSuggestion = result.current.suggestions.find(
+        suggestion => suggestion.field === 'description' && suggestion.source === 'field'
+      )
+
+      expect(fieldSuggestion).toBeDefined()
+
+      act(() => {
+        result.current.applySuggestion(fieldSuggestion!, setter, '')
+      })
+
+      expect(setter).toHaveBeenCalledWith('Field description')
+      expect(
+        result.current.visibleSuggestions.find(
+          suggestion => suggestion.field === 'description' && suggestion.source === 'bulk'
+        )
+      ).toBeDefined()
+      expect(
+        result.current.visibleSuggestions.find(
+          suggestion => suggestion.field === 'description' && suggestion.source === 'field'
+        )
+      ).toBeUndefined()
+    })
+
+    it('dismissing a field suggestion does not hide the bulk suggestion for the same field', async () => {
+      mockPostWithAuth.mockResolvedValueOnce({
+        data: {
+          suggestions: [{ field: 'description', suggestedValue: 'Bulk description', reason: '' }],
+        },
+      } as any)
+
+      const { result } = renderHook(() => useAISuggestions())
+
+      await act(async () => {
+        await result.current.fetchSuggestions({ recipeName: 'Pasta' })
+      })
+
+      mockPostWithAuth.mockResolvedValueOnce({
+        data: {
+          suggestions: [{ field: 'description', suggestedValue: 'Field description', reason: '' }],
+        },
+      } as any)
+
+      await act(async () => {
+        await result.current.fetchFieldSuggestion('description', '')
+      })
+
+      const fieldSuggestion = result.current.suggestions.find(
+        suggestion => suggestion.field === 'description' && suggestion.source === 'field'
+      )
+
+      expect(fieldSuggestion).toBeDefined()
+
+      act(() => {
+        result.current.dismissSuggestion(fieldSuggestion!)
+      })
+
+      expect(
+        result.current.visibleSuggestions.find(
+          suggestion => suggestion.field === 'description' && suggestion.source === 'bulk'
+        )
+      ).toBeDefined()
+      expect(
+        result.current.visibleSuggestions.find(
+          suggestion => suggestion.field === 'description' && suggestion.source === 'field'
+        )
+      ).toBeUndefined()
     })
   })
 
