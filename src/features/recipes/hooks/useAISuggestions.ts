@@ -60,6 +60,7 @@ interface UseAISuggestionsReturn {
   dismissedFields: Set<string>
   status: SuggestionStatus
   error: string | null
+  fieldErrors: Map<string, string>
   fetchSuggestions: (request: FieldSuggestionRequest) => Promise<void>
   fetchFieldSuggestion: <K extends SuggestibleFieldKey>(
     field: K,
@@ -90,6 +91,7 @@ export function useAISuggestions(): UseAISuggestionsReturn {
   const [status, setStatus] = useState<SuggestionStatus>('idle')
   const [error, setError] = useState<string | null>(null)
   const [fieldStatus, setFieldStatus] = useState<Map<string, SuggestionStatus>>(new Map())
+  const [fieldErrors, setFieldErrors] = useState<Map<string, string>>(new Map())
 
   const {
     auditLog,
@@ -105,6 +107,7 @@ export function useAISuggestions(): UseAISuggestionsReturn {
     setSuggestions([])
     setDismissedFields(new Set())
     setFieldStatus(new Map())
+    setFieldErrors(new Map())
     setStatus('loading')
     setError(null)
     const startTime = Date.now()
@@ -142,7 +145,11 @@ export function useAISuggestions(): UseAISuggestionsReturn {
     context?: Partial<FieldSuggestionRequest>
   ) => {
     setFieldStatus(prev => new Map(prev).set(field, 'loading'))
-    setError(null)
+    setFieldErrors(prev => {
+      const next = new Map(prev)
+      next.delete(field)
+      return next
+    })
 
     const request: FieldSuggestionRequest =
       field === 'tags' || field === 'dietaryRestrictions'
@@ -173,14 +180,19 @@ export function useAISuggestions(): UseAISuggestionsReturn {
         return next
       })
       setFieldStatus(prev => new Map(prev).set(field, 'success'))
+      setFieldErrors(prev => {
+        const next = new Map(prev)
+        next.delete(field)
+        return next
+      })
 
       for (const s of fieldSuggestions) {
         recordSuggestion(s.field, s.suggestedValue)
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to fetch AI suggestion'
-      setError(msg)
       setFieldStatus(prev => new Map(prev).set(field, 'error'))
+      setFieldErrors(prev => new Map(prev).set(field, msg))
       console.warn('[AI Suggestions] fetchFieldSuggestion failed:', msg)
     }
   }, [recordSuggestion])
@@ -217,6 +229,7 @@ export function useAISuggestions(): UseAISuggestionsReturn {
     dismissedFields,
     status,
     error,
+    fieldErrors,
     fetchSuggestions,
     fetchFieldSuggestion,
     fieldStatus,

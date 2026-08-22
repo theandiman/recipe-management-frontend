@@ -13,6 +13,7 @@ vi.mock('../../../../utils/apiUtils', () => ({
 
 import { postWithAuth } from '../../../../utils/authApi'
 const mockPostWithAuth = vi.mocked(postWithAuth)
+type MockApiResponse = Awaited<ReturnType<typeof postWithAuth>>
 
 const mockIngredients = [{ quantity: '', unit: '', item: '' }]
 const mockSteps = [
@@ -130,13 +131,65 @@ describe('RecipeFormLayout — on-demand AI enhancement (issue #35)', () => {
     expect(screen.getByRole('button', { name: /AI assist/i })).toHaveClass('bg-gray-50', 'text-gray-700')
   })
 
-  it('does NOT render the "AI assist" button on step 5 (preview)', () => {
+  it('renders the "AI assist" button on step 5 (preview)', () => {
     renderWithRouter(makeProps({ currentStep: 5 }))
-    expect(screen.queryByRole('button', { name: /AI assist/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /AI assist/i })).toBeInTheDocument()
+  })
+
+  it('lets users apply tag suggestions directly from the preview step', async () => {
+    const setTags = vi.fn()
+    mockPostWithAuth.mockResolvedValueOnce({
+      data: {
+        suggestions: [
+          { field: 'tags', suggestedValue: 'quick, weeknight', reason: 'Helpful categorization' },
+        ],
+      },
+    } as MockApiResponse)
+
+    renderWithRouter(makeProps({
+      currentStep: 5,
+      title: 'Pasta',
+      ingredients: [{ quantity: '1', unit: 'lb', item: 'pasta' }],
+      instructions: ['Boil water'],
+      setTags,
+    }))
+
+    fireEvent.click(screen.getByRole('button', { name: /^AI assist$/i }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Apply AI suggestion for Tags/i })).toBeInTheDocument()
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /Apply AI suggestion for Tags/i }))
+
+    expect(setTags).toHaveBeenCalledWith(['quick', 'weeknight'])
+  })
+
+  it('keeps bulk suggestion errors visible when a field-level enhancement fails', async () => {
+    mockPostWithAuth.mockRejectedValueOnce(new Error('Bulk request failed'))
+
+    renderWithRouter(makeProps({ currentStep: 1 }))
+    fireEvent.click(screen.getByRole('button', { name: /^AI assist$/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/Bulk request failed/i)).toBeInTheDocument()
+    })
+
+    mockPostWithAuth.mockRejectedValueOnce(new Error('Field request failed'))
+    const fieldButton = document.querySelector('button[data-field="recipeName"]')
+    expect(fieldButton).not.toBeNull()
+    fireEvent.click(fieldButton!)
+
+    await waitFor(() => {
+      expect(screen.getByText(/Could not enhance Recipe Name\./i)).toBeInTheDocument()
+      expect(screen.getByText(/Field request failed/i)).toBeInTheDocument()
+    })
+
+    expect(screen.getByText(/Bulk request failed/i)).toBeInTheDocument()
   })
 
   it('calls AI suggestions API when "AI assist" is clicked', async () => {
-    mockPostWithAuth.mockResolvedValueOnce({ data: { suggestions: [] } } as any)
+    mockPostWithAuth.mockResolvedValueOnce({ data: { suggestions: [] } } as MockApiResponse)
 
     renderWithRouter(makeProps({ title: 'Pasta' }))
     fireEvent.click(screen.getByRole('button', { name: /^AI assist$/i }))
@@ -149,7 +202,7 @@ describe('RecipeFormLayout — on-demand AI enhancement (issue #35)', () => {
   })
 
   it('includes dietary restrictions in the AI assist request payload', async () => {
-    mockPostWithAuth.mockResolvedValueOnce({ data: { suggestions: [] } } as any)
+    mockPostWithAuth.mockResolvedValueOnce({ data: { suggestions: [] } } as MockApiResponse)
 
     renderWithRouter(makeProps({
       title: 'Pasta',
@@ -175,7 +228,7 @@ describe('RecipeFormLayout — on-demand AI enhancement (issue #35)', () => {
           { field: 'description', suggestedValue: 'A tasty dish', reason: 'Empty' },
         ],
       },
-    } as any)
+    } as MockApiResponse)
 
     renderWithRouter(makeProps({ title: 'Pasta' }))
     // Panel is hidden before click
@@ -189,7 +242,7 @@ describe('RecipeFormLayout — on-demand AI enhancement (issue #35)', () => {
   })
 
   it('disables the button while a fetch is in progress', async () => {
-    let resolvePost: (v: any) => void
+    let resolvePost: ((value: MockApiResponse) => void) | undefined
     mockPostWithAuth.mockImplementationOnce(() => new Promise(r => { resolvePost = r }))
 
     renderWithRouter(makeProps())
@@ -198,7 +251,7 @@ describe('RecipeFormLayout — on-demand AI enhancement (issue #35)', () => {
 
     await waitFor(() => expect(btn).toBeDisabled())
 
-    resolvePost!({ data: { suggestions: [] } })
+    resolvePost!({ data: { suggestions: [] } } as MockApiResponse)
     await waitFor(() => expect(btn).not.toBeDisabled())
   })
 })
@@ -226,7 +279,7 @@ describe('RecipeFormLayout — AI undo affordance (issue #42)', () => {
           { field: 'description', suggestedValue: 'A tasty pasta dish', reason: 'Improve description' },
         ],
       },
-    } as any)
+    } as MockApiResponse)
 
     renderWithRouter(makeProps({ title: 'Pasta' }))
     fireEvent.click(screen.getByRole('button', { name: /^AI assist$/i }))
@@ -253,7 +306,7 @@ describe('RecipeFormLayout — AI undo affordance (issue #42)', () => {
           },
         ],
       },
-    } as any)
+    } as MockApiResponse)
 
     renderWithRouter(makeProps({
       currentStep: 4,
@@ -284,7 +337,7 @@ describe('RecipeFormLayout — AI nutrition completion', () => {
   })
 
   it('persists accepted nutrition estimates for saving', async () => {
-    mockPostWithAuth.mockResolvedValueOnce({ data: mockNutritionEstimate } as any)
+    mockPostWithAuth.mockResolvedValueOnce({ data: mockNutritionEstimate } as MockApiResponse)
     const onNutritionalInfoChange = vi.fn()
 
     renderWithRouter(makeProps({

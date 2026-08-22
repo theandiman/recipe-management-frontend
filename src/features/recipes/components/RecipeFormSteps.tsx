@@ -74,6 +74,7 @@ interface RecipeFormStepsProps {
   // Per-field AI enhance
   onEnhanceField?: <K extends SuggestibleFieldKey>(field: K, currentValue: SuggestibleFieldValue<K>) => void
   fieldStatus?: Map<string, SuggestionStatus>
+  fieldSuggestionErrors?: Map<string, string>
   fieldSuggestions?: FieldSuggestion[]
   onApplyFieldSuggestion?: (suggestion: FieldSuggestion) => void
   onDismissFieldSuggestion?: (suggestion: FieldSuggestion) => void
@@ -132,6 +133,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
   onDismissNormalization,
   onEnhanceField,
   fieldStatus,
+  fieldSuggestionErrors,
   fieldSuggestions,
   onApplyFieldSuggestion,
   onDismissFieldSuggestion,
@@ -144,6 +146,37 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
 
   const getFieldSuggestion = (field: string): FieldSuggestion | undefined =>
     fieldSuggestions?.find(s => s.field === field && isFieldSuggestion(s))
+
+  const getFieldSuggestionError = (field: string): string | null =>
+    fieldSuggestionErrors?.get(field) ?? null
+
+  const renderFieldAIFeedback = <K extends SuggestibleFieldKey,>(
+    field: K,
+    currentValue: string,
+    fieldValue: SuggestibleFieldValue<K>
+  ) => {
+    const suggestion = getFieldSuggestion(field)
+    const error = getFieldSuggestionError(field)
+
+    if (!suggestion && !error) return null
+
+    return (
+      <FieldAISuggestionChip
+        field={field}
+        suggestion={suggestion?.suggestedValue ?? ''}
+        reason={suggestion?.reason}
+        currentValue={currentValue}
+        error={error}
+        onApply={() => {
+          if (suggestion) onApplyFieldSuggestion?.(suggestion)
+        }}
+        onDismiss={() => {
+          if (suggestion) onDismissFieldSuggestion?.(suggestion)
+        }}
+        onRetry={onEnhanceField ? () => onEnhanceField(field, fieldValue) : undefined}
+      />
+    )
+  }
 
   return (
     <div className="space-y-8">
@@ -193,19 +226,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 {fieldErrors.title}
               </p>
             )}
-            {onEnhanceField && (() => {
-              const s = getFieldSuggestion('recipeName')
-              return s ? (
-                <FieldAISuggestionChip
-                  field="recipeName"
-                  suggestion={s.suggestedValue}
-                  reason={s.reason}
-                  currentValue={title}
-                  onApply={() => onApplyFieldSuggestion?.(s)}
-                  onDismiss={() => onDismissFieldSuggestion?.(s)}
-                />
-              ) : null
-            })()}
+{onEnhanceField && renderFieldAIFeedback('recipeName', title, title)}
           </div>
 
           {/* Description */}
@@ -230,19 +251,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               placeholder="Brief description of your recipe..."
               className={UI_STYLES.input}
             />
-            {onEnhanceField && (() => {
-              const s = getFieldSuggestion('description')
-              return s ? (
-                <FieldAISuggestionChip
-                  field="description"
-                  suggestion={s.suggestedValue}
-                  reason={s.reason}
-                  currentValue={description}
-                  onApply={() => onApplyFieldSuggestion?.(s)}
-                  onDismiss={() => onDismissFieldSuggestion?.(s)}
-                />
-              ) : null
-            })()}
+{onEnhanceField && renderFieldAIFeedback('description', description, description)}
           </div>
 
           {/* Recipe Image Upload */}
@@ -499,19 +508,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               {fieldErrors.prepTime && (
                 <p className="mt-1 text-sm text-red-600" role="alert">{fieldErrors.prepTime}</p>
               )}
-              {onEnhanceField && (() => {
-                const s = getFieldSuggestion('prepTime')
-                return s ? (
-                  <FieldAISuggestionChip
-                    field="prepTime"
-                    suggestion={s.suggestedValue}
-                    reason={s.reason}
-                    currentValue={prepTime}
-                    onApply={() => onApplyFieldSuggestion?.(s)}
-                    onDismiss={() => onDismissFieldSuggestion?.(s)}
-                  />
-                ) : null
-              })()}
+{onEnhanceField && renderFieldAIFeedback('prepTime', prepTime, prepTime)}
             </div>
             <div>
               <div className="flex items-center gap-1.5 mb-2">
@@ -538,19 +535,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               {fieldErrors.cookTime && (
                 <p className="mt-1 text-sm text-red-600" role="alert">{fieldErrors.cookTime}</p>
               )}
-              {onEnhanceField && (() => {
-                const s = getFieldSuggestion('cookTime')
-                return s ? (
-                  <FieldAISuggestionChip
-                    field="cookTime"
-                    suggestion={s.suggestedValue}
-                    reason={s.reason}
-                    currentValue={cookTime}
-                    onApply={() => onApplyFieldSuggestion?.(s)}
-                    onDismiss={() => onDismissFieldSuggestion?.(s)}
-                  />
-                ) : null
-              })()}
+{onEnhanceField && renderFieldAIFeedback('cookTime', cookTime, cookTime)}
             </div>
             <div>
               <div className="flex items-center gap-1.5 mb-2">
@@ -577,19 +562,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
               {fieldErrors.servings && (
                 <p className="mt-1 text-sm text-red-600" role="alert">{fieldErrors.servings}</p>
               )}
-              {onEnhanceField && (() => {
-                const s = getFieldSuggestion('servings')
-                return s ? (
-                  <FieldAISuggestionChip
-                    field="servings"
-                    suggestion={s.suggestedValue}
-                    reason={s.reason}
-                    currentValue={servings}
-                    onApply={() => onApplyFieldSuggestion?.(s)}
-                    onDismiss={() => onDismissFieldSuggestion?.(s)}
-                  />
-                ) : null
-              })()}
+{onEnhanceField && renderFieldAIFeedback('servings', servings, servings)}
             </div>
           </div>
 
@@ -651,19 +624,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 ))}
               </div>
             )}
-            {onEnhanceField && (() => {
-              const s = getFieldSuggestion('tags')
-              return s ? (
-                <FieldAISuggestionChip
-                  field="tags"
-                  suggestion={s.suggestedValue}
-                  reason={s.reason}
-                  currentValue={stringifySuggestionList(tags)}
-                  onApply={() => onApplyFieldSuggestion?.(s)}
-                  onDismiss={() => onDismissFieldSuggestion?.(s)}
-                />
-              ) : null
-            })()}
+{onEnhanceField && renderFieldAIFeedback('tags', stringifySuggestionList(tags), tags)}
           </div>
           {/* Dietary Restrictions Section */}
           <div className="space-y-4">
@@ -723,19 +684,11 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 ))}
               </div>
             )}
-            {onEnhanceField && (() => {
-              const s = getFieldSuggestion('dietaryRestrictions')
-              return s ? (
-                <FieldAISuggestionChip
-                  field="dietaryRestrictions"
-                  suggestion={s.suggestedValue}
-                  reason={s.reason}
-                  currentValue={stringifySuggestionList(dietaryRestrictions)}
-                  onApply={() => onApplyFieldSuggestion?.(s)}
-                  onDismiss={() => onDismissFieldSuggestion?.(s)}
-                />
-              ) : null
-            })()}
+{onEnhanceField && renderFieldAIFeedback(
+  'dietaryRestrictions',
+  stringifySuggestionList(dietaryRestrictions),
+  dietaryRestrictions
+)}
           </div>
         </div>
       )}

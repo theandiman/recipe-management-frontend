@@ -140,4 +140,25 @@ describe('FieldAISuggestionChip', () => {
     expect(screen.getByRole('button', { name: /apply/i })).toBeVisible()
     expect(screen.getByRole('button', { name: /dismiss/i })).toBeVisible()
   })
+
+  it('renders an inline retry state when the AI request fails', () => {
+    const onRetry = vi.fn()
+    render(
+      <FieldAISuggestionChip
+        field="recipeName"
+        suggestion=""
+        currentValue=""
+        error="Network error"
+        onApply={vi.fn()}
+        onDismiss={vi.fn()}
+        onRetry={onRetry}
+      />
+    )
+
+    expect(screen.getByText(/Could not enhance Recipe Name\./i)).toBeInTheDocument()
+    expect(screen.getByText(/Network error/i)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Retry AI for Recipe Name/i }))
+    expect(onRetry).toHaveBeenCalledOnce()
+    expect(onRetry).toHaveBeenCalledOnce()
+  })
 })

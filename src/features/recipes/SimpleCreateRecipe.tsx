@@ -92,10 +92,15 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
   const form = useRecipeForm(initialState)
   const { validateForm, buildRecipeObject } = useRecipeValidation()
   const sections = useSimpleCreateSections()
-
-  useEffect(() => {
-    setActiveRecipeOverrides(recipeOverrides)
-  }, [recipeOverrides])
+  const {
+    setTitle,
+    setDescription,
+    setPrepTime,
+    setCookTime,
+    setServings,
+    setTags,
+    setDietaryRestrictions,
+  } = form
 
   const { handleSubmit } = useRecipeSave({
     recipeId,
@@ -131,6 +136,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     fetchSuggestions,
     fetchFieldSuggestion,
     fieldStatus,
+    fieldErrors: fieldSuggestionErrors,
     applySuggestion,
     dismissSuggestion,
     canUndo,
@@ -161,21 +167,21 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
   })
 
   const fieldSetters: Partial<Record<string, (value: string) => void>> = useMemo(() => ({
-    recipeName: form.setTitle,
-    description: form.setDescription,
-    prepTime: form.setPrepTime,
-    cookTime: form.setCookTime,
-    servings: form.setServings,
-    tags: (value: string) => form.setTags(parseSuggestedList(value)),
-    dietaryRestrictions: (value: string) => form.setDietaryRestrictions(parseSuggestedList(value)),
+    recipeName: setTitle,
+    description: setDescription,
+    prepTime: setPrepTime,
+    cookTime: setCookTime,
+    servings: setServings,
+    tags: (value: string) => setTags(parseSuggestedList(value)),
+    dietaryRestrictions: (value: string) => setDietaryRestrictions(parseSuggestedList(value)),
   }), [
-    form.setTitle,
-    form.setDescription,
-    form.setPrepTime,
-    form.setCookTime,
-    form.setServings,
-    form.setTags,
-    form.setDietaryRestrictions,
+    setTitle,
+    setDescription,
+    setPrepTime,
+    setCookTime,
+    setServings,
+    setTags,
+    setDietaryRestrictions,
   ])
 
   const currentValues: Partial<Record<string, string>> = useMemo(() => ({
@@ -256,6 +262,39 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     (field: string) => fieldVisibleSuggestions.find(suggestion => suggestion.field === field),
     [fieldVisibleSuggestions]
   )
+
+  const getFieldSuggestionError = useCallback(
+    (field: string) => fieldSuggestionErrors.get(field) ?? null,
+    [fieldSuggestionErrors]
+  )
+
+  const renderFieldAIFeedback = useCallback(<K extends SuggestibleFieldKey,>(
+    field: K,
+    currentValue: string,
+    fieldValue: SuggestibleFieldValue<K>
+  ) => {
+    const suggestion = getFieldSuggestion(field)
+    const error = getFieldSuggestionError(field)
+
+    if (!suggestion && !error) return null
+
+    return (
+      <FieldAISuggestionChip
+        field={field}
+        suggestion={suggestion?.suggestedValue ?? ''}
+        reason={suggestion?.reason}
+        currentValue={currentValue}
+        error={error}
+        onApply={() => {
+          if (suggestion) handleApplyFieldSuggestion(suggestion)
+        }}
+        onDismiss={() => {
+          if (suggestion) dismissSuggestion(suggestion)
+        }}
+        onRetry={() => handleEnhanceField(field, fieldValue)}
+      />
+    )
+  }, [dismissSuggestion, getFieldSuggestion, getFieldSuggestionError, handleApplyFieldSuggestion, handleEnhanceField])
 
   const lastUndoableAIField = useMemo<string | null>(() => {
     const latestEntry = auditLog[auditLog.length - 1]
@@ -456,19 +495,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                 {form.fieldErrors.title}
               </p>
             )}
-            {(() => {
-              const s = getFieldSuggestion('recipeName')
-              return s ? (
-                <FieldAISuggestionChip
-                  field="recipeName"
-                  suggestion={s.suggestedValue}
-                  reason={s.reason}
-                  currentValue={form.title}
-                  onApply={() => handleApplyFieldSuggestion(s)}
-                  onDismiss={() => dismissSuggestion(s)}
-                />
-              ) : null
-            })()}
+{renderFieldAIFeedback('recipeName', form.title, form.title)}
           </div>
 
           {/* Description */}
@@ -492,19 +519,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
               placeholder="Brief description of your recipe..."
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             />
-            {(() => {
-              const s = getFieldSuggestion('description')
-              return s ? (
-                <FieldAISuggestionChip
-                  field="description"
-                  suggestion={s.suggestedValue}
-                  reason={s.reason}
-                  currentValue={form.description}
-                  onApply={() => handleApplyFieldSuggestion(s)}
-                  onDismiss={() => dismissSuggestion(s)}
-                />
-              ) : null
-            })()}
+{renderFieldAIFeedback('description', form.description, form.description)}
           </div>
         </div>
 
@@ -672,19 +687,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                   placeholder="15"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
-                {(() => {
-                  const s = getFieldSuggestion('prepTime')
-                  return s ? (
-                    <FieldAISuggestionChip
-                      field="prepTime"
-                      suggestion={s.suggestedValue}
-                      reason={s.reason}
-                      currentValue={form.prepTime}
-                      onApply={() => handleApplyFieldSuggestion(s)}
-                      onDismiss={() => dismissSuggestion(s)}
-                    />
-                  ) : null
-                })()}
+{renderFieldAIFeedback('prepTime', form.prepTime, form.prepTime)}
               </div>
               <div>
                 <div className="flex items-center gap-1.5 mb-2">
@@ -712,19 +715,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                   placeholder="30"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
-                {(() => {
-                  const s = getFieldSuggestion('cookTime')
-                  return s ? (
-                    <FieldAISuggestionChip
-                      field="cookTime"
-                      suggestion={s.suggestedValue}
-                      reason={s.reason}
-                      currentValue={form.cookTime}
-                      onApply={() => handleApplyFieldSuggestion(s)}
-                      onDismiss={() => dismissSuggestion(s)}
-                    />
-                  ) : null
-                })()}
+{renderFieldAIFeedback('cookTime', form.cookTime, form.cookTime)}
               </div>
             </div>
           </CollapsibleSection>
@@ -764,19 +755,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                 placeholder="4"
                 className="w-full sm:w-40 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
-              {(() => {
-                const s = getFieldSuggestion('servings')
-                return s ? (
-                  <FieldAISuggestionChip
-                    field="servings"
-                    suggestion={s.suggestedValue}
-                    reason={s.reason}
-                    currentValue={form.servings}
-                    onApply={() => handleApplyFieldSuggestion(s)}
-                    onDismiss={() => dismissSuggestion(s)}
-                  />
-                ) : null
-              })()}
+{renderFieldAIFeedback('servings', form.servings, form.servings)}
             </div>
           </CollapsibleSection>
 
@@ -889,19 +868,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                     ))}
                   </div>
                 )}
-                {(() => {
-                  const s = getFieldSuggestion('tags')
-                  return s ? (
-                    <FieldAISuggestionChip
-                      field="tags"
-                      suggestion={s.suggestedValue}
-                      reason={s.reason}
-                      currentValue={stringifySuggestionList(form.tags)}
-                      onApply={() => handleApplyFieldSuggestion(s)}
-                      onDismiss={() => dismissSuggestion(s)}
-                    />
-                  ) : null
-                })()}
+{renderFieldAIFeedback('tags', stringifySuggestionList(form.tags), form.tags)}
               </div>
 
               {/* Dietary restrictions */}
@@ -959,19 +926,11 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                     ))}
                   </div>
                 )}
-                {(() => {
-                  const s = getFieldSuggestion('dietaryRestrictions')
-                  return s ? (
-                    <FieldAISuggestionChip
-                      field="dietaryRestrictions"
-                      suggestion={s.suggestedValue}
-                      reason={s.reason}
-                      currentValue={stringifySuggestionList(form.dietaryRestrictions)}
-                      onApply={() => handleApplyFieldSuggestion(s)}
-                      onDismiss={() => dismissSuggestion(s)}
-                    />
-                  ) : null
-                })()}
+{renderFieldAIFeedback(
+  'dietaryRestrictions',
+  stringifySuggestionList(form.dietaryRestrictions),
+  form.dietaryRestrictions
+)}
               </div>
             </div>
           </CollapsibleSection>
@@ -1106,21 +1065,14 @@ export const SimpleCreateRecipe: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const { user: currentUser, isLoading: isAuthLoading } = useAuth()
   const isEditMode = Boolean(id)
-  const [loading, setLoading] = useState(isEditMode)
+  const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [loadedRecipeId, setLoadedRecipeId] = useState<string | null>(null)
   const [initialState, setInitialState] = useState<RecipeFormInitialState>()
   const [recipeOverrides, setRecipeOverrides] = useState<Partial<Recipe>>({})
 
   useEffect(() => {
-    if (!isEditMode) {
-      setLoading(false)
-      setLoadError(null)
-      setInitialState(undefined)
-      setRecipeOverrides({})
-      return
-    }
-
-    if (!id || isAuthLoading) return
+    if (!isEditMode || !id || isAuthLoading) return
 
     let isMounted = true
 
@@ -1137,6 +1089,7 @@ export const SimpleCreateRecipe: React.FC = () => {
 
         if (!isMounted) return
 
+        setLoadedRecipeId(id)
         setInitialState(getInitialFormState(recipe))
         setRecipeOverrides({
           nutritionalInfo: recipe.nutritionalInfo,
@@ -1149,6 +1102,7 @@ export const SimpleCreateRecipe: React.FC = () => {
         console.error('Failed to fetch recipe:', err)
         const errorMessage = err instanceof Error ? err.message : 'Failed to load recipe'
         const apiError = err as { response?: { data?: { message?: string } } }
+        setLoadedRecipeId(null)
         setLoadError(apiError.response?.data?.message || errorMessage)
       } finally {
         if (isMounted) {
@@ -1164,7 +1118,7 @@ export const SimpleCreateRecipe: React.FC = () => {
     }
   }, [currentUser?.uid, id, isAuthLoading, isEditMode, navigate])
 
-  if (isEditMode && loading) {
+  if (isEditMode && (loading || (loadedRecipeId !== id && !loadError))) {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-center py-12">
@@ -1199,8 +1153,8 @@ export const SimpleCreateRecipe: React.FC = () => {
       key={id ?? 'create'}
       isEditMode={isEditMode}
       recipeId={id}
-      initialState={initialState}
-      recipeOverrides={recipeOverrides}
+      initialState={isEditMode && loadedRecipeId === id ? initialState : undefined}
+      recipeOverrides={isEditMode && loadedRecipeId === id ? recipeOverrides : {}}
     />
   )
 }

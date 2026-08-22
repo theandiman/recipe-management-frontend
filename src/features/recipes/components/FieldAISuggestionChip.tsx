@@ -5,6 +5,8 @@ import {
   AI_PRIMARY_ACTION_CLASS,
   AI_SECONDARY_ACTION_CLASS,
 } from './aiStyles'
+import { AIBadge } from './AIBadge'
+import { FIELD_LABELS } from '../constants/aiConstants'
 
 export interface FieldAISuggestionChipProps {
   field: string
@@ -13,15 +15,46 @@ export interface FieldAISuggestionChipProps {
   currentValue: string
   onApply: () => void
   onDismiss: () => void
+  error?: string | null
+  onRetry?: () => void
 }
 
 export const FieldAISuggestionChip: React.FC<FieldAISuggestionChipProps> = ({
+  field,
   suggestion,
   reason,
   currentValue,
   onApply,
   onDismiss,
+  error,
+  onRetry,
 }) => {
+  const fieldLabel = FIELD_LABELS[field] ?? field
+
+  if (error) {
+    return (
+      <div className={`mt-2 px-3 py-3 text-sm flex items-start gap-3 ${AI_MUTED_PANEL_CLASS}`} role="alert">
+        <AIBadge className="mt-0.5 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-rose-700 dark:text-rose-200">
+            Could not enhance {fieldLabel}.
+          </p>
+          <p className="mt-1 text-xs text-rose-600 dark:text-rose-300">{error}</p>
+        </div>
+        {onRetry && (
+          <button
+            type="button"
+            onClick={onRetry}
+            aria-label={`Retry AI for ${fieldLabel}`}
+            className={AI_SECONDARY_ACTION_CLASS}
+          >
+            Retry
+          </button>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className={`mt-2 px-3 py-3 text-sm flex items-start gap-3 animate-field-ai-chip-enter ${AI_MUTED_PANEL_CLASS}`}>
       <div className="flex-1 min-w-0">
