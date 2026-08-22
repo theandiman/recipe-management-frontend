@@ -201,6 +201,7 @@ describe('RecipeFormSteps — per-field AI enhance (issue #40)', () => {
       />
     )
     expect(screen.getByText('Amazing Pasta')).toBeInTheDocument()
+    expect(screen.getByText('Sounds great')).toBeInTheDocument()
   })
 
   it('calls onApplyFieldSuggestion when Apply clicked on chip', () => {

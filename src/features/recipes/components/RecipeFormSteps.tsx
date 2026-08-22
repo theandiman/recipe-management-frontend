@@ -199,6 +199,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 <FieldAISuggestionChip
                   field="recipeName"
                   suggestion={s.suggestedValue}
+                  reason={s.reason}
                   currentValue={title}
                   onApply={() => onApplyFieldSuggestion?.(s)}
                   onDismiss={() => onDismissFieldSuggestion?.(s)}
@@ -235,6 +236,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 <FieldAISuggestionChip
                   field="description"
                   suggestion={s.suggestedValue}
+                  reason={s.reason}
                   currentValue={description}
                   onApply={() => onApplyFieldSuggestion?.(s)}
                   onDismiss={() => onDismissFieldSuggestion?.(s)}
@@ -503,6 +505,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   <FieldAISuggestionChip
                     field="prepTime"
                     suggestion={s.suggestedValue}
+                    reason={s.reason}
                     currentValue={prepTime}
                     onApply={() => onApplyFieldSuggestion?.(s)}
                     onDismiss={() => onDismissFieldSuggestion?.(s)}
@@ -541,6 +544,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   <FieldAISuggestionChip
                     field="cookTime"
                     suggestion={s.suggestedValue}
+                    reason={s.reason}
                     currentValue={cookTime}
                     onApply={() => onApplyFieldSuggestion?.(s)}
                     onDismiss={() => onDismissFieldSuggestion?.(s)}
@@ -579,6 +583,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   <FieldAISuggestionChip
                     field="servings"
                     suggestion={s.suggestedValue}
+                    reason={s.reason}
                     currentValue={servings}
                     onApply={() => onApplyFieldSuggestion?.(s)}
                     onDismiss={() => onDismissFieldSuggestion?.(s)}
@@ -652,6 +657,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 <FieldAISuggestionChip
                   field="tags"
                   suggestion={s.suggestedValue}
+                  reason={s.reason}
                   currentValue={stringifySuggestionList(tags)}
                   onApply={() => onApplyFieldSuggestion?.(s)}
                   onDismiss={() => onDismissFieldSuggestion?.(s)}
@@ -723,6 +729,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 <FieldAISuggestionChip
                   field="dietaryRestrictions"
                   suggestion={s.suggestedValue}
+                  reason={s.reason}
                   currentValue={stringifySuggestionList(dietaryRestrictions)}
                   onApply={() => onApplyFieldSuggestion?.(s)}
                   onDismiss={() => onDismissFieldSuggestion?.(s)}
