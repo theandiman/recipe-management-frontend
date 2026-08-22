@@ -150,7 +150,6 @@ export function useAISuggestions(): UseAISuggestionsReturn {
       next.delete(field)
       return next
     })
-    setError(null)
 
     const request: FieldSuggestionRequest =
       field === 'tags' || field === 'dietaryRestrictions'
@@ -192,7 +191,6 @@ export function useAISuggestions(): UseAISuggestionsReturn {
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to fetch AI suggestion'
-      setError(msg)
       setFieldStatus(prev => new Map(prev).set(field, 'error'))
       setFieldErrors(prev => new Map(prev).set(field, msg))
       console.warn('[AI Suggestions] fetchFieldSuggestion failed:', msg)

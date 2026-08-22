@@ -165,6 +165,29 @@ describe('RecipeFormLayout — on-demand AI enhancement (issue #35)', () => {
     expect(setTags).toHaveBeenCalledWith(['quick', 'weeknight'])
   })
 
+  it('keeps bulk suggestion errors visible when a field-level enhancement fails', async () => {
+    mockPostWithAuth.mockRejectedValueOnce(new Error('Bulk request failed'))
+
+    renderWithRouter(makeProps({ currentStep: 1 }))
+    fireEvent.click(screen.getByRole('button', { name: /^AI assist$/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/Bulk request failed/i)).toBeInTheDocument()
+    })
+
+    mockPostWithAuth.mockRejectedValueOnce(new Error('Field request failed'))
+    const fieldButton = document.querySelector('button[data-field="recipeName"]')
+    expect(fieldButton).not.toBeNull()
+    fireEvent.click(fieldButton!)
+
+    await waitFor(() => {
+      expect(screen.getByText(/Could not enhance Recipe Name\./i)).toBeInTheDocument()
+      expect(screen.getByText(/Field request failed/i)).toBeInTheDocument()
+    })
+
+    expect(screen.getByText(/Bulk request failed/i)).toBeInTheDocument()
+  })
+
   it('calls AI suggestions API when "AI assist" is clicked', async () => {
     mockPostWithAuth.mockResolvedValueOnce({ data: { suggestions: [] } } as MockApiResponse)
 

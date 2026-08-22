@@ -1067,6 +1067,7 @@ export const SimpleCreateRecipe: React.FC = () => {
   const isEditMode = Boolean(id)
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [loadedRecipeId, setLoadedRecipeId] = useState<string | null>(null)
   const [initialState, setInitialState] = useState<RecipeFormInitialState>()
   const [recipeOverrides, setRecipeOverrides] = useState<Partial<Recipe>>({})
 
@@ -1088,6 +1089,7 @@ export const SimpleCreateRecipe: React.FC = () => {
 
         if (!isMounted) return
 
+        setLoadedRecipeId(id)
         setInitialState(getInitialFormState(recipe))
         setRecipeOverrides({
           nutritionalInfo: recipe.nutritionalInfo,
@@ -1100,6 +1102,7 @@ export const SimpleCreateRecipe: React.FC = () => {
         console.error('Failed to fetch recipe:', err)
         const errorMessage = err instanceof Error ? err.message : 'Failed to load recipe'
         const apiError = err as { response?: { data?: { message?: string } } }
+        setLoadedRecipeId(null)
         setLoadError(apiError.response?.data?.message || errorMessage)
       } finally {
         if (isMounted) {
@@ -1115,7 +1118,7 @@ export const SimpleCreateRecipe: React.FC = () => {
     }
   }, [currentUser?.uid, id, isAuthLoading, isEditMode, navigate])
 
-  if (isEditMode && (loading || (!initialState && !loadError))) {
+  if (isEditMode && (loading || (loadedRecipeId !== id && !loadError))) {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-center py-12">
@@ -1150,8 +1153,8 @@ export const SimpleCreateRecipe: React.FC = () => {
       key={id ?? 'create'}
       isEditMode={isEditMode}
       recipeId={id}
-      initialState={isEditMode ? initialState : undefined}
-      recipeOverrides={isEditMode ? recipeOverrides : {}}
+      initialState={isEditMode && loadedRecipeId === id ? initialState : undefined}
+      recipeOverrides={isEditMode && loadedRecipeId === id ? recipeOverrides : {}}
     />
   )
 }

@@ -204,6 +204,24 @@ describe('RecipeFormSteps — per-field AI enhance (issue #40)', () => {
     expect(screen.getByText('Sounds great')).toBeInTheDocument()
   })
 
+  it('retries guided field enhancement with the current field value', () => {
+    const onEnhanceField = vi.fn()
+    render(
+      <RecipeFormSteps
+        {...makeProps({
+          currentStep: 4,
+          prepTime: '15',
+          onEnhanceField,
+          fieldSuggestionErrors: new Map([['prepTime', 'Network error']]),
+        })}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /Retry AI for Prep Time \(min\)/i }))
+
+    expect(onEnhanceField).toHaveBeenCalledWith('prepTime', '15')
+  })
+
   it('calls onApplyFieldSuggestion when Apply clicked on chip', () => {
     const onApply = vi.fn()
     render(
