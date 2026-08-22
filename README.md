@@ -112,7 +112,7 @@ If you want the frontend to call a locally running AI service (the AI service ru
       - `export VITE_MANAGEMENT_API_URL=http://localhost:8081`
       - `npm run dev`
 
-The dev server includes a Vite proxy that forwards `/api` -> `http://localhost:8080` so local calls are proxied and CORS is avoided.
+When `VITE_AI_API_URL` is set, `buildApiUrl` produces absolute URLs that go directly to the configured host, bypassing the Vite `/api` proxy. Make sure your local AI service has CORS configured to allow `http://localhost:5173` (or use the `local` Spring profile which disables auth and relaxes CORS).
 
 If you want to test with Firebase authentication enabled, make sure to sign-in via the UI in the frontend before trying to generate recipes (the AI backend expects a Firebase ID token when security is enabled).
 
