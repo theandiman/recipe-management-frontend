@@ -75,8 +75,8 @@ interface RecipeFormStepsProps {
   onEnhanceField?: <K extends SuggestibleFieldKey>(field: K, currentValue: SuggestibleFieldValue<K>) => void
   fieldStatus?: Map<string, SuggestionStatus>
   fieldSuggestions?: FieldSuggestion[]
-  onApplyFieldSuggestion?: (field: string, value: string) => void
-  onDismissFieldSuggestion?: (field: string) => void
+  onApplyFieldSuggestion?: (suggestion: FieldSuggestion) => void
+  onDismissFieldSuggestion?: (suggestion: FieldSuggestion) => void
   // AI Image Generation
   onGenerateAIImage?: (recipeName: string, description?: string) => Promise<void>
   generatingAIImage?: boolean
@@ -200,8 +200,8 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   field="recipeName"
                   suggestion={s.suggestedValue}
                   currentValue={title}
-                  onApply={() => onApplyFieldSuggestion?.('recipeName', s.suggestedValue)}
-                  onDismiss={() => onDismissFieldSuggestion?.('recipeName')}
+                  onApply={() => onApplyFieldSuggestion?.(s)}
+                  onDismiss={() => onDismissFieldSuggestion?.(s)}
                 />
               ) : null
             })()}
@@ -236,8 +236,8 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   field="description"
                   suggestion={s.suggestedValue}
                   currentValue={description}
-                  onApply={() => onApplyFieldSuggestion?.('description', s.suggestedValue)}
-                  onDismiss={() => onDismissFieldSuggestion?.('description')}
+                  onApply={() => onApplyFieldSuggestion?.(s)}
+                  onDismiss={() => onDismissFieldSuggestion?.(s)}
                 />
               ) : null
             })()}
@@ -505,8 +505,8 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                     field="prepTime"
                     suggestion={s.suggestedValue}
                     currentValue={prepTime}
-                    onApply={() => onApplyFieldSuggestion?.('prepTime', s.suggestedValue)}
-                    onDismiss={() => onDismissFieldSuggestion?.('prepTime')}
+                    onApply={() => onApplyFieldSuggestion?.(s)}
+                    onDismiss={() => onDismissFieldSuggestion?.(s)}
                   />
                 ) : null
               })()}
@@ -543,8 +543,8 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                     field="cookTime"
                     suggestion={s.suggestedValue}
                     currentValue={cookTime}
-                    onApply={() => onApplyFieldSuggestion?.('cookTime', s.suggestedValue)}
-                    onDismiss={() => onDismissFieldSuggestion?.('cookTime')}
+                    onApply={() => onApplyFieldSuggestion?.(s)}
+                    onDismiss={() => onDismissFieldSuggestion?.(s)}
                   />
                 ) : null
               })()}
@@ -581,8 +581,8 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                     field="servings"
                     suggestion={s.suggestedValue}
                     currentValue={servings}
-                    onApply={() => onApplyFieldSuggestion?.('servings', s.suggestedValue)}
-                    onDismiss={() => onDismissFieldSuggestion?.('servings')}
+                    onApply={() => onApplyFieldSuggestion?.(s)}
+                    onDismiss={() => onDismissFieldSuggestion?.(s)}
                   />
                 ) : null
               })()}
@@ -654,8 +654,8 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   field="tags"
                   suggestion={s.suggestedValue}
                   currentValue={stringifySuggestionList(tags)}
-                  onApply={() => onApplyFieldSuggestion?.('tags', s.suggestedValue)}
-                  onDismiss={() => onDismissFieldSuggestion?.('tags')}
+                  onApply={() => onApplyFieldSuggestion?.(s)}
+                  onDismiss={() => onDismissFieldSuggestion?.(s)}
                 />
               ) : null
             })()}
@@ -725,8 +725,8 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   field="dietaryRestrictions"
                   suggestion={s.suggestedValue}
                   currentValue={stringifySuggestionList(dietaryRestrictions)}
-                  onApply={() => onApplyFieldSuggestion?.('dietaryRestrictions', s.suggestedValue)}
-                  onDismiss={() => onDismissFieldSuggestion?.('dietaryRestrictions')}
+                  onApply={() => onApplyFieldSuggestion?.(s)}
+                  onDismiss={() => onDismissFieldSuggestion?.(s)}
                 />
               ) : null
             })()}

@@ -122,7 +122,11 @@ describe('AISuggestionPanel', () => {
       />
     )
     fireEvent.click(screen.getByRole('button', { name: /apply ai suggestion for description/i }))
-    expect(onApply).toHaveBeenCalledWith('description', setter, expect.any(String))
+    expect(onApply).toHaveBeenCalledWith(
+      expect.objectContaining({ field: 'description', suggestedValue: 'A delicious pasta dish' }),
+      setter,
+      expect.any(String)
+    )
   })
 
   it('calls onDismiss with field name when Dismiss is clicked', () => {
@@ -138,7 +142,9 @@ describe('AISuggestionPanel', () => {
       />
     )
     fireEvent.click(screen.getByRole('button', { name: /dismiss ai suggestion for description/i }))
-    expect(onDismiss).toHaveBeenCalledWith('description')
+    expect(onDismiss).toHaveBeenCalledWith(
+      expect.objectContaining({ field: 'description', suggestedValue: 'A delicious pasta dish' })
+    )
   })
 
   it('shows AI labels that distinguish current and suggested values', () => {
@@ -306,7 +312,11 @@ describe('Before/after comparison', () => {
       />
     )
     fireEvent.click(screen.getByRole('button', { name: /apply ai suggestion for description/i }))
-    expect(onApply).toHaveBeenCalledWith('description', setter, 'My current description')
+    expect(onApply).toHaveBeenCalledWith(
+      expect.objectContaining({ field: 'description', suggestedValue: 'A delicious pasta dish' }),
+      setter,
+      'My current description'
+    )
   })
 })
 

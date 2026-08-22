@@ -372,8 +372,8 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     })
   }, [fetchFieldSuggestion, title, description, tags, dietaryRestrictions, ingredients, instructions])
 
-  const handleApplyFieldSuggestion = useCallback((field: string, value: string) => {
-    const setter = fieldSetters[field]
+  const handleApplyFieldSuggestion = useCallback((suggestion: import('../hooks/useAISuggestions').FieldSuggestion) => {
+    const setter = fieldSetters[suggestion.field]
     const previousValue = {
       recipeName: title,
       description,
@@ -382,9 +382,9 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
       servings,
       tags,
       dietaryRestrictions,
-    }[field] ?? ''
+    }[suggestion.field] ?? ''
     if (setter) {
-      applySuggestion(field, () => setter(value), previousValue)
+      applySuggestion(suggestion, () => setter(suggestion.suggestedValue), previousValue)
     }
   }, [fieldSetters, title, description, prepTime, cookTime, servings, tags, dietaryRestrictions, applySuggestion])
 

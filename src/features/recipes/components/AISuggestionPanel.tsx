@@ -1,5 +1,5 @@
 import React from 'react'
-import { isBulkSuggestion } from '../hooks/useAISuggestions'
+import { getSuggestionKey, isBulkSuggestion } from '../hooks/useAISuggestions'
 import type { FieldSuggestion, SuggestionStatus } from '../hooks/useAISuggestions'
 import { FIELD_LABELS, STEP_FIELDS } from '../constants/aiConstants'
 import { AISpinnerIcon } from './AISpinnerIcon'
@@ -15,8 +15,8 @@ interface AISuggestionPanelProps {
   suggestions: FieldSuggestion[]
   status: SuggestionStatus
   error: string | null
-  onApply: (field: string, applyFn: (value: string) => void, previousValue: string) => void
-  onDismiss: (field: string) => void
+  onApply: (suggestion: FieldSuggestion, applyFn: (value: string) => void, previousValue: string) => void
+  onDismiss: (suggestion: FieldSuggestion) => void
   /** Maps field names to their corresponding form setter functions */
   fieldSetters: Partial<Record<string, (value: string) => void>>
   /** Current form values keyed by field name */
@@ -139,7 +139,7 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
                 const previousValue = currentValue ?? ''
                 return (
                   <li
-                    key={suggestion.field}
+                    key={getSuggestionKey(suggestion)}
                     className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-gray-50/70 p-3 dark:border-gray-700 dark:bg-gray-800/60 sm:flex-row sm:items-center"
                     role="listitem"
                     aria-label={`AI suggestion for ${label}`}
@@ -173,7 +173,7 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
                       {setter && (
                         <button
                           type="button"
-                          onClick={() => onApply(suggestion.field, setter, previousValue)}
+                          onClick={() => onApply(suggestion, setter, previousValue)}
                           className={AI_PRIMARY_ACTION_CLASS}
                           aria-label={`Apply AI suggestion for ${label}`}
                         >
@@ -182,7 +182,7 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
                       )}
                         <button
                           type="button"
-                          onClick={() => onDismiss(suggestion.field)}
+                          onClick={() => onDismiss(suggestion)}
                           className={AI_SECONDARY_ACTION_CLASS}
                           aria-label={`Dismiss AI suggestion for ${label}`}
                         >

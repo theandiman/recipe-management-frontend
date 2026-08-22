@@ -212,7 +212,9 @@ describe('RecipeFormSteps — per-field AI enhance (issue #40)', () => {
       />
     )
     fireEvent.click(screen.getByRole('button', { name: /apply/i }))
-    expect(onApply).toHaveBeenCalledWith('recipeName', 'Amazing Pasta')
+    expect(onApply).toHaveBeenCalledWith(
+      expect.objectContaining({ field: 'recipeName', suggestedValue: 'Amazing Pasta', source: 'field' })
+    )
   })
 
   it('calls onDismissFieldSuggestion when Dismiss clicked on chip', () => {
@@ -229,7 +231,9 @@ describe('RecipeFormSteps — per-field AI enhance (issue #40)', () => {
       />
     )
     fireEvent.click(screen.getByRole('button', { name: /dismiss/i }))
-    expect(onDismiss).toHaveBeenCalledWith('recipeName')
+    expect(onDismiss).toHaveBeenCalledWith(
+      expect.objectContaining({ field: 'recipeName', suggestedValue: 'Amazing Pasta', source: 'field' })
+    )
   })
 
   it('shows AI enhance buttons for tags and dietary restrictions on step 4', () => {
@@ -267,7 +271,13 @@ describe('RecipeFormSteps — per-field AI enhance (issue #40)', () => {
 
     expect(screen.getByText('gluten-free, dairy-free')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /apply/i }))
-    expect(onApply).toHaveBeenCalledWith('dietaryRestrictions', 'gluten-free, dairy-free')
+    expect(onApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        field: 'dietaryRestrictions',
+        suggestedValue: 'gluten-free, dairy-free',
+        source: 'field',
+      })
+    )
   })
 
   it('does not render bulk suggestions as inline chips', () => {

@@ -235,11 +235,11 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     form.instructions,
   ])
 
-  const handleApplyFieldSuggestion = useCallback((field: string, value: string) => {
-    const setter = fieldSetters[field]
-    const previous = previousSuggestionValues[field] ?? ''
+  const handleApplyFieldSuggestion = useCallback((suggestion: import('./hooks/useAISuggestions').FieldSuggestion) => {
+    const setter = fieldSetters[suggestion.field]
+    const previous = previousSuggestionValues[suggestion.field] ?? ''
     if (setter) {
-      applySuggestion(field, () => setter(value), previous)
+      applySuggestion(suggestion, () => setter(suggestion.suggestedValue), previous)
     }
   }, [fieldSetters, previousSuggestionValues, applySuggestion])
 
@@ -463,8 +463,8 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                   field="recipeName"
                   suggestion={s.suggestedValue}
                   currentValue={form.title}
-                  onApply={() => handleApplyFieldSuggestion('recipeName', s.suggestedValue)}
-                  onDismiss={() => dismissSuggestion('recipeName')}
+                  onApply={() => handleApplyFieldSuggestion(s)}
+                  onDismiss={() => dismissSuggestion(s)}
                 />
               ) : null
             })()}
@@ -498,8 +498,8 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                   field="description"
                   suggestion={s.suggestedValue}
                   currentValue={form.description}
-                  onApply={() => handleApplyFieldSuggestion('description', s.suggestedValue)}
-                  onDismiss={() => dismissSuggestion('description')}
+                  onApply={() => handleApplyFieldSuggestion(s)}
+                  onDismiss={() => dismissSuggestion(s)}
                 />
               ) : null
             })()}
@@ -677,8 +677,8 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                       field="prepTime"
                       suggestion={s.suggestedValue}
                       currentValue={form.prepTime}
-                      onApply={() => handleApplyFieldSuggestion('prepTime', s.suggestedValue)}
-                      onDismiss={() => dismissSuggestion('prepTime')}
+                      onApply={() => handleApplyFieldSuggestion(s)}
+                      onDismiss={() => dismissSuggestion(s)}
                     />
                   ) : null
                 })()}
@@ -716,8 +716,8 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                       field="cookTime"
                       suggestion={s.suggestedValue}
                       currentValue={form.cookTime}
-                      onApply={() => handleApplyFieldSuggestion('cookTime', s.suggestedValue)}
-                      onDismiss={() => dismissSuggestion('cookTime')}
+                      onApply={() => handleApplyFieldSuggestion(s)}
+                      onDismiss={() => dismissSuggestion(s)}
                     />
                   ) : null
                 })()}
@@ -767,8 +767,8 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                     field="servings"
                     suggestion={s.suggestedValue}
                     currentValue={form.servings}
-                    onApply={() => handleApplyFieldSuggestion('servings', s.suggestedValue)}
-                    onDismiss={() => dismissSuggestion('servings')}
+                    onApply={() => handleApplyFieldSuggestion(s)}
+                    onDismiss={() => dismissSuggestion(s)}
                   />
                 ) : null
               })()}
@@ -891,8 +891,8 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                       field="tags"
                       suggestion={s.suggestedValue}
                       currentValue={stringifySuggestionList(form.tags)}
-                      onApply={() => handleApplyFieldSuggestion('tags', s.suggestedValue)}
-                      onDismiss={() => dismissSuggestion('tags')}
+                      onApply={() => handleApplyFieldSuggestion(s)}
+                      onDismiss={() => dismissSuggestion(s)}
                     />
                   ) : null
                 })()}
@@ -960,8 +960,8 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                       field="dietaryRestrictions"
                       suggestion={s.suggestedValue}
                       currentValue={stringifySuggestionList(form.dietaryRestrictions)}
-                      onApply={() => handleApplyFieldSuggestion('dietaryRestrictions', s.suggestedValue)}
-                      onDismiss={() => dismissSuggestion('dietaryRestrictions')}
+                      onApply={() => handleApplyFieldSuggestion(s)}
+                      onDismiss={() => dismissSuggestion(s)}
                     />
                   ) : null
                 })()}

@@ -25,6 +25,9 @@ export const isBulkSuggestion = (suggestion: Pick<FieldSuggestion, 'source'>): b
 export const isFieldSuggestion = (suggestion: Pick<FieldSuggestion, 'source'>): boolean =>
   getSuggestionSource(suggestion) === 'field'
 
+export const getSuggestionKey = (suggestion: Pick<FieldSuggestion, 'field' | 'source'>): string =>
+  `${getSuggestionSource(suggestion)}:${suggestion.field}`
+
 const withSuggestionSource = (
   suggestions: FieldSuggestion[],
   source: SuggestionSource
@@ -64,8 +67,8 @@ interface UseAISuggestionsReturn {
     context?: Partial<FieldSuggestionRequest>
   ) => Promise<void>
   fieldStatus: Map<string, SuggestionStatus>
-  applySuggestion: (field: string, applyFn: (value: string) => void, previousValue: unknown) => void
-  dismissSuggestion: (field: string) => void
+  applySuggestion: (suggestion: FieldSuggestion, applyFn: (value: string) => void, previousValue: unknown) => void
+  dismissSuggestion: (suggestion: FieldSuggestion) => void
   visibleSuggestions: FieldSuggestion[]
   // Audit trail
   auditLog: AuditEntry[]
@@ -166,7 +169,7 @@ export function useAISuggestions(): UseAISuggestionsReturn {
       })
       setDismissedFields(prev => {
         const next = new Set(prev)
-        next.delete(field)
+        next.delete(getSuggestionKey({ field, source: 'field' }))
         return next
       })
       setFieldStatus(prev => new Map(prev).set(field, 'success'))
@@ -182,31 +185,32 @@ export function useAISuggestions(): UseAISuggestionsReturn {
     }
   }, [recordSuggestion])
 
-  const applySuggestion = useCallback((field: string, applyFn: (value: string) => void, previousValue: unknown) => {
-    const suggestion = suggestions.find(s => s.field === field)
+  const applySuggestion = useCallback((suggestionToApply: FieldSuggestion, applyFn: (value: string) => void, previousValue: unknown) => {
+    const suggestion = suggestions.find(s => getSuggestionKey(s) === getSuggestionKey(suggestionToApply))
     if (!suggestion) return
+    const suggestionKey = getSuggestionKey(suggestion)
 
     applyFn(suggestion.suggestedValue)
-    setDismissedFields(prev => new Set([...prev, field]))
+    setDismissedFields(prev => new Set([...prev, suggestionKey]))
 
-    recordAccepted(field, previousValue, suggestion.suggestedValue)
+    recordAccepted(suggestion.field, previousValue, suggestion.suggestedValue)
 
-    const event = { type: 'ai_suggestion_applied', field }
+    const event = { type: 'ai_suggestion_applied', field: suggestion.field, source: getSuggestionSource(suggestion) }
     console.log('[AI Suggestions]', event)
     window.dispatchEvent(new CustomEvent('ai:suggestions', { detail: event }))
   }, [suggestions, recordAccepted])
 
-  const dismissSuggestion = useCallback((field: string) => {
-    setDismissedFields(prev => new Set([...prev, field]))
+  const dismissSuggestion = useCallback((suggestion: FieldSuggestion) => {
+    setDismissedFields(prev => new Set([...prev, getSuggestionKey(suggestion)]))
 
-    recordRejected(field)
+    recordRejected(suggestion.field)
 
-    const event = { type: 'ai_suggestion_dismissed', field }
+    const event = { type: 'ai_suggestion_dismissed', field: suggestion.field, source: getSuggestionSource(suggestion) }
     console.log('[AI Suggestions]', event)
     window.dispatchEvent(new CustomEvent('ai:suggestions', { detail: event }))
   }, [recordRejected])
 
-  const visibleSuggestions = suggestions.filter(s => !dismissedFields.has(s.field))
+  const visibleSuggestions = suggestions.filter(s => !dismissedFields.has(getSuggestionKey(s)))
 
   return {
     suggestions,
