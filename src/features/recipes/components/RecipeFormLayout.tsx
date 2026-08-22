@@ -6,7 +6,7 @@ import { AISpinnerIcon } from './AISpinnerIcon'
 
 import { RecipePreview } from './RecipePreview'
 import { AISuggestionPanel } from './AISuggestionPanel'
-import { useAISuggestions } from '../hooks/useAISuggestions'
+import { isFieldSuggestion, useAISuggestions } from '../hooks/useAISuggestions'
 import { useInstructionRefinement } from '../hooks/useInstructionRefinement'
 import { useAIImageGeneration } from '../hooks/useAIImageGeneration'
 import { FIELD_LABELS } from '../constants/aiConstants'
@@ -411,6 +411,11 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     fetchSuggestions(buildSuggestionRequest())
   }
 
+  const fieldVisibleSuggestions = useMemo(
+    () => visibleSuggestions.filter(isFieldSuggestion),
+    [visibleSuggestions]
+  )
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Header with Step Indicator */}
@@ -555,7 +560,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 onDismissNormalization={onDismissNormalization}
                 onEnhanceField={handleEnhanceField}
                 fieldStatus={fieldStatus}
-                fieldSuggestions={visibleSuggestions}
+                fieldSuggestions={fieldVisibleSuggestions}
                 onApplyFieldSuggestion={handleApplyFieldSuggestion}
                 onDismissFieldSuggestion={dismissSuggestion}
                 onGenerateAIImage={setImagePreview ? handleGenerateAIImage : undefined}

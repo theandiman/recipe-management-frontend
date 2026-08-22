@@ -4,6 +4,7 @@ import { UI_STYLES } from '../../../utils/uiStyles'
 import { clampedNumericHandler } from '../../../utils/formUtils'
 import type { Ingredient } from '../../../types/nutrition'
 import type { StepRefinementState, RefinementLoadingState } from '../hooks/useInstructionRefinement'
+import { isFieldSuggestion } from '../hooks/useAISuggestions'
 import { InstructionDiffView } from './InstructionDiffView'
 import { FieldAIEnhanceButton } from './FieldAIEnhanceButton'
 import { FieldAISuggestionChip } from './FieldAISuggestionChip'
@@ -142,7 +143,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
     fieldStatus?.get(field) ?? 'idle'
 
   const getFieldSuggestion = (field: string): FieldSuggestion | undefined =>
-    fieldSuggestions?.find(s => s.field === field)
+    fieldSuggestions?.find(s => s.field === field && isFieldSuggestion(s))
 
   return (
     <div className="space-y-8">

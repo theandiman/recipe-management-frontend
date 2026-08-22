@@ -8,7 +8,7 @@ import { COMMON_UNITS, IngredientInput } from '../../components/IngredientInput'
 import { UI_STYLES } from '../../utils/uiStyles'
 import { clampedNumericHandler } from '../../utils/formUtils'
 import { useSimpleCreateSections } from './hooks/useSimpleCreateSections'
-import { useAISuggestions } from './hooks/useAISuggestions'
+import { isFieldSuggestion, useAISuggestions } from './hooks/useAISuggestions'
 import type { SuggestibleFieldKey, SuggestibleFieldValue } from './hooks/useAISuggestions'
 import { AISuggestionPanel } from './components/AISuggestionPanel'
 import { FieldAIEnhanceButton } from './components/FieldAIEnhanceButton'
@@ -247,6 +247,16 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     fetchSuggestions(buildSuggestionRequest())
   }
 
+  const fieldVisibleSuggestions = useMemo(
+    () => visibleSuggestions.filter(isFieldSuggestion),
+    [visibleSuggestions]
+  )
+
+  const getFieldSuggestion = useCallback(
+    (field: string) => fieldVisibleSuggestions.find(suggestion => suggestion.field === field),
+    [fieldVisibleSuggestions]
+  )
+
   const lastUndoableAIField = useMemo<string | null>(() => {
     const latestEntry = auditLog[auditLog.length - 1]
     return latestEntry?.event === 'accepted' ? latestEntry.field : null
@@ -447,7 +457,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
               </p>
             )}
             {(() => {
-              const s = visibleSuggestions.find(x => x.field === 'recipeName')
+              const s = getFieldSuggestion('recipeName')
               return s ? (
                 <FieldAISuggestionChip
                   field="recipeName"
@@ -482,7 +492,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             />
             {(() => {
-              const s = visibleSuggestions.find(x => x.field === 'description')
+              const s = getFieldSuggestion('description')
               return s ? (
                 <FieldAISuggestionChip
                   field="description"
@@ -661,7 +671,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
                 {(() => {
-                  const s = visibleSuggestions.find(x => x.field === 'prepTime')
+                  const s = getFieldSuggestion('prepTime')
                   return s ? (
                     <FieldAISuggestionChip
                       field="prepTime"
@@ -700,7 +710,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
                 {(() => {
-                  const s = visibleSuggestions.find(x => x.field === 'cookTime')
+                  const s = getFieldSuggestion('cookTime')
                   return s ? (
                     <FieldAISuggestionChip
                       field="cookTime"
@@ -751,7 +761,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                 className="w-full sm:w-40 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
               {(() => {
-                const s = visibleSuggestions.find(x => x.field === 'servings')
+                const s = getFieldSuggestion('servings')
                 return s ? (
                   <FieldAISuggestionChip
                     field="servings"
@@ -875,7 +885,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                   </div>
                 )}
                 {(() => {
-                  const s = visibleSuggestions.find(x => x.field === 'tags')
+                  const s = getFieldSuggestion('tags')
                   return s ? (
                     <FieldAISuggestionChip
                       field="tags"
@@ -944,7 +954,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                   </div>
                 )}
                 {(() => {
-                  const s = visibleSuggestions.find(x => x.field === 'dietaryRestrictions')
+                  const s = getFieldSuggestion('dietaryRestrictions')
                   return s ? (
                     <FieldAISuggestionChip
                       field="dietaryRestrictions"

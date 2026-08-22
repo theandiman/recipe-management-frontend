@@ -7,11 +7,28 @@ import type { AuditEntry, UndoResult } from './useAIAuditTrail'
 export type { AuditEntry, UndoResult }
 
 /** A single AI-generated suggestion for one recipe field. */
+export type SuggestionSource = 'bulk' | 'field'
+
 export interface FieldSuggestion {
   field: string
   suggestedValue: string
   reason: string
+  source?: SuggestionSource
 }
+
+export const getSuggestionSource = (suggestion: Pick<FieldSuggestion, 'source'>): SuggestionSource =>
+  suggestion.source ?? 'bulk'
+
+export const isBulkSuggestion = (suggestion: Pick<FieldSuggestion, 'source'>): boolean =>
+  getSuggestionSource(suggestion) === 'bulk'
+
+export const isFieldSuggestion = (suggestion: Pick<FieldSuggestion, 'source'>): boolean =>
+  getSuggestionSource(suggestion) === 'field'
+
+const withSuggestionSource = (
+  suggestions: FieldSuggestion[],
+  source: SuggestionSource
+): FieldSuggestion[] => suggestions.map(suggestion => ({ ...suggestion, source }))
 
 /** Request payload for the suggest-fields endpoint. */
 export interface FieldSuggestionRequest {
@@ -94,7 +111,7 @@ export function useAISuggestions(): UseAISuggestionsReturn {
       const url = buildApiUrl(apiBase, '/api/recipes/suggest-fields')
       const res = await postWithAuth(url, request)
       const data = res.data as { suggestions: FieldSuggestion[] }
-      const fetched = data?.suggestions ?? []
+      const fetched = withSuggestionSource(data?.suggestions ?? [], 'bulk')
       setSuggestions(fetched)
       setDismissedFields(new Set())
       setStatus('success')
@@ -140,11 +157,11 @@ export function useAISuggestions(): UseAISuggestionsReturn {
       const url = buildApiUrl(apiBase, '/api/recipes/suggest-fields')
       const res = await postWithAuth(url, request)
       const data = res.data as { suggestions: FieldSuggestion[] }
-      const fetched = data?.suggestions ?? []
+      const fetched = withSuggestionSource(data?.suggestions ?? [], 'field')
       const fieldSuggestions = fetched.filter(s => s.field === field)
 
       setSuggestions(prev => {
-        const withoutField = prev.filter(s => s.field !== field)
+        const withoutField = prev.filter(s => !(s.field === field && isFieldSuggestion(s)))
         return [...withoutField, ...fieldSuggestions]
       })
       setDismissedFields(prev => {

@@ -1,4 +1,5 @@
 import React from 'react'
+import { isBulkSuggestion } from '../hooks/useAISuggestions'
 import type { FieldSuggestion, SuggestionStatus } from '../hooks/useAISuggestions'
 import { FIELD_LABELS, STEP_FIELDS } from '../constants/aiConstants'
 import { AISpinnerIcon } from './AISpinnerIcon'
@@ -44,13 +45,18 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
   onRetry,
   currentStep,
 }) => {
+  const bulkSuggestions = React.useMemo(
+    () => suggestions.filter(isBulkSuggestion),
+    [suggestions]
+  )
+
   const stepFilteredSuggestions = React.useMemo(() => {
-    if (currentStep === undefined) return suggestions
+    if (currentStep === undefined) return bulkSuggestions
     const allowedFields = STEP_FIELDS[currentStep] ?? []
     // No mapping for this step → show all (steps 2, 3 etc. are not restricted)
-    if (allowedFields.length === 0) return suggestions
-    return suggestions.filter(s => allowedFields.includes(s.field))
-  }, [suggestions, currentStep])
+    if (allowedFields.length === 0) return bulkSuggestions
+    return bulkSuggestions.filter(s => allowedFields.includes(s.field))
+  }, [bulkSuggestions, currentStep])
 
   const autoCollapsed = status === 'success' && stepFilteredSuggestions.length === 0
   const [isExpanded, setIsExpanded] = React.useState(!autoCollapsed)

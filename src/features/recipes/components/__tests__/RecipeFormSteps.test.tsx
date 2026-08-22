@@ -189,7 +189,7 @@ describe('RecipeFormSteps — per-field AI enhance (issue #40)', () => {
         {...makeProps({
           currentStep: 1,
           onEnhanceField: vi.fn(),
-          fieldSuggestions: [{ field: 'recipeName', suggestedValue: 'Amazing Pasta', reason: 'Sounds great' }],
+          fieldSuggestions: [{ field: 'recipeName', suggestedValue: 'Amazing Pasta', reason: 'Sounds great', source: 'field' }],
           onApplyFieldSuggestion: vi.fn(),
           onDismissFieldSuggestion: vi.fn(),
         })}
@@ -205,7 +205,7 @@ describe('RecipeFormSteps — per-field AI enhance (issue #40)', () => {
         {...makeProps({
           currentStep: 1,
           onEnhanceField: vi.fn(),
-          fieldSuggestions: [{ field: 'recipeName', suggestedValue: 'Amazing Pasta', reason: 'Sounds great' }],
+          fieldSuggestions: [{ field: 'recipeName', suggestedValue: 'Amazing Pasta', reason: 'Sounds great', source: 'field' }],
           onApplyFieldSuggestion: onApply,
           onDismissFieldSuggestion: vi.fn(),
         })}
@@ -222,7 +222,7 @@ describe('RecipeFormSteps — per-field AI enhance (issue #40)', () => {
         {...makeProps({
           currentStep: 1,
           onEnhanceField: vi.fn(),
-          fieldSuggestions: [{ field: 'recipeName', suggestedValue: 'Amazing Pasta', reason: 'Sounds great' }],
+          fieldSuggestions: [{ field: 'recipeName', suggestedValue: 'Amazing Pasta', reason: 'Sounds great', source: 'field' }],
           onApplyFieldSuggestion: vi.fn(),
           onDismissFieldSuggestion: onDismiss,
         })}
@@ -257,7 +257,7 @@ describe('RecipeFormSteps — per-field AI enhance (issue #40)', () => {
           currentStep: 4,
           onEnhanceField: vi.fn(),
           fieldSuggestions: [
-            { field: 'dietaryRestrictions', suggestedValue: 'gluten-free, dairy-free', reason: 'Matches ingredients' },
+            { field: 'dietaryRestrictions', suggestedValue: 'gluten-free, dairy-free', reason: 'Matches ingredients', source: 'field' },
           ],
           onApplyFieldSuggestion: onApply,
           onDismissFieldSuggestion: vi.fn(),
@@ -268,6 +268,22 @@ describe('RecipeFormSteps — per-field AI enhance (issue #40)', () => {
     expect(screen.getByText('gluten-free, dairy-free')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /apply/i }))
     expect(onApply).toHaveBeenCalledWith('dietaryRestrictions', 'gluten-free, dairy-free')
+  })
+
+  it('does not render bulk suggestions as inline chips', () => {
+    render(
+      <RecipeFormSteps
+        {...makeProps({
+          currentStep: 1,
+          onEnhanceField: vi.fn(),
+          fieldSuggestions: [{ field: 'recipeName', suggestedValue: 'Bulk title', reason: 'Bulk only' }],
+          onApplyFieldSuggestion: vi.fn(),
+          onDismissFieldSuggestion: vi.fn(),
+        })}
+      />
+    )
+
+    expect(screen.queryByText('Bulk title')).not.toBeInTheDocument()
   })
 })
 
