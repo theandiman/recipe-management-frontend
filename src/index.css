@@ -72,6 +72,12 @@
   }
 
   .animate-field-ai-chip-enter {
-    animation: field-ai-chip-enter 180ms ease-out;
+    animation: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .animate-field-ai-chip-enter {
+      animation: field-ai-chip-enter 180ms ease-out;
+    }
   }
 }

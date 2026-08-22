@@ -462,6 +462,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                 <FieldAISuggestionChip
                   field="recipeName"
                   suggestion={s.suggestedValue}
+                  reason={s.reason}
                   currentValue={form.title}
                   onApply={() => handleApplyFieldSuggestion(s)}
                   onDismiss={() => dismissSuggestion(s)}
@@ -497,6 +498,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                 <FieldAISuggestionChip
                   field="description"
                   suggestion={s.suggestedValue}
+                  reason={s.reason}
                   currentValue={form.description}
                   onApply={() => handleApplyFieldSuggestion(s)}
                   onDismiss={() => dismissSuggestion(s)}
@@ -676,6 +678,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                     <FieldAISuggestionChip
                       field="prepTime"
                       suggestion={s.suggestedValue}
+                      reason={s.reason}
                       currentValue={form.prepTime}
                       onApply={() => handleApplyFieldSuggestion(s)}
                       onDismiss={() => dismissSuggestion(s)}
@@ -715,6 +718,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                     <FieldAISuggestionChip
                       field="cookTime"
                       suggestion={s.suggestedValue}
+                      reason={s.reason}
                       currentValue={form.cookTime}
                       onApply={() => handleApplyFieldSuggestion(s)}
                       onDismiss={() => dismissSuggestion(s)}
@@ -766,6 +770,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                   <FieldAISuggestionChip
                     field="servings"
                     suggestion={s.suggestedValue}
+                    reason={s.reason}
                     currentValue={form.servings}
                     onApply={() => handleApplyFieldSuggestion(s)}
                     onDismiss={() => dismissSuggestion(s)}
@@ -890,6 +895,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                     <FieldAISuggestionChip
                       field="tags"
                       suggestion={s.suggestedValue}
+                      reason={s.reason}
                       currentValue={stringifySuggestionList(form.tags)}
                       onApply={() => handleApplyFieldSuggestion(s)}
                       onDismiss={() => dismissSuggestion(s)}
@@ -959,6 +965,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                     <FieldAISuggestionChip
                       field="dietaryRestrictions"
                       suggestion={s.suggestedValue}
+                      reason={s.reason}
                       currentValue={stringifySuggestionList(form.dietaryRestrictions)}
                       onApply={() => handleApplyFieldSuggestion(s)}
                       onDismiss={() => dismissSuggestion(s)}

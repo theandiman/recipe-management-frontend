@@ -473,6 +473,33 @@ describe('AI Enhancement', () => {
     expect(screen.getByText('dairy-free')).toBeInTheDocument()
   })
 
+  it('shows the AI reason on inline field suggestions in quick entry mode', async () => {
+    const { postWithAuth } = await import('../../utils/authApi')
+    vi.mocked(postWithAuth).mockResolvedValueOnce({
+      data: {
+        suggestions: [
+          {
+            field: 'recipeName',
+            suggestedValue: 'Amazing Pasta',
+            reason: 'Sounds more specific',
+          },
+        ],
+      },
+    } as Awaited<ReturnType<typeof postWithAuth>>)
+
+    renderWithRouter(<SimpleCreateRecipe />)
+    fireEvent.change(screen.getByPlaceholderText(/Grandma's Chocolate Chip Cookies/i), {
+      target: { value: 'Pasta' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /Enhance with AI/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Amazing Pasta')).toBeInTheDocument()
+    })
+
+    expect(screen.getByText('Sounds more specific')).toBeInTheDocument()
+  })
+
   it('saves accepted AI nutrition estimates with the recipe', async () => {
     const { postWithAuth } = await import('../../utils/authApi')
     vi.mocked(postWithAuth).mockResolvedValueOnce({
