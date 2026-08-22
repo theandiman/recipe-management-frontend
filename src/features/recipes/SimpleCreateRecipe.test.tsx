@@ -648,4 +648,76 @@ describe('AI Undo Affordance', () => {
       expect(screen.queryByRole('button', { name: /Undo: Description/i })).not.toBeInTheDocument()
     })
   })
+
+  it('reverts applied tag suggestions through undo in quick entry', async () => {
+    const { postWithAuth } = await import('../../utils/authApi')
+    vi.mocked(postWithAuth).mockResolvedValueOnce({
+      data: {
+        suggestions: [
+          { field: 'tags', suggestedValue: 'quick, vegetarian', reason: 'Helpful categorization' },
+        ],
+      },
+    } as Awaited<ReturnType<typeof postWithAuth>>)
+
+    renderWithRouter(<SimpleCreateRecipe />)
+    fireEvent.click(screen.getByRole('button', { name: /Tags & Dietary/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^AI assist$/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Apply AI suggestion for Tags/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /Apply AI suggestion for Tags/i }))
+
+    expect(screen.getByText('quick')).toBeInTheDocument()
+    expect(screen.getByText('vegetarian')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Undo: Tags/i }))
+
+    await waitFor(() => {
+      expect(screen.queryByText('quick')).not.toBeInTheDocument()
+      expect(screen.queryByText('vegetarian')).not.toBeInTheDocument()
+    })
+  })
+})
+
+describe('AI error recovery', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    setDefaultAuthMock()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('shows an inline retry state when a field-level AI request fails', async () => {
+    const { postWithAuth } = await import('../../utils/authApi')
+    vi.mocked(postWithAuth)
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValueOnce({
+        data: {
+          suggestions: [
+            { field: 'recipeName', suggestedValue: 'Weeknight Pasta', reason: 'More descriptive' },
+          ],
+        },
+      } as Awaited<ReturnType<typeof postWithAuth>>)
+
+    const { container } = renderWithRouter(<SimpleCreateRecipe />)
+    const aiButton = container.querySelector('button[data-field="recipeName"]')
+
+    expect(aiButton).not.toBeNull()
+    fireEvent.click(aiButton!)
+
+    await waitFor(() => {
+      expect(screen.getByText(/Could not enhance Recipe Name\./i)).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /Retry AI for Recipe Name/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Weeknight Pasta')).toBeInTheDocument()
+    })
+  })
 })

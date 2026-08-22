@@ -16,6 +16,8 @@ const FIELD_LABELS: Record<string, string> = {
   prepTime: 'Prep Time',
   cookTime: 'Cook Time',
   servings: 'Servings',
+  tags: 'Tags',
+  dietaryRestrictions: 'Dietary Restrictions',
 }
 
 export const CreateRecipe: React.FC = () => {

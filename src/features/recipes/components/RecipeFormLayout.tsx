@@ -294,6 +294,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     visibleSuggestions,
     status: suggestionStatus,
     error: suggestionError,
+    fieldErrors: fieldSuggestionErrors,
     fetchSuggestions,
     fetchFieldSuggestion,
     fieldStatus,
@@ -436,7 +437,6 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 onUndo={handleLocalUndo}
                 fieldLabels={FIELD_LABELS}
               />
-              {currentStep !== 5 && (
               <button
                 type="button"
                 onClick={handleEnhanceWithAI}
@@ -455,7 +455,6 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                   </>
                 )}
               </button>
-              )}
             </div>
         </div>
 
@@ -468,28 +467,25 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
         />
       </div>
 
-      {/* AI Suggestion Panel — shown on non-preview steps */}
-      {currentStep !== 5 && (
-        <AISuggestionPanel
-          suggestions={visibleSuggestions}
-          status={suggestionStatus}
-          error={suggestionError}
-          onApply={applySuggestion}
-          onDismiss={dismissSuggestion}
-          fieldSetters={fieldSetters}
-          currentValues={{
-            recipeName: title,
-            description,
-            prepTime,
-            cookTime,
-            servings,
-            tags: stringifySuggestionList(tags),
-            dietaryRestrictions: stringifySuggestionList(dietaryRestrictions),
-          }}
-          onRetry={handleRetrySuggestions}
-          currentStep={currentStep}
-        />
-      )}
+      <AISuggestionPanel
+        suggestions={visibleSuggestions}
+        status={suggestionStatus}
+        error={suggestionError}
+        onApply={applySuggestion}
+        onDismiss={dismissSuggestion}
+        fieldSetters={fieldSetters}
+        currentValues={{
+          recipeName: title,
+          description,
+          prepTime,
+          cookTime,
+          servings,
+          tags: stringifySuggestionList(tags),
+          dietaryRestrictions: stringifySuggestionList(dietaryRestrictions),
+        }}
+        onRetry={handleRetrySuggestions}
+        currentStep={currentStep}
+      />
 
       {/* Preview Step */}
       {currentStep === 5 ? (
@@ -560,6 +556,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 onDismissNormalization={onDismissNormalization}
                 onEnhanceField={handleEnhanceField}
                 fieldStatus={fieldStatus}
+                fieldSuggestionErrors={fieldSuggestionErrors}
                 fieldSuggestions={fieldVisibleSuggestions}
                 onApplyFieldSuggestion={handleApplyFieldSuggestion}
                 onDismissFieldSuggestion={dismissSuggestion}
