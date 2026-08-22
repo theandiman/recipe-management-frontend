@@ -356,6 +356,16 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 Instructions <span className="text-red-500">*</span>
               </h2>
               <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={addInstruction}
+                  className={UI_STYLES.addButton}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>Add Step</span>
+                </button>
                 {onRefineAllInstructions && (
                   <button
                     type="button"
@@ -372,17 +382,6 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                     Refine all
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={addInstruction}
-                  className={UI_STYLES.addButton}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>Add Step</span>
-                </button>
-                
               </div>
             </div>
 

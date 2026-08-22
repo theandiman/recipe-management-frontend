@@ -51,6 +51,11 @@ describe('RecipeFormSteps — instruction refinement (issue #37)', () => {
     expect(screen.getByRole('button', { name: /Refine all instructions with AI/i })).toBeInTheDocument()
   })
 
+  it('renders "Refine all" with subdued secondary styling', () => {
+    render(<RecipeFormSteps {...makeProps({ onRefineAllInstructions: vi.fn() })} />)
+    expect(screen.getByRole('button', { name: /Refine all instructions with AI/i })).toHaveClass('bg-gray-50', 'text-gray-700')
+  })
+
   it('does NOT render "Refine all" button when handler is absent', () => {
     render(<RecipeFormSteps {...makeProps()} />)
     expect(screen.queryByRole('button', { name: /Refine all/i })).not.toBeInTheDocument()
@@ -306,6 +311,11 @@ describe('RecipeFormSteps — AI image generation (issue #41)', () => {
     render(<RecipeFormSteps {...makeStep1Props({ onGenerateAIImage: vi.fn() })} />)
     expect(screen.getByRole('button', { name: /Generate image/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Generate image/i })).toHaveTextContent('Generate image')
+  })
+
+  it('renders "Generate image" with subdued secondary styling', () => {
+    render(<RecipeFormSteps {...makeStep1Props({ onGenerateAIImage: vi.fn() })} />)
+    expect(screen.getByRole('button', { name: /Generate image/i })).toHaveClass('bg-gray-50', 'text-gray-700')
   })
 
   it('does NOT show AI generate button when onGenerateAIImage prop is absent', () => {

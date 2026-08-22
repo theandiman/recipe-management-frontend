@@ -125,6 +125,11 @@ describe('RecipeFormLayout — on-demand AI enhancement (issue #35)', () => {
     expect(screen.getByRole('button', { name: /AI assist/i })).toBeInTheDocument()
   })
 
+  it('renders the "AI assist" button with subdued secondary styling', () => {
+    renderWithRouter(makeProps())
+    expect(screen.getByRole('button', { name: /AI assist/i })).toHaveClass('bg-gray-50', 'text-gray-700')
+  })
+
   it('does NOT render the "AI assist" button on step 5 (preview)', () => {
     renderWithRouter(makeProps({ currentStep: 5 }))
     expect(screen.queryByRole('button', { name: /AI assist/i })).not.toBeInTheDocument()

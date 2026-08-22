@@ -95,6 +95,20 @@ describe('NutritionEstimatePanel', () => {
     expect(screen.getByText('700kcal')).toBeInTheDocument()
   })
 
+  it('shows an understated AI estimate label in the header', () => {
+    render(
+      <NutritionEstimatePanel
+        estimate={makeEstimate()}
+        loadingState="success"
+        error={null}
+        onAccept={vi.fn()}
+        onDismiss={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText('AI estimate')).toBeInTheDocument()
+  })
+
   it('includes dark mode styles on the success panel', () => {
     const { container } = render(
       <NutritionEstimatePanel

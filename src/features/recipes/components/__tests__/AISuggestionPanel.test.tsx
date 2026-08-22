@@ -164,6 +164,21 @@ describe('AISuggestionPanel', () => {
     expect(screen.getByText('Suggested')).toBeInTheDocument()
   })
 
+  it('keeps the AI badge scoped to the panel header instead of repeating it per suggestion card', () => {
+    render(
+      <AISuggestionPanel
+        suggestions={[mockSuggestions[0]]}
+        status="success"
+        error={null}
+        onApply={vi.fn()}
+        onDismiss={vi.fn()}
+        fieldSetters={{ description: vi.fn() }}
+      />
+    )
+
+    expect(screen.getAllByText('AI')).toHaveLength(1)
+  })
+
   it('includes dark mode classes on the panel and suggestion cards', () => {
     render(
       <AISuggestionPanel

@@ -1,7 +1,12 @@
 import React from 'react'
 import type { NutritionEstimate, NutritionEstimateResponse, NutritionLoadingState } from '../hooks/useNutritionEstimate'
-import { AIBadge } from './AIBadge'
-import { AI_MUTED_PANEL_CLASS, AI_PANEL_CLASS, AI_PRIMARY_ACTION_CLASS, AI_SECONDARY_ACTION_CLASS } from './aiStyles'
+import {
+  AI_EYEBROW_CLASS,
+  AI_MUTED_PANEL_CLASS,
+  AI_PANEL_CLASS,
+  AI_PRIMARY_ACTION_CLASS,
+  AI_SECONDARY_ACTION_CLASS,
+} from './aiStyles'
 
 interface NutritionEstimatePanelProps {
   estimate: NutritionEstimateResponse | null
@@ -75,8 +80,8 @@ export const NutritionEstimatePanel: React.FC<NutritionEstimatePanelProps> = ({
   if (loadingState === 'loading') {
     return (
       <div className={`mt-3 p-3 ${AI_MUTED_PANEL_CLASS}`}>
-        <div className="flex items-center gap-2">
-          <AIBadge />
+        <p className={AI_EYEBROW_CLASS}>AI estimate</p>
+        <div className="mt-1 flex items-center gap-2">
           <p className="text-sm text-gray-700 dark:text-gray-200">Estimating nutrition...</p>
         </div>
       </div>
@@ -107,15 +112,19 @@ export const NutritionEstimatePanel: React.FC<NutritionEstimatePanelProps> = ({
 
   return (
     <div className={`mt-3 p-4 ${AI_PANEL_CLASS}`}>
-      <div className="flex items-center gap-2 mb-2">
-        <AIBadge />
-        <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-          Nutrition estimate
-          <span className="sr-only">, AI generated</span>
-        </h4>
+      <div className="mb-2">
+        <p className={AI_EYEBROW_CLASS}>AI estimate</p>
+        <div className="mt-1 flex items-center gap-2">
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            Nutrition estimate
+            <span className="sr-only">, AI generated</span>
+          </h4>
         {isPartial && (
-          <span className="text-xs font-medium text-amber-700 dark:text-amber-300">(partial)</span>
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
+              Partial
+            </span>
         )}
+        </div>
       </div>
 
       <NutritionTable perServing={estimate.perServing} wholeRecipe={estimate.wholeRecipe} />

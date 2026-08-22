@@ -5,6 +5,7 @@ import { FIELD_LABELS, STEP_FIELDS } from '../constants/aiConstants'
 import { AISpinnerIcon } from './AISpinnerIcon'
 import { AIBadge } from './AIBadge'
 import {
+  AI_EYEBROW_CLASS,
   AI_MUTED_PANEL_CLASS,
   AI_PANEL_CLASS,
   AI_PRIMARY_ACTION_CLASS,
@@ -90,9 +91,12 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
       >
         <span className="flex items-center gap-3 text-sm">
           <AIBadge />
-          <span className="font-semibold text-gray-900 dark:text-gray-100">AI Suggestions</span>
+          <span>
+            <span className="block font-semibold text-gray-900 dark:text-gray-100">AI Suggestions</span>
+            <span className="block text-xs text-gray-500 dark:text-gray-400">Optional suggestions to review</span>
+          </span>
           {hasSuggestions && (
-            <span className="inline-flex items-center justify-center min-w-5 h-5 rounded-full bg-emerald-100 px-1.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/70 dark:text-emerald-200">
+            <span className="inline-flex items-center justify-center min-w-5 h-5 rounded-full bg-gray-100 px-1.5 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">
               {stepFilteredSuggestions.length}
             </span>
           )}
@@ -145,10 +149,8 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
                     aria-label={`AI suggestion for ${label}`}
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">{label}</p>
-                        <AIBadge />
-                      </div>
+                      <p className={AI_EYEBROW_CLASS}>AI suggestion</p>
+                      <p className="mb-1 text-xs font-semibold text-gray-700 dark:text-gray-200">{label}</p>
                       {currentValue && (
                         <p
                           className="mb-2 break-words rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
@@ -159,10 +161,10 @@ export const AISuggestionPanel: React.FC<AISuggestionPanelProps> = ({
                         </p>
                       )}
                       <p
-                        className="break-words rounded-md border border-emerald-100 bg-emerald-50 px-2 py-1.5 text-sm text-gray-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-gray-100"
+                        className="break-words rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                         aria-label={`Suggested value: ${suggestion.suggestedValue}`}
                       >
-                        <span className="mr-1 font-medium text-emerald-700 dark:text-emerald-200">Suggested</span>
+                        <span className="mr-1 font-medium text-gray-500 dark:text-gray-400">Suggested</span>
                         {suggestion.suggestedValue}
                       </p>
                       {suggestion.reason && (
