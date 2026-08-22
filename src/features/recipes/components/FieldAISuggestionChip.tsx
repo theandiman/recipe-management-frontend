@@ -1,6 +1,10 @@
 import React from 'react'
-import { AIBadge } from './AIBadge'
-import { AI_MUTED_PANEL_CLASS, AI_PRIMARY_ACTION_CLASS, AI_SECONDARY_ACTION_CLASS } from './aiStyles'
+import {
+  AI_EYEBROW_CLASS,
+  AI_MUTED_PANEL_CLASS,
+  AI_PRIMARY_ACTION_CLASS,
+  AI_SECONDARY_ACTION_CLASS,
+} from './aiStyles'
 
 export interface FieldAISuggestionChipProps {
   field: string
@@ -18,10 +22,11 @@ export const FieldAISuggestionChip: React.FC<FieldAISuggestionChipProps> = ({
 }) => {
   return (
     <div className={`mt-2 px-3 py-3 text-sm flex items-start gap-3 ${AI_MUTED_PANEL_CLASS}`}>
-      <AIBadge className="mt-0.5 shrink-0" />
       <div className="flex-1 min-w-0">
+        <p className={AI_EYEBROW_CLASS}>AI suggestion</p>
         {currentValue && (
           <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
+            <span className="mr-1 font-medium text-gray-400 dark:text-gray-500">Current</span>
             <s>{currentValue}</s>
           </p>
         )}

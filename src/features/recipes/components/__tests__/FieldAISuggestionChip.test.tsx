@@ -16,6 +16,20 @@ describe('FieldAISuggestionChip', () => {
     expect(screen.getByText('A delicious pasta dish')).toBeInTheDocument()
   })
 
+  it('shows an understated AI suggestion label above the suggestion content', () => {
+    render(
+      <FieldAISuggestionChip
+        field="recipeName"
+        suggestion="A delicious pasta dish"
+        currentValue=""
+        onApply={vi.fn()}
+        onDismiss={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText('AI suggestion')).toBeInTheDocument()
+  })
+
   it('shows Apply and Dismiss buttons', () => {
     render(
       <FieldAISuggestionChip

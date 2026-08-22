@@ -429,7 +429,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
               Step {currentStep} of {totalSteps}: {steps[currentStep - 1].title}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
               <AIUndoButton
                 key={localAuditLog.length}
                 lastField={effectiveCanUndo ? effectiveUndoField : null}
