@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { uploadRecipeImage, deleteRecipeImage } from './imageStorage'
+import {
+  uploadRecipeImage,
+  deleteRecipeImage,
+  uploadAvatarImage,
+  deleteAvatarImage
+} from './imageStorage'
 import { uploadBytes, getDownloadURL, deleteObject, ref } from 'firebase/storage'
 
 // Mock Firebase storage
@@ -146,6 +151,50 @@ describe('imageStorage', () => {
       await deleteRecipeImage(mockRecipeId)
 
       expect(ref).toHaveBeenCalledWith(expect.anything(), 'recipes/delete-this-recipe/image.jpg')
+    })
+  })
+
+  describe('uploadAvatarImage', () => {
+    it('should upload avatar and return download URL', async () => {
+      const mockDataUrl = 'data:image/jpeg;base64,/9j/4AAQSkZJRg=='
+      const mockUid = 'user-123'
+      const mockDownloadUrl = 'https://storage.googleapis.com/avatars/user-123/avatar.jpg'
+
+      vi.mocked(ref).mockReturnValue({ toString: () => 'mock-ref' } as any)
+      vi.mocked(uploadBytes).mockResolvedValue({} as any)
+      vi.mocked(getDownloadURL).mockResolvedValue(mockDownloadUrl)
+
+      const result = await uploadAvatarImage(mockDataUrl, mockUid)
+
+      expect(ref).toHaveBeenCalledWith(expect.anything(), `avatars/${mockUid}/avatar.jpg`)
+      expect(uploadBytes).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.any(Blob),
+        expect.objectContaining({
+          contentType: 'image/jpeg',
+          cacheControl: 'public, max-age=31536000'
+        })
+      )
+      expect(result).toBe(mockDownloadUrl)
+    })
+
+    it('should reject invalid data format', async () => {
+      await expect(uploadAvatarImage('not-a-data-url', 'user-123')).rejects.toThrow(
+        'Invalid image format'
+      )
+    })
+  })
+
+  describe('deleteAvatarImage', () => {
+    it('should delete avatar from storage path', async () => {
+      const mockUid = 'user-123'
+      vi.mocked(ref).mockReturnValue({ toString: () => 'mock-ref' } as any)
+      vi.mocked(deleteObject).mockResolvedValue(undefined)
+
+      await deleteAvatarImage(mockUid)
+
+      expect(ref).toHaveBeenCalledWith(expect.anything(), `avatars/${mockUid}/avatar.jpg`)
+      expect(deleteObject).toHaveBeenCalled()
     })
   })
 })

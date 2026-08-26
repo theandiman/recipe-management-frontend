@@ -6,6 +6,7 @@ import { useAuth } from '../../features/auth/AuthContext'
 import RecipeCard from '../../components/RecipeCard'
 import { RecipeCardSkeleton } from '../../components/skeletons/RecipeCardSkeleton'
 import { FollowListModal } from './FollowListModal'
+import { ProfileSettingsModal } from './ProfileSettingsModal'
 import { FollowButton } from './FollowButton'
 import { useFollowContext } from './FollowContext'
 import type { UserProfile } from '../../services/userApi'
@@ -20,6 +21,7 @@ export const UserProfilePage: React.FC = () => {
   const [notFound, setNotFound] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [followModal, setFollowModal] = useState<'followers' | 'following' | null>(null)
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -204,8 +206,18 @@ export const UserProfilePage: React.FC = () => {
               </p>
             )}
 
-            {/* Follow / Unfollow button – hidden on own profile */}
-            {uid !== currentUser?.uid && uid && <FollowButton uid={uid} />}
+            {/* Follow / Unfollow button or Edit Profile button */}
+            {uid === currentUser?.uid ? (
+              <button
+                type="button"
+                onClick={() => setIsEditingProfile(true)}
+                className="px-4 py-2 text-sm font-medium border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-200 transition-colors"
+              >
+                Edit profile
+              </button>
+            ) : (
+              uid && <FollowButton uid={uid} />
+            )}
           </div>
         </div>
       </motion.div>
@@ -264,6 +276,14 @@ export const UserProfilePage: React.FC = () => {
           uid={uid}
           type={followModal}
           onClose={() => setFollowModal(null)}
+        />
+      )}
+      {/* Edit Profile Modal */}
+      {isEditingProfile && profile && (
+        <ProfileSettingsModal
+          profile={profile}
+          onClose={() => setIsEditingProfile(false)}
+          onProfileUpdated={(updated) => setProfile(updated)}
         />
       )}
     </div>
