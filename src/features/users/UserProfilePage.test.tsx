@@ -153,7 +153,7 @@ describe('UserProfilePage', () => {
     })
   })
 
-  it('hides Follow button when viewing own profile', async () => {
+  it('renders Edit profile button when viewing own profile', async () => {
     mockUseAuth.mockReturnValue({
       user: { uid: 'uid-123', email: 'jane@example.com' },
       isAuthenticated: true,
@@ -164,7 +164,8 @@ describe('UserProfilePage', () => {
     await waitFor(() => {
       expect(screen.getByText('Jane Chef')).toBeInTheDocument()
     })
-    expect(screen.queryByRole('button', { name: /follow/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Edit profile' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^follow$/i })).not.toBeInTheDocument()
   })
 
   it('shows "Following" when isFollowedByCurrentUser is true', async () => {
