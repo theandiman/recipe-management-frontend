@@ -103,6 +103,11 @@ export const UserProfilePage: React.FC = () => {
 
   const avatarLetter = (profile.displayName || profile.uid)?.[0]?.toUpperCase() || '?'
 
+  const isPrivateAccount =
+    profile.visibility === 'PRIVATE' &&
+    uid !== currentUser?.uid &&
+    !profile.isFollowedByCurrentUser
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Back button */}
@@ -139,12 +144,25 @@ export const UserProfilePage: React.FC = () => {
 
           {/* Info */}
           <div className="flex-1 text-center sm:text-left">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">
-              {profile.displayName}
-            </h1>
+            <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+                {profile.displayName}
+              </h1>
+              {profile.visibility === 'PRIVATE' && (
+                <span
+                  title="Private Account"
+                  className="px-2 py-0.5 text-xs font-semibold bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 rounded-full flex items-center gap-1"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  Private
+                </span>
+              )}
+            </div>
 
             {/* Follower / Following counts – followerCount reads from context for optimistic updates */}
-            {(() => {
+            {!isPrivateAccount && (() => {
               const contextState = uid ? getFollowState(uid) : undefined
               const displayFollowerCount =
                 contextState !== undefined ? contextState.followerCount : profile.followerCount
@@ -179,10 +197,12 @@ export const UserProfilePage: React.FC = () => {
             {profile.bio && (
               <p className="text-gray-600 dark:text-gray-300 mb-3">{profile.bio}</p>
             )}
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              {profile.publicRecipeCount}{' '}
-              {profile.publicRecipeCount === 1 ? 'public recipe' : 'public recipes'}
-            </p>
+            {!isPrivateAccount && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                {profile.publicRecipeCount}{' '}
+                {profile.publicRecipeCount === 1 ? 'public recipe' : 'public recipes'}
+              </p>
+            )}
 
             {/* Follow / Unfollow button – hidden on own profile */}
             {uid !== currentUser?.uid && uid && <FollowButton uid={uid} />}
@@ -190,39 +210,53 @@ export const UserProfilePage: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* Public recipes grid */}
-      <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Public Recipes</h2>
-
-      {profile.publicRecipes.length === 0 ? (
-        <motion.div
-          className="text-center py-12 text-gray-500 dark:text-gray-400"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          No public recipes yet.
-        </motion.div>
+      {/* Content area: Private banner or Public recipes grid */}
+      {isPrivateAccount ? (
+        <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center my-8">
+          <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center mx-auto mb-3">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">This Account is Private</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Follow this user to see their public recipes and details.</p>
+        </div>
       ) : (
-        <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          {profile.publicRecipes.map((recipe, index) => (
+        <>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Public Recipes</h2>
+
+          {profile.publicRecipes.length === 0 ? (
             <motion.div
-              key={recipe.id}
-              initial={{ opacity: 0, y: 20 }}
+              className="text-center py-12 text-gray-500 dark:text-gray-400"
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) }}
+              transition={{ duration: 0.3 }}
             >
-              <RecipeCard
-                recipe={recipe}
-                onView={(id) => navigate(`/dashboard/recipes/${id}`)}
-              />
+              No public recipes yet.
             </motion.div>
-          ))}
-        </motion.div>
+          ) : (
+            <motion.div
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              {profile.publicRecipes.map((recipe, index) => (
+                <motion.div
+                  key={recipe.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) }}
+                >
+                  <RecipeCard
+                    recipe={recipe}
+                    onView={(id) => navigate(`/dashboard/recipes/${id}`)}
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </>
       )}
       {/* Followers / Following modal */}
       {followModal && uid && (

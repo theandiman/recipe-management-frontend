@@ -406,4 +406,19 @@ describe('UserProfilePage', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     })
   })
+
+  it('renders private account banner and hides recipe grid for private non-followed profile', async () => {
+    vi.spyOn(userApi, 'getUserProfile').mockResolvedValue({
+      ...mockProfile,
+      visibility: 'PRIVATE',
+      isFollowedByCurrentUser: false,
+    })
+    renderAtUid()
+
+    await waitFor(() => {
+      expect(screen.getByText('This Account is Private')).toBeInTheDocument()
+    })
+    expect(screen.getByText('Follow this user to see their public recipes and details.')).toBeInTheDocument()
+    expect(screen.queryByText('Pasta Carbonara')).not.toBeInTheDocument()
+  })
 })
