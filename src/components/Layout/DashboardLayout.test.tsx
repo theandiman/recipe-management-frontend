@@ -50,6 +50,10 @@ vi.mock('../../features/recipes/SavedRecipesPage', () => ({
   SavedRecipesPage: () => <div>SavedRecipesPageStub</div>,
 }))
 
+vi.mock('../../features/users/UserProfilePage', () => ({
+  UserProfilePage: () => <div>UserProfilePageStub</div>,
+}))
+
 const renderAt = (path: string) =>
   render(
     <MemoryRouter initialEntries={[path]}>
@@ -74,5 +78,18 @@ describe('DashboardLayout routing', () => {
     renderAt('/dashboard/recipes/edit/1')
 
     expect(screen.getByText('SimpleCreateRecipeStub')).toBeInTheDocument()
+  })
+
+  it('renders My Profile link and profile header button', () => {
+    renderAt('/dashboard')
+
+    expect(screen.getByRole('link', { name: /my profile/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /my profile/i })).toBeInTheDocument()
+  })
+
+  it('renders UserProfilePage for /dashboard/profile', () => {
+    renderAt('/dashboard/profile')
+
+    expect(screen.getByText('UserProfilePageStub')).toBeInTheDocument()
   })
 })
