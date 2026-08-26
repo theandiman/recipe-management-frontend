@@ -41,7 +41,9 @@ export const SavedRecipesProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const data = await getSavedRecipes()
       setSavedRecipes(Array.isArray(data) ? data : [])
     } catch (err) {
-      console.error('Failed to load saved recipes:', err)
+      if (import.meta.env.VITE_TEST_MODE !== 'true') {
+        console.error('Failed to load saved recipes:', err)
+      }
     } finally {
       setIsLoading(false)
     }
