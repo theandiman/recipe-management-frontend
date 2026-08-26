@@ -12,6 +12,7 @@ import { AIGenerator } from '../../features/recipes/AIGenerator'
 import { HelpPage } from '../../features/help/HelpPage'
 import { CommunityPage } from '../../features/community/CommunityPage'
 import { SavedRecipesPage } from '../../features/recipes/SavedRecipesPage'
+import { UserProfilePage } from '../../features/users/UserProfilePage'
 
 export const DashboardLayout: React.FC = () => {
   const { user, logout } = useAuth()
@@ -46,6 +47,15 @@ export const DashboardLayout: React.FC = () => {
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
+        </svg>
+      ),
+    },
+    {
+      name: 'My Profile',
+      path: '/dashboard/profile',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
       ),
     },
@@ -224,7 +234,14 @@ export const DashboardLayout: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.3 }}
           >
-            <div className="flex items-center justify-between mb-3">
+            <div
+              onClick={() => {
+                navigate('/dashboard/profile')
+                if (window.innerWidth < 1024) setIsSidebarOpen(false)
+              }}
+              className="flex items-center justify-between mb-3 cursor-pointer p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700/50 transition-colors"
+              title="View & Edit My Profile"
+            >
               <div className="flex items-center space-x-3">
                 <motion.div
                   className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-teal-500 rounded-full flex items-center justify-center text-white font-semibold"
@@ -237,7 +254,7 @@ export const DashboardLayout: React.FC = () => {
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                     {user?.email || 'User'}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Signed in</p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">View & Edit Profile</p>
                 </div>
               </div>
             </div>
@@ -282,7 +299,19 @@ export const DashboardLayout: React.FC = () => {
       </motion.button>
       )}
       <div className="ml-3 flex-1" />
-      <ThemeToggle />
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => navigate('/dashboard/profile')}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors shadow-sm"
+          title="My Profile & Settings"
+        >
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-bold">
+            {user?.email?.[0].toUpperCase() || 'U'}
+          </div>
+          <span className="text-xs font-medium text-gray-700 dark:text-gray-200 hidden sm:inline">My Profile</span>
+        </button>
+        <ThemeToggle />
+      </div>
     </div>
   </header>
 
@@ -290,6 +319,8 @@ export const DashboardLayout: React.FC = () => {
         <main className="p-4 bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
           <Routes>
             <Route index element={<Dashboard />} />
+            <Route path="profile" element={<UserProfilePage />} />
+            <Route path="user/:uid" element={<UserProfilePage />} />
             <Route path="recipes/*" element={<RecipeLibrary />} />
             <Route path="recipes/:id" element={<RecipeDetail />} />
             <Route path="recipes/edit/:id" element={<SimpleCreateRecipe />} />

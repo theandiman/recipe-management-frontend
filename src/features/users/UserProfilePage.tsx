@@ -12,9 +12,10 @@ import { useFollowContext } from './FollowContext'
 import type { UserProfile } from '../../services/userApi'
 
 export const UserProfilePage: React.FC = () => {
-  const { uid } = useParams<{ uid: string }>()
+  const { uid: paramUid } = useParams<{ uid: string }>()
   const navigate = useNavigate()
   const { user: currentUser } = useAuth()
+  const targetUid = paramUid || currentUser?.uid
   const { initUser, getFollowState } = useFollowContext()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -25,14 +26,14 @@ export const UserProfilePage: React.FC = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!uid) return
+      if (!targetUid) return
       try {
         setLoading(true)
         setNotFound(false)
         setError(null)
-        const data = await getUserProfile(uid)
+        const data = await getUserProfile(targetUid)
         setProfile(data)
-        initUser(uid, data.isFollowedByCurrentUser ?? false, data.followerCount)
+        initUser(targetUid, data.isFollowedByCurrentUser ?? false, data.followerCount)
       } catch (err: unknown) {
         const apiError = err as { response?: { status?: number; data?: { message?: string } } }
         if (apiError.response?.status === 404) {
@@ -47,7 +48,7 @@ export const UserProfilePage: React.FC = () => {
     }
 
     fetchProfile()
-  }, [uid, initUser])
+  }, [targetUid, initUser])
 
   if (loading) {
     return (
@@ -107,7 +108,7 @@ export const UserProfilePage: React.FC = () => {
 
   const isPrivateAccount =
     profile.visibility === 'PRIVATE' &&
-    uid !== currentUser?.uid &&
+    targetUid !== currentUser?.uid &&
     !profile.isFollowedByCurrentUser
 
   return (
@@ -165,7 +166,7 @@ export const UserProfilePage: React.FC = () => {
 
             {/* Follower / Following counts – followerCount reads from context for optimistic updates */}
             {!isPrivateAccount && (() => {
-              const contextState = uid ? getFollowState(uid) : undefined
+              const contextState = targetUid ? getFollowState(targetUid) : undefined
               const displayFollowerCount =
                 contextState !== undefined ? contextState.followerCount : profile.followerCount
               return (displayFollowerCount !== undefined || profile.followingCount !== undefined) ? (
@@ -207,16 +208,19 @@ export const UserProfilePage: React.FC = () => {
             )}
 
             {/* Follow / Unfollow button or Edit Profile button */}
-            {uid === currentUser?.uid ? (
+            {targetUid === currentUser?.uid ? (
               <button
                 type="button"
                 onClick={() => setIsEditingProfile(true)}
-                className="px-4 py-2 text-sm font-medium border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-200 transition-colors"
+                className="px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors flex items-center gap-2"
               >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
                 Edit profile
               </button>
             ) : (
-              uid && <FollowButton uid={uid} />
+              targetUid && <FollowButton uid={targetUid} />
             )}
           </div>
         </div>
@@ -271,9 +275,9 @@ export const UserProfilePage: React.FC = () => {
         </>
       )}
       {/* Followers / Following modal */}
-      {followModal && uid && (
+      {followModal && targetUid && (
         <FollowListModal
-          uid={uid}
+          uid={targetUid}
           type={followModal}
           onClose={() => setFollowModal(null)}
         />
