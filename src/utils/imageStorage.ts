@@ -138,3 +138,52 @@ export const deleteRecipeImage = async (recipeId: string): Promise<void> => {
     console.warn('Error deleting image (may not exist):', error)
   }
 }
+
+/**
+ * Upload profile avatar image to Firebase Storage
+ * @param imageDataUrl - Base64 data URL of the avatar image
+ * @param uid - Firebase user ID of the profile owner
+ * @returns Download URL of the uploaded avatar image
+ */
+export const uploadAvatarImage = async (
+  imageDataUrl: string,
+  uid: string
+): Promise<string> => {
+  if (!imageDataUrl || !uid) {
+    throw new Error('Image data and UID are required')
+  }
+
+  if (!imageDataUrl.startsWith('data:image/')) {
+    throw new Error('Invalid image format. Allowed formats: JPEG, PNG, WEBP')
+  }
+
+  try {
+    const compressedDataUrl = await compressImage(imageDataUrl)
+    const blob = dataURLtoBlob(compressedDataUrl)
+
+    const storageRef = ref(storage, `avatars/${uid}/avatar.jpg`)
+    await uploadBytes(storageRef, blob, {
+      contentType: 'image/jpeg',
+      cacheControl: 'public, max-age=31536000'
+    })
+
+    const downloadURL = await getDownloadURL(storageRef)
+    return downloadURL
+  } catch (error) {
+    console.error('Error uploading avatar:', error)
+    throw new Error('Failed to upload avatar image')
+  }
+}
+
+/**
+ * Delete profile avatar image from Firebase Storage
+ * @param uid - Firebase user ID of the profile owner
+ */
+export const deleteAvatarImage = async (uid: string): Promise<void> => {
+  try {
+    const storageRef = ref(storage, `avatars/${uid}/avatar.jpg`)
+    await deleteObject(storageRef)
+  } catch (error) {
+    console.warn('Error deleting avatar image (may not exist):', error)
+  }
+}

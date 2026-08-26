@@ -153,7 +153,7 @@ describe('UserProfilePage', () => {
     })
   })
 
-  it('hides Follow button when viewing own profile', async () => {
+  it('renders Edit profile button when viewing own profile', async () => {
     mockUseAuth.mockReturnValue({
       user: { uid: 'uid-123', email: 'jane@example.com' },
       isAuthenticated: true,
@@ -164,7 +164,8 @@ describe('UserProfilePage', () => {
     await waitFor(() => {
       expect(screen.getByText('Jane Chef')).toBeInTheDocument()
     })
-    expect(screen.queryByRole('button', { name: /follow/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Edit profile' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^follow$/i })).not.toBeInTheDocument()
   })
 
   it('shows "Following" when isFollowedByCurrentUser is true', async () => {
@@ -405,5 +406,20 @@ describe('UserProfilePage', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     })
+  })
+
+  it('renders private account banner and hides recipe grid for private non-followed profile', async () => {
+    vi.spyOn(userApi, 'getUserProfile').mockResolvedValue({
+      ...mockProfile,
+      visibility: 'PRIVATE',
+      isFollowedByCurrentUser: false,
+    })
+    renderAtUid()
+
+    await waitFor(() => {
+      expect(screen.getByText('This Account is Private')).toBeInTheDocument()
+    })
+    expect(screen.getByText('Follow this user to see their public recipes and details.')).toBeInTheDocument()
+    expect(screen.queryByText('Pasta Carbonara')).not.toBeInTheDocument()
   })
 })
