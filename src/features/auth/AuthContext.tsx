@@ -40,6 +40,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Listen to Firebase auth state changes
   useEffect(() => {
+    const isTestMode = import.meta.env.VITE_TEST_MODE === 'true'
+    if (isTestMode) {
+      setUser({
+        uid: 'test-user-123',
+        email: 'test@example.com',
+        displayName: 'Chef Andy',
+        photoURL: null,
+      })
+      setIsLoading(false)
+      return
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         setUser(convertFirebaseUser(firebaseUser))
