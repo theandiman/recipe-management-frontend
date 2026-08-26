@@ -20,11 +20,21 @@ export interface UserProfile {
   displayName: string
   avatarUrl?: string
   bio?: string
+  visibility?: 'PUBLIC' | 'PRIVATE' | string
   publicRecipeCount: number
   publicRecipes: Recipe[]
   followerCount?: number
   followingCount?: number
   isFollowedByCurrentUser?: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface UpdateUserProfileRequest {
+  displayName?: string
+  bio?: string
+  avatarUrl?: string
+  visibility?: 'PUBLIC' | 'PRIVATE' | string
 }
 
 export interface FollowUser {
@@ -75,6 +85,38 @@ export async function getUserProfile(uid: string): Promise<UserProfile> {
         ? ((profile.publicRecipes as unknown as { recipes: Recipe[] }).recipes || [])
         : [],
   }
+}
+
+export async function getMyProfile(): Promise<UserProfile> {
+  const url = buildApiUrl(USER_API_BASE, `/api/users/me/profile`)
+  const headers = await getUserApiHeaders(true)
+
+  const response = await axios.get<UserProfile>(url, { headers })
+  const profile = response.data
+
+  return {
+    ...profile,
+    publicRecipes: Array.isArray(profile.publicRecipes) ? profile.publicRecipes : [],
+  }
+}
+
+export async function updateMyProfile(payload: UpdateUserProfileRequest): Promise<UserProfile> {
+  const url = buildApiUrl(USER_API_BASE, `/api/users/me/profile`)
+  const headers = await getUserApiHeaders(true)
+
+  const response = await axios.put<UserProfile>(url, payload, { headers })
+  return response.data
+}
+
+export async function updateUserProfile(
+  uid: string,
+  payload: UpdateUserProfileRequest,
+): Promise<UserProfile> {
+  const url = buildApiUrl(USER_API_BASE, `/api/users/${uid}/profile`)
+  const headers = await getUserApiHeaders(true)
+
+  const response = await axios.put<UserProfile>(url, payload, { headers })
+  return response.data
 }
 
 export async function followUser(uid: string): Promise<void> {
