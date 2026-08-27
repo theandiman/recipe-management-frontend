@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { buildApiUrl } from '../../../utils/apiUtils'
+import { resolveAiApiBase } from '../../../utils/aiApi'
 import { postWithAuth } from '../../../utils/authApi'
 import type { Ingredient, NutritionalInfo, NutritionValues } from '../../../types/nutrition'
 
@@ -73,7 +74,7 @@ export function useNutritionEstimate(): UseNutritionEstimateReturn {
       setError(null)
 
       try {
-        const apiBase = import.meta.env.VITE_AI_API_URL || import.meta.env.VITE_API_URL || ''
+        const apiBase = resolveAiApiBase()
         const url = buildApiUrl(apiBase, '/api/recipes/estimate-nutrition')
         const ingredientStrings = filledIngredients.map((i) => {
           const parts = [i.quantity, i.unit, i.item].filter(Boolean).join(' ')

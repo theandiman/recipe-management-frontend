@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { buildApiUrl } from '../../../utils/apiUtils'
+import { resolveAiApiBase } from '../../../utils/aiApi'
 import { postWithAuth } from '../../../utils/authApi'
 
 // ---------------------------------------------------------------------------
@@ -56,7 +57,7 @@ export function useInstructionRefinement(
 
   const callRefineApi = useCallback(
     async (instructions: string[], recipeName?: string): Promise<InstructionRefinement[]> => {
-      const apiBase = import.meta.env.VITE_AI_API_URL || import.meta.env.VITE_API_URL || ''
+      const apiBase = resolveAiApiBase()
       const url = buildApiUrl(apiBase, '/api/recipes/refine-instructions')
       const res = await postWithAuth(url, { instructions, recipeName: recipeName ?? null })
       const data = res.data as { refinements: InstructionRefinement[] }

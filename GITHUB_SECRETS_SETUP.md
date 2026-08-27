@@ -27,7 +27,8 @@ Get the values from your `.env.local` file and add them as secrets:
 | `VITE_FIREBASE_STORAGE_BUCKET` | Firebase storage bucket | `.env.local` (usually `{project-id}.appspot.com`) |
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID | `.env.local` or Firebase Console |
 | `VITE_FIREBASE_APP_ID` | Firebase app ID | `.env.local` or Firebase Console |
-| `VITE_API_URL` | Backend AI service URL | `.env.local` (Cloud Run URL) |
+| `VITE_AI_API_URL` | Preferred AI service URL | `.env.local` (Cloud Run URL) |
+| `VITE_API_URL` | Legacy AI service fallback URL | `.env.local` (Cloud Run URL) |
 | `VITE_MANAGEMENT_API_URL` | Management service URL | `.env.local` (Cloud Run URL) |
 
 ### Already Configured

@@ -20,6 +20,14 @@ set -a
 source .env
 set +a
 
+AI_API_URL="${VITE_AI_API_URL:-${VITE_API_URL:-}}"
+LEGACY_AI_API_URL="${VITE_API_URL:-$AI_API_URL}"
+
+if [ -z "$AI_API_URL" ]; then
+    echo "❌ Error: set VITE_AI_API_URL or VITE_API_URL in .env before pushing secrets."
+    exit 1
+fi
+
 echo "📤 Setting Firebase configuration secrets..."
 gh secret set VITE_FIREBASE_API_KEY \
     --env "$ENV" \
@@ -55,7 +63,12 @@ echo "📤 Setting backend API URL secrets..."
 gh secret set VITE_API_URL \
     --env "$ENV" \
     --repo "$REPO" \
-    --body "$VITE_API_URL"
+    --body "$LEGACY_AI_API_URL"
+
+gh secret set VITE_AI_API_URL \
+    --env "$ENV" \
+    --repo "$REPO" \
+    --body "$AI_API_URL"
 
 gh secret set VITE_MANAGEMENT_API_URL \
     --env "$ENV" \

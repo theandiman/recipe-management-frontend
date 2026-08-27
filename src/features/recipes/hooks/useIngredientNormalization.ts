@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { buildApiUrl } from '../../../utils/apiUtils'
+import { resolveAiApiBase } from '../../../utils/aiApi'
 import { postWithAuth } from '../../../utils/authApi'
 import type { Ingredient } from '../../../types/nutrition'
 
@@ -67,7 +68,7 @@ export function useIngredientNormalization(
       ingredients: Ingredient[],
       recipeName?: string
     ): Promise<IngredientNormalization[]> => {
-      const apiBase = import.meta.env.VITE_AI_API_URL || import.meta.env.VITE_API_URL || ''
+      const apiBase = resolveAiApiBase()
       const url = buildApiUrl(apiBase, '/api/recipes/normalize-ingredients')
       const ingredientStrings = ingredients.map(ingredientToString)
       const res = await postWithAuth(url, {

@@ -2,9 +2,8 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import axios from 'axios'
 import type { Recipe } from '../../types/nutrition'
 import { buildApiUrl } from '../../utils/apiUtils'
+import { resolveAiApiBase } from '../../utils/aiApi'
 import { postWithAuth } from '../../utils/authApi'
-
-const getAiApiBase = () => import.meta.env.VITE_AI_API_URL || import.meta.env.VITE_API_URL || ''
 
 export const generateRecipe = createAsyncThunk(
   'recipe/generate',
@@ -17,7 +16,7 @@ export const generateRecipe = createAsyncThunk(
     maxTotalMinutes?: number | null 
   }, { rejectWithValue, signal }) => {
     try {
-      const apiBase = getAiApiBase()
+      const apiBase = resolveAiApiBase()
       const url = buildApiUrl(apiBase, '/api/recipes/generate')
       const res = await postWithAuth(url, payload, { signal })
       return res.data
@@ -43,7 +42,7 @@ export const generateImage = createAsyncThunk(
   'recipe/generateImage',
   async (payload: { prompt?: string; recipe?: Recipe }, { rejectWithValue, signal }) => {
     try {
-      const apiBase = getAiApiBase()
+      const apiBase = resolveAiApiBase()
       const url = buildApiUrl(apiBase, '/api/recipes/image/generate')
       const res = await postWithAuth(url, payload, { signal })
       return res.data
