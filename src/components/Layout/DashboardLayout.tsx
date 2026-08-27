@@ -252,7 +252,7 @@ export const DashboardLayout: React.FC = () => {
                 </motion.div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                    {user?.email || 'User'}
+                    {user?.displayName || user?.email || 'User'}
                   </p>
                   <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">View & Edit Profile</p>
                 </div>
