@@ -248,11 +248,11 @@ export const DashboardLayout: React.FC = () => {
                   whileHover={{ scale: 1.1 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {user?.email?.[0].toUpperCase() || 'U'}
+                  {user?.displayName?.[0].toUpperCase() || user?.email?.[0].toUpperCase() || 'U'}
                 </motion.div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                    {user?.email || 'User'}
+                    {user?.displayName || user?.email || 'User'}
                   </p>
                   <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">View & Edit Profile</p>
                 </div>
