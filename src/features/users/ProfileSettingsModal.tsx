@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
+import { useAuth } from '../auth/AuthContext'
 import { updateMyProfile } from '../../services/userApi'
 import { uploadAvatarImage, deleteAvatarImage } from '../../utils/imageStorage'
 import type { UserProfile, UpdateUserProfileRequest } from '../../services/userApi'
@@ -16,6 +17,15 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   onClose,
   onProfileUpdated,
 }) => {
+  let activeUid = profile.uid
+  try {
+    const { user: currentUser } = useAuth()
+    if (currentUser?.uid) {
+      activeUid = currentUser.uid
+    }
+  } catch {
+    // Fallback to profile.uid if component is rendered outside AuthProvider context
+  }
   const [displayName, setDisplayName] = useState(profile.displayName || '')
   const [bio, setBio] = useState(profile.bio || '')
   const [visibility, setVisibility] = useState<'PUBLIC' | 'PRIVATE'>(
@@ -50,7 +60,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
       reader.onload = async (event) => {
         try {
           const dataUrl = event.target?.result as string
-          const uploadedUrl = await uploadAvatarImage(dataUrl, profile.uid)
+          const uploadedUrl = await uploadAvatarImage(dataUrl, activeUid)
           setAvatarUrl(uploadedUrl)
           toast.success('Avatar uploaded')
         } catch (err: unknown) {
@@ -77,7 +87,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
     try {
       setIsUploadingAvatar(true)
       setError(null)
-      await deleteAvatarImage(profile.uid)
+      await deleteAvatarImage(activeUid)
       setAvatarUrl('')
       toast.success('Avatar removed')
     } catch (err: unknown) {
