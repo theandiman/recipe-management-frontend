@@ -25,80 +25,61 @@ describe('HelpPage', () => {
     vi.clearAllMocks()
   })
 
-  it('should render the page heading', () => {
+  it('should render the page heading and search bar', () => {
     renderHelpPage()
-    expect(screen.getByText('Help & Documentation')).toBeInTheDocument()
-    expect(screen.getByText(/Everything you need to know about using CookFlow/i)).toBeInTheDocument()
+    expect(screen.getByText('Help & Documentation Center')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/Search help topics/i)).toBeInTheDocument()
   })
 
-  it('should render all section titles', () => {
+  it('should render updated section titles', () => {
     renderHelpPage()
-    expect(screen.getByText('Getting Started')).toBeInTheDocument()
-    expect(screen.getByText('Browsing Your Recipe Library')).toBeInTheDocument()
-    expect(screen.getByText('Creating a Recipe')).toBeInTheDocument()
-    expect(screen.getByText('Editing & Deleting Recipes')).toBeInTheDocument()
-    expect(screen.getByText('Using the AI Recipe Generator')).toBeInTheDocument()
-    expect(screen.getByText('Cooking Mode')).toBeInTheDocument()
-    expect(screen.getByText('Account & Sign Out')).toBeInTheDocument()
+    expect(screen.getByText('Getting Started & Dashboard')).toBeInTheDocument()
+    expect(screen.getByText('Command Palette & Quick Search (⌘K)')).toBeInTheDocument()
+    expect(screen.getByText('✨ Direct AI Semantic Search & Ranking')).toBeInTheDocument()
+    expect(screen.getByText('🍳 Cooking Mode & Hands-Free Voice Controls')).toBeInTheDocument()
+    expect(screen.getByText('🥗 Nutrition Facts & AI Nutrition Estimation')).toBeInTheDocument()
   })
 
-  it('should open the Getting Started section by default', () => {
+  it('should filter help topics when searching in the input bar', () => {
     renderHelpPage()
-    expect(screen.getByText(/Welcome to/i)).toBeInTheDocument()
+    const searchInput = screen.getByPlaceholderText(/Search help topics/i)
+
+    fireEvent.change(searchInput, { target: { value: 'voice' } })
+
+    expect(screen.getByText('🍳 Cooking Mode & Hands-Free Voice Controls')).toBeInTheDocument()
+    expect(screen.queryByText('Command Palette & Quick Search (⌘K)')).not.toBeInTheDocument()
+  })
+
+  it('should filter help topics when clicking category pills', () => {
+    renderHelpPage()
+    const aiCategoryBtn = screen.getByRole('button', { name: /✨ AI Features/i })
+
+    fireEvent.click(aiCategoryBtn)
+
+    expect(screen.getByText('✨ Direct AI Semantic Search & Ranking')).toBeInTheDocument()
+    expect(screen.queryByText('Getting Started & Dashboard')).not.toBeInTheDocument()
   })
 
   it('should toggle a section open when its header is clicked', () => {
     renderHelpPage()
 
-    // Click "Creating a Recipe" which starts closed
-    const button = screen.getByRole('button', { name: /Creating a Recipe/i })
+    // Click "Browsing Your Recipe Library" which starts closed
+    const button = screen.getByRole('button', { name: /Browsing Your Recipe Library/i })
     expect(button).toHaveAttribute('aria-expanded', 'false')
 
     fireEvent.click(button)
     expect(button).toHaveAttribute('aria-expanded', 'true')
   })
 
-  it('should close an open section when its header is clicked again', () => {
+  it('should navigate when footer CTA buttons are clicked', () => {
     renderHelpPage()
 
-    // "Getting Started" starts open
-    const button = screen.getByRole('button', { name: /Getting Started/i })
-    expect(button).toHaveAttribute('aria-expanded', 'true')
-
-    fireEvent.click(button)
-    expect(button).toHaveAttribute('aria-expanded', 'false')
-  })
-
-  it('should allow multiple sections to be open simultaneously', () => {
-    renderHelpPage()
-
-    const createButton = screen.getByRole('button', { name: /Creating a Recipe/i })
-    const libraryButton = screen.getByRole('button', { name: /Browsing Your Recipe Library/i })
-
-    fireEvent.click(createButton)
-    fireEvent.click(libraryButton)
-
-    expect(createButton).toHaveAttribute('aria-expanded', 'true')
-    expect(libraryButton).toHaveAttribute('aria-expanded', 'true')
-  })
-
-  it('should render the footer call-to-action buttons', () => {
-    renderHelpPage()
-    expect(screen.getByRole('button', { name: /Create a Recipe/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Browse Recipes/i })).toBeInTheDocument()
-  })
-
-  it('should navigate to create page when "Create a Recipe" CTA is clicked', () => {
-    renderHelpPage()
-    const createButton = screen.getByRole('button', { name: /Create a Recipe/i })
-    fireEvent.click(createButton)
+    const createBtn = screen.getByRole('button', { name: /Create a Recipe/i })
+    fireEvent.click(createBtn)
     expect(mockNavigate).toHaveBeenCalledWith('/dashboard/create')
-  })
 
-  it('should navigate to recipes page when "Browse Recipes" CTA is clicked', () => {
-    renderHelpPage()
-    const browseButton = screen.getByRole('button', { name: /Browse Recipes/i })
-    fireEvent.click(browseButton)
-    expect(mockNavigate).toHaveBeenCalledWith('/dashboard/recipes')
+    const aiGenBtn = screen.getByRole('button', { name: /✨ Try AI Generator/i })
+    fireEvent.click(aiGenBtn)
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard/generate')
   })
 })
