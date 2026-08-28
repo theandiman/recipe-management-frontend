@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { parseAiSearchIntent } from '../../utils/aiApi'
 import {
   type RecipeFilterState,
   DIETARY_OPTIONS,
@@ -33,6 +34,41 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
 }) => {
   const [incInput, setIncInput] = useState('')
   const [excInput, setExcInput] = useState('')
+  const [aiPrompt, setAiPrompt] = useState('')
+  const [isAiLoading, setIsAiLoading] = useState(false)
+  const [aiExplanation, setAiExplanation] = useState<string | null>(null)
+
+  const handleApplyAiFilters = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!aiPrompt.trim() || isAiLoading) return
+    setIsAiLoading(true)
+    setAiExplanation(null)
+
+    try {
+      const result = await parseAiSearchIntent(aiPrompt)
+      if (result.queryKeywords && onSearchTextChange) {
+        onSearchTextChange(result.queryKeywords)
+      }
+
+      const mergedTags = Array.from(new Set([...filters.dietaryTags, ...(result.dietaryTags || [])]))
+
+      onFiltersChange({
+        ...filters,
+        dietaryTags: mergedTags,
+        maxPrepTime: result.maxPrepTime !== undefined && result.maxPrepTime !== null ? result.maxPrepTime : filters.maxPrepTime,
+        maxCalories: result.maxCalories !== undefined && result.maxCalories !== null ? result.maxCalories : filters.maxCalories,
+      })
+
+      if (result.explanation) {
+        setAiExplanation(result.explanation)
+      }
+    } catch (err) {
+      console.error('AI filter parse failed:', err)
+      setAiExplanation('Failed to interpret prompt. Using standard search.')
+    } finally {
+      setIsAiLoading(false)
+    }
+  }
 
   const activeCount = getActiveFilterCount(filters)
 
@@ -155,6 +191,45 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
             className="overflow-hidden mb-4"
           >
             <div className="p-5 bg-white dark:bg-slate-850 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-5">
+              {/* AI Natural Language Filter Assistant */}
+              <div className="p-3.5 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-indigo-500/10 border border-emerald-500/30 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                    <span>✨</span> Auto-Fill Filters with AI
+                  </label>
+                  {aiExplanation && (
+                    <button
+                      type="button"
+                      onClick={() => setAiExplanation(null)}
+                      className="text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                    >
+                      Dismiss
+                    </button>
+                  )}
+                </div>
+                <form onSubmit={handleApplyAiFilters} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={aiPrompt}
+                    onChange={e => setAiPrompt(e.target.value)}
+                    placeholder="e.g. 'Quick low-carb pasta under 500 kcal'"
+                    className="flex-1 px-3 py-1.5 text-xs border border-emerald-500/30 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isAiLoading || !aiPrompt.trim()}
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors flex-shrink-0 shadow-xs"
+                  >
+                    {isAiLoading ? 'Parsing...' : 'Apply AI Filters'}
+                  </button>
+                </form>
+                {aiExplanation && (
+                  <p className="text-[11px] text-emerald-800 dark:text-emerald-300 italic bg-emerald-500/10 p-2 rounded-md">
+                    🤖 {aiExplanation}
+                  </p>
+                )}
+              </div>
+
               {/* Keyword Search Query */}
               <div>
                 <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">

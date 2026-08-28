@@ -36,3 +36,64 @@ describe('resolveAiApiBase', () => {
     expect(() => resolveAiApiBase()).toThrow(/must not match VITE_MANAGEMENT_API_URL/i)
   })
 })
+
+describe('parseAiSearchIntent', () => {
+  it('returns default fallback for empty prompt', async () => {
+    const { parseAiSearchIntent } = await import('./aiApi')
+    const result = await parseAiSearchIntent('')
+    expect(result.queryKeywords).toBe('')
+    expect(result.dietaryTags).toEqual([])
+  })
+
+  it('parses valid AI search intent API response correctly', async () => {
+    const { parseAiSearchIntent } = await import('./aiApi')
+    vi.stubEnv('VITE_AI_API_URL', 'https://ai.example.com')
+    vi.stubEnv('VITE_MANAGEMENT_API_URL', 'https://api.example.com')
+
+    const mockResponse = {
+      queryKeywords: 'pasta',
+      dietaryTags: ['Quick & Easy', 'Low Carb'],
+      maxPrepTime: 30,
+      maxCalories: 500,
+      explanation: 'Filtered quick pasta under 500 kcal',
+    }
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockResponse,
+    } as Response)
+
+    const result = await parseAiSearchIntent('Quick low-carb pasta under 500 kcal')
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://ai.example.com/api/recipes/search/parse-intent',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ prompt: 'Quick low-carb pasta under 500 kcal' }),
+      }),
+    )
+
+    expect(result.queryKeywords).toBe('pasta')
+    expect(result.dietaryTags).toEqual(['Quick & Easy', 'Low Carb'])
+    expect(result.maxPrepTime).toBe(30)
+    expect(result.maxCalories).toBe(500)
+    expect(result.explanation).toBe('Filtered quick pasta under 500 kcal')
+
+    fetchSpy.mockRestore()
+  })
+
+  it('falls back gracefully to raw prompt if fetch fails', async () => {
+    const { parseAiSearchIntent } = await import('./aiApi')
+    vi.stubEnv('VITE_AI_API_URL', 'https://ai.example.com')
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('Network error'))
+
+    const result = await parseAiSearchIntent('Vegetarian curry')
+
+    expect(result.queryKeywords).toBe('Vegetarian curry')
+    expect(result.dietaryTags).toEqual([])
+    expect(result.explanation).toContain('Using standard keyword search')
+
+    fetchSpy.mockRestore()
+  })
+})

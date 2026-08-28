@@ -26,3 +26,48 @@ export const resolveAiApiBase = (): string => {
 
   return aiApiBase
 }
+
+export interface AiSearchIntentResult {
+  queryKeywords: string
+  dietaryTags: string[]
+  maxPrepTime?: number | null
+  maxCalories?: number | null
+  explanation?: string
+}
+
+export const parseAiSearchIntent = async (prompt: string): Promise<AiSearchIntentResult> => {
+  if (!prompt || !prompt.trim()) {
+    return { queryKeywords: '', dietaryTags: [], explanation: 'Empty search prompt' }
+  }
+
+  try {
+    const baseUrl = resolveAiApiBase()
+    const response = await fetch(`${baseUrl}/api/recipes/search/parse-intent`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`AI search intent API error: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    return {
+      queryKeywords: data.queryKeywords || prompt,
+      dietaryTags: Array.isArray(data.dietaryTags) ? data.dietaryTags : [],
+      maxPrepTime: typeof data.maxPrepTime === 'number' ? data.maxPrepTime : null,
+      maxCalories: typeof data.maxCalories === 'number' ? data.maxCalories : null,
+      explanation: data.explanation || 'Parsed search intent',
+    }
+  } catch (error) {
+    console.warn('Failed to parse AI search intent, falling back to raw prompt:', error)
+    return {
+      queryKeywords: prompt,
+      dietaryTags: [],
+      explanation: 'Using standard keyword search.',
+    }
+  }
+}
