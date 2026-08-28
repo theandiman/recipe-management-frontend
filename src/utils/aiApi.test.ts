@@ -97,3 +97,46 @@ describe('parseAiSearchIntent', () => {
     fetchSpy.mockRestore()
   })
 })
+
+describe('queryAiSearch', () => {
+  it('returns empty matches for empty prompt', async () => {
+    const { queryAiSearch } = await import('./aiApi')
+    const result = await queryAiSearch('', [])
+    expect(result.matches).toEqual([])
+    expect(result.suggestedIdea).toBeNull()
+  })
+
+  it('queries /api/recipes/search/query and parses direct match response', async () => {
+    const { queryAiSearch } = await import('./aiApi')
+    vi.stubEnv('VITE_AI_API_URL', 'https://ai.example.com')
+    vi.stubEnv('VITE_MANAGEMENT_API_URL', 'https://api.example.com')
+
+    const mockResponse = {
+      matches: [{ recipeId: 'r-1', matchScore: 0.9, matchReason: 'Comforting pasta dish' }],
+      suggestedIdea: { title: 'Tomato Soup', prompt: 'Create tomato soup', reason: 'Warm soup idea' },
+    }
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockResponse,
+    } as Response)
+
+    const result = await queryAiSearch('cozy winter pasta', [
+      { id: 'r-1', recipeName: 'Rigatoni Bake' }
+    ])
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://ai.example.com/api/recipes/search/query',
+      expect.objectContaining({
+        method: 'POST',
+      }),
+    )
+
+    expect(result.matches.length).toBe(1)
+    expect(result.matches[0].recipeId).toBe('r-1')
+    expect(result.matches[0].matchReason).toBe('Comforting pasta dish')
+    expect(result.suggestedIdea?.title).toBe('Tomato Soup')
+
+    fetchSpy.mockRestore()
+  })
+})

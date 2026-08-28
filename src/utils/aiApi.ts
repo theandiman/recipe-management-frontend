@@ -73,3 +73,58 @@ export const parseAiSearchIntent = async (prompt: string): Promise<AiSearchInten
     }
   }
 }
+
+export interface RecipeSummaryForAi {
+  id: string
+  recipeName: string
+  description?: string
+  tags?: string[]
+  ingredients?: string[]
+  prepTimeMinutes?: number
+}
+
+export interface AiSearchQueryResult {
+  matches: Array<{
+    recipeId: string
+    matchScore: number
+    matchReason: string
+  }>
+  suggestedIdea?: {
+    title: string
+    prompt: string
+    reason: string
+  } | null
+}
+
+export const queryAiSearch = async (
+  prompt: string,
+  recipes: RecipeSummaryForAi[],
+): Promise<AiSearchQueryResult> => {
+  if (!prompt || !prompt.trim()) {
+    return { matches: [], suggestedIdea: null }
+  }
+
+  try {
+    const baseUrl = resolveAiApiBase()
+    const response = await fetchWithAuth(`${baseUrl}/api/recipes/search/query`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt, recipes }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`AI direct search query API error: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    return {
+      matches: Array.isArray(data.matches) ? data.matches : [],
+      suggestedIdea: data.suggestedIdea || null,
+    }
+  } catch (error) {
+    console.warn('Failed to query AI direct search, returning empty matches:', error)
+    return { matches: [], suggestedIdea: null }
+  }
+}
