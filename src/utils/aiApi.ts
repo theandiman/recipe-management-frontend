@@ -1,3 +1,5 @@
+import { fetchWithAuth } from './authApi'
+
 const trimApiBase = (value: string | undefined): string => value?.trim().replace(/\/+$/, '') ?? ''
 
 export const resolveAiApiBase = (): string => {
@@ -42,7 +44,7 @@ export const parseAiSearchIntent = async (prompt: string): Promise<AiSearchInten
 
   try {
     const baseUrl = resolveAiApiBase()
-    const response = await fetch(`${baseUrl}/api/recipes/search/parse-intent`, {
+    const response = await fetchWithAuth(`${baseUrl}/api/recipes/search/parse-intent`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
