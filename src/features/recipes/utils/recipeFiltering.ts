@@ -71,12 +71,12 @@ const getRecipeCalories = (recipe: Recipe): number | null => {
 }
 
 const parseNumericTimeFromQuery = (query: string): number | null => {
-  const match = query.match(/(?:under|less than|<|\b)(\d+)\s*(?:mins?|minutes?|m\b)/i)
+  const match = query.match(/(?:under|less than|<)?\s*(\d+)\s*(?:mins?|minutes?|m\b)/i)
   return match ? parseInt(match[1], 10) : null
 }
 
 const parseNumericCalsFromQuery = (query: string): number | null => {
-  const match = query.match(/(?:under|less than|<|\b)(\d+)\s*(?:cals?|calories?|kcal\b)/i)
+  const match = query.match(/(?:under|less than|<)?\s*(\d+)\s*(?:cals?|calories?|kcal\b)/i)
   return match ? parseInt(match[1], 10) : null
 }
 
@@ -106,8 +106,8 @@ export const filterRecipes = (
   const queryMaxCals = parseNumericCalsFromQuery(query)
 
   const cleanedText = query
-    .replace(/(?:under|less than|<|\b)\d+\s*(?:mins?|minutes?|m\b)/gi, '')
-    .replace(/(?:under|less than|<|\b)\d+\s*(?:cals?|calories?|kcal\b)/gi, '')
+    .replace(/(?:under|less than|<)?\s*\d+\s*(?:mins?|minutes?|m\b)/gi, '')
+    .replace(/(?:under|less than|<)?\s*\d+\s*(?:cals?|calories?|kcal\b)/gi, '')
     .trim()
 
   const rawTokens = cleanedText ? cleanedText.split(/[\s,]+/).filter(Boolean) : []
