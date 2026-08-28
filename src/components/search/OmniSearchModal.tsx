@@ -10,12 +10,13 @@ const MAX_RECENT_SEARCHES = 5
 export interface OmniSearchModalProps {
   isOpen: boolean
   onClose: () => void
+  initialQuery?: string
 }
 
-export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClose }) => {
+export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClose, initialQuery = '' }) => {
   const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(initialQuery)
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [recentSearches, setRecentSearches] = useState<string[]>([])
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -35,6 +36,7 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
   // Fetch recipes when modal opens
   useEffect(() => {
     if (isOpen) {
+      if (initialQuery) setQuery(initialQuery)
       getRecipes()
         .then(data => setRecipes(data))
         .catch(err => console.error('OmniSearch failed to load recipes:', err))
@@ -44,7 +46,7 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
       setQuery('')
       setSelectedIndex(0)
     }
-  }, [isOpen])
+  }, [isOpen, initialQuery])
 
   // Save query to recent searches
   const saveRecentSearch = (searchQuery: string) => {
