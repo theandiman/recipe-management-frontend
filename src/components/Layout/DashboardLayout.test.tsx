@@ -80,10 +80,10 @@ describe('DashboardLayout routing', () => {
     expect(screen.getByText('SimpleCreateRecipeStub')).toBeInTheDocument()
   })
 
-  it('renders My Profile link and profile header button', () => {
+  it('renders My Cookbook link and profile header button', () => {
     renderAt('/dashboard')
 
-    expect(screen.getByRole('link', { name: /my profile/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /my cookbook/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /my profile/i })).toBeInTheDocument()
   })
 

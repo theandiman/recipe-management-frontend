@@ -9,7 +9,7 @@ test.describe('Test Mode Verification', () => {
     await expect(page).not.toHaveURL(/\/login/)
     
     // Should see dashboard content - use a more specific selector
-    await expect(page.getByRole('link', { name: 'Browse Recipes' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('link', { name: 'My Cookbook' })).toBeVisible({ timeout: 10000 })
   })
 
   test('should access create recipe page without authentication', async ({ page }) => {
