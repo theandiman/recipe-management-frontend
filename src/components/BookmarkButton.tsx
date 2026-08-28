@@ -1,5 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { useAuth } from '../features/auth/AuthContext'
 import { useSavedRecipes } from '../features/recipes/SavedRecipesContext'
 import type { Recipe } from '../types/nutrition'
@@ -25,13 +26,19 @@ export const BookmarkButton: React.FC<BookmarkButtonProps> = ({ recipe, classNam
       return
     }
 
+    if ('vibrate' in navigator) {
+      try { navigator.vibrate(10) } catch {}
+    }
+
     await toggleSave(recipe)
   }
 
   return (
-    <button
+    <motion.button
       type="button"
       onClick={handleClick}
+      whileHover={{ scale: 1.15 }}
+      whileTap={{ scale: 0.85 }}
       aria-label={saved ? `Unsave ${recipe.recipeName}` : `Save ${recipe.recipeName}`}
       aria-pressed={saved}
       title={saved ? 'Remove from saved' : 'Save recipe'}
@@ -70,7 +77,7 @@ export const BookmarkButton: React.FC<BookmarkButtonProps> = ({ recipe, classNam
           />
         </svg>
       )}
-    </button>
+    </motion.button>
   )
 }
 

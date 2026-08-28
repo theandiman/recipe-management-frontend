@@ -481,15 +481,15 @@ export const RecipeLibrary: React.FC = () => {
             {/* Smart Empty Filter State */}
             {filtered.length === 0 && (
               <motion.div 
-                className="mt-8 text-center py-10 px-4 bg-white dark:bg-slate-850 border border-dashed border-gray-200 dark:border-slate-800 rounded-2xl"
+                className="mt-8 text-center py-10 px-4 bg-white dark:bg-slate-850 border border-dashed border-emerald-500/30 dark:border-emerald-500/30 rounded-2xl bg-gradient-to-r from-emerald-500/5 via-teal-500/5 to-indigo-500/5"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <div className="text-gray-600 dark:text-gray-300 font-medium mb-2">
-                  No recipes match your search or selected tag.
+                <div className="text-gray-900 dark:text-gray-100 font-bold mb-2">
+                  No recipes found in your cookbook{searchText ? ` for "${searchText}"` : ''}.
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
-                  Try clearing some filter criteria, or generate a custom recipe with AI matching these requirements.
+                  Try clearing active search filters or let AI Kitchen generate a custom recipe for you in seconds.
                 </p>
                 <div className="flex flex-wrap justify-center gap-3">
                   <button
@@ -500,9 +500,9 @@ export const RecipeLibrary: React.FC = () => {
                   </button>
                   <button
                     onClick={() => navigate(`/dashboard/generate?prompt=${encodeURIComponent(searchText)}`)}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-medium transition-colors shadow-xs"
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-semibold transition-colors shadow-sm flex items-center gap-1.5"
                   >
-                    ✨ Generate with AI Kitchen
+                    <span>✨</span> Generate {searchText ? `"${searchText}" ` : ''}with AI Kitchen
                   </button>
                 </div>
               </motion.div>
@@ -579,6 +579,23 @@ export const RecipeLibrary: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Mobile Sticky Floating Filter Action Bar */}
+      <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+        <button
+          onClick={() => setIsFilterDrawerOpen(true)}
+          className="flex items-center gap-2.5 px-5 py-3 bg-slate-900/90 dark:bg-emerald-600/95 backdrop-blur-md text-white font-bold text-xs rounded-full shadow-2xl border border-white/20 active:scale-95 transition-all cursor-pointer"
+        >
+          <svg className="w-4 h-4 text-emerald-400 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          <span>Filter & Sort</span>
+          {activeFilterCount > 0 && (
+            <span className="px-2 py-0.5 text-[10px] font-extrabold bg-emerald-500 dark:bg-slate-900 text-white rounded-full">
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
+      </div>
     </div>
   )
 }

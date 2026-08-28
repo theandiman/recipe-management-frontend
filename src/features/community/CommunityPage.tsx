@@ -496,22 +496,30 @@ export const CommunityPage: React.FC = () => {
           {/* Smart Empty Filter State */}
           {filtered.length === 0 && (
             <motion.div
-              className="mt-8 text-center py-10 px-4 bg-white dark:bg-slate-900 border border-dashed border-gray-200 dark:border-slate-800 rounded-2xl"
+              className="mt-8 text-center py-10 px-4 bg-white dark:bg-slate-900 border border-dashed border-emerald-500/30 dark:border-emerald-500/30 rounded-2xl bg-gradient-to-r from-emerald-500/5 via-teal-500/5 to-indigo-500/5"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <div className="text-gray-600 dark:text-gray-300 font-medium mb-2">
-                No community recipes match your search criteria or filters.
+              <div className="text-gray-800 dark:text-gray-200 font-bold mb-2">
+                No community recipes found{searchText ? ` for "${searchText}"` : ''}.
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
-                Try clearing some of your filter constraints or broadening your search term.
+                Clear active filters or let AI Kitchen generate a custom recipe for you in seconds.
               </p>
-              <button
-                onClick={clearAllFilters}
-                className="px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200 rounded-xl text-xs font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-              >
-                Clear All Filters
-              </button>
+              <div className="flex flex-wrap justify-center gap-3">
+                <button
+                  onClick={clearAllFilters}
+                  className="px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200 rounded-xl text-xs font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                >
+                  Clear All Filters
+                </button>
+                <button
+                  onClick={() => navigate(`/dashboard/generate?prompt=${encodeURIComponent(searchText)}`)}
+                  className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-semibold transition-colors shadow-sm cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>✨</span> Generate {searchText ? `"${searchText}" ` : ''}with AI Kitchen
+                </button>
+              </div>
             </motion.div>
           )}
         </>
