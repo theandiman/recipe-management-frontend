@@ -15,6 +15,10 @@ export const resolveAiApiBase = (): string => {
       return ''
     }
 
+    if (import.meta.env.DEV) {
+      return 'http://localhost:8081'
+    }
+
     throw new Error(
       'Missing required AI API URL. Set VITE_AI_API_URL or VITE_API_URL before using AI features.',
     )
