@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getRecipes, deleteRecipe } from '../../services/recipeStorageApi'
 import RecipeCard from '../../components/RecipeCard'
@@ -13,7 +13,6 @@ import type { Recipe } from '../../types/nutrition'
 
 export const RecipeLibrary: React.FC = () => {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
   const { searchQuery, setSearchQuery } = useOmniSearch()
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
@@ -41,29 +40,9 @@ export const RecipeLibrary: React.FC = () => {
     clearAllFilters,
   } = useRecipeSearchFilters(recipes)
 
-  // Handle URL query parameters (?q=... or ?tag=...)
+  // Sync top nav search bar with page search text
   useEffect(() => {
-    const qParam = searchParams.get('q')
-    const tagParam = searchParams.get('tag')
-
-    if (qParam) {
-      setSearchText(qParam)
-      setSearchQuery(qParam)
-    }
-
-    if (tagParam) {
-      setFilters(prev => {
-        if (!prev.dietaryTags.includes(tagParam)) {
-          return { ...prev, dietaryTags: [...prev.dietaryTags, tagParam] }
-        }
-        return prev
-      })
-    }
-  }, [searchParams])
-
-  // Bidirectional sync between top bar searchQuery and page searchText
-  useEffect(() => {
-    if (searchQuery !== searchText) {
+    if (searchQuery && searchQuery !== searchText) {
       setSearchText(searchQuery)
     }
   }, [searchQuery])
