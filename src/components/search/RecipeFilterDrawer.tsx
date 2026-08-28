@@ -46,8 +46,8 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
 
     try {
       const result = await parseAiSearchIntent(aiPrompt)
-      if (result.queryKeywords && onSearchTextChange) {
-        onSearchTextChange(result.queryKeywords)
+      if (onSearchTextChange) {
+        onSearchTextChange(result.queryKeywords || '')
       }
 
       const mergedTags = Array.from(new Set([...filters.dietaryTags, ...(result.dietaryTags || [])]))
