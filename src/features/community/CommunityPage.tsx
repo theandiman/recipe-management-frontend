@@ -175,11 +175,25 @@ export const CommunityPage: React.FC = () => {
               )}
             </div>
 
-            {/* Right Side: Sort Select & View Mode Switcher Grouped Together */}
+            {/* Right Side: Quick Search, Sort Select & View Mode Switcher */}
             <div className="flex items-center gap-3">
+              {/* Quick Search Input */}
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  placeholder="Search by recipe name..."
+                  className="pl-8 pr-3 py-1.5 border border-gray-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-400 w-36 sm:w-56"
+                />
+                <svg className="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+
               {/* Sort Dropdown */}
-              <div className="flex items-center gap-1">
-                <label htmlFor="community-sort-select" className="sr-only">Sort community recipes</label>
+              <div className="flex items-center gap-2">
+                <label htmlFor="community-sort-select" className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Sort by:</label>
                 <select
                   id="community-sort-select"
                   value={sortOption}
