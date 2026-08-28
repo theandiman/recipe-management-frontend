@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getRecipes } from '../../services/recipeStorageApi'
-import { parseAiSearchIntent } from '../../utils/aiApi'
+import { queryAiSearch } from '../../utils/aiApi'
 import type { Recipe } from '../../types/nutrition'
 
 const RECENT_SEARCHES_KEY = 'recipe_search_history_v1'
@@ -22,6 +22,10 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
   const [recentSearches, setRecentSearches] = useState<string[]>([])
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isAiSearching, setIsAiSearching] = useState(false)
+  const [aiSearchResults, setAiSearchResults] = useState<{
+    matchesMap: Record<string, { score: number; reason: string }>
+    idea?: { title: string; prompt: string; reason: string } | null
+  } | null>(null)
 
   const handleAiSearch = async (searchPrompt: string) => {
     if (!searchPrompt.trim() || isAiSearching) return
@@ -29,22 +33,32 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
     saveRecentSearch(searchPrompt)
 
     try {
-      const result = await parseAiSearchIntent(searchPrompt)
-      onClose()
+      const summaryList = recipes
+        .map(r => ({
+          id: r.id || '',
+          recipeName: r.recipeName,
+          description: r.description,
+          tags: r.tags,
+          ingredients: Array.isArray(r.ingredients)
+            ? r.ingredients.map(ing => (typeof ing === 'string' ? ing : (ing as { item?: string })?.item || ''))
+            : [],
+          prepTimeMinutes: r.prepTimeMinutes,
+        }))
+        .filter(r => r.id)
 
-      const params = new URLSearchParams()
-      if (result.queryKeywords) params.set('q', result.queryKeywords)
-      if (result.dietaryTags && result.dietaryTags.length > 0) {
-        params.set('tag', result.dietaryTags[0])
-      }
-      if (result.maxPrepTime) params.set('maxPrepTime', String(result.maxPrepTime))
-      if (result.maxCalories) params.set('maxCalories', String(result.maxCalories))
+      const result = await queryAiSearch(searchPrompt, summaryList)
 
-      navigate(`/dashboard/recipes?${params.toString()}`)
+      const matchesMap: Record<string, { score: number; reason: string }> = {}
+      result.matches.forEach(m => {
+        matchesMap[m.recipeId] = { score: m.matchScore, reason: m.matchReason }
+      })
+
+      setAiSearchResults({
+        matchesMap,
+        idea: result.suggestedIdea,
+      })
     } catch (err) {
-      console.error('AI search intent parsing failed:', err)
-      onClose()
-      navigate(`/dashboard/recipes?q=${encodeURIComponent(searchPrompt.trim())}`)
+      console.error('AI direct search failed:', err)
     } finally {
       setIsAiSearching(false)
     }
@@ -103,6 +117,13 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
   // Filter matching recipes and tags
   const filteredRecipes = useMemo(() => {
     if (!query.trim()) return []
+
+    if (aiSearchResults?.matchesMap && Object.keys(aiSearchResults.matchesMap).length > 0) {
+      return recipes
+        .filter(r => r.id && aiSearchResults.matchesMap[r.id])
+        .sort((a, b) => (aiSearchResults.matchesMap[b.id!].score || 0) - (aiSearchResults.matchesMap[a.id!].score || 0))
+    }
+
     const q = query.trim().toLowerCase()
     return recipes.filter(r => 
       (r.recipeName || '').toLowerCase().includes(q) ||
@@ -110,7 +131,7 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
       (r.tags || []).some(t => t.toLowerCase().includes(q)) ||
       (r.ingredients || []).some(ing => (typeof ing === 'string' ? ing : (ing as { item?: string })?.item || '').toLowerCase().includes(q))
     ).slice(0, 6)
-  }, [recipes, query])
+  }, [recipes, query, aiSearchResults])
 
   const matchingTags = useMemo(() => {
     if (!query.trim()) return []
@@ -210,13 +231,17 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
                 onChange={e => {
                   setQuery(e.target.value)
                   setSelectedIndex(0)
+                  setAiSearchResults(null)
                 }}
                 placeholder="Search recipes, tags, ingredients... (Press Esc to exit)"
                 className="w-full bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-base focus:outline-none"
               />
               {query && (
                 <button
-                  onClick={() => setQuery('')}
+                  onClick={() => {
+                    setQuery('')
+                    setAiSearchResults(null)
+                  }}
                   className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-md"
                   title="Clear query"
                 >
@@ -270,7 +295,7 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
               )}
 
               {/* AI Natural Language Search Suggestion Pill */}
-              {query.trim().length > 3 && (
+              {query.trim().length > 3 && !aiSearchResults && (
                 <div className="px-3 mb-2">
                   <button
                     onClick={() => handleAiSearch(query)}
@@ -281,29 +306,55 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
                       <span className="text-base flex-shrink-0">✨</span>
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
-                          {isAiSearching ? 'AI is interpreting search intent...' : 'Ask AI Kitchen to search'}
+                          {isAiSearching ? 'AI is scanning recipe collection...' : 'Ask AI Kitchen to search'}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                          Parse "{query}" into smart dietary, prep time & calorie filters
+                          Directly rank recipes by context, mood & ingredients for "{query}"
                         </p>
                       </div>
                     </div>
                     <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform flex-shrink-0 ml-2">
-                      {isAiSearching ? 'Parsing...' : 'Search with AI →'}
+                      {isAiSearching ? 'Evaluating...' : 'Search with AI →'}
                     </span>
                   </button>
+                </div>
+              )}
+
+              {/* AI Recipe Idea Suggestion */}
+              {aiSearchResults?.idea && (
+                <div className="p-3.5 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-indigo-500/10 border border-emerald-500/30 rounded-xl space-y-2 mx-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                      <span>✨</span> Suggested AI Recipe Idea
+                    </span>
+                    <button
+                      onClick={() => {
+                        onClose()
+                        navigate(`/dashboard/generate?prompt=${encodeURIComponent(aiSearchResults.idea!.prompt)}`)
+                      }}
+                      className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
+                    >
+                      Generate & Save Idea →
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-800 dark:text-gray-200 font-bold">{aiSearchResults.idea.title}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{aiSearchResults.idea.reason}</p>
                 </div>
               )}
 
               {/* Filtered Recipe Results */}
               {query.trim() && filteredRecipes.length > 0 && (
                 <div>
-                  <div className="px-3 py-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                    Recipes ({filteredRecipes.length})
+                  <div className="px-3 py-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider flex items-center justify-between">
+                    <span>{aiSearchResults ? '✨ AI Ranked Matches' : 'Recipes'} ({filteredRecipes.length})</span>
+                    {aiSearchResults && (
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-normal">Sorted by relevance</span>
+                    )}
                   </div>
                   <div className="mt-1 space-y-1">
                     {filteredRecipes.map((recipe, idx) => {
                       const isSelected = selectedIndex === idx
+                      const matchInfo = recipe.id ? aiSearchResults?.matchesMap[recipe.id] : null
                       return (
                         <div
                           key={recipe.id || idx}
@@ -328,10 +379,14 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
                               </div>
                             )}
                             <div className="min-w-0">
-                              <p className="text-sm truncate">{recipe.recipeName}</p>
-                              {recipe.description && (
+                              <p className="text-sm truncate font-medium">{recipe.recipeName}</p>
+                              {matchInfo?.reason ? (
+                                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-normal truncate">
+                                  ✨ {matchInfo.reason}
+                                </p>
+                              ) : recipe.description ? (
                                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{recipe.description}</p>
-                              )}
+                              ) : null}
                             </div>
                           </div>
                           {recipe.prepTime && (

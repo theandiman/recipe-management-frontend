@@ -15,9 +15,10 @@ interface RecipeCardProps {
   authorName?: string
   showBookmark?: boolean
   showLike?: boolean
+  matchReason?: string
 }
 
-export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete, compact, authorUid, authorName, showBookmark = false, showLike = false }) => {
+export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete, compact, authorUid, authorName, showBookmark = false, showLike = false, matchReason }) => {
   const title = recipe.recipeName
   // Calculate total time safely
   const totalTime = recipe.totalTimeMinutes ||
@@ -107,6 +108,12 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
         )}
         <div className={`p-4 sm:p-5 ${compact ? 'p-3 sm:p-4' : ''}`}>
           {!recipe.imageUrl && <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">{title}</h3>}
+          {matchReason && (
+            <div className="mb-3 px-2.5 py-1.5 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-indigo-500/10 border border-emerald-500/30 rounded-lg flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+              <span className="flex-shrink-0">✨</span>
+              <span className="truncate">{matchReason}</span>
+            </div>
+          )}
           {recipe.description && <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 leading-relaxed">{recipe.description}</p>}
           <div className="flex items-center justify-between text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
             {(totalTime !== undefined && totalTime > 0) ? (
