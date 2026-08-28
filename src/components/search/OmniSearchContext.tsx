@@ -5,22 +5,23 @@ interface OmniSearchContextType {
   isOpen: boolean
   openOmniSearch: (initialQuery?: string) => void
   closeOmniSearch: () => void
+  searchQuery: string
+  setSearchQuery: (query: string) => void
 }
 
 const OmniSearchContext = createContext<OmniSearchContextType | undefined>(undefined)
 
 export const OmniSearchProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false)
-  const [initialQuery, setInitialQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const openOmniSearch = (query: string = '') => {
-    if (query) setInitialQuery(query)
+    if (query) setSearchQuery(query)
     setIsOpen(true)
   }
 
   const closeOmniSearch = () => {
     setIsOpen(false)
-    setInitialQuery('')
   }
 
   useEffect(() => {
@@ -35,9 +36,17 @@ export const OmniSearchProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, [])
 
   return (
-    <OmniSearchContext.Provider value={{ isOpen, openOmniSearch, closeOmniSearch }}>
+    <OmniSearchContext.Provider
+      value={{
+        isOpen,
+        openOmniSearch,
+        closeOmniSearch,
+        searchQuery,
+        setSearchQuery,
+      }}
+    >
       {children}
-      <OmniSearchModal isOpen={isOpen} onClose={closeOmniSearch} initialQuery={initialQuery} />
+      <OmniSearchModal isOpen={isOpen} onClose={closeOmniSearch} initialQuery={searchQuery} />
     </OmniSearchContext.Provider>
   )
 }
@@ -49,6 +58,8 @@ export const useOmniSearch = () => {
       isOpen: false,
       openOmniSearch: () => {},
       closeOmniSearch: () => {},
+      searchQuery: '',
+      setSearchQuery: () => {},
     }
   }
   return ctx

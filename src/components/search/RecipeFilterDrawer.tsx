@@ -12,6 +12,8 @@ export interface RecipeFilterDrawerProps {
   isOpen: boolean
   onToggleOpen: () => void
   filters: RecipeFilterState
+  searchText?: string
+  onSearchTextChange?: (text: string) => void
   onFiltersChange: (newFilters: RecipeFilterState) => void
   onClearFilters: () => void
 }
@@ -20,6 +22,8 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
   isOpen,
   onToggleOpen,
   filters,
+  searchText = '',
+  onSearchTextChange,
   onFiltersChange,
   onClearFilters,
 }) => {
@@ -140,6 +144,34 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
             className="overflow-hidden"
           >
             <div className="mt-4 p-5 bg-white dark:bg-slate-850 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-5">
+              {/* Keyword Search Query */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                  Keyword Search Query
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchText}
+                    onChange={e => onSearchTextChange?.(e.target.value)}
+                    placeholder="Search by title, description or tag..."
+                    className="w-full pl-9 pr-8 py-2 text-xs border border-gray-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                  <svg className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  {searchText && (
+                    <button
+                      type="button"
+                      onClick={() => onSearchTextChange?.('')}
+                      className="absolute right-2.5 top-2 text-gray-400 hover:text-red-500 text-xs font-bold"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+
               {/* Dietary Tags */}
               <div>
                 <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2.5">
