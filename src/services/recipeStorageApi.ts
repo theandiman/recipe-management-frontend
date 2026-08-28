@@ -17,6 +17,10 @@ const resolveManagementApiBase = (): string => {
     return ''
   }
 
+  if (import.meta.env.DEV) {
+    return 'http://localhost:8080'
+  }
+
   throw new Error('Missing required VITE_MANAGEMENT_API_URL environment variable')
 }
 
