@@ -70,22 +70,60 @@ const getRecipeCalories = (recipe: Recipe): number | null => {
   return null
 }
 
+const ATTRIBUTE_TAG_MAP: Record<string, string[]> = {
+  quick: ['Quick & Easy'],
+  easy: ['Quick & Easy'],
+  fast: ['Quick & Easy'],
+  keto: ['Keto'],
+  vegan: ['Vegan'],
+  vegetarian: ['Vegetarian'],
+  veggie: ['Vegetarian'],
+  healthy: ['Healthy', 'Low-Carb', 'Quick & Easy'],
+  'low-carb': ['Low-Carb'],
+  'lowcarb': ['Low-Carb'],
+  'dairy-free': ['Dairy-Free'],
+  'gluten-free': ['Gluten-Free'],
+}
+
 export const filterRecipes = (
   recipes: Recipe[],
   filters: RecipeFilterState,
   searchText: string = ''
 ): Recipe[] => {
   const query = searchText.trim().toLowerCase()
+  const rawTokens = query ? query.split(/[\s,]+/).filter(Boolean) : []
 
   return recipes.filter(recipe => {
-    // 1. Text Search Match
+    // 1. Text Search / Tokenized NLP Match
     if (query) {
-      const matchName = (recipe.recipeName || '').toLowerCase().includes(query)
-      const matchDesc = (recipe.description || '').toLowerCase().includes(query)
-      const matchTags = (recipe.tags || []).some(t => t.toLowerCase().includes(query))
-      const matchIng = (recipe.ingredients || []).some(i => getIngredientString(i).toLowerCase().includes(query))
-      if (!matchName && !matchDesc && !matchTags && !matchIng) {
-        return false
+      const fullText = [
+        recipe.recipeName || '',
+        recipe.description || '',
+        ...(recipe.tags || []),
+        ...(recipe.ingredients || []).map(i => getIngredientString(i)),
+      ].join(' ').toLowerCase()
+
+      const exactMatch = fullText.includes(query)
+
+      if (!exactMatch) {
+        const allTokensMatched = rawTokens.every(token => {
+          if (fullText.includes(token)) return true
+
+          const mappedTags = ATTRIBUTE_TAG_MAP[token]
+          if (mappedTags) {
+            const recipeTags = (recipe.tags || []).map(t => t.toLowerCase())
+            const hasMappedTag = mappedTags.some(mt => recipeTags.includes(mt.toLowerCase()))
+            if (hasMappedTag) return true
+
+            if ((token === 'quick' || token === 'fast' || token === 'easy') && getRecipeTotalMinutes(recipe) <= 30 && getRecipeTotalMinutes(recipe) > 0) {
+              return true
+            }
+          }
+
+          return false
+        })
+
+        if (!allTokensMatched) return false
       }
     }
 

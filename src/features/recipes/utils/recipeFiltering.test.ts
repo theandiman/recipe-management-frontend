@@ -106,4 +106,15 @@ describe('recipeFiltering', () => {
     }
     expect(getActiveFilterCount(filters)).toBe(5)
   })
+
+  it('should support tokenized NLP search for attribute words like "quick"', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'quick')
+    expect(result.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('should match multi-token search terms across fields in any order', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'garlic bread')
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Cheesy Garlic Bread')
+  })
 })
