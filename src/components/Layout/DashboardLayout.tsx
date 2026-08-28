@@ -291,7 +291,7 @@ export const DashboardLayout: React.FC = () => {
           title="My Profile & Settings"
         >
           <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-bold">
-            {user?.email?.[0].displayName()|| user?.email?.[0].toUpperCase() || 'U'}
+            {user?.displayName?.[0].toUpperCase()|| user?.email?.[0].toUpperCase() || 'U'}
           </div>
           <span className="text-xs font-medium text-gray-700 dark:text-gray-200 hidden sm:inline">My Profile</span>
         </button>
