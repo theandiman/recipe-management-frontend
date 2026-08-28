@@ -13,26 +13,14 @@ import { HelpPage } from '../../features/help/HelpPage'
 import { CommunityPage } from '../../features/community/CommunityPage'
 import { SavedRecipesPage } from '../../features/recipes/SavedRecipesPage'
 import { UserProfilePage } from '../../features/users/UserProfilePage'
-import { OmniSearchModal } from '../search/OmniSearchModal'
+import { OmniSearchProvider, useOmniSearch } from '../search/OmniSearchContext'
 
-export const DashboardLayout: React.FC = () => {
+const DashboardLayoutInner: React.FC = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { openOmniSearch } = useOmniSearch()
   // Start with sidebar closed on mobile, open on desktop
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024)
-  const [isOmniSearchOpen, setIsOmniSearchOpen] = useState(false)
-
-  // Global Cmd+K keyboard listener
-  useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        setIsOmniSearchOpen(prev => !prev)
-      }
-    }
-    window.addEventListener('keydown', handleGlobalKeyDown)
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
-  }, [])
 
   // Handle window resize to auto-open/close sidebar
   useEffect(() => {
@@ -300,7 +288,7 @@ export const DashboardLayout: React.FC = () => {
       <div className="ml-3 flex-1" />
       <div className="flex items-center gap-2">
         <button
-          onClick={() => setIsOmniSearchOpen(true)}
+          onClick={() => openOmniSearch()}
           className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors shadow-xs text-xs font-medium"
           title="Global Search (Cmd+K)"
         >
@@ -353,12 +341,12 @@ export const DashboardLayout: React.FC = () => {
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
-
-      {/* Global OmniSearch Palette Modal */}
-      <OmniSearchModal
-        isOpen={isOmniSearchOpen}
-        onClose={() => setIsOmniSearchOpen(false)}
-      />
     </div>
   )
 }
+
+export const DashboardLayout: React.FC = () => (
+  <OmniSearchProvider>
+    <DashboardLayoutInner />
+  </OmniSearchProvider>
+)

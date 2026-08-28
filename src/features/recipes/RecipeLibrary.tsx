@@ -5,6 +5,7 @@ import { getRecipes, deleteRecipe } from '../../services/recipeStorageApi'
 import RecipeCard from '../../components/RecipeCard'
 import { RecipeCardSkeleton } from '../../components/skeletons/RecipeCardSkeleton'
 import { RecipeFilterDrawer } from '../../components/search/RecipeFilterDrawer'
+import { useOmniSearch } from '../../components/search/OmniSearchContext'
 import { useRecipeSearchFilters } from './hooks/useRecipeSearchFilters'
 import { SORT_OPTIONS, type SortOption } from './utils/recipeSorting'
 import { getActiveFilterCount } from './utils/recipeFiltering'
@@ -12,6 +13,7 @@ import type { Recipe } from '../../types/nutrition'
 
 export const RecipeLibrary: React.FC = () => {
   const navigate = useNavigate()
+  const { openOmniSearch } = useOmniSearch()
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -257,17 +259,16 @@ export const RecipeLibrary: React.FC = () => {
               id="search"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
+              onClick={() => openOmniSearch(searchText)}
+              onFocus={() => openOmniSearch(searchText)}
               placeholder="Search by title, description or tag..."
-              className="w-full pl-9 pr-8 py-2 border border-gray-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              className="w-full pl-9 pr-14 py-2 border border-gray-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
             />
-            {searchText && (
-              <button
-                onClick={() => setSearchText('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-              >
-                ✕
-              </button>
-            )}
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+              <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded">
+                ⌘K
+              </kbd>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
