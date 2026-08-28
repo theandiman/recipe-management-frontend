@@ -70,6 +70,16 @@ const getRecipeCalories = (recipe: Recipe): number | null => {
   return null
 }
 
+const parseNumericTimeFromQuery = (query: string): number | null => {
+  const match = query.match(/(?:under|less than|<|\b)(\d+)\s*(?:mins?|minutes?|m\b)/i)
+  return match ? parseInt(match[1], 10) : null
+}
+
+const parseNumericCalsFromQuery = (query: string): number | null => {
+  const match = query.match(/(?:under|less than|<|\b)(\d+)\s*(?:cals?|calories?|kcal\b)/i)
+  return match ? parseInt(match[1], 10) : null
+}
+
 const ATTRIBUTE_TAG_MAP: Record<string, string[]> = {
   quick: ['Quick & Easy'],
   easy: ['Quick & Easy'],
