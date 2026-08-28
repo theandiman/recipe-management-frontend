@@ -5,7 +5,6 @@ import { getRecipes, deleteRecipe } from '../../services/recipeStorageApi'
 import RecipeCard from '../../components/RecipeCard'
 import { RecipeCardSkeleton } from '../../components/skeletons/RecipeCardSkeleton'
 import { RecipeFilterDrawer } from '../../components/search/RecipeFilterDrawer'
-import { useOmniSearch } from '../../components/search/OmniSearchContext'
 import { useRecipeSearchFilters } from './hooks/useRecipeSearchFilters'
 import { SORT_OPTIONS, type SortOption } from './utils/recipeSorting'
 import { getActiveFilterCount } from './utils/recipeFiltering'
@@ -13,7 +12,6 @@ import type { Recipe } from '../../types/nutrition'
 
 export const RecipeLibrary: React.FC = () => {
   const navigate = useNavigate()
-  const { openOmniSearch } = useOmniSearch()
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -246,32 +244,25 @@ export const RecipeLibrary: React.FC = () => {
           </div>
         </div>
 
-        {/* Search & Sort Controls Bar */}
-        <div className="mt-4 flex flex-col md:flex-row gap-3 md:items-center">
-          <div className="relative flex-1">
-            <label htmlFor="search" className="sr-only">Search recipes</label>
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        {/* Search & Filter Controls Bar */}
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Filter Drawer Toggle Button */}
+            <button
+              onClick={() => setIsFilterDrawerOpen(true)}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-800 text-sm font-medium transition-colors shadow-xs"
+            >
+              <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.707 7.293A1 1 0 013 6.586V4z" />
               </svg>
-            </div>
-            <input
-              id="search"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              onClick={() => openOmniSearch(searchText)}
-              onFocus={() => openOmniSearch(searchText)}
-              placeholder="Search by title, description or tag..."
-              className="w-full pl-9 pr-14 py-2 border border-gray-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
-            />
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded">
-                ⌘K
-              </kbd>
-            </div>
-          </div>
+              <span>Filter Recipes</span>
+              {activeFilterCount > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500 text-white">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
 
-          <div className="flex items-center gap-3">
             {/* Quick Tag Selector for backwards compatibility */}
             <label htmlFor="tag-filter" className="sr-only">Filter by tag</label>
             <select
@@ -291,7 +282,9 @@ export const RecipeLibrary: React.FC = () => {
                 <option key={tag} value={tag}>{tag}</option>
               ))}
             </select>
+          </div>
 
+          <div className="flex items-center gap-3">
             {/* Sort Dropdown */}
             <div className="flex items-center gap-1">
               <label htmlFor="sort-select" className="sr-only">Sort recipes</label>
