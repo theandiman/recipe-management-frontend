@@ -15,6 +15,7 @@ export interface RecipeFilterDrawerProps {
   searchText?: string
   onSearchTextChange?: (text: string) => void
   availableTags?: string[]
+  hideHeaderButton?: boolean
   onFiltersChange: (newFilters: RecipeFilterState) => void
   onClearFilters: () => void
 }
@@ -26,6 +27,7 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
   searchText = '',
   onSearchTextChange,
   availableTags = [],
+  hideHeaderButton = false,
   onFiltersChange,
   onClearFilters,
 }) => {
@@ -104,41 +106,43 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
   return (
     <div className="w-full">
       {/* Drawer Toggle Header */}
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={onToggleOpen}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-750 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-xl transition-colors shadow-xs"
-        >
-          <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-          </svg>
-          <span>Filters</span>
-          {activeCount > 0 && (
-            <span className="px-2 py-0.5 text-xs font-bold bg-emerald-600 text-white rounded-full">
-              {activeCount}
-            </span>
-          )}
-          <svg
-            className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-
-        {activeCount > 0 && (
+      {!hideHeaderButton && (
+        <div className="flex items-center justify-between mb-2">
           <button
             type="button"
-            onClick={onClearFilters}
-            className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline"
+            onClick={onToggleOpen}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-750 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-xl transition-colors shadow-xs"
           >
-            Clear all filters ({activeCount})
+            <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span>Filters</span>
+            {activeCount > 0 && (
+              <span className="px-2 py-0.5 text-xs font-bold bg-emerald-600 text-white rounded-full">
+                {activeCount}
+              </span>
+            )}
+            <svg
+              className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
           </button>
-        )}
-      </div>
+
+          {activeCount > 0 && (
+            <button
+              type="button"
+              onClick={onClearFilters}
+              className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline"
+            >
+              Clear all filters ({activeCount})
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Drawer Content */}
       <AnimatePresence>
@@ -148,9 +152,9 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25, ease: 'easeInOut' }}
-            className="overflow-hidden"
+            className="overflow-hidden mb-4"
           >
-            <div className="mt-4 p-5 bg-white dark:bg-slate-850 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-5">
+            <div className="p-5 bg-white dark:bg-slate-850 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-5">
               {/* Keyword Search Query */}
               <div>
                 <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">

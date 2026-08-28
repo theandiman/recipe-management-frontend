@@ -215,17 +215,71 @@ export const RecipeLibrary: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Page Header */}
-      <div className="mb-6 md:mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">My Cookbook</h1>
-            <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">
-              Browse and manage your recipe collection ({filtered.length} {filtered.length === 1 ? 'recipe' : 'recipes'})
-            </p>
+      <div className="mb-4">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">My Cookbook</h1>
+        <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">
+          Browse and manage your recipe collection ({filtered.length} {filtered.length === 1 ? 'recipe' : 'recipes'})
+        </p>
+      </div>
+
+      {/* Unified Action & Filter Toolbar Bar */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        {/* Left Side: Filter Trigger Button */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsFilterDrawerOpen(prev => !prev)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-xl transition-colors shadow-xs"
+          >
+            <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span>Filters</span>
+            {activeFilterCount > 0 && (
+              <span className="px-2 py-0.5 text-xs font-bold bg-emerald-600 text-white rounded-full">
+                {activeFilterCount}
+              </span>
+            )}
+            <svg
+              className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isFilterDrawerOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {activeFilterCount > 0 && (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline"
+            >
+              Clear all filters ({activeFilterCount})
+            </button>
+          )}
+        </div>
+
+        {/* Right Side: Sort Select & View Mode Switcher Grouped Together */}
+        <div className="flex items-center gap-3">
+          {/* Sort Dropdown */}
+          <div className="flex items-center gap-1">
+            <label htmlFor="sort-select" className="sr-only">Sort recipes</label>
+            <select
+              id="sort-select"
+              value={sortOption}
+              onChange={(e) => setSortOption(e.target.value as SortOption)}
+              className="px-3.5 py-2 border border-gray-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-xs cursor-pointer"
+            >
+              {SORT_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
           </div>
 
           {/* View Mode Switcher (Grid vs List) */}
-          <div className="flex items-center gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl border border-gray-200 dark:border-slate-700 self-start sm:self-auto">
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl border border-gray-200 dark:border-slate-700">
             <button
               type="button"
               onClick={() => setViewMode('grid')}
@@ -258,40 +312,20 @@ export const RecipeLibrary: React.FC = () => {
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Search & Filter Controls Bar */}
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex-1 min-w-[240px]">
-            {/* Multi-Facet Filter Drawer */}
-            <RecipeFilterDrawer
-              isOpen={isFilterDrawerOpen}
-              onToggleOpen={() => setIsFilterDrawerOpen(prev => !prev)}
-              filters={filters}
-              searchText={searchText}
-              onSearchTextChange={setSearchText}
-              availableTags={tags}
-              onFiltersChange={setFilters}
-              onClearFilters={clearAllFilters}
-            />
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Sort Dropdown */}
-            <div className="flex items-center gap-1">
-              <label htmlFor="sort-select" className="sr-only">Sort recipes</label>
-              <select
-                id="sort-select"
-                value={sortOption}
-                onChange={(e) => setSortOption(e.target.value as SortOption)}
-                className="px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
-              >
-                {SORT_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
+      {/* Multi-Facet Filter Drawer Panel (Header Hidden) */}
+      <RecipeFilterDrawer
+        isOpen={isFilterDrawerOpen}
+        onToggleOpen={() => setIsFilterDrawerOpen(prev => !prev)}
+        filters={filters}
+        searchText={searchText}
+        onSearchTextChange={setSearchText}
+        availableTags={tags}
+        hideHeaderButton
+        onFiltersChange={setFilters}
+        onClearFilters={clearAllFilters}
+      />
 
         {/* Active Filter Pills Bar */}
         {(activeFilterCount > 0 || searchText) && (
@@ -344,7 +378,6 @@ export const RecipeLibrary: React.FC = () => {
             </button>
           </div>
         )}
-      </div>
 
       {/* Paged recipes rendering */}
       {(() => {
