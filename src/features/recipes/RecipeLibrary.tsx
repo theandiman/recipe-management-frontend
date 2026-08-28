@@ -261,7 +261,7 @@ export const RecipeLibrary: React.FC = () => {
               onChange={(e) => setSearchText(e.target.value)}
               onClick={() => openOmniSearch(searchText)}
               onFocus={() => openOmniSearch(searchText)}
-              placeholder="Search by title, description or tag... (⌘K)"
+              placeholder="Search by title, description or tag..."
               className="w-full pl-9 pr-14 py-2 border border-gray-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
             />
             <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
