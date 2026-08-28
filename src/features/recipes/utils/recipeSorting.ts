@@ -1,11 +1,12 @@
 import type { Recipe } from '../../../types/nutrition'
 
-export type SortOption = 'relevance' | 'newest' | 'oldest' | 'prepTime' | 'calories' | 'alphabetical'
+export type SortOption = 'relevance' | 'newest' | 'oldest' | 'prepTime' | 'calories' | 'alphabetical' | 'most-liked'
 
 export type ViewMode = 'grid' | 'list'
 
 export const SORT_OPTIONS: { label: string; value: SortOption }[] = [
   { label: 'Relevance', value: 'relevance' },
+  { label: 'Most Liked', value: 'most-liked' },
   { label: 'Newest First', value: 'newest' },
   { label: 'Oldest First', value: 'oldest' },
   { label: 'Prep Time (Fastest)', value: 'prepTime' },
@@ -40,6 +41,11 @@ export const sortRecipes = (recipes: Recipe[], sortOption: SortOption): Recipe[]
   const copy = [...recipes]
 
   switch (sortOption) {
+    case 'most-liked':
+      return copy.sort((a, b) => {
+        const getLikeCount = (r: Recipe) => (r as Recipe & { likeCount?: number }).likeCount ?? 0
+        return getLikeCount(b) - getLikeCount(a)
+      })
     case 'newest':
       return copy.sort((a, b) => {
         const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0
