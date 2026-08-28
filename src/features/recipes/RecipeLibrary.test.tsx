@@ -179,7 +179,7 @@ describe('RecipeLibrary', () => {
       expect(screen.getByText(/Browse and manage your recipe collection \(2 recipes\)/i)).toBeInTheDocument()
     })
 
-    it('should filter recipes by search', async () => {
+    it('should filter recipes by tag selection', async () => {
       vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
 
       renderRecipeLibrary()
@@ -188,8 +188,8 @@ describe('RecipeLibrary', () => {
         expect(screen.getByText('Chocolate Cake')).toBeInTheDocument()
       })
 
-      const searchInput = screen.getByPlaceholderText('Search by title, description or tag...')
-      fireEvent.change(searchInput, { target: { value: 'Pasta' } })
+      const tagSelect = screen.getByLabelText('Filter by tag')
+      fireEvent.change(tagSelect, { target: { value: 'pasta' } })
 
       await waitFor(() => {
         expect(screen.queryByText('Chocolate Cake')).not.toBeInTheDocument()
