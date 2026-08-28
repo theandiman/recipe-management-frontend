@@ -38,6 +38,7 @@ export const RecipeLibrary: React.FC = () => {
     setIsFilterDrawerOpen,
     filteredAndSortedRecipes: filtered,
     clearAllFilters,
+    nlpSummary,
   } = useRecipeSearchFilters(recipes)
 
   // Sync top nav search bar with page search text
@@ -328,9 +329,14 @@ export const RecipeLibrary: React.FC = () => {
       />
 
         {/* Active Filter Pills Bar */}
-        {(activeFilterCount > 0 || searchText) && (
+        {(activeFilterCount > 0 || searchText || nlpSummary) && (
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Active:</span>
+            {nlpSummary && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-semibold rounded-full border border-emerald-500/30">
+                <span>✨ Smart NLP:</span> {nlpSummary}
+              </span>
+            )}
             {searchText && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
                 Query: "{searchText}"
