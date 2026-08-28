@@ -13,12 +13,26 @@ import { HelpPage } from '../../features/help/HelpPage'
 import { CommunityPage } from '../../features/community/CommunityPage'
 import { SavedRecipesPage } from '../../features/recipes/SavedRecipesPage'
 import { UserProfilePage } from '../../features/users/UserProfilePage'
+import { OmniSearchModal } from '../search/OmniSearchModal'
 
 export const DashboardLayout: React.FC = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   // Start with sidebar closed on mobile, open on desktop
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024)
+  const [isOmniSearchOpen, setIsOmniSearchOpen] = useState(false)
+
+  // Global Cmd+K keyboard listener
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setIsOmniSearchOpen(prev => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [])
 
   // Handle window resize to auto-open/close sidebar
   useEffect(() => {
@@ -286,6 +300,19 @@ export const DashboardLayout: React.FC = () => {
       <div className="ml-3 flex-1" />
       <div className="flex items-center gap-2">
         <button
+          onClick={() => setIsOmniSearchOpen(true)}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors shadow-xs text-xs font-medium"
+          title="Global Search (Cmd+K)"
+        >
+          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <span className="hidden md:inline">Search...</span>
+          <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 bg-gray-100 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded">
+            ⌘K
+          </kbd>
+        </button>
+        <button
           onClick={() => navigate('/dashboard/profile')}
           className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors shadow-sm"
           title="My Profile & Settings"
@@ -326,6 +353,12 @@ export const DashboardLayout: React.FC = () => {
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
+
+      {/* Global OmniSearch Palette Modal */}
+      <OmniSearchModal
+        isOpen={isOmniSearchOpen}
+        onClose={() => setIsOmniSearchOpen(false)}
+      />
     </div>
   )
 }

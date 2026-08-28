@@ -71,6 +71,7 @@ const mockRecipes: Recipe[] = [
 describe('RecipeLibrary', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    window.history.replaceState({}, '', '/')
   })
 
   const renderRecipeLibrary = () => {
