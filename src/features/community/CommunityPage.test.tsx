@@ -121,7 +121,7 @@ describe('CommunityPage', () => {
     const searchInput = screen.getByPlaceholderText('Search by recipe name...')
     await user.type(searchInput, 'zzznomatch')
 
-    expect(screen.getByText('No recipes match your search.')).toBeInTheDocument()
+    expect(screen.getByText('No community recipes match your search criteria or filters.')).toBeInTheDocument()
   })
 
   it('calls getPublicRecipes without an auth token', async () => {
