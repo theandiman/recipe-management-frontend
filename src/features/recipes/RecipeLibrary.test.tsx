@@ -179,7 +179,7 @@ describe('RecipeLibrary', () => {
       expect(screen.getByText(/Browse and manage your recipe collection \(2 recipes\)/i)).toBeInTheDocument()
     })
 
-    it('should filter recipes by tag selection', async () => {
+    it('should filter recipes by tag selection in Filters drawer', async () => {
       vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
 
       renderRecipeLibrary()
@@ -188,27 +188,11 @@ describe('RecipeLibrary', () => {
         expect(screen.getByText('Chocolate Cake')).toBeInTheDocument()
       })
 
-      const tagSelect = screen.getByLabelText('Filter by tag')
-      fireEvent.change(tagSelect, { target: { value: 'pasta' } })
+      const filtersBtn = screen.getByRole('button', { name: /Filters/i })
+      fireEvent.click(filtersBtn)
 
-      await waitFor(() => {
-        expect(screen.queryByText('Chocolate Cake')).not.toBeInTheDocument()
-      })
-
-      expect(screen.getByText('Pasta Carbonara')).toBeInTheDocument()
-    })
-
-    it('should filter recipes by tag', async () => {
-      vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
-
-      renderRecipeLibrary()
-
-      await waitFor(() => {
-        expect(screen.getByText('Chocolate Cake')).toBeInTheDocument()
-      })
-
-      const select = screen.getByLabelText('Filter by tag')
-      fireEvent.change(select, { target: { value: 'pasta' } })
+      const pastaTagBtn = screen.getByRole('button', { name: 'pasta' })
+      fireEvent.click(pastaTagBtn)
 
       await waitFor(() => {
         expect(screen.queryByText('Chocolate Cake')).not.toBeInTheDocument()
