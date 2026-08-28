@@ -61,18 +61,32 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     }
   }, [])
 
-  // Sync state to URL search parameters
+  // Sync state to URL search parameters (preserving non-filter params like 'tab')
   useEffect(() => {
-    const params = new URLSearchParams()
-    if (searchText.trim()) params.set('q', searchText.trim())
-    if (filters.dietaryTags.length > 0) params.set('diet', filters.dietaryTags.join(','))
-    if (filters.maxPrepTime !== null) params.set('maxTime', String(filters.maxPrepTime))
-    if (filters.maxCalories !== null) params.set('maxCal', String(filters.maxCalories))
-    if (sortOption !== 'relevance') params.set('sort', sortOption)
-    if (viewMode !== 'grid') params.set('view', viewMode)
+    const params = new URLSearchParams(searchParams)
 
-    setSearchParams(params, { replace: true })
-  }, [searchText, filters, sortOption, viewMode, setSearchParams])
+    if (searchText.trim()) params.set('q', searchText.trim())
+    else params.delete('q')
+
+    if (filters.dietaryTags.length > 0) params.set('diet', filters.dietaryTags.join(','))
+    else params.delete('diet')
+
+    if (filters.maxPrepTime !== null) params.set('maxTime', String(filters.maxPrepTime))
+    else params.delete('maxTime')
+
+    if (filters.maxCalories !== null) params.set('maxCal', String(filters.maxCalories))
+    else params.delete('maxCal')
+
+    if (sortOption !== 'relevance') params.set('sort', sortOption)
+    else params.delete('sort')
+
+    if (viewMode !== 'grid') params.set('view', viewMode)
+    else params.delete('view')
+
+    if (params.toString() !== searchParams.toString()) {
+      setSearchParams(params, { replace: true })
+    }
+  }, [searchText, filters, sortOption, viewMode, searchParams, setSearchParams])
 
   // Filter & Sort Pipeline
   const filteredAndSortedRecipes = useMemo(() => {
