@@ -174,3 +174,10 @@ This project uses GitHub Actions for CI/CD:
 - **Security**: Checks for vulnerabilities and secrets
 
 All checks must pass before merging PRs.
+
+## License
+
+Copyright (c) 2026 Andy. All Rights Reserved.
+
+This repository is public for CI/CD integration purposes. It is **proprietary software**. Unauthorized copying, modification, distribution, hosting, or commercial monetization is strictly prohibited. See [LICENSE](./LICENSE) for full legal terms.
+
