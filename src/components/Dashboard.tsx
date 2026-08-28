@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../features/auth/AuthContext'
+import { useOmniSearch } from './search/OmniSearchContext'
 import { getRecipes } from '../services/recipeStorageApi'
 import RecipeCard from '../components/RecipeCard'
 import { StatsSkeleton } from '../components/skeletons/StatsSkeleton'
@@ -11,6 +12,7 @@ import type { Recipe } from '../types/nutrition'
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { setSearchQuery: setOmniSearchQuery } = useOmniSearch()
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [recentRecipes, setRecentRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
@@ -18,6 +20,25 @@ export const Dashboard: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('All')
 
   const categories = ['All', 'Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Vegan', 'High-Protein']
+
+  const handleHeroSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      setOmniSearchQuery(searchQuery.trim())
+      navigate(`/dashboard/recipes?q=${encodeURIComponent(searchQuery.trim())}`)
+    } else {
+      navigate('/dashboard/recipes')
+    }
+  }
+
+  const handleCategoryClick = (category: string) => {
+    setActiveCategory(category)
+    if (category === 'All') {
+      navigate('/dashboard/recipes')
+    } else {
+      navigate(`/dashboard/recipes?tag=${encodeURIComponent(category)}`)
+    }
+  }
 
   // Fetch recipes on component mount
   useEffect(() => {
@@ -147,8 +168,8 @@ export const Dashboard: React.FC = () => {
             What are you craving today? Search your recipe library or explore new categorizations.
           </p>
 
-          {/* Search Bar */}
-          <div className="relative max-w-2xl mb-6">
+          {/* Search Bar Form */}
+          <form onSubmit={handleHeroSearchSubmit} className="relative max-w-2xl mb-6">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -159,16 +180,22 @@ export const Dashboard: React.FC = () => {
               placeholder="Search recipes, ingredients, or tags..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 rounded-2xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-900/50 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner transition-all text-lg placeholder-gray-400 dark:placeholder-gray-500"
+              className="w-full pl-12 pr-28 py-4 rounded-2xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-900/50 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner transition-all text-lg placeholder-gray-400 dark:placeholder-gray-500"
             />
-          </div>
+            <button
+              type="submit"
+              className="absolute right-2.5 top-2.5 bottom-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm rounded-xl transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>Search</span>
+            </button>
+          </form>
 
           {/* Animated Category Pills */}
           <div className="flex flex-wrap gap-3">
             {categories.map((category, idx) => (
               <motion.button
                 key={category}
-                onClick={() => setActiveCategory(category)}
+                onClick={() => handleCategoryClick(category)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 initial={{ opacity: 0, y: 10 }}
