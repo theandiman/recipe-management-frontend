@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getRecipes } from '../../services/recipeStorageApi'
+import { parseAiSearchIntent } from '../../utils/aiApi'
 import type { Recipe } from '../../types/nutrition'
 
 const RECENT_SEARCHES_KEY = 'recipe_search_history_v1'
@@ -20,6 +21,34 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [recentSearches, setRecentSearches] = useState<string[]>([])
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [isAiSearching, setIsAiSearching] = useState(false)
+
+  const handleAiSearch = async (searchPrompt: string) => {
+    if (!searchPrompt.trim() || isAiSearching) return
+    setIsAiSearching(true)
+    saveRecentSearch(searchPrompt)
+
+    try {
+      const result = await parseAiSearchIntent(searchPrompt)
+      onClose()
+
+      const params = new URLSearchParams()
+      if (result.queryKeywords) params.set('q', result.queryKeywords)
+      if (result.dietaryTags && result.dietaryTags.length > 0) {
+        params.set('tag', result.dietaryTags[0])
+      }
+      if (result.maxPrepTime) params.set('maxPrepTime', String(result.maxPrepTime))
+      if (result.maxCalories) params.set('maxCalories', String(result.maxCalories))
+
+      navigate(`/dashboard/recipes?${params.toString()}`)
+    } catch (err) {
+      console.error('AI search intent parsing failed:', err)
+      onClose()
+      navigate(`/dashboard/recipes?q=${encodeURIComponent(searchPrompt.trim())}`)
+    } finally {
+      setIsAiSearching(false)
+    }
+  }
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -237,6 +266,32 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
                       Type to search your cookbook by recipe name, tag, or ingredients...
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* AI Natural Language Search Suggestion Pill */}
+              {query.trim().length > 3 && (
+                <div className="px-3 mb-2">
+                  <button
+                    onClick={() => handleAiSearch(query)}
+                    disabled={isAiSearching}
+                    className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-indigo-500/10 hover:from-emerald-500/20 hover:to-indigo-500/20 border border-emerald-500/30 rounded-xl transition-all text-left group"
+                  >
+                    <div className="flex items-center space-x-2.5 min-w-0">
+                      <span className="text-base flex-shrink-0">✨</span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                          {isAiSearching ? 'AI is interpreting search intent...' : 'Ask AI Kitchen to search'}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          Parse "{query}" into smart dietary, prep time & calorie filters
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform flex-shrink-0 ml-2">
+                      {isAiSearching ? 'Parsing...' : 'Search with AI →'}
+                    </span>
+                  </button>
                 </div>
               )}
 
