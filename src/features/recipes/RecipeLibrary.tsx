@@ -80,7 +80,7 @@ export const RecipeLibrary: React.FC = () => {
     return (
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Recipe Library</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">My Cookbook</h1>
           <p className="text-gray-600">Browse and manage your recipe collection</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -107,7 +107,7 @@ export const RecipeLibrary: React.FC = () => {
     return (
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Recipe Library</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">My Cookbook</h1>
           <p className="text-gray-600">Browse and manage your recipe collection</p>
         </div>
         <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
@@ -122,7 +122,7 @@ export const RecipeLibrary: React.FC = () => {
     return (
       <div className="max-w-7xl mx-auto">
         <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Recipe Library</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">My Cookbook</h1>
           <p className="text-sm md:text-base text-gray-600">Browse and manage your recipe collection</p>
         </div>
         <motion.div 
@@ -193,8 +193,8 @@ export const RecipeLibrary: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Recipe Library</h1>
-        <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">Showing {filtered.length} of {recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'} in your collection</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">My Cookbook</h1>
+        <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">Browse and manage your recipe collection ({filtered.length} {filtered.length === 1 ? 'recipe' : 'recipes'})</p>
         <div className="mt-4 flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center">
           <label htmlFor="search" className="sr-only">Search recipes</label>
           <input

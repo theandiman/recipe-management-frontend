@@ -89,7 +89,7 @@ describe('RecipeLibrary', () => {
 
       renderRecipeLibrary()
 
-      expect(screen.getByText('Recipe Library')).toBeInTheDocument()
+      expect(screen.getByText('My Cookbook')).toBeInTheDocument()
       expect(screen.getByText('Browse and manage your recipe collection')).toBeInTheDocument()
       
       // Check for skeleton loading cards (they have animate-pulse class)
@@ -175,7 +175,7 @@ describe('RecipeLibrary', () => {
       })
 
       expect(screen.getByText('Pasta Carbonara')).toBeInTheDocument()
-      expect(screen.getByText(/Showing\s*2\s*of\s*2\s*recipes?/i)).toBeInTheDocument()
+      expect(screen.getByText(/Browse and manage your recipe collection \(2 recipes\)/i)).toBeInTheDocument()
     })
 
     it('should filter recipes by search', async () => {
@@ -322,7 +322,7 @@ describe('RecipeLibrary', () => {
       renderRecipeLibrary()
 
       await waitFor(() => {
-        expect(screen.getByText(/Showing\s*1\s*of\s*1\s*recipe/i)).toBeInTheDocument()
+        expect(screen.getByText(/Browse and manage your recipe collection \(1 recipe\)/i)).toBeInTheDocument()
       })
     })
   })
