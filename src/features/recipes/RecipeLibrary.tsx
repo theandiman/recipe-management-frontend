@@ -5,6 +5,7 @@ import { getRecipes, deleteRecipe } from '../../services/recipeStorageApi'
 import RecipeCard from '../../components/RecipeCard'
 import { RecipeCardSkeleton } from '../../components/skeletons/RecipeCardSkeleton'
 import { RecipeFilterDrawer } from '../../components/search/RecipeFilterDrawer'
+import { useOmniSearch } from '../../components/search/OmniSearchContext'
 import { useRecipeSearchFilters } from './hooks/useRecipeSearchFilters'
 import { SORT_OPTIONS, type SortOption } from './utils/recipeSorting'
 import { getActiveFilterCount } from './utils/recipeFiltering'
@@ -12,6 +13,7 @@ import type { Recipe } from '../../types/nutrition'
 
 export const RecipeLibrary: React.FC = () => {
   const navigate = useNavigate()
+  const { searchQuery, setSearchQuery } = useOmniSearch()
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -21,6 +23,35 @@ export const RecipeLibrary: React.FC = () => {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(20)
+
+  // Custom Search & Multi-Facet Filtering Hook
+  const {
+    searchText,
+    setSearchText,
+    filters,
+    setFilters,
+    sortOption,
+    setSortOption,
+    viewMode,
+    setViewMode,
+    isFilterDrawerOpen,
+    setIsFilterDrawerOpen,
+    filteredAndSortedRecipes: filtered,
+    clearAllFilters,
+  } = useRecipeSearchFilters(recipes)
+
+  // Bidirectional sync between top bar searchQuery and page searchText
+  useEffect(() => {
+    if (searchQuery !== searchText) {
+      setSearchText(searchQuery)
+    }
+  }, [searchQuery])
+
+  useEffect(() => {
+    if (searchText !== searchQuery) {
+      setSearchQuery(searchText)
+    }
+  }, [searchText])
 
   useEffect(() => {
     const fetchRecipes = async () => {
@@ -66,22 +97,6 @@ export const RecipeLibrary: React.FC = () => {
 
   // Tags list for quick select
   const tags = useMemo(() => Array.from(new Set(recipes.flatMap(r => r.tags || []))).filter(Boolean), [recipes])
-
-  // Custom Search & Multi-Facet Filtering Hook
-  const {
-    searchText,
-    setSearchText,
-    filters,
-    setFilters,
-    sortOption,
-    setSortOption,
-    viewMode,
-    setViewMode,
-    isFilterDrawerOpen,
-    setIsFilterDrawerOpen,
-    filteredAndSortedRecipes: filtered,
-    clearAllFilters,
-  } = useRecipeSearchFilters(recipes)
 
   const activeFilterCount = getActiveFilterCount(filters)
 
@@ -308,6 +323,8 @@ export const RecipeLibrary: React.FC = () => {
             isOpen={isFilterDrawerOpen}
             onToggleOpen={() => setIsFilterDrawerOpen(prev => !prev)}
             filters={filters}
+            searchText={searchText}
+            onSearchTextChange={setSearchText}
             onFiltersChange={setFilters}
             onClearFilters={clearAllFilters}
           />
