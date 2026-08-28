@@ -61,7 +61,29 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     }
   }, [])
 
-  // Sync state to URL search parameters (preserving non-filter params like 'tab')
+  // Listen for incoming URL parameter changes (e.g. from Dashboard navigation)
+  useEffect(() => {
+    const urlQ = searchParams.get('q') || ''
+    const urlTag = searchParams.get('tag')
+    const urlDiet = searchParams.get('diet') ? searchParams.get('diet')!.split(',') : (urlTag ? [urlTag] : [])
+
+    if (urlQ && urlQ !== searchText) {
+      setSearchText(urlQ)
+    }
+
+    if (urlDiet.length > 0) {
+      setFilters(prev => {
+        const hasAll = urlDiet.every(t => prev.dietaryTags.includes(t))
+        if (!hasAll) {
+          const merged = Array.from(new Set([...prev.dietaryTags, ...urlDiet]))
+          return { ...prev, dietaryTags: merged }
+        }
+        return prev
+      })
+    }
+  }, [searchParams])
+
+  // Sync internal state out to URL search parameters
   useEffect(() => {
     const params = new URLSearchParams(searchParams)
 
@@ -83,10 +105,13 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     if (viewMode !== 'grid') params.set('view', viewMode)
     else params.delete('view')
 
-    if (params.toString() !== searchParams.toString()) {
+    const newQueryString = params.toString()
+    const currentQueryString = searchParams.toString()
+
+    if (newQueryString !== currentQueryString) {
       setSearchParams(params, { replace: true })
     }
-  }, [searchText, filters, sortOption, viewMode, searchParams, setSearchParams])
+  }, [searchText, filters, sortOption, viewMode])
 
   // Filter & Sort Pipeline
   const filteredAndSortedRecipes = useMemo(() => {

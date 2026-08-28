@@ -43,9 +43,9 @@ export const CommunityPage: React.FC = () => {
     clearAllFilters,
   } = useRecipeSearchFilters(recipes)
 
-  // Bidirectional sync between top nav searchQuery and page searchText
+  // Sync top nav search bar with page search text
   useEffect(() => {
-    if (searchQuery !== searchText) {
+    if (searchQuery && searchQuery !== searchText) {
       setSearchText(searchQuery)
     }
   }, [searchQuery])
