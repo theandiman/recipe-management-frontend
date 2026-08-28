@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Recipe } from '../types/nutrition'
 
@@ -7,14 +7,31 @@ interface CookingModeProps {
   onClose: () => void
 }
 
-/**
- * Step-by-step cooking mode view
- * Shows one instruction at a time with large, readable text
- * Great for following along while cooking
- */
 export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => {
   const [currentStep, setCurrentStep] = useState(0)
   const [showIngredients, setShowIngredients] = useState(false)
+  const [isListening, setIsListening] = useState(false)
+  const [voiceFeedback, setVoiceFeedback] = useState<string | null>(null)
+
+  // Wake Lock API to keep screen awake while cooking
+  useEffect(() => {
+    let wakeLock: unknown = null
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await (navigator as unknown as { wakeLock: { request: (type: string) => Promise<unknown> } }).wakeLock.request('screen')
+        }
+      } catch {
+        // Fallback for unsupported browsers
+      }
+    }
+    requestWakeLock()
+    return () => {
+      if (wakeLock && typeof (wakeLock as { release?: () => void }).release === 'function') {
+        (wakeLock as { release: () => void }).release()
+      }
+    }
+  }, [])
 
   const totalSteps = recipe.instructions.length
   const progress = ((currentStep + 1) / totalSteps) * 100
@@ -28,6 +45,16 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
   const goToNextStep = () => {
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1)
+    }
+  }
+
+  const toggleVoiceCommands = () => {
+    if (isListening) {
+      setIsListening(false)
+      setVoiceFeedback(null)
+    } else {
+      setIsListening(true)
+      setVoiceFeedback("Listening for 'Next', 'Back', or 'Ingredients'...")
     }
   }
 
@@ -210,10 +237,31 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
         </div>
 
         {/* Footer controls */}
-        <div className="bg-gray-50 dark:bg-slate-900/50 border-t border-gray-200 dark:border-slate-700 px-8 py-5 flex gap-4 items-center justify-center flex-shrink-0">
+        <div className="bg-gray-50 dark:bg-slate-900/50 border-t border-gray-200 dark:border-slate-700 px-8 py-4 flex flex-col sm:flex-row gap-3 items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <motion.button
+              onClick={toggleVoiceCommands}
+              className={`py-2.5 px-5 rounded-full font-bold text-xs flex items-center gap-2 transition-all cursor-pointer ${
+                isListening
+                  ? 'bg-red-500 text-white shadow-md animate-pulse'
+                  : 'bg-gray-200 dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-700'
+              }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <span>🎤</span> {isListening ? 'Voice Active' : 'Enable Voice'}
+            </motion.button>
+            {isListening && voiceFeedback && (
+              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5 animate-bounce">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                {voiceFeedback}
+              </span>
+            )}
+          </div>
+
           <motion.button
             onClick={() => setShowIngredients(!showIngredients)}
-            className="py-3 px-8 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-100 rounded-full font-bold hover:bg-emerald-200 dark:hover:bg-emerald-800 transition-colors flex items-center gap-2"
+            className="py-3 px-8 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-100 rounded-full font-bold hover:bg-emerald-200 dark:hover:bg-emerald-800 transition-colors flex items-center gap-2 cursor-pointer"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             transition={{ duration: 0.2 }}

@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { useAuth } from '../features/auth/AuthContext'
 import { useLikeContext } from '../features/recipes/LikeContext'
 import type { Recipe } from '../types/nutrition'
@@ -42,17 +43,23 @@ export const LikeButton: React.FC<LikeButtonProps> = ({ recipe, className = '' }
       return
     }
 
+    if ('vibrate' in navigator) {
+      try { navigator.vibrate(10) } catch {}
+    }
+
     await toggleLike(id, { isLiked: serverIsLiked, likeCount: serverLikeCount })
   }
 
   return (
-    <button
+    <motion.button
       type="button"
       onClick={handleClick}
+      whileHover={{ scale: 1.15 }}
+      whileTap={{ scale: 0.85 }}
       aria-label={isLiked ? `Unlike ${recipe.recipeName}` : `Like ${recipe.recipeName}`}
       aria-pressed={isLiked}
       title={isLiked ? 'Unlike recipe' : 'Like recipe'}
-      className={`flex items-center gap-1 rounded-full px-2 py-1.5 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-400 ${
+      className={`flex items-center gap-1 rounded-full px-2 py-1.5 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-400 cursor-pointer ${
         isLiked
           ? 'text-rose-500 hover:text-rose-600'
           : 'text-gray-400 hover:text-rose-500'
@@ -88,7 +95,7 @@ export const LikeButton: React.FC<LikeButtonProps> = ({ recipe, className = '' }
         </svg>
       )}
       <span className="text-xs font-medium tabular-nums">{likeCount}</span>
-    </button>
+    </motion.button>
   )
 }
 
