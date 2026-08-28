@@ -11,7 +11,7 @@ test.describe('Saved Recipes & Bookmarks', () => {
     await expect(page.getByText('Your bookmarked recipe collection')).toBeVisible()
   })
 
-  test('should render Saved Recipes navigation link in sidebar', async ({ page }) => {
-    await expect(page.getByRole('link', { name: /Saved Recipes/i })).toBeVisible()
+  test('should render My Cookbook navigation link in sidebar', async ({ page }) => {
+    await expect(page.getByRole('link', { name: /My Cookbook/i })).toBeVisible()
   })
 })

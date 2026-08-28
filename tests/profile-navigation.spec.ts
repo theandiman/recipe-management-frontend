@@ -67,13 +67,13 @@ test.describe('User Profile Navigation & Settings', () => {
     await page.waitForLoadState('networkidle')
   })
 
-  test('should render My Profile navigation link in sidebar and profile header button', async ({ page }) => {
-    await expect(page.getByRole('link', { name: /My Profile/i })).toBeVisible()
+  test('should render profile card in sidebar and profile header button', async ({ page }) => {
+    await expect(page.getByText('View & Edit Profile')).toBeVisible()
     await expect(page.getByRole('button', { name: /My Profile/i })).toBeVisible()
   })
 
-  test('should navigate to profile page via sidebar link', async ({ page }) => {
-    await page.getByRole('link', { name: /My Profile/i }).click()
+  test('should navigate to profile page via sidebar profile card', async ({ page }) => {
+    await page.getByText('View & Edit Profile').click()
     await expect(page).toHaveURL(/\/dashboard\/profile|\/user\//)
     await expect(page.getByRole('heading', { name: 'Chef Andy' })).toBeVisible()
   })
