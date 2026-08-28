@@ -10,7 +10,6 @@ import {
   type ViewMode,
   sortRecipes,
 } from '../utils/recipeSorting'
-import { parseAiSearchIntent } from '../../../utils/aiApi'
 import type { Recipe } from '../../../types/nutrition'
 
 export interface UseRecipeSearchFiltersReturn {
@@ -27,7 +26,6 @@ export interface UseRecipeSearchFiltersReturn {
   filteredAndSortedRecipes: Recipe[]
   clearAllFilters: () => void
   removeDietaryTag: (tag: string) => void
-  nlpSummary: string | null
 }
 
 export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFiltersReturn => {
@@ -121,56 +119,8 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     return sortRecipes(filtered, sortOption)
   }, [allRecipes, filters, searchText, sortOption])
 
-  const [nlpSummary, setNlpSummary] = useState<string | null>(null)
-
-  // Debounced NLP intent parser for numeric caps and dietary intent in search box
-  useEffect(() => {
-    if (!searchText.trim() || searchText.trim().length < 4) {
-      setNlpSummary(null)
-      return
-    }
-
-    const timer = setTimeout(async () => {
-      try {
-        const intent = await parseAiSearchIntent(searchText)
-        const summaryParts: string[] = []
-
-        if (typeof intent.maxPrepTime === 'number') {
-          const prepVal = intent.maxPrepTime
-          summaryParts.push(`Max Prep: ${prepVal} mins`)
-          setFilters(prev => (prev.maxPrepTime !== prepVal ? { ...prev, maxPrepTime: prepVal } : prev))
-        }
-
-        if (typeof intent.maxCalories === 'number') {
-          const calVal = intent.maxCalories
-          summaryParts.push(`Max Cals: ${calVal} kcal`)
-          setFilters(prev => (prev.maxCalories !== calVal ? { ...prev, maxCalories: calVal } : prev))
-        }
-
-        if (intent.dietaryTags && intent.dietaryTags.length > 0) {
-          summaryParts.push(`Tags: ${intent.dietaryTags.join(', ')}`)
-          setFilters(prev => {
-            const merged = Array.from(new Set([...prev.dietaryTags, ...intent.dietaryTags]))
-            return merged.length !== prev.dietaryTags.length ? { ...prev, dietaryTags: merged } : prev
-          })
-        }
-
-        if (summaryParts.length > 0) {
-          setNlpSummary(summaryParts.join(' • '))
-        } else {
-          setNlpSummary(null)
-        }
-      } catch {
-        setNlpSummary(null)
-      }
-    }, 450)
-
-    return () => clearTimeout(timer)
-  }, [searchText])
-
   const clearAllFilters = useCallback(() => {
     setSearchText('')
-    setNlpSummary(null)
     setFilters(DEFAULT_RECIPE_FILTERS)
     setSortOption('relevance')
   }, [])
@@ -196,6 +146,5 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     filteredAndSortedRecipes,
     clearAllFilters,
     removeDietaryTag,
-    nlpSummary,
   }
 }

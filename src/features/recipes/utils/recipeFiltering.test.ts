@@ -117,4 +117,15 @@ describe('recipeFiltering', () => {
     expect(result).toHaveLength(1)
     expect(result[0].recipeName).toBe('Cheesy Garlic Bread')
   })
+
+  it('should parse numeric prep time limits directly from text query without mutating filters', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'under 15 mins')
+    expect(result.map(r => r.recipeName)).toEqual(['Keto Avocado Salad', 'Cheesy Garlic Bread'])
+  })
+
+  it('should parse numeric calorie limits directly from text query without mutating filters', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'under 400 cals')
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Keto Avocado Salad')
+  })
 })

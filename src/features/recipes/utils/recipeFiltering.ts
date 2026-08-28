@@ -70,6 +70,16 @@ const getRecipeCalories = (recipe: Recipe): number | null => {
   return null
 }
 
+const parseNumericTimeFromQuery = (query: string): number | null => {
+  const match = query.match(/(?:under|less than|<|\b)(\d+)\s*(?:mins?|minutes?|m\b)/i)
+  return match ? parseInt(match[1], 10) : null
+}
+
+const parseNumericCalsFromQuery = (query: string): number | null => {
+  const match = query.match(/(?:under|less than|<|\b)(\d+)\s*(?:cals?|calories?|kcal\b)/i)
+  return match ? parseInt(match[1], 10) : null
+}
+
 const ATTRIBUTE_TAG_MAP: Record<string, string[]> = {
   quick: ['Quick & Easy'],
   easy: ['Quick & Easy'],
@@ -91,11 +101,36 @@ export const filterRecipes = (
   searchText: string = ''
 ): Recipe[] => {
   const query = searchText.trim().toLowerCase()
-  const rawTokens = query ? query.split(/[\s,]+/).filter(Boolean) : []
+
+  const queryMaxTime = parseNumericTimeFromQuery(query)
+  const queryMaxCals = parseNumericCalsFromQuery(query)
+
+  const cleanedText = query
+    .replace(/(?:under|less than|<|\b)\d+\s*(?:mins?|minutes?|m\b)/gi, '')
+    .replace(/(?:under|less than|<|\b)\d+\s*(?:cals?|calories?|kcal\b)/gi, '')
+    .trim()
+
+  const rawTokens = cleanedText ? cleanedText.split(/[\s,]+/).filter(Boolean) : []
 
   return recipes.filter(recipe => {
-    // 1. Text Search / Tokenized NLP Match
-    if (query) {
+    // 1. Check Query Numeric Time limit if present in text
+    if (queryMaxTime !== null) {
+      const totalMins = getRecipeTotalMinutes(recipe)
+      if (totalMins > 0 && totalMins > queryMaxTime) {
+        return false
+      }
+    }
+
+    // 2. Check Query Numeric Calorie limit if present in text
+    if (queryMaxCals !== null) {
+      const cals = getRecipeCalories(recipe)
+      if (cals !== null && cals > queryMaxCals) {
+        return false
+      }
+    }
+
+    // 3. Text Search / Tokenized NLP Match
+    if (cleanedText && rawTokens.length > 0) {
       const fullText = [
         recipe.recipeName || '',
         recipe.description || '',
@@ -103,7 +138,7 @@ export const filterRecipes = (
         ...(recipe.ingredients || []).map(i => getIngredientString(i)),
       ].join(' ').toLowerCase()
 
-      const exactMatch = fullText.includes(query)
+      const exactMatch = fullText.includes(cleanedText)
 
       if (!exactMatch) {
         const allTokensMatched = rawTokens.every(token => {
