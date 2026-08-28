@@ -261,42 +261,18 @@ export const RecipeLibrary: React.FC = () => {
 
         {/* Search & Filter Controls Bar */}
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Filter Drawer Toggle Button */}
-            <button
-              onClick={() => setIsFilterDrawerOpen(true)}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-800 text-sm font-medium transition-colors shadow-xs"
-            >
-              <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.707 7.293A1 1 0 013 6.586V4z" />
-              </svg>
-              <span>Filter Recipes</span>
-              {activeFilterCount > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500 text-white">
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
-
-            {/* Quick Tag Selector for backwards compatibility */}
-            <label htmlFor="tag-filter" className="sr-only">Filter by tag</label>
-            <select
-              id="tag-filter"
-              value={filters.dietaryTags[0] || ''}
-              onChange={(e) => {
-                const val = e.target.value
-                setFilters(prev => ({
-                  ...prev,
-                  dietaryTags: val ? [val] : [],
-                }))
-              }}
-              className="px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
-            >
-              <option value="">All tags</option>
-              {tags.map(tag => (
-                <option key={tag} value={tag}>{tag}</option>
-              ))}
-            </select>
+          <div className="flex-1 min-w-[240px]">
+            {/* Multi-Facet Filter Drawer */}
+            <RecipeFilterDrawer
+              isOpen={isFilterDrawerOpen}
+              onToggleOpen={() => setIsFilterDrawerOpen(prev => !prev)}
+              filters={filters}
+              searchText={searchText}
+              onSearchTextChange={setSearchText}
+              availableTags={tags}
+              onFiltersChange={setFilters}
+              onClearFilters={clearAllFilters}
+            />
           </div>
 
           <div className="flex items-center gap-3">
@@ -315,19 +291,6 @@ export const RecipeLibrary: React.FC = () => {
               </select>
             </div>
           </div>
-        </div>
-
-        {/* Multi-Facet Filter Drawer */}
-        <div className="mt-3">
-          <RecipeFilterDrawer
-            isOpen={isFilterDrawerOpen}
-            onToggleOpen={() => setIsFilterDrawerOpen(prev => !prev)}
-            filters={filters}
-            searchText={searchText}
-            onSearchTextChange={setSearchText}
-            onFiltersChange={setFilters}
-            onClearFilters={clearAllFilters}
-          />
         </div>
 
         {/* Active Filter Pills Bar */}

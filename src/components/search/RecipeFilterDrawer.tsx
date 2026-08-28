@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   type RecipeFilterState,
@@ -14,6 +14,7 @@ export interface RecipeFilterDrawerProps {
   filters: RecipeFilterState
   searchText?: string
   onSearchTextChange?: (text: string) => void
+  availableTags?: string[]
   onFiltersChange: (newFilters: RecipeFilterState) => void
   onClearFilters: () => void
 }
@@ -24,6 +25,7 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
   filters,
   searchText = '',
   onSearchTextChange,
+  availableTags = [],
   onFiltersChange,
   onClearFilters,
 }) => {
@@ -94,9 +96,14 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
     })
   }
 
+  const combinedTags = useMemo(() => {
+    const set = new Set([...DIETARY_OPTIONS, ...availableTags])
+    return Array.from(set).filter(Boolean)
+  }, [availableTags])
+
   return (
-    <div className="w-full mb-6">
-      {/* Toggle Bar */}
+    <div className="w-full">
+      {/* Drawer Toggle Header */}
       <div className="flex items-center justify-between">
         <button
           type="button"
@@ -172,13 +179,13 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
                 </div>
               </div>
 
-              {/* Dietary Tags */}
+              {/* Tags & Dietary Restrictions */}
               <div>
                 <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2.5">
-                  Dietary Restrictions & Badges
+                  Tags & Dietary Restrictions
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {DIETARY_OPTIONS.map(tag => {
+                  {combinedTags.map((tag: string) => {
                     const isSelected = filters.dietaryTags.includes(tag)
                     return (
                       <button
