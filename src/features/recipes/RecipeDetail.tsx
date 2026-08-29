@@ -8,6 +8,8 @@ import BookmarkButton from '../../components/BookmarkButton'
 import LikeButton from '../../components/LikeButton'
 import type { Recipe } from '../../types/nutrition'
 import RecipeBody from './components/RecipeBody'
+import { RecipeReviewsSection } from './components/RecipeReviewsSection'
+import { RecipeCommentsSection } from './components/RecipeCommentsSection'
 import { useAuth } from '../../features/auth/AuthContext'
 
 // ── Icon helpers ────────────────────────────────────────────────────────────
@@ -397,6 +399,14 @@ export const RecipeDetail: React.FC = () => {
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 sm:p-8 transition-colors duration-300">
         <RecipeBody recipe={recipe} />
       </div>
+
+      {/* Social Ratings, Reviews & Discussion */}
+      {id && (
+        <>
+          <RecipeReviewsSection recipeId={id} currentUserId={currentUser?.uid} />
+          <RecipeCommentsSection recipeId={id} currentUserId={currentUser?.uid} />
+        </>
+      )}
 
       {/* Cooking Mode Modal */}
       {isCookingMode && recipe && (
