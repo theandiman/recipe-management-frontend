@@ -63,14 +63,43 @@ function getInstructionTextStyle(text: string): string {
   return 'text-base sm:text-lg font-normal leading-relaxed text-left text-slate-200'
 }
 
+function getStepIngredients(allIngredients: string[], stepText: string): string[] {
+  if (!stepText || !allIngredients || allIngredients.length === 0) return allIngredients
+
+  const lowerStep = stepText.toLowerCase()
+  const stopWords = new Set([
+    'cup', 'cups', 'tbsp', 'tsp', 'tablespoon', 'tablespoons', 'teaspoon', 'teaspoons',
+    'g', 'gram', 'grams', 'oz', 'ounce', 'ounces', 'lb', 'lbs', 'pound', 'pounds',
+    'ml', 'l', 'pinch', 'dash', 'large', 'small', 'medium', 'fresh', 'chopped', 'diced',
+    'minced', 'sliced', 'grated', 'ground', 'to', 'of', 'and', 'or', 'a', 'an', 'for',
+    'with', 'in', 'into', 'on', 'onto', 'heat', 'cook', 'bake', 'mix', 'add', 'stir',
+    'whisk', 'combine', 'place', 'pour', 'serve', 'top'
+  ])
+
+  const matched = allIngredients.filter((ingredient) => {
+    const lowerIng = ingredient.toLowerCase()
+    const tokens = lowerIng
+      .replace(/[^a-z\s]/g, '')
+      .split(/\s+/)
+      .filter((t) => t.length >= 3 && !stopWords.has(t))
+
+    if (tokens.length === 0) {
+      return lowerStep.includes(lowerIng)
+    }
+    return tokens.some((token) => lowerStep.includes(token))
+  })
+
+  return matched.length > 0 ? matched : allIngredients
+}
+
 export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => {
   const [currentStep, setCurrentStep] = useState(0)
   const [showIngredients, setShowIngredients] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [voiceFeedback, setVoiceFeedback] = useState<string | null>(null)
 
-  // Interactive Checklist for Ingredients
-  const [checkedIngredients, setCheckedIngredients] = useState<Record<number, boolean>>({})
+  // Collapsible Ingredients Side Panel
+  const [isSidePanelOpen, setIsSidePanelOpen] = useState(true)
 
   // Built-in Step Timer
   const [timerSeconds, setTimerSeconds] = useState<number | null>(null)
@@ -84,6 +113,10 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
   const progress = ((currentStep + 1) / totalSteps) * 100
   const currentInstruction = recipe.instructions[currentStep] || ''
   const isLastStep = currentStep === totalSteps - 1
+
+  // Extract ingredients relevant to the active cooking step
+  const stepIngredients = getStepIngredients(recipe.ingredients, currentInstruction)
+  const isStepSpecific = stepIngredients.length < recipe.ingredients.length && stepIngredients.length > 0
 
   // Detect timer in current step
   useEffect(() => {
@@ -298,10 +331,6 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
     }
   }
 
-  const toggleIngredientCheck = (index: number) => {
-    setCheckedIngredients((prev) => ({ ...prev, [index]: !prev[index] }))
-  }
-
   return (
     <AnimatePresence>
       <motion.div
@@ -411,7 +440,7 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
           <div className="flex-1 overflow-hidden flex items-center justify-center p-4 sm:p-6 relative">
             <AnimatePresence mode="wait">
               {showIngredients ? (
-                /* Full Ingredients Overlay */
+                /* Full Ingredients Overlay (No Checkboxes) */
                 <motion.div
                   key="ingredients"
                   className="w-full h-full flex flex-col max-w-4xl py-2"
@@ -422,52 +451,24 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
                 >
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
-                      <span>🥗</span> Recipe Ingredients
+                      <span>🥗</span> Recipe Ingredients ({recipe.ingredients.length})
                     </h3>
-                    <span className="text-xs font-bold px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
-                      {Object.values(checkedIngredients).filter(Boolean).length} / {recipe.ingredients.length} Ready
-                    </span>
                   </div>
 
-                  <div className="space-y-2.5 overflow-y-auto flex-1 pr-2 max-h-[60vh]">
-                    {recipe.ingredients.map((ingredient: string, index: number) => {
-                      const isChecked = !!checkedIngredients[index]
-                      return (
-                        <motion.div
-                          key={index}
-                          onClick={() => toggleIngredientCheck(index)}
-                          className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer ${
-                            isChecked
-                              ? 'bg-emerald-950/30 border-emerald-800/40 text-slate-400 opacity-60'
-                              : 'bg-slate-800/60 border-slate-700/60 text-slate-100 hover:bg-slate-800 hover:border-slate-600'
-                          }`}
-                          whileHover={{ x: 4 }}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`w-5 h-5 rounded-lg flex items-center justify-center border text-xs transition-all ${
-                                isChecked
-                                  ? 'bg-emerald-500 border-emerald-400 text-slate-950 font-bold'
-                                  : 'border-slate-600 bg-slate-900/60'
-                              }`}
-                            >
-                              {isChecked && '✓'}
-                            </div>
-                            <span
-                              className={`text-base sm:text-lg font-medium ${
-                                isChecked ? 'line-through' : ''
-                              }`}
-                            >
-                              {ingredient}
-                            </span>
-                          </div>
-                        </motion.div>
-                      )
-                    })}
+                  <div className="space-y-2 overflow-y-auto flex-1 pr-2 max-h-[60vh]">
+                    {recipe.ingredients.map((ingredient: string, index: number) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-3 p-3.5 rounded-2xl border border-slate-700/60 bg-slate-800/60 text-slate-100"
+                      >
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                        <span className="text-base sm:text-lg font-medium">{ingredient}</span>
+                      </div>
+                    ))}
                   </div>
                 </motion.div>
               ) : (
-                /* Split View: Mini Ingredients Sidebar + Main Instruction Card */
+                /* Split View: Step-Specific Collapsible Sidebar + Main Instruction Card */
                 <motion.div
                   key="instructions-split"
                   className="w-full flex flex-col lg:flex-row items-stretch justify-center gap-4 sm:gap-6 max-w-6xl"
@@ -476,41 +477,46 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
                   exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 0.25 }}
                 >
-                  {/* Left Side: Quick Ingredients Checklist Reference (hidden on mobile, visible on lg+) */}
-                  <div className="hidden lg:flex flex-col w-72 bg-slate-950/60 rounded-2xl p-4 border border-slate-800/80 overflow-hidden flex-shrink-0">
-                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
-                      <span className="text-xs font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                        <span>🥗</span> Ingredients ({recipe.ingredients.length})
-                      </span>
-                    </div>
-
-                    <div className="space-y-1.5 overflow-y-auto flex-1 pr-1 max-h-[50vh] scrollbar-thin">
-                      {recipe.ingredients.map((ingredient: string, index: number) => {
-                        const isChecked = !!checkedIngredients[index]
-                        return (
-                          <div
-                            key={index}
-                            onClick={() => toggleIngredientCheck(index)}
-                            className={`flex items-start gap-2.5 p-2 rounded-xl border text-xs transition-all cursor-pointer ${
-                              isChecked
-                                ? 'bg-emerald-950/20 border-emerald-900/40 text-slate-500 line-through'
-                                : 'bg-slate-900/40 border-slate-800/60 text-slate-300 hover:bg-slate-800/60'
-                            }`}
+                  {/* Left Side: Step-Specific Ingredients Collapsible Panel */}
+                  <div className="hidden lg:flex flex-col transition-all duration-300">
+                    {isSidePanelOpen ? (
+                      <div className="w-72 bg-slate-950/60 rounded-2xl p-4 border border-slate-800/80 overflow-hidden flex flex-col flex-shrink-0 h-full">
+                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
+                          <span className="text-xs font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5 truncate">
+                            <span>🥗</span> {isStepSpecific ? `Step ${currentStep + 1} Ingredients (${stepIngredients.length})` : `Ingredients (${stepIngredients.length})`}
+                          </span>
+                          <button
+                            onClick={() => setIsSidePanelOpen(false)}
+                            className="text-xs text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition-colors flex-shrink-0 cursor-pointer"
+                            title="Collapse ingredients panel"
                           >
+                            ‹ Hide
+                          </button>
+                        </div>
+
+                        <div className="space-y-2 overflow-y-auto flex-1 pr-1 max-h-[50vh] scrollbar-thin">
+                          {stepIngredients.map((ingredient: string, index: number) => (
                             <div
-                              className={`w-4 h-4 rounded mt-0.5 flex items-center justify-center border text-[10px] flex-shrink-0 ${
-                                isChecked
-                                  ? 'bg-emerald-500 border-emerald-400 text-slate-950 font-bold'
-                                  : 'border-slate-700 bg-slate-950'
-                              }`}
+                              key={index}
+                              className="flex items-start gap-2 p-2.5 rounded-xl border border-slate-800/60 bg-slate-900/50 text-slate-200 text-xs"
                             >
-                              {isChecked && '✓'}
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
+                              <span className="leading-snug font-medium">{ingredient}</span>
                             </div>
-                            <span className="leading-snug">{ingredient}</span>
-                          </div>
-                        )
-                      })}
-                    </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setIsSidePanelOpen(true)}
+                        className="h-full px-3 py-4 bg-slate-950/60 hover:bg-slate-900 border border-slate-800/80 rounded-2xl text-xs font-bold text-slate-300 hover:text-white flex flex-col items-center justify-center gap-2 transition-all cursor-pointer"
+                        title="Expand ingredients panel"
+                      >
+                        <span>🥗</span>
+                        <span className="writing-mode-vertical uppercase tracking-wider text-[11px]">Ingredients</span>
+                        <span>›</span>
+                      </button>
+                    )}
                   </div>
 
                   {/* Navigation Controls + Instruction Card Container */}
@@ -645,7 +651,7 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
               )}
             </div>
 
-            {/* Toggle Full Ingredients / Steps Button */}
+            {/* Toggle Ingredients / Steps Button */}
             <motion.button
               onClick={() => setShowIngredients(!showIngredients)}
               className="py-2 px-5 bg-slate-800 text-slate-100 border border-slate-700 rounded-full font-bold hover:bg-slate-700 transition-colors flex items-center gap-2 cursor-pointer text-xs"
