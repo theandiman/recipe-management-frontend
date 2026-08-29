@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getRecipe, updateRecipeSharing } from '../../services/recipeStorageApi'
+import { getUserProfile, type UserProfile } from '../../services/userApi'
 import { CookingMode } from '../../components/CookingMode'
 import GlobeIcon from '../../components/GlobeIcon'
 import BookmarkButton from '../../components/BookmarkButton'
@@ -36,6 +37,7 @@ export const RecipeDetail: React.FC = () => {
   const navigate = useNavigate()
   const { user: currentUser } = useAuth()
   const [recipe, setRecipe] = useState<Recipe | null>(null)
+  const [authorProfile, setAuthorProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isCookingMode, setIsCookingMode] = useState(false)
@@ -100,6 +102,34 @@ export const RecipeDetail: React.FC = () => {
 
     fetchRecipe()
   }, [id])
+
+  useEffect(() => {
+    if (!recipe?.userId) return
+
+    if (currentUser && currentUser.uid === recipe.userId && (currentUser.displayName || currentUser.email)) {
+      setAuthorProfile({
+        uid: currentUser.uid,
+        displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Chef',
+        avatarUrl: currentUser.photoURL || undefined,
+        publicRecipeCount: 0,
+        publicRecipes: [],
+      })
+      return
+    }
+
+    let isMounted = true
+    getUserProfile(recipe.userId)
+      .then((profile) => {
+        if (isMounted) setAuthorProfile(profile)
+      })
+      .catch(() => {
+        // Fall back gracefully if user profile is unavailable
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [recipe?.userId, currentUser])
 
   const handleCopyLink = async () => {
     if (!id) return
@@ -321,12 +351,25 @@ export const RecipeDetail: React.FC = () => {
       {recipe.userId ? (
         <Link
           to={`/user/${recipe.userId}`}
-          className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors mb-6"
+          className="inline-flex items-center gap-2.5 text-sm text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors mb-6 group"
         >
-          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-semibold">
-            {(recipe.userId[0] || '?').toUpperCase()}
-          </div>
-          <span>View author profile</span>
+          {authorProfile?.avatarUrl ? (
+            <img
+              src={authorProfile.avatarUrl}
+              alt={authorProfile.displayName || 'Author'}
+              className="w-7 h-7 rounded-full object-cover border border-emerald-500/30 group-hover:scale-105 transition-transform flex-shrink-0"
+            />
+          ) : (
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-bold shadow-xs group-hover:scale-105 transition-transform flex-shrink-0">
+              {((authorProfile?.displayName || (recipe as Record<string, unknown>).authorName || (recipe as Record<string, unknown>).displayName || (isOwner ? currentUser?.displayName : null) || 'Chef')[0] || 'C').toUpperCase()}
+            </div>
+          )}
+          <span>
+            By{' '}
+            <span className="font-semibold underline decoration-emerald-500/40 group-hover:decoration-emerald-500">
+              {authorProfile?.displayName || (recipe as Record<string, unknown>).authorName || (recipe as Record<string, unknown>).displayName || (isOwner ? (currentUser?.displayName || currentUser?.email?.split('@')[0]) : null) || 'Chef'}
+            </span>
+          </span>
         </Link>
       ) : (
         <div className="mb-4" />
