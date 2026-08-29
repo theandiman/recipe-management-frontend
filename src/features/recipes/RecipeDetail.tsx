@@ -348,30 +348,36 @@ export const RecipeDetail: React.FC = () => {
       <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">{recipe.recipeName}</h1>
 
       {/* Author link */}
-      {recipe.userId ? (
-        <Link
-          to={`/user/${recipe.userId}`}
-          className="inline-flex items-center gap-2.5 text-sm text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors mb-6 group"
-        >
-          {authorProfile?.avatarUrl ? (
-            <img
-              src={authorProfile.avatarUrl}
-              alt={authorProfile.displayName || 'Author'}
-              className="w-7 h-7 rounded-full object-cover border border-emerald-500/30 group-hover:scale-105 transition-transform flex-shrink-0"
-            />
-          ) : (
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-bold shadow-xs group-hover:scale-105 transition-transform flex-shrink-0">
-              {((authorProfile?.displayName || (recipe as Record<string, unknown>).authorName || (recipe as Record<string, unknown>).displayName || (isOwner ? currentUser?.displayName : null) || 'Chef')[0] || 'C').toUpperCase()}
-            </div>
-          )}
-          <span>
-            By{' '}
-            <span className="font-semibold underline decoration-emerald-500/40 group-hover:decoration-emerald-500">
-              {authorProfile?.displayName || (recipe as Record<string, unknown>).authorName || (recipe as Record<string, unknown>).displayName || (isOwner ? (currentUser?.displayName || currentUser?.email?.split('@')[0]) : null) || 'Chef'}
+      {recipe.userId ? (() => {
+        const recipeWithAuthor = recipe as (Recipe & { authorName?: string; displayName?: string }) | null
+        const authorDisplayName = authorProfile?.displayName || recipeWithAuthor?.authorName || recipeWithAuthor?.displayName || (isOwner ? (currentUser?.displayName || currentUser?.email?.split('@')[0]) : null) || 'Chef'
+        const avatarInitial = (authorDisplayName[0] || 'C').toUpperCase()
+
+        return (
+          <Link
+            to={`/user/${recipe.userId}`}
+            className="inline-flex items-center gap-2.5 text-sm text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors mb-6 group"
+          >
+            {authorProfile?.avatarUrl ? (
+              <img
+                src={authorProfile.avatarUrl}
+                alt={authorDisplayName}
+                className="w-7 h-7 rounded-full object-cover border border-emerald-500/30 group-hover:scale-105 transition-transform flex-shrink-0"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-bold shadow-xs group-hover:scale-105 transition-transform flex-shrink-0">
+                {avatarInitial}
+              </div>
+            )}
+            <span>
+              By{' '}
+              <span className="font-semibold underline decoration-emerald-500/40 group-hover:decoration-emerald-500">
+                {authorDisplayName}
+              </span>
             </span>
-          </span>
-        </Link>
-      ) : (
+          </Link>
+        )
+      })() : (
         <div className="mb-4" />
       )}
 
