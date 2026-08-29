@@ -29,19 +29,88 @@ interface ISpeechRecognition {
   stop: () => void
 }
 
+// Helper to extract duration in seconds from instruction text (e.g. "Bake for 30 minutes")
+function parseStepTimerSeconds(text: string): number | null {
+  const match = text.match(/(\d+)\s*(hour|hr|minute|min|second|sec)s?/i)
+  if (!match) return null
+
+  const value = parseInt(match[1], 10)
+  const unit = match[2].toLowerCase()
+
+  if (unit.startsWith('hour') || unit.startsWith('hr')) return value * 3600
+  if (unit.startsWith('min')) return value * 60
+  if (unit.startsWith('sec')) return value
+  return null
+}
+
+function formatTimerDisplay(seconds: number): string {
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
 export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => {
   const [currentStep, setCurrentStep] = useState(0)
   const [showIngredients, setShowIngredients] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [voiceFeedback, setVoiceFeedback] = useState<string | null>(null)
 
-  // Wake Lock API to keep screen awake while cooking
+  // Interactive Checklist for Ingredients
+  const [checkedIngredients, setCheckedIngredients] = useState<Record<number, boolean>>({})
+
+  // Built-in Step Timer
+  const [timerSeconds, setTimerSeconds] = useState<number | null>(null)
+  const [timerRemaining, setTimerRemaining] = useState<number | null>(null)
+  const [isTimerRunning, setIsTimerRunning] = useState(false)
+
+  // Speech Synthesis Read-Aloud
+  const [isSpeaking, setIsSpeaking] = useState(false)
+
+  const totalSteps = recipe.instructions.length
+  const progress = ((currentStep + 1) / totalSteps) * 100
+  const currentInstruction = recipe.instructions[currentStep] || ''
+  const isLastStep = currentStep === totalSteps - 1
+
+  // Detect timer in current step
+  useEffect(() => {
+    const detected = parseStepTimerSeconds(currentInstruction)
+    setTimerSeconds(detected)
+    setTimerRemaining(detected)
+    setIsTimerRunning(false)
+  }, [currentInstruction, currentStep])
+
+  // Timer Countdown Effect
+  useEffect(() => {
+    if (!isTimerRunning || timerRemaining === null || timerRemaining <= 0) return
+
+    const interval = setInterval(() => {
+      setTimerRemaining((prev) => {
+        if (prev === null || prev <= 1) {
+          setIsTimerRunning(false)
+          // Play notification audio tone if available
+          if ('vibrate' in navigator) {
+            try { navigator.vibrate([200, 100, 200]) } catch {}
+          }
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [isTimerRunning, timerRemaining])
+
+  // Screen Wake Lock
   useEffect(() => {
     let wakeLock: unknown = null
     const requestWakeLock = async () => {
       try {
         if ('wakeLock' in navigator) {
-          wakeLock = await (navigator as unknown as { wakeLock: { request: (type: string) => Promise<unknown> } }).wakeLock.request('screen')
+          wakeLock = await (
+            navigator as unknown as {
+              wakeLock: { request: (type: string) => Promise<unknown> }
+            }
+          ).wakeLock.request('screen')
         }
       } catch {
         // Fallback for unsupported browsers
@@ -50,13 +119,33 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
     requestWakeLock()
     return () => {
       if (wakeLock && typeof (wakeLock as { release?: () => void }).release === 'function') {
-        (wakeLock as { release: () => void }).release()
+        ;(wakeLock as { release: () => void }).release()
       }
     }
   }, [])
 
-  const totalSteps = recipe.instructions.length
-  const progress = ((currentStep + 1) / totalSteps) * 100
+  // Keyboard Shortcuts Navigation (Left, Right, Space, KeyV, KeyI)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept if target is input/textarea
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return
+
+      if (e.key === 'ArrowRight') {
+        goToNextStep()
+      } else if (e.key === 'ArrowLeft') {
+        goToPreviousStep()
+      } else if (e.key === 'v' || e.key === 'V') {
+        toggleVoiceCommands()
+      } else if (e.key === 'i' || e.key === 'I') {
+        setShowIngredients((prev) => !prev)
+      } else if (e.key === 'r' || e.key === 'R') {
+        toggleReadStep()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [currentStep, totalSteps, isListening])
 
   // Web Speech API Voice Recognition
   useEffect(() => {
@@ -111,11 +200,7 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
           transcript.includes('repeat') ||
           transcript.includes('speak')
         ) {
-          if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel()
-            const utterance = new SpeechSynthesisUtterance(recipe.instructions[currentStep])
-            window.speechSynthesis.speak(utterance)
-          }
+          readCurrentStep()
           setVoiceFeedback('Reading step out loud...')
         } else {
           setVoiceFeedback(`Listening... (Heard: "${transcript}")`)
@@ -154,7 +239,7 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
         }
       }
     }
-  }, [isListening, totalSteps, currentStep, recipe.instructions])
+  }, [isListening, totalSteps, currentStep, currentInstruction])
 
   const goToPreviousStep = () => {
     if (currentStep > 0) {
@@ -177,249 +262,351 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
     }
   }
 
-  const currentInstruction = recipe.instructions[currentStep]
-  const isLastStep = currentStep === totalSteps - 1
+  const readCurrentStep = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+      const utterance = new SpeechSynthesisUtterance(currentInstruction)
+      utterance.onend = () => setIsSpeaking(false)
+      utterance.onerror = () => setIsSpeaking(false)
+      setIsSpeaking(true)
+      window.speechSynthesis.speak(utterance)
+    }
+  }
+
+  const toggleReadStep = () => {
+    if (isSpeaking) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+      }
+      setIsSpeaking(false)
+    } else {
+      readCurrentStep()
+    }
+  }
+
+  const toggleIngredientCheck = (index: number) => {
+    setCheckedIngredients((prev) => ({ ...prev, [index]: !prev[index] }))
+  }
 
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-8"
+        className="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-6 text-slate-100"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.3 }}
       >
         <motion.div
-          className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-6xl h-[90vh] overflow-hidden flex flex-col border border-gray-200 dark:border-slate-700"
-          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          className="bg-slate-900/90 rounded-3xl shadow-2xl w-full max-w-6xl h-[94vh] overflow-hidden flex flex-col border border-slate-700/60 backdrop-blur-xl"
+          initial={{ scale: 0.95, opacity: 0, y: 15 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.9, opacity: 0, y: 20 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
+          exit={{ scale: 0.95, opacity: 0, y: 15 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
         >
-        
-        {/* Header with close and recipe title */}
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-8 py-4 flex items-center justify-between flex-shrink-0">
-          <div>
-            <h2 className="text-2xl font-bold">{recipe.recipeName}</h2>
-            <p className="text-emerald-100 text-sm mt-1">Step {currentStep + 1} of {totalSteps}</p>
-          </div>
-          <motion.button
-            onClick={onClose}
-            className="text-white hover:bg-white/20 rounded-full p-2 transition-colors"
-            title="Close cooking mode"
-            whileHover={{ scale: 1.1, rotate: 90 }}
-            whileTap={{ scale: 0.9 }}
-            transition={{ duration: 0.2 }}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </motion.button>
-        </div>
-
-        {/* Progress bar */}
-        <div className="h-1 bg-gray-200">
-          <div 
-            className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-
-        {/* Main content area - landscape card */}
-        <div className="flex-1 overflow-hidden flex items-center justify-center p-8">
-          <AnimatePresence mode="wait">
-            {showIngredients ? (
-              // Ingredients panel
-              <motion.div
-                key="ingredients"
-                className="w-full h-full flex flex-col"
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -50 }}
-                transition={{ duration: 0.3 }}
-              >
-                <motion.h3
-                  className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8"
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1, duration: 0.3 }}
-                >
-                  Ingredients
-                </motion.h3>
-                <motion.ul
-                  className="space-y-3 overflow-y-auto flex-1 pr-4"
-                  initial="hidden"
-                  animate="visible"
-                  variants={{
-                    visible: {
-                      transition: {
-                        staggerChildren: 0.1
-                      }
-                    }
-                  }}
-                >
-                  {recipe.ingredients.map((ingredient: string, index: number) => (
-                    <motion.li
-                      key={index}
-                      className="flex items-start p-4 bg-emerald-50 dark:bg-slate-800 rounded-xl"
-                      variants={{
-                        hidden: { opacity: 0, x: -20 },
-                        visible: { opacity: 1, x: 0 }
-                      }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <motion.svg
-                        className="w-5 h-5 mr-3 mt-0.5 text-emerald-600 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: index * 0.1 + 0.3, duration: 0.2 }}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </motion.svg>
-                      <span className="text-xl md:text-2xl text-gray-800 dark:text-gray-200">{ingredient}</span>
-                    </motion.li>
-                  ))}
-                </motion.ul>
-              </motion.div>
-            ) : (
-              // Instructions panel with side navigation
-              <motion.div
-                key="instructions"
-                className="w-full flex items-center justify-between gap-8"
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 50 }}
-                transition={{ duration: 0.3 }}
-              >
-              {/* Previous button */}
-              <motion.button
-                onClick={goToPreviousStep}
-                disabled={currentStep === 0}
-                className="flex-shrink-0 p-4 text-gray-400 dark:text-gray-500 hover:text-emerald-600 dark:hover:text-emerald-400 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
-                title="Previous step"
-                whileHover={{ scale: 1.1, x: -5 }}
-                whileTap={{ scale: 0.9 }}
-                transition={{ duration: 0.2 }}
-              >
-                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </motion.button>
-
-              {/* Current instruction - large card */}
-              <motion.div
-                key={currentStep}
-                className="flex-1 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-800 dark:to-slate-800/50 rounded-3xl p-10 md:p-16 text-center border-2 border-emerald-200 dark:border-slate-700 flex flex-col items-center justify-center overflow-hidden shadow-inner"
-                initial={{ opacity: 0, x: 50, scale: 0.95 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: -50, scale: 0.95 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-              >
-                <motion.div
-                  className="text-7xl font-black text-emerald-500/20 dark:text-emerald-400/10 mb-6"
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.2, duration: 0.3 }}
-                >
-                  {currentStep + 1}
-                </motion.div>
-                <motion.p
-                  className="text-3xl md:text-5xl leading-tight text-gray-900 dark:text-gray-100 font-semibold overflow-y-auto max-h-full"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3, duration: 0.3 }}
-                >
-                  {currentInstruction}
-                </motion.p>
-              </motion.div>
-
-              {/* Next button */}
-              <motion.button
-                onClick={goToNextStep}
-                disabled={isLastStep}
-                className="flex-shrink-0 p-4 text-emerald-600 hover:text-emerald-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                title={isLastStep ? "You've completed the recipe!" : "Next step"}
-                whileHover={{ scale: 1.1, x: 5 }}
-                whileTap={{ scale: 0.9 }}
-                transition={{ duration: 0.2 }}
-              >
-                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </motion.button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Footer controls */}
-        <div className="bg-gray-50 dark:bg-slate-900/50 border-t border-gray-200 dark:border-slate-700 px-8 py-4 flex flex-col sm:flex-row gap-3 items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <motion.button
-              onClick={toggleVoiceCommands}
-              className={`py-2.5 px-5 rounded-full font-bold text-xs flex items-center gap-2 transition-all cursor-pointer ${
-                isListening
-                  ? 'bg-red-500 text-white shadow-md animate-pulse'
-                  : 'bg-gray-200 dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-700'
-              }`}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <span>🎤</span> {isListening ? 'Voice Active' : 'Enable Voice'}
-            </motion.button>
-            {isListening && voiceFeedback && (
-              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5 animate-bounce">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                {voiceFeedback}
+          {/* Top Glass Header */}
+          <div className="bg-gradient-to-r from-slate-900 via-emerald-950/50 to-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <span className="p-2.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-2xl text-xl">
+                🍳
               </span>
-            )}
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                  {recipe.recipeName}
+                </h2>
+                <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-400 font-medium">
+                  <span>Step {currentStep + 1} of {totalSteps}</span>
+                  {recipe.prepTimeMinutes && (
+                    <>
+                      <span>•</span>
+                      <span>⏱ Prep: {recipe.prepTimeMinutes}m</span>
+                    </>
+                  )}
+                  {recipe.cookTimeMinutes && (
+                    <>
+                      <span>•</span>
+                      <span>🔥 Cook: {recipe.cookTimeMinutes}m</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <motion.button
+                onClick={toggleReadStep}
+                className={`py-2 px-4 rounded-xl text-xs font-bold flex items-center gap-2 transition-all border cursor-pointer ${
+                  isSpeaking
+                    ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/20 animate-pulse'
+                    : 'bg-slate-800/80 text-slate-200 border-slate-700 hover:bg-slate-700 hover:text-white'
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                title="Read step out loud (Shortcut: R)"
+              >
+                <span>{isSpeaking ? '🔊' : '🔈'}</span>
+                <span>{isSpeaking ? 'Stop Audio' : 'Read Step'}</span>
+              </motion.button>
+
+              <motion.button
+                onClick={onClose}
+                className="text-slate-400 hover:text-white hover:bg-slate-800 rounded-full p-2.5 transition-colors border border-transparent hover:border-slate-700"
+                title="Close cooking mode (Esc)"
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </motion.button>
+            </div>
           </div>
 
-          <motion.button
-            onClick={() => setShowIngredients(!showIngredients)}
-            className="py-3 px-8 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-100 rounded-full font-bold hover:bg-emerald-200 dark:hover:bg-emerald-800 transition-colors flex items-center gap-2 cursor-pointer"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-          >
+          {/* Interactive Step Track Bar */}
+          <div className="bg-slate-950/80 border-b border-slate-800/80 px-6 py-2 flex items-center justify-between gap-2 overflow-x-auto flex-shrink-0">
+            <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none">
+              {recipe.instructions.map((_, index) => {
+                const isActive = index === currentStep
+                const isPassed = index < currentStep
+                return (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setCurrentStep(index)
+                      setShowIngredients(false)
+                    }}
+                    className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1 flex-shrink-0 ${
+                      isActive
+                        ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20 scale-105'
+                        : isPassed
+                        ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/60 hover:bg-emerald-900/60'
+                        : 'bg-slate-800/60 text-slate-400 border border-slate-700/50 hover:bg-slate-800 hover:text-slate-200'
+                    }`}
+                  >
+                    <span>{isPassed ? '✓' : index + 1}</span>
+                  </button>
+                )
+              })}
+            </div>
+            <span className="text-xs font-bold text-slate-400 flex-shrink-0 ml-2">
+              {Math.round(progress)}% Complete
+            </span>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="flex-1 overflow-hidden flex items-center justify-center p-6 sm:p-10 relative">
             <AnimatePresence mode="wait">
               {showIngredients ? (
+                /* Ingredients Overlay */
                 <motion.div
-                  key="steps-icon"
-                  className="flex items-center gap-2"
-                  initial={{ opacity: 0, rotate: -90 }}
-                  animate={{ opacity: 1, rotate: 0 }}
-                  exit={{ opacity: 0, rotate: 90 }}
-                  transition={{ duration: 0.2 }}
+                  key="ingredients"
+                  className="w-full h-full flex flex-col max-w-4xl"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.25 }}
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  View Steps
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-2xl sm:text-3xl font-black text-white flex items-center gap-3">
+                      <span>🥗</span> Recipe Ingredients
+                    </h3>
+                    <span className="text-xs font-bold px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
+                      {Object.values(checkedIngredients).filter(Boolean).length} / {recipe.ingredients.length} Ready
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 overflow-y-auto flex-1 pr-2">
+                    {recipe.ingredients.map((ingredient: string, index: number) => {
+                      const isChecked = !!checkedIngredients[index]
+                      return (
+                        <motion.div
+                          key={index}
+                          onClick={() => toggleIngredientCheck(index)}
+                          className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${
+                            isChecked
+                              ? 'bg-emerald-950/30 border-emerald-800/40 text-slate-400 opacity-60'
+                              : 'bg-slate-800/60 border-slate-700/60 text-slate-100 hover:bg-slate-800 hover:border-slate-600'
+                          }`}
+                          whileHover={{ x: 4 }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`w-6 h-6 rounded-lg flex items-center justify-center border transition-all ${
+                                isChecked
+                                  ? 'bg-emerald-500 border-emerald-400 text-slate-950 font-bold'
+                                  : 'border-slate-600 bg-slate-900/60'
+                              }`}
+                            >
+                              {isChecked && '✓'}
+                            </div>
+                            <span
+                              className={`text-lg sm:text-xl font-medium ${
+                                isChecked ? 'line-through' : ''
+                              }`}
+                            >
+                              {ingredient}
+                            </span>
+                          </div>
+                        </motion.div>
+                      )
+                    })}
+                  </div>
                 </motion.div>
               ) : (
+                /* Instruction Card View */
                 <motion.div
-                  key="ingredients-icon"
-                  className="flex items-center gap-2"
-                  initial={{ opacity: 0, rotate: -90 }}
-                  animate={{ opacity: 1, rotate: 0 }}
-                  exit={{ opacity: 0, rotate: 90 }}
-                  transition={{ duration: 0.2 }}
+                  key="instructions"
+                  className="w-full h-full flex items-center justify-between gap-4 sm:gap-8 max-w-5xl"
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ duration: 0.25 }}
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  View Ingredients
+                  {/* Previous Button */}
+                  <motion.button
+                    onClick={goToPreviousStep}
+                    disabled={currentStep === 0}
+                    className="flex-shrink-0 p-4 rounded-2xl bg-slate-800/50 border border-slate-700/60 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all shadow-lg"
+                    title="Previous step (Left Arrow)"
+                    whileHover={{ scale: 1.08, x: -3 }}
+                    whileTap={{ scale: 0.92 }}
+                  >
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </motion.button>
+
+                  {/* Main Instruction Display */}
+                  <motion.div
+                    key={currentStep}
+                    className="flex-1 h-full bg-gradient-to-b from-slate-800/80 to-slate-900/80 rounded-3xl p-8 sm:p-14 border border-emerald-500/20 flex flex-col items-center justify-between overflow-hidden shadow-2xl relative"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -15 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {/* Top step badge & detected timer */}
+                    <div className="w-full flex items-center justify-between mb-4 flex-shrink-0">
+                      <span className="px-4 py-1.5 rounded-full text-xs font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider">
+                        Step {currentStep + 1}
+                      </span>
+
+                      {/* Built-in Step Timer Badge */}
+                      {timerSeconds !== null && (
+                        <div className="flex items-center gap-2">
+                          <motion.button
+                            onClick={() => setIsTimerRunning((prev) => !prev)}
+                            className={`px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 border transition-all cursor-pointer ${
+                              isTimerRunning
+                                ? 'bg-amber-500 text-slate-950 border-amber-400 animate-pulse'
+                                : timerRemaining === 0
+                                ? 'bg-rose-500 text-white border-rose-400 animate-bounce'
+                                : 'bg-slate-800 text-amber-300 border-amber-500/30 hover:bg-slate-700'
+                            }`}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <span>⏱</span>
+                            <span>
+                              {timerRemaining === 0
+                                ? "Time's Up!"
+                                : isTimerRunning
+                                ? `Timer: ${formatTimerDisplay(timerRemaining ?? 0)} (Pause)`
+                                : `Start Timer (${formatTimerDisplay(timerRemaining ?? 0)})`}
+                            </span>
+                          </motion.button>
+
+                          {timerRemaining !== timerSeconds && (
+                            <button
+                              onClick={() => {
+                                setTimerRemaining(timerSeconds)
+                                setIsTimerRunning(false)
+                              }}
+                              className="text-xs text-slate-400 hover:text-white underline cursor-pointer"
+                              title="Reset Timer"
+                            >
+                              Reset
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Instruction text */}
+                    <div className="flex-1 flex items-center justify-center my-4 overflow-y-auto w-full px-2">
+                      <p className="text-2xl sm:text-4xl md:text-5xl leading-tight text-white font-bold text-center tracking-tight">
+                        {currentInstruction}
+                      </p>
+                    </div>
+
+                    {/* Footer helper note */}
+                    <div className="text-xs text-slate-500 font-medium flex items-center gap-4 flex-shrink-0 mt-4">
+                      <span>Press <kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-300">←</kbd> / <kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-300">→</kbd> to navigate</span>
+                      <span>•</span>
+                      <span>Press <kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-300">R</kbd> for audio</span>
+                    </div>
+                  </motion.div>
+
+                  {/* Next Button */}
+                  <motion.button
+                    onClick={goToNextStep}
+                    disabled={isLastStep}
+                    className="flex-shrink-0 p-4 rounded-2xl bg-emerald-500 text-slate-950 hover:bg-emerald-400 disabled:opacity-20 disabled:cursor-not-allowed transition-all shadow-lg shadow-emerald-500/20 font-bold"
+                    title={isLastStep ? "You've completed the recipe!" : "Next step (Right Arrow)"}
+                    whileHover={{ scale: 1.08, x: 3 }}
+                    whileTap={{ scale: 0.92 }}
+                  >
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </motion.button>
                 </motion.div>
               )}
             </AnimatePresence>
-          </motion.button>
-        </div>
+          </div>
+
+          {/* Bottom Glass Footer Controls */}
+          <div className="bg-slate-950/80 border-t border-slate-800 px-6 py-4 flex flex-col sm:flex-row gap-3 items-center justify-between flex-shrink-0">
+            {/* Voice Control Pill */}
+            <div className="flex items-center gap-3">
+              <motion.button
+                onClick={toggleVoiceCommands}
+                className={`py-2.5 px-6 rounded-full font-extrabold text-xs flex items-center gap-2.5 transition-all cursor-pointer border ${
+                  isListening
+                    ? 'bg-rose-500 text-white border-rose-400 shadow-lg shadow-rose-500/30 animate-pulse'
+                    : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:text-white'
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                title="Toggle Voice Commands (Shortcut: V)"
+              >
+                <span>🎤</span> {isListening ? 'Voice Commands Active' : 'Enable Voice (Shortcut: V)'}
+              </motion.button>
+
+              {isListening && voiceFeedback && (
+                <span className="text-xs text-emerald-400 font-semibold flex items-center gap-2 bg-emerald-950/50 px-3 py-1.5 rounded-full border border-emerald-800/60">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  {voiceFeedback}
+                </span>
+              )}
+            </div>
+
+            {/* Toggle View Ingredients / Steps Button */}
+            <motion.button
+              onClick={() => setShowIngredients(!showIngredients)}
+              className="py-2.5 px-6 bg-slate-800 text-slate-100 border border-slate-700 rounded-full font-bold hover:bg-slate-700 transition-colors flex items-center gap-2 cursor-pointer text-xs"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="Toggle Ingredients overlay (Shortcut: I)"
+            >
+              <span>{showIngredients ? '📋 View Steps' : '🥗 View Ingredients (Shortcut: I)'}</span>
+            </motion.button>
+          </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>
   )
 }
+
+export default CookingMode
+
