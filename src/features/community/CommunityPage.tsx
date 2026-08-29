@@ -10,6 +10,8 @@ import { useOmniSearch } from '../../components/search/OmniSearchContext'
 import { useRecipeSearchFilters } from '../recipes/hooks/useRecipeSearchFilters'
 import { SORT_OPTIONS, type SortOption } from '../recipes/utils/recipeSorting'
 import { getActiveFilterCount } from '../recipes/utils/recipeFiltering'
+import BookmarkButton from '../../components/BookmarkButton'
+import LikeButton from '../../components/LikeButton'
 import type { Recipe } from '../../types/nutrition'
 
 type Tab = 'community' | 'following'
@@ -475,17 +477,14 @@ export const CommunityPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-4 ml-4 flex-shrink-0">
+                    <div className="flex items-center space-x-3 ml-4 flex-shrink-0">
                       {recipe.prepTime && (
                         <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                           ⏱ {recipe.prepTime} min
                         </span>
                       )}
-                      {(recipe as Recipe & { likeCount?: number }).likeCount !== undefined && (
-                        <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                          ❤️ {(recipe as Recipe & { likeCount?: number }).likeCount}
-                        </span>
-                      )}
+                      <LikeButton recipe={recipe} />
+                      <BookmarkButton recipe={recipe} />
                     </div>
                   </div>
                 ))}
