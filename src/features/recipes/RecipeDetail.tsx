@@ -12,6 +12,8 @@ import { HeroMetadataOverlay } from './components/HeroMetadataOverlay'
 import { QuickJumpNav } from './components/QuickJumpNav'
 import { RecipeReviewsSection } from './components/RecipeReviewsSection'
 import { RecipeCommentsSection } from './components/RecipeCommentsSection'
+import { useRecipeKeyboardShortcuts } from './hooks/useRecipeKeyboardShortcuts'
+import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal'
 import { useAuth } from '../../features/auth/AuthContext'
 
 // ── Icon helpers ────────────────────────────────────────────────────────────
@@ -52,9 +54,32 @@ export const RecipeDetail: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [topRating, setTopRating] = useState<number>(0)
   const [topRatingCount, setTopRatingCount] = useState<number>(0)
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false)
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const isOwner = !!currentUser && !!recipe?.userId && currentUser.uid === recipe.userId
+
+  useRecipeKeyboardShortcuts({
+    onCookMode: () => setIsCookingMode(true),
+    onLike: () => {
+      const likeBtn = document.getElementById('recipe-like-button')
+      if (likeBtn) likeBtn.click()
+    },
+    onBookmark: () => {
+      const bookmarkBtn = document.getElementById('recipe-bookmark-button')
+      if (bookmarkBtn) bookmarkBtn.click()
+    },
+    onJumpIngredients: () => {
+      const el = document.getElementById('ingredients-section')
+      if (el) {
+        const yOffset = -90
+        const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset
+        window.scrollTo({ top: y, behavior: 'smooth' })
+      }
+    },
+    onToggleShortcutsModal: () => setIsShortcutsModalOpen((v) => !v),
+    disabled: isCookingMode,
+  })
 
   useEffect(() => {
     if (!sharingError) return
@@ -308,6 +333,18 @@ export const RecipeDetail: React.FC = () => {
                       {isCopied ? 'Copied!' : 'Copy link'}
                     </button>
                   )}
+
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setIsMenuOpen(false)
+                      window.print()
+                    }}
+                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-t border-gray-100 dark:border-slate-700/60"
+                  >
+                    <span className="text-sm">🖨️</span>
+                    Print recipe
+                  </button>
                 </div>
               )}
             </div>
@@ -474,6 +511,12 @@ export const RecipeDetail: React.FC = () => {
           </button>
         </div>
       )}
+
+      {/* Keyboard Shortcuts Floating Trigger & Modal */}
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsModalOpen}
+        onClose={() => setIsShortcutsModalOpen(false)}
+      />
     </div>
   )
 }
