@@ -61,7 +61,7 @@ describe('CommunityPage', () => {
     )
     renderWithRouter(<CommunityPage />)
     expect(screen.getByText('Community Recipes')).toBeInTheDocument()
-    expect(screen.getByText('Discover recipes shared by the community')).toBeInTheDocument()
+    expect(screen.getByText('Discover recipes shared by home cooks and community chefs.')).toBeInTheDocument()
     // Skeleton cards should be present (they contain animate-pulse divs)
     const animatedElements = document.querySelectorAll('.animate-pulse')
     expect(animatedElements.length).toBeGreaterThan(0)
@@ -167,58 +167,43 @@ describe('CommunityPage', () => {
     await waitFor(() => {
       expect(spy).toHaveBeenCalledTimes(1)
     })
-    // Verify it was called with no arguments (no auth token parameter)
     expect(spy).toHaveBeenCalledWith()
   })
 
-  describe('tab bar', () => {
-    it('does not show tab bar for unauthenticated users', async () => {
+  describe('following quick filter', () => {
+    it('does not show Cooks You Follow button for unauthenticated users', async () => {
       mockUseAuth.mockReturnValue({ user: null })
-      vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue([])
-      renderWithRouter(<CommunityPage />)
-
-      await waitFor(() => {
-        expect(screen.queryByRole('button', { name: 'Community' })).not.toBeInTheDocument()
-        expect(screen.queryByRole('button', { name: 'Following' })).not.toBeInTheDocument()
-      })
-    })
-
-    it('shows tab bar for authenticated users', async () => {
-      mockUseAuth.mockReturnValue({ user: { uid: 'u1', email: 'user@example.com' } })
-      vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue([])
-      renderWithRouter(<CommunityPage />)
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Community' })).toBeInTheDocument()
-        expect(screen.getByRole('button', { name: 'Following' })).toBeInTheDocument()
-      })
-    })
-
-    it('defaults to Community tab', async () => {
-      mockUseAuth.mockReturnValue({ user: { uid: 'u1', email: 'user@example.com' } })
       vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue(mockRecipes)
-      vi.spyOn(recipeStorageApi, 'getFeed').mockResolvedValue([])
       renderWithRouter(<CommunityPage />)
 
       await waitFor(() => {
         expect(screen.getByText('Spaghetti Carbonara')).toBeInTheDocument()
       })
-      expect(recipeStorageApi.getPublicRecipes).toHaveBeenCalledTimes(1)
-      expect(recipeStorageApi.getFeed).not.toHaveBeenCalled()
+      expect(screen.queryByRole('button', { name: /Cooks You Follow/i })).not.toBeInTheDocument()
     })
 
-    it('switches to Following tab and calls getFeed', async () => {
+    it('shows Cooks You Follow button for authenticated users', async () => {
+      mockUseAuth.mockReturnValue({ user: { uid: 'u1', email: 'user@example.com' } })
+      vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue(mockRecipes)
+      renderWithRouter(<CommunityPage />)
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Cooks You Follow/i })).toBeInTheDocument()
+      })
+    })
+
+    it('toggles Cooks You Follow filter and calls getFeed', async () => {
       const user = userEvent.setup()
       mockUseAuth.mockReturnValue({ user: { uid: 'u1', email: 'user@example.com' } })
-      vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue([])
+      vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue(mockRecipes)
       vi.spyOn(recipeStorageApi, 'getFeed').mockResolvedValue(mockFeedRecipes)
       renderWithRouter(<CommunityPage />)
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Following' })).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /Cooks You Follow/i })).toBeInTheDocument()
       })
 
-      await user.click(screen.getByRole('button', { name: 'Following' }))
+      await user.click(screen.getByRole('button', { name: /Cooks You Follow/i }))
 
       await waitFor(() => {
         expect(screen.getByText('Avocado Toast')).toBeInTheDocument()
@@ -226,76 +211,17 @@ describe('CommunityPage', () => {
       expect(recipeStorageApi.getFeed).toHaveBeenCalledTimes(1)
     })
 
-    it('shows empty state with CTA when following feed is empty', async () => {
-      const user = userEvent.setup()
-      mockUseAuth.mockReturnValue({ user: { uid: 'u1', email: 'user@example.com' } })
-      vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue([])
-      vi.spyOn(recipeStorageApi, 'getFeed').mockResolvedValue([])
-      renderWithRouter(<CommunityPage />)
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Following' })).toBeInTheDocument()
-      })
-
-      await user.click(screen.getByRole('button', { name: 'Following' }))
-
-      await waitFor(() => {
-        expect(screen.getByText('Follow some cooks to see their recipes here')).toBeInTheDocument()
-      })
-      expect(screen.getByRole('button', { name: 'Browse Community' })).toBeInTheDocument()
-    })
-
-    it('Browse Community CTA switches back to Community tab', async () => {
-      const user = userEvent.setup()
-      mockUseAuth.mockReturnValue({ user: { uid: 'u1', email: 'user@example.com' } })
-      vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue(mockRecipes)
-      vi.spyOn(recipeStorageApi, 'getFeed').mockResolvedValue([])
-      renderWithRouter(<CommunityPage />)
-
-      // Switch to Following tab
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Following' })).toBeInTheDocument()
-      })
-      await user.click(screen.getByRole('button', { name: 'Following' }))
-
-      // Wait for empty state
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Browse Community' })).toBeInTheDocument()
-      })
-
-      // Click Browse Community
-      await user.click(screen.getByRole('button', { name: 'Browse Community' }))
-
-      // Should now show community recipes
-      await waitFor(() => {
-        expect(screen.getByText('Spaghetti Carbonara')).toBeInTheDocument()
-      })
-    })
-
-    it('activates Following tab when URL has ?tab=following', async () => {
+    it('activates Cooks You Follow filter when URL has ?following=true', async () => {
       mockUseAuth.mockReturnValue({ user: { uid: 'u1', email: 'user@example.com' } })
       vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue([])
       vi.spyOn(recipeStorageApi, 'getFeed').mockResolvedValue(mockFeedRecipes)
-      renderWithRouter(<CommunityPage />, ['/community?tab=following'])
+      renderWithRouter(<CommunityPage />, ['/community?following=true'])
 
       await waitFor(() => {
         expect(screen.getByText('Avocado Toast')).toBeInTheDocument()
       })
       expect(recipeStorageApi.getFeed).toHaveBeenCalledTimes(1)
       expect(recipeStorageApi.getPublicRecipes).not.toHaveBeenCalled()
-    })
-
-    it('ignores ?tab=following for unauthenticated users and loads community', async () => {
-      mockUseAuth.mockReturnValue({ user: null })
-      vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue(mockRecipes)
-      vi.spyOn(recipeStorageApi, 'getFeed').mockResolvedValue([])
-      renderWithRouter(<CommunityPage />, ['/community?tab=following'])
-
-      await waitFor(() => {
-        expect(screen.getByText('Spaghetti Carbonara')).toBeInTheDocument()
-      })
-      expect(recipeStorageApi.getPublicRecipes).toHaveBeenCalledTimes(1)
-      expect(recipeStorageApi.getFeed).not.toHaveBeenCalled()
     })
   })
 
@@ -306,32 +232,34 @@ describe('CommunityPage', () => {
       { id: '3', recipeName: 'Caesar Salad', description: 'Salad', servings: 2, likeCount: 1 },
     ] as unknown as Recipe[]
 
-    it('shows sort select only in community tab when recipes are loaded', async () => {
+    it('shows sort select when recipes are loaded', async () => {
       mockUseAuth.mockReturnValue({ user: { uid: 'u1' } })
       vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue(recipesWithLikes)
+
       renderWithRouter(<CommunityPage />)
 
       await waitFor(() => {
-        expect(screen.getByLabelText('Sort by:')).toBeInTheDocument()
+        expect(screen.getByLabelText(/Sort by/i)).toBeInTheDocument()
       })
     })
 
-    it('sorts recipes by most liked when "Most liked" is selected', async () => {
+    it('sorts recipes by most liked when selected', async () => {
       const user = userEvent.setup()
       mockUseAuth.mockReturnValue({ user: { uid: 'u1' } })
       vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue(recipesWithLikes)
+
       renderWithRouter(<CommunityPage />)
 
       await waitFor(() => {
-        expect(screen.getByLabelText('Sort by:')).toBeInTheDocument()
+        expect(screen.getByLabelText(/Sort by/i)).toBeInTheDocument()
       })
 
-      await user.selectOptions(screen.getByLabelText('Sort by:'), 'most-liked')
+      await user.selectOptions(screen.getByLabelText(/Sort by/i), 'most-liked')
 
-      const cards = screen.getAllByText(/Spaghetti Carbonara|Chicken Tikka Masala|Caesar Salad/)
-      expect(cards[0].textContent).toBe('Chicken Tikka Masala')
-      expect(cards[1].textContent).toBe('Spaghetti Carbonara')
-      expect(cards[2].textContent).toBe('Caesar Salad')
+      const cards = screen.getAllByRole('heading', { level: 3 })
+      expect(cards[0]).toHaveTextContent('Chicken Tikka Masala')
+      expect(cards[1]).toHaveTextContent('Spaghetti Carbonara')
+      expect(cards[2]).toHaveTextContent('Caesar Salad')
     })
   })
 })
