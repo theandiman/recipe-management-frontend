@@ -21,8 +21,9 @@ const DashboardLayoutInner: React.FC = () => {
   const location = useLocation()
   const { searchQuery, setSearchQuery, openOmniSearch } = useOmniSearch()
 
+  const isRecipeDetailRoute = /\/dashboard\/recipes\/[^\/]+/.test(location.pathname) || location.pathname.startsWith('/recipes/')
   const hideTopSearchOnRoutes = ['/dashboard/create', '/dashboard/generate', '/dashboard/help', '/dashboard/profile']
-  const showTopSearch = !hideTopSearchOnRoutes.some(p => location.pathname.startsWith(p))
+  const showTopSearch = !isRecipeDetailRoute && !hideTopSearchOnRoutes.some(p => location.pathname.startsWith(p))
   // Start with sidebar closed on mobile, open on desktop
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024)
 
