@@ -305,7 +305,7 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-6 text-slate-100"
+        className="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center z-[100] p-2 sm:p-6 text-slate-100"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
