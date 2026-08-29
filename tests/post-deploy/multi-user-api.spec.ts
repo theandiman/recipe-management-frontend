@@ -147,9 +147,8 @@ test.describe('Multi-user API post-deployment @post-deploy', () => {
     const res = await request.get(`${BASE_API}/api/recipes/public`)
     expect(res.status()).toBe(200)
     const body = await res.json()
-    const ids: string[] = (Array.isArray(body) ? body : body.content ?? []).map(
-      (r: { id: string }) => r.id
-    )
+    const items = Array.isArray(body) ? body : (body.recipes ?? body.content ?? [])
+    const ids: string[] = items.map((r: { id: string }) => r.id)
     expect(ids).toContain(recipeId)
   })
 
