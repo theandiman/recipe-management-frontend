@@ -49,6 +49,20 @@ function formatTimerDisplay(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
+function getInstructionTextStyle(text: string): string {
+  const len = text.length
+  if (len < 50) {
+    return 'text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-center text-white'
+  }
+  if (len < 120) {
+    return 'text-xl sm:text-2xl md:text-3xl font-semibold leading-snug text-center text-slate-100'
+  }
+  if (len < 240) {
+    return 'text-lg sm:text-xl font-medium leading-relaxed text-left text-slate-200'
+  }
+  return 'text-base sm:text-lg font-normal leading-relaxed text-left text-slate-200'
+}
+
 export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => {
   const [currentStep, setCurrentStep] = useState(0)
   const [showIngredients, setShowIngredients] = useState(false)
@@ -298,20 +312,20 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
         transition={{ duration: 0.3 }}
       >
         <motion.div
-          className="bg-slate-900/90 rounded-3xl shadow-2xl w-full max-w-6xl h-[94vh] overflow-hidden flex flex-col border border-slate-700/60 backdrop-blur-xl"
+          className="bg-slate-900/90 rounded-3xl shadow-2xl w-full max-w-6xl max-h-[92vh] h-auto my-auto overflow-hidden flex flex-col border border-slate-700/60 backdrop-blur-xl"
           initial={{ scale: 0.95, opacity: 0, y: 15 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 15 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
         >
           {/* Top Glass Header */}
-          <div className="bg-gradient-to-r from-slate-900 via-emerald-950/50 to-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between flex-shrink-0">
+          <div className="bg-gradient-to-r from-slate-900 via-emerald-950/50 to-slate-900 border-b border-slate-800 px-6 py-3.5 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-3">
-              <span className="p-2.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-2xl text-xl">
+              <span className="p-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl text-lg">
                 🍳
               </span>
               <div>
-                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">
                   {recipe.recipeName}
                 </h2>
                 <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-400 font-medium">
@@ -335,7 +349,7 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
             <div className="flex items-center gap-2">
               <motion.button
                 onClick={toggleReadStep}
-                className={`py-2 px-4 rounded-xl text-xs font-bold flex items-center gap-2 transition-all border cursor-pointer ${
+                className={`py-1.5 px-3.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all border cursor-pointer ${
                   isSpeaking
                     ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/20 animate-pulse'
                     : 'bg-slate-800/80 text-slate-200 border-slate-700 hover:bg-slate-700 hover:text-white'
@@ -350,7 +364,7 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
 
               <motion.button
                 onClick={onClose}
-                className="text-slate-400 hover:text-white hover:bg-slate-800 rounded-full p-2.5 transition-colors border border-transparent hover:border-slate-700"
+                className="text-slate-400 hover:text-white hover:bg-slate-800 rounded-full p-2 transition-colors border border-transparent hover:border-slate-700"
                 title="Close cooking mode (Esc)"
                 whileHover={{ scale: 1.1, rotate: 90 }}
                 whileTap={{ scale: 0.9 }}
@@ -394,20 +408,20 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
           </div>
 
           {/* Main Content Area */}
-          <div className="flex-1 overflow-hidden flex items-center justify-center p-6 sm:p-10 relative">
+          <div className="flex-1 overflow-hidden flex items-center justify-center p-4 sm:p-6 relative">
             <AnimatePresence mode="wait">
               {showIngredients ? (
-                /* Ingredients Overlay */
+                /* Full Ingredients Overlay */
                 <motion.div
                   key="ingredients"
-                  className="w-full h-full flex flex-col max-w-4xl"
+                  className="w-full h-full flex flex-col max-w-4xl py-2"
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.25 }}
                 >
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-2xl sm:text-3xl font-black text-white flex items-center gap-3">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
                       <span>🥗</span> Recipe Ingredients
                     </h3>
                     <span className="text-xs font-bold px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
@@ -415,14 +429,14 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
                     </span>
                   </div>
 
-                  <div className="space-y-3 overflow-y-auto flex-1 pr-2">
+                  <div className="space-y-2.5 overflow-y-auto flex-1 pr-2 max-h-[60vh]">
                     {recipe.ingredients.map((ingredient: string, index: number) => {
                       const isChecked = !!checkedIngredients[index]
                       return (
                         <motion.div
                           key={index}
                           onClick={() => toggleIngredientCheck(index)}
-                          className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${
+                          className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer ${
                             isChecked
                               ? 'bg-emerald-950/30 border-emerald-800/40 text-slate-400 opacity-60'
                               : 'bg-slate-800/60 border-slate-700/60 text-slate-100 hover:bg-slate-800 hover:border-slate-600'
@@ -431,7 +445,7 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
                         >
                           <div className="flex items-center gap-3">
                             <div
-                              className={`w-6 h-6 rounded-lg flex items-center justify-center border transition-all ${
+                              className={`w-5 h-5 rounded-lg flex items-center justify-center border text-xs transition-all ${
                                 isChecked
                                   ? 'bg-emerald-500 border-emerald-400 text-slate-950 font-bold'
                                   : 'border-slate-600 bg-slate-900/60'
@@ -440,7 +454,7 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
                               {isChecked && '✓'}
                             </div>
                             <span
-                              className={`text-lg sm:text-xl font-medium ${
+                              className={`text-base sm:text-lg font-medium ${
                                 isChecked ? 'line-through' : ''
                               }`}
                             >
@@ -453,125 +467,165 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
                   </div>
                 </motion.div>
               ) : (
-                /* Instruction Card View */
+                /* Split View: Mini Ingredients Sidebar + Main Instruction Card */
                 <motion.div
-                  key="instructions"
-                  className="w-full h-full flex items-center justify-between gap-4 sm:gap-8 max-w-5xl"
+                  key="instructions-split"
+                  className="w-full flex flex-col lg:flex-row items-stretch justify-center gap-4 sm:gap-6 max-w-6xl"
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 0.25 }}
                 >
-                  {/* Previous Button */}
-                  <motion.button
-                    onClick={goToPreviousStep}
-                    disabled={currentStep === 0}
-                    className="flex-shrink-0 p-4 rounded-2xl bg-slate-800/50 border border-slate-700/60 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all shadow-lg"
-                    title="Previous step (Left Arrow)"
-                    whileHover={{ scale: 1.08, x: -3 }}
-                    whileTap={{ scale: 0.92 }}
-                  >
-                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </motion.button>
-
-                  {/* Main Instruction Display */}
-                  <motion.div
-                    key={currentStep}
-                    className="flex-1 h-full bg-gradient-to-b from-slate-800/80 to-slate-900/80 rounded-3xl p-8 sm:p-14 border border-emerald-500/20 flex flex-col items-center justify-between overflow-hidden shadow-2xl relative"
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -15 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {/* Top step badge & detected timer */}
-                    <div className="w-full flex items-center justify-between mb-4 flex-shrink-0">
-                      <span className="px-4 py-1.5 rounded-full text-xs font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider">
-                        Step {currentStep + 1}
+                  {/* Left Side: Quick Ingredients Checklist Reference (hidden on mobile, visible on lg+) */}
+                  <div className="hidden lg:flex flex-col w-72 bg-slate-950/60 rounded-2xl p-4 border border-slate-800/80 overflow-hidden flex-shrink-0">
+                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                        <span>🥗</span> Ingredients ({recipe.ingredients.length})
                       </span>
+                    </div>
 
-                      {/* Built-in Step Timer Badge */}
-                      {timerSeconds !== null && (
-                        <div className="flex items-center gap-2">
-                          <motion.button
-                            onClick={() => setIsTimerRunning((prev) => !prev)}
-                            className={`px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 border transition-all cursor-pointer ${
-                              isTimerRunning
-                                ? 'bg-amber-500 text-slate-950 border-amber-400 animate-pulse'
-                                : timerRemaining === 0
-                                ? 'bg-rose-500 text-white border-rose-400 animate-bounce'
-                                : 'bg-slate-800 text-amber-300 border-amber-500/30 hover:bg-slate-700'
+                    <div className="space-y-1.5 overflow-y-auto flex-1 pr-1 max-h-[50vh] scrollbar-thin">
+                      {recipe.ingredients.map((ingredient: string, index: number) => {
+                        const isChecked = !!checkedIngredients[index]
+                        return (
+                          <div
+                            key={index}
+                            onClick={() => toggleIngredientCheck(index)}
+                            className={`flex items-start gap-2.5 p-2 rounded-xl border text-xs transition-all cursor-pointer ${
+                              isChecked
+                                ? 'bg-emerald-950/20 border-emerald-900/40 text-slate-500 line-through'
+                                : 'bg-slate-900/40 border-slate-800/60 text-slate-300 hover:bg-slate-800/60'
                             }`}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
                           >
-                            <span>⏱</span>
-                            <span>
-                              {timerRemaining === 0
-                                ? "Time's Up!"
-                                : isTimerRunning
-                                ? `Timer: ${formatTimerDisplay(timerRemaining ?? 0)} (Pause)`
-                                : `Start Timer (${formatTimerDisplay(timerRemaining ?? 0)})`}
-                            </span>
-                          </motion.button>
-
-                          {timerRemaining !== timerSeconds && (
-                            <button
-                              onClick={() => {
-                                setTimerRemaining(timerSeconds)
-                                setIsTimerRunning(false)
-                              }}
-                              className="text-xs text-slate-400 hover:text-white underline cursor-pointer"
-                              title="Reset Timer"
+                            <div
+                              className={`w-4 h-4 rounded mt-0.5 flex items-center justify-center border text-[10px] flex-shrink-0 ${
+                                isChecked
+                                  ? 'bg-emerald-500 border-emerald-400 text-slate-950 font-bold'
+                                  : 'border-slate-700 bg-slate-950'
+                              }`}
                             >
-                              Reset
-                            </button>
-                          )}
-                        </div>
-                      )}
+                              {isChecked && '✓'}
+                            </div>
+                            <span className="leading-snug">{ingredient}</span>
+                          </div>
+                        )
+                      })}
                     </div>
+                  </div>
 
-                    {/* Instruction text */}
-                    <div className="flex-1 flex items-center justify-center my-4 overflow-y-auto w-full px-2">
-                      <p className="text-2xl sm:text-4xl md:text-5xl leading-tight text-white font-bold text-center tracking-tight">
-                        {currentInstruction}
-                      </p>
-                    </div>
+                  {/* Navigation Controls + Instruction Card Container */}
+                  <div className="flex-1 flex items-center justify-between gap-3 sm:gap-6 min-w-0">
+                    {/* Previous Button */}
+                    <motion.button
+                      onClick={goToPreviousStep}
+                      disabled={currentStep === 0}
+                      className="flex-shrink-0 p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/60 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all shadow-lg"
+                      title="Previous step (Left Arrow)"
+                      whileHover={{ scale: 1.08, x: -3 }}
+                      whileTap={{ scale: 0.92 }}
+                    >
+                      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </motion.button>
 
-                    {/* Footer helper note */}
-                    <div className="text-xs text-slate-500 font-medium flex items-center gap-4 flex-shrink-0 mt-4">
-                      <span>Press <kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-300">←</kbd> / <kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-300">→</kbd> to navigate</span>
-                      <span>•</span>
-                      <span>Press <kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-300">R</kbd> for audio</span>
-                    </div>
-                  </motion.div>
+                    {/* Main Instruction Display Card */}
+                    <motion.div
+                      key={currentStep}
+                      className="flex-1 bg-gradient-to-b from-slate-800/90 to-slate-900/90 rounded-3xl p-6 sm:p-10 border border-emerald-500/20 flex flex-col items-center justify-between overflow-hidden shadow-2xl relative min-h-[360px] max-h-[55vh]"
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -15 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {/* Top Step Badge & Timer */}
+                      <div className="w-full flex items-center justify-between mb-3 flex-shrink-0">
+                        <span className="px-3.5 py-1 rounded-full text-xs font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider">
+                          Step {currentStep + 1}
+                        </span>
 
-                  {/* Next Button */}
-                  <motion.button
-                    onClick={goToNextStep}
-                    disabled={isLastStep}
-                    className="flex-shrink-0 p-4 rounded-2xl bg-emerald-500 text-slate-950 hover:bg-emerald-400 disabled:opacity-20 disabled:cursor-not-allowed transition-all shadow-lg shadow-emerald-500/20 font-bold"
-                    title={isLastStep ? "You've completed the recipe!" : "Next step (Right Arrow)"}
-                    whileHover={{ scale: 1.08, x: 3 }}
-                    whileTap={{ scale: 0.92 }}
-                  >
-                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </motion.button>
+                        {/* Built-in Step Timer Badge */}
+                        {timerSeconds !== null && (
+                          <div className="flex items-center gap-2">
+                            <motion.button
+                              onClick={() => setIsTimerRunning((prev) => !prev)}
+                              className={`px-3.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
+                                isTimerRunning
+                                  ? 'bg-amber-500 text-slate-950 border-amber-400 animate-pulse'
+                                  : timerRemaining === 0
+                                  ? 'bg-rose-500 text-white border-rose-400 animate-bounce'
+                                  : 'bg-slate-800 text-amber-300 border-amber-500/30 hover:bg-slate-700'
+                              }`}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <span>⏱</span>
+                              <span>
+                                {timerRemaining === 0
+                                  ? "Time's Up!"
+                                  : isTimerRunning
+                                  ? `Timer: ${formatTimerDisplay(timerRemaining ?? 0)} (Pause)`
+                                  : `Start Timer (${formatTimerDisplay(timerRemaining ?? 0)})`}
+                              </span>
+                            </motion.button>
+
+                            {timerRemaining !== timerSeconds && (
+                              <button
+                                onClick={() => {
+                                  setTimerRemaining(timerSeconds)
+                                  setIsTimerRunning(false)
+                                }}
+                                className="text-xs text-slate-400 hover:text-white underline cursor-pointer"
+                                title="Reset Timer"
+                              >
+                                Reset
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Instruction text with dynamic text scaling */}
+                      <div className="flex-1 flex items-center justify-center my-3 overflow-y-auto w-full px-2 max-h-[35vh]">
+                        <p className={getInstructionTextStyle(currentInstruction)}>
+                          {currentInstruction}
+                        </p>
+                      </div>
+
+                      {/* Footer helper note */}
+                      <div className="text-xs text-slate-500 font-medium flex items-center gap-3 flex-shrink-0 mt-2">
+                        <span>Nav: <kbd className="px-1 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-300">←</kbd> <kbd className="px-1 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-300">→</kbd></span>
+                        <span>•</span>
+                        <span>Audio: <kbd className="px-1 py-0.5 bg-slate-800 rounded border border-slate-700 text-slate-300">R</kbd></span>
+                      </div>
+                    </motion.div>
+
+                    {/* Next Button */}
+                    <motion.button
+                      onClick={goToNextStep}
+                      disabled={isLastStep}
+                      className="flex-shrink-0 p-3.5 rounded-2xl bg-emerald-500 text-slate-950 hover:bg-emerald-400 disabled:opacity-20 disabled:cursor-not-allowed transition-all shadow-lg shadow-emerald-500/20 font-bold"
+                      title={isLastStep ? "You've completed the recipe!" : "Next step (Right Arrow)"}
+                      whileHover={{ scale: 1.08, x: 3 }}
+                      whileTap={{ scale: 0.92 }}
+                    >
+                      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </motion.button>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
           {/* Bottom Glass Footer Controls */}
-          <div className="bg-slate-950/80 border-t border-slate-800 px-6 py-4 flex flex-col sm:flex-row gap-3 items-center justify-between flex-shrink-0">
+          <div className="bg-slate-950/80 border-t border-slate-800 px-6 py-3 flex flex-col sm:flex-row gap-3 items-center justify-between flex-shrink-0">
             {/* Voice Control Pill */}
             <div className="flex items-center gap-3">
               <motion.button
                 onClick={toggleVoiceCommands}
-                className={`py-2.5 px-6 rounded-full font-extrabold text-xs flex items-center gap-2.5 transition-all cursor-pointer border ${
+                className={`py-2 px-5 rounded-full font-extrabold text-xs flex items-center gap-2 transition-all cursor-pointer border ${
                   isListening
                     ? 'bg-rose-500 text-white border-rose-400 shadow-lg shadow-rose-500/30 animate-pulse'
                     : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:text-white'
@@ -584,17 +638,17 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
               </motion.button>
 
               {isListening && voiceFeedback && (
-                <span className="text-xs text-emerald-400 font-semibold flex items-center gap-2 bg-emerald-950/50 px-3 py-1.5 rounded-full border border-emerald-800/60">
+                <span className="text-xs text-emerald-400 font-semibold flex items-center gap-2 bg-emerald-950/50 px-3 py-1 rounded-full border border-emerald-800/60">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
                   {voiceFeedback}
                 </span>
               )}
             </div>
 
-            {/* Toggle View Ingredients / Steps Button */}
+            {/* Toggle Full Ingredients / Steps Button */}
             <motion.button
               onClick={() => setShowIngredients(!showIngredients)}
-              className="py-2.5 px-6 bg-slate-800 text-slate-100 border border-slate-700 rounded-full font-bold hover:bg-slate-700 transition-colors flex items-center gap-2 cursor-pointer text-xs"
+              className="py-2 px-5 bg-slate-800 text-slate-100 border border-slate-700 rounded-full font-bold hover:bg-slate-700 transition-colors flex items-center gap-2 cursor-pointer text-xs"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               title="Toggle Ingredients overlay (Shortcut: I)"
