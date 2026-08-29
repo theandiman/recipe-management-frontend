@@ -1,7 +1,8 @@
 import * as crypto from 'crypto'
 import * as firebaseAdmin from 'firebase-admin'
 
-const admin: typeof firebaseAdmin = (firebaseAdmin as any).default || firebaseAdmin
+const mod = firebaseAdmin as any
+const admin: typeof firebaseAdmin = mod.default && (mod.default.apps || mod.default.initializeApp) ? mod.default : mod
 
 export interface TestUser {
   uid: string
