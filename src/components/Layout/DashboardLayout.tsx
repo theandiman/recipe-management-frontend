@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { NavLink, Routes, Route, useNavigate } from 'react-router-dom'
+import { NavLink, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../features/auth/AuthContext'
 import { Dashboard } from '../Dashboard'
@@ -18,7 +18,11 @@ import { OmniSearchProvider, useOmniSearch } from '../search/OmniSearchContext'
 const DashboardLayoutInner: React.FC = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const { searchQuery, setSearchQuery, openOmniSearch } = useOmniSearch()
+
+  const hideTopSearchOnRoutes = ['/dashboard/create', '/dashboard/generate', '/dashboard/help', '/dashboard/profile']
+  const showTopSearch = !hideTopSearchOnRoutes.some(p => location.pathname.startsWith(p))
   // Start with sidebar closed on mobile, open on desktop
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024)
 
@@ -301,26 +305,28 @@ const DashboardLayoutInner: React.FC = () => {
       )}
       <div className="ml-3 flex-1" />
       <div className="flex items-center gap-2">
-        <div className="relative flex items-center">
-          <svg className="w-4 h-4 text-emerald-500 absolute left-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search recipes, tags..."
-            className="pl-9 pr-14 py-1.5 rounded-xl bg-white/90 dark:bg-slate-800/90 border border-gray-200/80 dark:border-slate-700/80 text-gray-900 dark:text-gray-100 placeholder-gray-400 text-xs font-medium w-44 sm:w-64 md:w-80 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-xs transition-all"
-          />
-          <button
-            type="button"
-            onClick={() => openOmniSearch(searchQuery)}
-            className="absolute right-2 px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 bg-gray-100 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded hover:text-emerald-500 transition-colors"
-            title="Open Command Palette (Cmd+K)"
-          >
-            ⌘K
-          </button>
-        </div>
+        {showTopSearch && (
+          <div className="relative flex items-center">
+            <svg className="w-4 h-4 text-emerald-500 absolute left-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search recipes, tags..."
+              className="pl-9 pr-14 py-1.5 rounded-xl bg-white/90 dark:bg-slate-800/90 border border-gray-200/80 dark:border-slate-700/80 text-gray-900 dark:text-gray-100 placeholder-gray-400 text-xs font-medium w-44 sm:w-64 md:w-80 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-xs transition-all"
+            />
+            <button
+              type="button"
+              onClick={() => openOmniSearch(searchQuery)}
+              className="absolute right-2 px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 bg-gray-100 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded hover:text-emerald-500 transition-colors"
+              title="Open Command Palette (Cmd+K)"
+            >
+              ⌘K
+            </button>
+          </div>
+        )}
         <button
           onClick={() => navigate('/dashboard/profile')}
           className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors shadow-sm"
