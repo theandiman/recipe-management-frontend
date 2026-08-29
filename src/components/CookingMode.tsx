@@ -7,6 +7,28 @@ interface CookingModeProps {
   onClose: () => void
 }
 
+interface ISpeechEvent {
+  results: {
+    length: number
+    [index: number]: {
+      [index: number]: {
+        transcript: string
+      }
+    }
+  }
+}
+
+interface ISpeechRecognition {
+  continuous: boolean
+  interimResults: boolean
+  lang: string
+  onresult: ((event: ISpeechEvent) => void) | null
+  onerror: ((event: { error: string }) => void) | null
+  onend: (() => void) | null
+  start: () => void
+  stop: () => void
+}
+
 export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => {
   const [currentStep, setCurrentStep] = useState(0)
   const [showIngredients, setShowIngredients] = useState(false)
@@ -36,6 +58,104 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
   const totalSteps = recipe.instructions.length
   const progress = ((currentStep + 1) / totalSteps) * 100
 
+  // Web Speech API Voice Recognition
+  useEffect(() => {
+    if (!isListening) return
+
+    const windowWithSpeech = window as unknown as {
+      SpeechRecognition?: new () => ISpeechRecognition
+      webkitSpeechRecognition?: new () => ISpeechRecognition
+    }
+
+    const SpeechRecognitionClass =
+      windowWithSpeech.SpeechRecognition || windowWithSpeech.webkitSpeechRecognition
+
+    if (!SpeechRecognitionClass) {
+      setVoiceFeedback('Voice recognition not supported in this browser')
+      return
+    }
+
+    let recognition: ISpeechRecognition | null = null
+    try {
+      recognition = new SpeechRecognitionClass()
+      recognition.continuous = true
+      recognition.interimResults = false
+      recognition.lang = 'en-US'
+
+      recognition.onresult = (event: ISpeechEvent) => {
+        const lastIndex = event.results.length - 1
+        const transcript = event.results[lastIndex][0].transcript.trim().toLowerCase()
+
+        if (
+          transcript.includes('next') ||
+          transcript.includes('forward') ||
+          transcript.includes('continue')
+        ) {
+          setCurrentStep((prev) => (prev < totalSteps - 1 ? prev + 1 : prev))
+          setVoiceFeedback('Heard: "Next"')
+        } else if (transcript.includes('back') || transcript.includes('previous')) {
+          setCurrentStep((prev) => (prev > 0 ? prev - 1 : prev))
+          setVoiceFeedback('Heard: "Back"')
+        } else if (transcript.includes('ingredient') || transcript.includes('ingredients')) {
+          setShowIngredients(true)
+          setVoiceFeedback('Heard: "Ingredients"')
+        } else if (
+          transcript.includes('step') ||
+          transcript.includes('steps') ||
+          transcript.includes('instruction')
+        ) {
+          setShowIngredients(false)
+          setVoiceFeedback('Heard: "View Steps"')
+        } else if (
+          transcript.includes('read') ||
+          transcript.includes('repeat') ||
+          transcript.includes('speak')
+        ) {
+          if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel()
+            const utterance = new SpeechSynthesisUtterance(recipe.instructions[currentStep])
+            window.speechSynthesis.speak(utterance)
+          }
+          setVoiceFeedback('Reading step out loud...')
+        } else {
+          setVoiceFeedback(`Listening... (Heard: "${transcript}")`)
+        }
+      }
+
+      recognition.onerror = (err: { error: string }) => {
+        if (err.error !== 'no-speech') {
+          setVoiceFeedback(`Listening... Say 'Next', 'Back', or 'Ingredients'`)
+        }
+      }
+
+      recognition.onend = () => {
+        if (isListening) {
+          try {
+            recognition?.start()
+          } catch {
+            // ignore restart collision
+          }
+        }
+      }
+
+      recognition.start()
+      setVoiceFeedback("Listening for 'Next', 'Back', or 'Ingredients'...")
+    } catch {
+      setVoiceFeedback('Failed to start voice recognition')
+    }
+
+    return () => {
+      if (recognition) {
+        recognition.onend = null
+        try {
+          recognition.stop()
+        } catch {
+          // ignore stop error
+        }
+      }
+    }
+  }, [isListening, totalSteps, currentStep, recipe.instructions])
+
   const goToPreviousStep = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1)
@@ -54,7 +174,6 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
       setVoiceFeedback(null)
     } else {
       setIsListening(true)
-      setVoiceFeedback("Listening for 'Next', 'Back', or 'Ingredients'...")
     }
   }
 
