@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import type { Recipe } from '../types/nutrition'
 import GlobeIcon from './GlobeIcon'
@@ -19,13 +19,21 @@ interface RecipeCardProps {
 }
 
 export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete, compact, authorUid, authorName, showBookmark = false, showLike = false, matchReason }) => {
+  const navigate = useNavigate()
   const title = recipe.recipeName
   // Calculate total time safely
   const totalTime = recipe.totalTimeMinutes ||
     ((recipe.prepTimeMinutes || 0) + (recipe.cookTimeMinutes || 0)) ||
-    // Fallback to parsing strings if numbers are missing (though shared type suggests they might be optional)
-    // For now, let's just display what we have or skip
     undefined
+
+  const handleCardClick = () => {
+    if (!recipe.id) return
+    if (onView) {
+      onView(recipe.id)
+    } else {
+      navigate(`/recipes/${recipe.id}`)
+    }
+  }
 
   return (
     <motion.div
@@ -34,10 +42,10 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
-          if (recipe.id) onView?.(recipe.id)
+          handleCardClick()
         }
       }}
-      onClick={() => { if (recipe.id) onView?.(recipe.id) }}
+      onClick={handleCardClick}
       className={`bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-xl border border-gray-200 dark:border-slate-700 overflow-hidden relative group cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-300 ${compact ? 'p-0' : ''}`}
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}

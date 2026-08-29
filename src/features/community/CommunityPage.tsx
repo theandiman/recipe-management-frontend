@@ -368,6 +368,7 @@ export const CommunityPage: React.FC = () => {
                 recipe={recipe}
                 showBookmark={true}
                 showLike={true}
+                onView={(id) => navigate(`/recipes/${id}`)}
               />
             </motion.div>
           ))}

@@ -5,6 +5,15 @@ import { MemoryRouter } from 'react-router-dom'
 import RecipeCard from './RecipeCard'
 import type { Recipe } from '../types/nutrition'
 
+const mockNavigate = vi.fn()
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  }
+})
+
 const renderWithRouter = (ui: React.ReactElement) =>
   render(<MemoryRouter>{ui}</MemoryRouter>)
 
