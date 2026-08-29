@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getRecipes } from '../../services/recipeStorageApi'
-import { searchUsers, type UserProfile } from '../../services/userApi'
 import { queryAiSearch } from '../../utils/aiApi'
 import type { Recipe } from '../../types/nutrition'
 
@@ -20,7 +19,6 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
   const inputRef = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState(initialQuery)
   const [recipes, setRecipes] = useState<Recipe[]>([])
-  const [matchingUsers, setMatchingUsers] = useState<UserProfile[]>([])
   const [recentSearches, setRecentSearches] = useState<string[]>([])
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isAiSearching, setIsAiSearching] = useState(false)
@@ -115,20 +113,6 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
       // Ignore storage errors
     }
   }
-
-  // Search users when query changes
-  useEffect(() => {
-    if (!query.trim()) {
-      setMatchingUsers([])
-      return
-    }
-    const timer = setTimeout(() => {
-      searchUsers(query.trim(), 0, 4)
-        .then((res) => setMatchingUsers(res.users || []))
-        .catch(() => setMatchingUsers([]))
-    }, 200)
-    return () => clearTimeout(timer)
-  }, [query])
 
   // Filter matching recipes and tags
   const filteredRecipes = useMemo(() => {
@@ -442,42 +426,6 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
                         </button>
                       )
                     })}
-                  </div>
-                </div>
-              )}
-
-              {/* Matching Chefs & Creators */}
-              {query.trim() && matchingUsers.length > 0 && (
-                <div>
-                  <div className="px-3 py-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                    Chefs & Creators
-                  </div>
-                  <div className="mt-1 space-y-1">
-                    {matchingUsers.map((u) => (
-                      <div
-                        key={u.uid}
-                        onClick={() => {
-                          onClose()
-                          navigate(`/user/${u.uid}`)
-                        }}
-                        className="flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-800/60 transition-colors"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-slate-950 font-bold text-xs">
-                            {u.displayName ? u.displayName[0].toUpperCase() : 'C'}
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                              {u.displayName || 'Chef User'}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {u.publicRecipeCount || 0} recipes • {u.followerCount || 0} followers
-                            </p>
-                          </div>
-                        </div>
-                        <span className="text-xs text-amber-500 font-medium">View Profile →</span>
-                      </div>
-                    ))}
                   </div>
                 </div>
               )}

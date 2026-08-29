@@ -13,10 +13,8 @@ import { getActiveFilterCount } from '../recipes/utils/recipeFiltering'
 import BookmarkButton from '../../components/BookmarkButton'
 import LikeButton from '../../components/LikeButton'
 import type { Recipe } from '../../types/nutrition'
-import { getFeaturedCreators, searchUsers, type UserProfile } from '../../services/userApi'
-import { CreatorCard } from './components/CreatorCard'
 
-type Tab = 'community' | 'following' | 'creators'
+type Tab = 'community' | 'following'
 
 export const CommunityPage: React.FC = () => {
   const navigate = useNavigate()
@@ -25,14 +23,9 @@ export const CommunityPage: React.FC = () => {
   const { searchQuery, setSearchQuery } = useOmniSearch()
 
   const activeTab: Tab =
-    searchParams.get('tab') === 'creators'
-      ? 'creators'
-      : user && searchParams.get('tab') === 'following'
-      ? 'following'
-      : 'community'
+    user && searchParams.get('tab') === 'following' ? 'following' : 'community'
 
   const [recipes, setRecipes] = useState<Recipe[]>([])
-  const [creators, setCreators] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -65,23 +58,16 @@ export const CommunityPage: React.FC = () => {
     }
   }, [searchText])
 
-  // Fetch community, following, or creators when tab changes
+  // Fetch community or following recipes when tab changes
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchRecipes = async () => {
       try {
         setLoading(true)
         setError(null)
-        if (activeTab === 'creators') {
-          const res = searchText.trim()
-            ? await searchUsers(searchText.trim())
-            : await getFeaturedCreators(20)
-          setCreators('users' in res ? res.users : res.creators)
-        } else {
-          const data = activeTab === 'following' ? await getFeed() : await getPublicRecipes()
-          setRecipes(data)
-        }
+        const data = activeTab === 'following' ? await getFeed() : await getPublicRecipes()
+        setRecipes(data)
       } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load content'
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load recipes'
         const apiError = err as { response?: { data?: { message?: string } } }
         setError(apiError.response?.data?.message || errorMessage)
       } finally {
@@ -89,8 +75,8 @@ export const CommunityPage: React.FC = () => {
       }
     }
 
-    fetchData()
-  }, [activeTab, searchText])
+    fetchRecipes()
+  }, [activeTab])
 
   const handleTabChange = (tab: Tab) => {
     if (tab === 'community') {
@@ -137,16 +123,6 @@ export const CommunityPage: React.FC = () => {
               }`}
             >
               Following
-            </button>
-            <button
-              onClick={() => handleTabChange('creators')}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
-                activeTab === 'creators'
-                  ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-slate-600'
-              }`}
-            >
-              Discover Creators
             </button>
           </div>
         )}
@@ -328,28 +304,6 @@ export const CommunityPage: React.FC = () => {
               <RecipeCardSkeleton />
             </motion.div>
           ))}
-        </div>
-      )}
-
-      {/* Creators Tab View */}
-      {activeTab === 'creators' && !loading && (
-        <div>
-          {creators.length === 0 ? (
-            <div className="text-center py-12 border border-dashed border-slate-800 rounded-2xl">
-              <p className="text-slate-400 text-base font-medium">No creators found</p>
-              <p className="text-xs text-slate-500 mt-1">Try searching for a different chef name or bio.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {creators.map((creator) => (
-                <CreatorCard
-                  key={creator.uid}
-                  creator={creator}
-                  currentUserId={user?.uid}
-                />
-              ))}
-            </div>
-          )}
         </div>
       )}
 
