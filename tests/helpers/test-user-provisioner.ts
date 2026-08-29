@@ -1,32 +1,6 @@
 import * as crypto from 'crypto'
-import * as firebaseAdmin from 'firebase-admin'
-
-function getAdmin(): any {
-  let a: any = firebaseAdmin
-  if (a.default && !a.apps && !a.initializeApp) a = a.default
-  if (a.default && !a.apps && !a.initializeApp) a = a.default
-  return a
-}
-
-function getCertFunction(adminObj: any): (serviceAccountObject: any) => any {
-  const cert =
-    adminObj.credential?.cert ||
-    (firebaseAdmin as any).credential?.cert ||
-    (firebaseAdmin as any).default?.credential?.cert ||
-    (firebaseAdmin as any).default?.default?.credential?.cert
-  if (!cert) throw new Error('Unable to resolve firebase-admin credential.cert function')
-  return cert
-}
-
-function getAuthFunction(adminObj: any): any {
-  const auth =
-    adminObj.auth ||
-    (firebaseAdmin as any).auth ||
-    (firebaseAdmin as any).default?.auth ||
-    (firebaseAdmin as any).default?.default?.auth
-  if (!auth) throw new Error('Unable to resolve firebase-admin auth function')
-  return auth
-}
+import { initializeApp, getApps, cert } from 'firebase-admin/app'
+import { getAuth } from 'firebase-admin/auth'
 
 export interface TestUser {
   uid: string
@@ -42,12 +16,10 @@ export class TestUserProvisioner {
 
   constructor() {
     this.runId = `t${Date.now()}-${crypto.randomBytes(3).toString('hex')}`
-    const admin = getAdmin()
-    if (!admin.apps || admin.apps.length === 0) {
+    if (getApps().length === 0) {
       const serviceAccount = process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT
       if (!serviceAccount) throw new Error('FIREBASE_ADMIN_SERVICE_ACCOUNT env var not set')
-      const cert = getCertFunction(admin)
-      admin.initializeApp({
+      initializeApp({
         credential: cert(JSON.parse(serviceAccount)),
       })
     }
@@ -58,8 +30,7 @@ export class TestUserProvisioner {
     const password = `Test${crypto.randomBytes(8).toString('hex')}Aa1!`
     const displayName = `Test ${role} ${this.runId}`
 
-    const auth = getAuthFunction(getAdmin())()
-    const record = await auth.createUser({
+    const record = await getAuth().createUser({
       email,
       password,
       displayName,
@@ -95,7 +66,7 @@ export class TestUserProvisioner {
   }
 
   async cleanup(): Promise<void> {
-    const auth = getAuthFunction(getAdmin())()
+    const auth = getAuth()
     const results = await Promise.allSettled(
       this.createdUids.map((uid) => auth.deleteUser(uid))
     )
