@@ -178,6 +178,22 @@ test.describe('Multi-user API post-deployment @post-deploy', () => {
     expect(res.status()).toBe(200)
   })
 
+  test('author can update own profile (displayName, bio, avatarUrl)', async ({ request }) => {
+    const res = await request.put(`${BASE_API}/api/users/me/profile`, {
+      headers: { Authorization: `Bearer ${author.idToken}` },
+      data: {
+        displayName: `Author ${provisioner.runId}`,
+        bio: 'Updated bio via post-deploy smoke test',
+        avatarUrl: `https://storage.googleapis.com/avatars/${author.uid}/avatar.jpg`,
+        visibility: 'PUBLIC',
+      },
+    })
+    expect(res.status()).toBe(200)
+    const body = await res.json()
+    expect(body.displayName).toBe(`Author ${provisioner.runId}`)
+    expect(body.avatarUrl).toBe(`https://storage.googleapis.com/avatars/${author.uid}/avatar.jpg`)
+  })
+
   test('reader can unlike a recipe', async ({ request }) => {
     const res = await request.delete(`${BASE_API}/api/recipes/${recipeId}/like`, {
       headers: { Authorization: `Bearer ${reader.idToken}` },
