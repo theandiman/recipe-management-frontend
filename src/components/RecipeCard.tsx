@@ -155,9 +155,9 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
               aria-label={authorName ? `View ${authorName}'s profile` : 'View author profile'}
             >
               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 shadow-inner">
-                {((authorName || authorUid)[0] || '?').toUpperCase()}
+                {((authorName || (recipe as Recipe & { authorName?: string; displayName?: string }).authorName || (recipe as Recipe & { authorName?: string; displayName?: string }).displayName || 'Chef')[0] || 'C').toUpperCase()}
               </div>
-              <span className="truncate font-medium">{authorName || 'View Author'}</span>
+              <span className="truncate font-medium">{authorName || (recipe as Recipe & { authorName?: string; displayName?: string }).authorName || (recipe as Recipe & { authorName?: string; displayName?: string }).displayName || 'View Author'}</span>
             </Link>
           ) : null}
           {showLike && (
