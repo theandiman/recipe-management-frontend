@@ -31,7 +31,7 @@ describe('CookingMode', () => {
   it('should navigate to next step', () => {
     render(<CookingMode recipe={mockRecipe} onClose={mockOnClose} />)
     
-    const nextButton = screen.getByTitle('Next step')
+    const nextButton = screen.getByTitle(/Next step/i)
     fireEvent.click(nextButton)
     
     expect(screen.getByText('Step 2 of 3')).toBeInTheDocument()
@@ -42,11 +42,11 @@ describe('CookingMode', () => {
     render(<CookingMode recipe={mockRecipe} onClose={mockOnClose} />)
     
     // Go to step 2
-    const nextButton = screen.getByTitle('Next step')
+    const nextButton = screen.getByTitle(/Next step/i)
     fireEvent.click(nextButton)
     
     // Go back to step 1
-    const prevButton = screen.getByTitle('Previous step')
+    const prevButton = screen.getByTitle(/Previous step/i)
     fireEvent.click(prevButton)
     
     expect(screen.getByText('Step 1 of 3')).toBeInTheDocument()
@@ -56,7 +56,7 @@ describe('CookingMode', () => {
   it('should not go back from first step', () => {
     render(<CookingMode recipe={mockRecipe} onClose={mockOnClose} />)
     
-    const prevButton = screen.getByTitle('Previous step')
+    const prevButton = screen.getByTitle(/Previous step/i)
     fireEvent.click(prevButton)
     
     // Should still be on step 1
@@ -66,7 +66,7 @@ describe('CookingMode', () => {
   it('should disable next button on last step', () => {
     render(<CookingMode recipe={mockRecipe} onClose={mockOnClose} />)
     
-    const nextButton = screen.getByTitle('Next step')
+    const nextButton = screen.getByTitle(/Next step/i)
     // Go to last step
     fireEvent.click(nextButton)
     fireEvent.click(nextButton)
@@ -84,8 +84,8 @@ describe('CookingMode', () => {
     const ingredientsButton = screen.getByText(/View Ingredients/i)
     fireEvent.click(ingredientsButton)
     
-    // Should show ingredients
-    expect(screen.getByText('Ingredients')).toBeInTheDocument()
+    // Should show ingredients header
+    expect(screen.getByText(/Recipe Ingredients/i)).toBeInTheDocument()
     expect(screen.getByText('2 cups flour')).toBeInTheDocument()
     expect(screen.getByText('1 cup sugar')).toBeInTheDocument()
     expect(screen.getByText('2 eggs')).toBeInTheDocument()
@@ -101,21 +101,17 @@ describe('CookingMode', () => {
   it('should call onClose when close button is clicked', () => {
     render(<CookingMode recipe={mockRecipe} onClose={mockOnClose} />)
     
-    const closeButton = screen.getByTitle('Close cooking mode')
+    const closeButton = screen.getByTitle(/Close cooking mode/i)
     fireEvent.click(closeButton)
     
     expect(mockOnClose).toHaveBeenCalledTimes(1)
   })
 
-  it('should display progress bar', () => {
+  it('should display progress track', () => {
     render(<CookingMode recipe={mockRecipe} onClose={mockOnClose} />)
     
-    // Progress bar should exist
-    const progressBar = document.querySelector('.bg-gradient-to-r.from-emerald-500') as HTMLElement
-    expect(progressBar).toBeTruthy()
-    
-    // Should have some width on first step
-    expect(progressBar?.style.width).toBeTruthy()
+    // Progress percentage should be rendered
+    expect(screen.getByText('33% Complete')).toBeInTheDocument()
   })
 
   it('should render all ingredients when showing ingredients view', () => {
@@ -133,7 +129,7 @@ describe('CookingMode', () => {
     render(<CookingMode recipe={mockRecipe} onClose={mockOnClose} />)
     
     // Go to step 2
-    const nextButton = screen.getByTitle('Next step')
+    const nextButton = screen.getByTitle(/Next step/i)
     fireEvent.click(nextButton)
     
     expect(screen.getByText('Step 2 of 3')).toBeInTheDocument()
@@ -154,18 +150,18 @@ describe('CookingMode', () => {
     expect(screen.getByText('Add wet ingredients')).toBeInTheDocument()
   })
 
-  it('should show current step number in large display', () => {
+  it('should show current step number in step track pill', () => {
     render(<CookingMode recipe={mockRecipe} onClose={mockOnClose} />)
     
-    // Should show step 1
-    expect(screen.getByText('1')).toBeInTheDocument()
+    // Should show step 1 active badge
+    expect(screen.getByText('Step 1')).toBeInTheDocument()
     
     // Navigate to step 2
-    const nextButton = screen.getByTitle('Next step')
+    const nextButton = screen.getByTitle(/Next step/i)
     fireEvent.click(nextButton)
     
-    // Should show step 2
-    expect(screen.getByText('2')).toBeInTheDocument()
+    // Should show step 2 active badge
+    expect(screen.getByText('Step 2')).toBeInTheDocument()
   })
 })
 
