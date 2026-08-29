@@ -6,6 +6,7 @@ import { CommentCard } from './CommentCard'
 interface RecipeCommentsSectionProps {
   recipeId: string
   currentUserId?: string
+  currentUserInitial?: string
 }
 
 const MessageIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
@@ -17,6 +18,7 @@ const MessageIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
 export const RecipeCommentsSection: React.FC<RecipeCommentsSectionProps> = ({
   recipeId,
   currentUserId,
+  currentUserInitial = 'C',
 }) => {
   const [data, setData] = useState<CommentsResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -24,7 +26,7 @@ export const RecipeCommentsSection: React.FC<RecipeCommentsSectionProps> = ({
   const fetchComments = useCallback(async () => {
     try {
       setLoading(true)
-      const res = await getComments(recipeId, 0, 20)
+      const res = await getComments(recipeId, 0, 30)
       setData(res)
     } catch (err) {
       console.error('Failed to load comments:', err)
@@ -50,38 +52,42 @@ export const RecipeCommentsSection: React.FC<RecipeCommentsSectionProps> = ({
   const totalComments = data?.totalComments || 0
 
   return (
-    <section className="mt-10 pt-8 border-t border-slate-800">
-      <h2 className="text-xl font-bold text-slate-100 mb-6 flex items-center gap-2">
-        <MessageIcon className="w-5 h-5 text-amber-400" />
-        Discussion & Cooking Notes ({totalComments})
+    <section id="recipe-comments-section" className="mt-8 pt-6 border-t border-gray-200 dark:border-slate-800">
+      <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-5 flex items-center gap-2">
+        <MessageIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+        Comments & Questions ({totalComments})
       </h2>
 
       {/* Main Comment Input */}
       {currentUserId ? (
-        <div className="mb-8 bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
-          <CommentInput onSubmit={handleCreateComment} />
+        <div className="mb-6 bg-white dark:bg-slate-900/60 border border-gray-200/80 dark:border-slate-800/80 rounded-2xl p-4 shadow-xs">
+          <CommentInput
+            authorInitial={currentUserInitial}
+            onSubmit={handleCreateComment}
+          />
         </div>
       ) : (
-        <div className="mb-8 p-4 bg-slate-900/40 border border-slate-800 rounded-xl text-center text-sm text-slate-400">
-          Sign in to leave a comment or reply to this recipe!
+        <div className="mb-6 p-4 bg-gray-50 dark:bg-slate-900/40 border border-gray-200 dark:border-slate-800 rounded-2xl text-center text-sm text-gray-500 dark:text-gray-400">
+          Sign in to join the conversation and ask cooking questions!
         </div>
       )}
 
       {/* Comment List */}
       {loading ? (
-        <div className="text-sm text-slate-500 py-4">Loading discussion...</div>
+        <div className="text-sm text-gray-400 py-4">Loading comments...</div>
       ) : !data?.comments || data.comments.length === 0 ? (
-        <div className="text-sm text-slate-500 py-6 text-center border border-dashed border-slate-800 rounded-xl">
-          No comments yet. Start the conversation!
+        <div className="text-sm text-gray-400 py-8 text-center border border-dashed border-gray-200 dark:border-slate-800 rounded-2xl">
+          No comments yet. Be the first to ask a question or leave a cooking note!
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3.5">
           {data.comments.map((comment: CommentItem) => (
             <CommentCard
               key={comment.id}
               comment={comment}
               recipeId={recipeId}
               currentUserId={currentUserId}
+              currentUserInitial={currentUserInitial}
               onReply={handleReplyComment}
               onCommentChanged={fetchComments}
             />

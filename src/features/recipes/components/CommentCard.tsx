@@ -6,11 +6,12 @@ interface CommentCardProps {
   comment: CommentItem
   recipeId: string
   currentUserId?: string
+  currentUserInitial?: string
   onReply: (parentId: string, content: string) => Promise<void>
   onCommentChanged: () => void
 }
 
-const ReplyIcon = ({ className = 'w-3 h-3' }: { className?: string }) => (
+const ReplyIcon = ({ className = 'w-3.5 h-3.5' }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
   </svg>
@@ -31,6 +32,7 @@ const TrashIcon = ({ className = 'w-3.5 h-3.5' }: { className?: string }) => (
 export const CommentCard: React.FC<CommentCardProps> = ({
   comment,
   currentUserId,
+  currentUserInitial,
   onReply,
   onCommentChanged,
 }) => {
@@ -60,35 +62,41 @@ export const CommentCard: React.FC<CommentCardProps> = ({
     }
   }
 
+  const authorInitial = (comment.authorName || 'C')[0].toUpperCase()
+
   return (
-    <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 transition-colors">
+    <div className="group bg-white dark:bg-slate-900/60 border border-gray-200/80 dark:border-slate-800/80 rounded-2xl p-4 transition-all hover:border-gray-300 dark:hover:border-slate-700 shadow-xs">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center font-bold text-slate-950 text-xs">
-            {comment.authorName ? comment.authorName[0].toUpperCase() : 'C'}
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-xs">
+            {authorInitial}
           </div>
           <div>
-            <div className="text-sm font-semibold text-slate-200">
-              {comment.authorName || 'Chef User'}
+            <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              {comment.authorName || 'Home Cook'}
             </div>
-            <div className="text-[10px] text-slate-500">
-              {new Date(comment.createdAt).toLocaleDateString()}
+            <div className="text-[11px] text-gray-400">
+              {new Date(comment.createdAt).toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
             </div>
           </div>
         </div>
 
         {isOwner && !isEditing && (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => setIsEditing(true)}
-              className="p-1 text-slate-500 hover:text-amber-400 transition-colors"
+              className="p-1 text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
               title="Edit comment"
             >
               <EditIcon className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={handleDelete}
-              className="p-1 text-slate-500 hover:text-red-400 transition-colors"
+              className="p-1 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
               title="Delete comment"
             >
               <TrashIcon className="w-3.5 h-3.5" />
@@ -103,43 +111,46 @@ export const CommentCard: React.FC<CommentCardProps> = ({
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
             rows={2}
-            className="w-full bg-slate-950 border border-amber-500/50 rounded-lg p-2 text-sm text-slate-100 focus:outline-none"
+            className="w-full bg-gray-50 dark:bg-slate-950 border border-emerald-500/50 rounded-xl p-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none"
           />
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setIsEditing(false)}
-              className="px-3 py-1 text-xs text-slate-400 hover:text-slate-200"
+              className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-medium"
             >
               Cancel
             </button>
             <button
               onClick={handleUpdate}
-              className="px-3 py-1 bg-amber-500 text-slate-950 text-xs font-semibold rounded-md"
+              className="px-3.5 py-1 bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow-xs"
             >
               Save
             </button>
           </div>
         </div>
       ) : (
-        <p className="text-sm text-slate-300 leading-relaxed my-2">{comment.content}</p>
+        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed my-2">
+          {comment.content}
+        </p>
       )}
 
-      {/* Reply Action */}
+      {/* Reply Button */}
       {currentUserId && !isReplying && (
         <button
           onClick={() => setIsReplying(true)}
-          className="flex items-center gap-1 text-xs text-amber-400/80 hover:text-amber-400 transition-colors mt-2"
+          className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors mt-2 cursor-pointer"
         >
-          <ReplyIcon className="w-3 h-3" />
+          <ReplyIcon className="w-3.5 h-3.5" />
           Reply
         </button>
       )}
 
       {isReplying && (
-        <div className="mt-3 pl-4 border-l-2 border-amber-500/30">
+        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-slate-800/80">
           <CommentInput
-            placeholder={`Reply to ${comment.authorName || 'Chef'}...`}
+            placeholder={`Reply to ${comment.authorName || 'cook'}...`}
             submitLabel="Reply"
+            authorInitial={currentUserInitial}
             onCancel={() => setIsReplying(false)}
             onSubmit={async (text) => {
               await onReply(comment.id, text)
@@ -151,13 +162,14 @@ export const CommentCard: React.FC<CommentCardProps> = ({
 
       {/* Nested Replies */}
       {comment.replies && comment.replies.length > 0 && (
-        <div className="mt-4 pl-4 border-l-2 border-slate-800 space-y-3">
+        <div className="mt-4 pl-4 sm:pl-6 border-l-2 border-emerald-500/20 space-y-3">
           {comment.replies.map((reply) => (
             <CommentCard
               key={reply.id}
               comment={reply}
               recipeId={comment.recipeId}
               currentUserId={currentUserId}
+              currentUserInitial={currentUserInitial}
               onReply={onReply}
               onCommentChanged={onCommentChanged}
             />

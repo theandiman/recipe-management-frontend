@@ -48,6 +48,8 @@ export const RecipeDetail: React.FC = () => {
   const [isCopied, setIsCopied] = useState(false)
   const [fallbackUrl, setFallbackUrl] = useState<string | null>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [topRating, setTopRating] = useState<number>(0)
+  const [topRatingCount, setTopRatingCount] = useState<number>(0)
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const isOwner = !!currentUser && !!recipe?.userId && currentUser.uid === recipe.userId
@@ -347,41 +349,59 @@ export const RecipeDetail: React.FC = () => {
       )}
 
       {/* Recipe title */}
-      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">{recipe.recipeName}</h1>
+      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3">{recipe.recipeName}</h1>
 
-      {/* Author link */}
-      {recipe.userId ? (() => {
-        const recipeWithAuthor = recipe as (Recipe & { authorName?: string; displayName?: string }) | null
-        const authorDisplayName = authorProfile?.displayName || recipeWithAuthor?.authorName || recipeWithAuthor?.displayName || (isOwner ? (currentUser?.displayName || currentUser?.email?.split('@')[0]) : null) || 'Chef'
-        const avatarInitial = (authorDisplayName[0] || 'C').toUpperCase()
+      {/* Author & Top Rating Meta Row */}
+      <div className="flex flex-wrap items-center gap-4 mb-6">
+        {recipe.userId && (() => {
+          const recipeWithAuthor = recipe as (Recipe & { authorName?: string; displayName?: string }) | null
+          const authorDisplayName = authorProfile?.displayName || recipeWithAuthor?.authorName || recipeWithAuthor?.displayName || (isOwner ? (currentUser?.displayName || currentUser?.email?.split('@')[0]) : null) || 'Chef'
+          const avatarInitial = (authorDisplayName[0] || 'C').toUpperCase()
 
-        return (
-          <Link
-            to={`/user/${recipe.userId}`}
-            className="inline-flex items-center gap-2.5 text-sm text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors mb-6 group"
-          >
-            {authorProfile?.avatarUrl ? (
-              <img
-                src={authorProfile.avatarUrl}
-                alt={authorDisplayName}
-                className="w-7 h-7 rounded-full object-cover border border-emerald-500/30 group-hover:scale-105 transition-transform flex-shrink-0"
-              />
-            ) : (
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-bold shadow-xs group-hover:scale-105 transition-transform flex-shrink-0">
-                {avatarInitial}
-              </div>
-            )}
-            <span>
-              By{' '}
-              <span className="font-semibold underline decoration-emerald-500/40 group-hover:decoration-emerald-500">
-                {authorDisplayName}
+          return (
+            <Link
+              to={`/user/${recipe.userId}`}
+              className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors group"
+            >
+              {authorProfile?.avatarUrl ? (
+                <img
+                  src={authorProfile.avatarUrl}
+                  alt={authorDisplayName}
+                  className="w-6 h-6 rounded-full object-cover border border-emerald-500/30 group-hover:scale-105 transition-transform flex-shrink-0"
+                />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-[10px] font-bold shadow-xs group-hover:scale-105 transition-transform flex-shrink-0">
+                  {avatarInitial}
+                </div>
+              )}
+              <span>
+                By{' '}
+                <span className="font-semibold underline decoration-emerald-500/40 group-hover:decoration-emerald-500">
+                  {authorDisplayName}
+                </span>
               </span>
-            </span>
-          </Link>
-        )
-      })() : (
-        <div className="mb-4" />
-      )}
+            </Link>
+          )
+        })()}
+
+        {/* Top Average Rating Pill */}
+        {topRating > 0 ? (
+          <a
+            href="#recipe-ratings-section"
+            className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 font-bold text-xs rounded-full border border-amber-500/20 transition-all cursor-pointer"
+          >
+            <span>⭐ {topRating.toFixed(1)}</span>
+            <span className="text-amber-500/80 font-normal">({topRatingCount} rating{topRatingCount === 1 ? '' : 's'})</span>
+          </a>
+        ) : (
+          <a
+            href="#recipe-ratings-section"
+            className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400 font-medium text-xs rounded-full hover:text-amber-500 transition-colors cursor-pointer"
+          >
+            <span>⭐ Rate this recipe</span>
+          </a>
+        )}
+      </div>
 
       {/* Recipe image */}
       {recipe.imageUrl && (
@@ -400,11 +420,22 @@ export const RecipeDetail: React.FC = () => {
         <RecipeBody recipe={recipe} />
       </div>
 
-      {/* Social Ratings, Reviews & Discussion */}
+      {/* Social Ratings & Clean Discussion */}
       {id && (
         <>
-          <RecipeReviewsSection recipeId={id} currentUserId={currentUser?.uid} />
-          <RecipeCommentsSection recipeId={id} currentUserId={currentUser?.uid} />
+          <RecipeReviewsSection
+            recipeId={id}
+            currentUserId={currentUser?.uid}
+            onRatingsLoaded={(avg, count) => {
+              setTopRating(avg)
+              setTopRatingCount(count)
+            }}
+          />
+          <RecipeCommentsSection
+            recipeId={id}
+            currentUserId={currentUser?.uid}
+            currentUserInitial={(currentUser?.displayName || currentUser?.email || 'C')[0]}
+          />
         </>
       )}
 
