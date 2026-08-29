@@ -1,5 +1,7 @@
 import * as crypto from 'crypto'
-import * as admin from 'firebase-admin'
+import * as firebaseAdmin from 'firebase-admin'
+
+const admin: typeof firebaseAdmin = (firebaseAdmin as any).default || firebaseAdmin
 
 export interface TestUser {
   uid: string
@@ -15,7 +17,7 @@ export class TestUserProvisioner {
 
   constructor() {
     this.runId = `t${Date.now()}-${crypto.randomBytes(3).toString('hex')}`
-    if (!admin.apps.length) {
+    if (!admin.apps?.length) {
       const serviceAccount = process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT
       if (!serviceAccount) throw new Error('FIREBASE_ADMIN_SERVICE_ACCOUNT env var not set')
       admin.initializeApp({
