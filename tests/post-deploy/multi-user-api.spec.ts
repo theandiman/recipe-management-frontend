@@ -45,11 +45,12 @@ test.describe('Multi-user API post-deployment @post-deploy', () => {
       data: {
         title: `API Test Recipe ${provisioner.runId}`,
         description: 'Created by post-deploy API test',
-        ingredients: [{ name: 'Water', quantity: '1', unit: 'cup' }],
-        instructions: [{ stepNumber: 1, instruction: 'Boil water' }],
-        prepTimeMinutes: 5,
-        cookTimeMinutes: 10,
+        ingredients: ['1 cup Water'],
+        instructions: ['Boil water'],
+        prepTime: 5,
+        cookTime: 10,
         servings: 2,
+        source: 'manual',
         isPublic: false,
       },
     })
@@ -74,11 +75,12 @@ test.describe('Multi-user API post-deployment @post-deploy', () => {
       data: {
         title: `Updated API Test Recipe ${provisioner.runId}`,
         description: 'Updated by post-deploy API test',
-        ingredients: [{ name: 'Water', quantity: '2', unit: 'cups' }],
-        instructions: [{ stepNumber: 1, instruction: 'Boil water vigorously' }],
-        prepTimeMinutes: 5,
-        cookTimeMinutes: 15,
+        ingredients: ['2 cups Water'],
+        instructions: ['Boil water vigorously'],
+        prepTime: 5,
+        cookTime: 15,
         servings: 4,
+        source: 'manual',
         isPublic: false,
       },
     })
