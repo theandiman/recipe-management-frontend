@@ -169,9 +169,13 @@ export const uploadAvatarImage = async (
 
     const downloadURL = await getDownloadURL(storageRef)
     return downloadURL
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error uploading avatar:', error)
-    throw new Error('Failed to upload avatar image')
+    const errObj = error as { code?: string; message?: string }
+    if (errObj.code === 'storage/unauthorized') {
+      throw new Error('Permission denied by Storage Rules. Ensure you are signed in and storage.rules permit uploading to avatars/{uid}')
+    }
+    throw error instanceof Error ? error : new Error('Failed to upload avatar image')
   }
 }
 
