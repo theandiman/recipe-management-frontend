@@ -387,6 +387,35 @@ describe('SimpleCreateRecipe', () => {
       fireEvent.click(screen.getByRole('button', { name: /Cancel/i }))
       expect(mockNavigate).toHaveBeenCalledWith('/dashboard/recipes/test-recipe-123')
     })
+
+    it('allows generating an AI image in edit recipe view', async () => {
+      const { postWithAuth } = await import('../../utils/authApi')
+      vi.mocked(postWithAuth).mockResolvedValueOnce({
+        data: { imageUrl: 'https://example.com/ai-generated-edit.png' },
+      } as Awaited<ReturnType<typeof postWithAuth>>)
+
+      renderWithRouter(<SimpleCreateRecipe />, editEntry, editRoute)
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: /Edit Recipe/i })).toBeInTheDocument()
+      })
+
+      fireEvent.click(screen.getByRole('button', { name: /Photo/i }))
+
+      const aiImageBtn = screen.getByRole('button', { name: /Regenerate image with AI|Generate image with AI/i })
+      expect(aiImageBtn).toBeInTheDocument()
+
+      fireEvent.click(aiImageBtn)
+
+      await waitFor(() => {
+        expect(postWithAuth).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            prompt: expect.stringContaining('Test Recipe'),
+          })
+        )
+      })
+    })
   })
 })
 
