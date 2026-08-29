@@ -1,8 +1,10 @@
+import axios from 'axios'
 import { postWithAuth } from '../utils/authApi'
 import { buildApiUrl } from '../utils/apiUtils'
 import { uploadRecipeImage, deleteRecipeImage } from '../utils/imageStorage'
 import type { Recipe, RecipeTips } from '../types/nutrition'
 import { RecipeUtils } from '@theandiman/recipe-management-shared/dist/types/recipe'
+import { auth } from '../config/firebase'
 
 const IS_TEST_MODE = import.meta.env.VITE_TEST_MODE === 'true'
 
@@ -265,7 +267,6 @@ export const saveRecipe = async (recipe: Recipe): Promise<Recipe> => {
   
   if (IS_TEST_MODE) {
     // In test mode, use direct axios call without authentication
-    const { default: axios } = await import('axios')
     const response = await axios.post(url, request, {
       headers: {
         'Content-Type': 'application/json'
@@ -285,14 +286,12 @@ export const saveRecipe = async (recipe: Recipe): Promise<Recipe> => {
  */
 export const getRecipes = async (): Promise<Recipe[]> => {
   const url = buildApiUrl(MANAGEMENT_API_BASE, '/api/recipes')
-  const { default: axios } = await import('axios')
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   }
 
   if (!IS_TEST_MODE) {
-    const { auth } = await import('../config/firebase')
     const user = auth.currentUser
     if (!user) {
       throw new Error('User not authenticated')
@@ -312,7 +311,6 @@ export const getRecipes = async (): Promise<Recipe[]> => {
  * @returns The recipe
  */
 export const getPublicRecipe = async (id: string): Promise<Recipe> => {
-  const { default: axios } = await import('axios')
   const url = buildApiUrl(MANAGEMENT_API_BASE, `/api/recipes/${id}/public`)
 
   const response = await axios.get(url, {
@@ -325,9 +323,6 @@ export const getPublicRecipe = async (id: string): Promise<Recipe> => {
 }
 
 export const getRecipe = async (id: string): Promise<Recipe> => {
-  const { default: axios } = await import('axios')
-  const { auth } = await import('../config/firebase')
-
   const user = auth.currentUser
   if (!user) {
     return getPublicRecipe(id)
@@ -361,9 +356,6 @@ export const getRecipe = async (id: string): Promise<Recipe> => {
  * @returns The updated recipe
  */
 export const updateRecipe = async (id: string, recipe: Recipe): Promise<Recipe> => {
-  const { default: axios } = await import('axios')
-  const { auth } = await import('../config/firebase')
-  
   const user = auth.currentUser
   if (!user) {
     throw new Error('User not authenticated')
@@ -407,9 +399,6 @@ export const updateRecipe = async (id: string, recipe: Recipe): Promise<Recipe> 
  * @param id - The recipe ID to delete
  */
 export const deleteRecipe = async (id: string): Promise<void> => {
-  const { default: axios } = await import('axios')
-  const { auth } = await import('../config/firebase')
-  
   const user = auth.currentUser
   if (!user) {
     throw new Error('User not authenticated')
@@ -441,9 +430,6 @@ export const deleteRecipe = async (id: string): Promise<void> => {
  * @returns List of recipes from followed users
  */
 export const getFeed = async (): Promise<Recipe[]> => {
-  const { default: axios } = await import('axios')
-  const { auth } = await import('../config/firebase')
-
   const user = auth.currentUser
   if (!user) {
     throw new Error('User not authenticated')
@@ -467,7 +453,6 @@ export const getFeed = async (): Promise<Recipe[]> => {
  * @returns List of public recipes
  */
 export const getPublicRecipes = async (): Promise<Recipe[]> => {
-  const { default: axios } = await import('axios')
   const url = buildApiUrl(MANAGEMENT_API_BASE, '/api/recipes/public')
 
   const response = await axios.get(url, {
@@ -484,9 +469,6 @@ export const getPublicRecipes = async (): Promise<Recipe[]> => {
  * @param id - The recipe ID to save
  */
 export const bookmarkRecipe = async (id: string): Promise<void> => {
-  const { default: axios } = await import('axios')
-  const { auth } = await import('../config/firebase')
-
   const user = auth.currentUser
   if (!user) {
     throw new Error('User not authenticated')
@@ -508,9 +490,6 @@ export const bookmarkRecipe = async (id: string): Promise<void> => {
  * @param id - The recipe ID to unsave
  */
 export const unbookmarkRecipe = async (id: string): Promise<void> => {
-  const { default: axios } = await import('axios')
-  const { auth } = await import('../config/firebase')
-
   const user = auth.currentUser
   if (!user) {
     throw new Error('User not authenticated')
@@ -532,9 +511,6 @@ export const unbookmarkRecipe = async (id: string): Promise<void> => {
  * @returns List of saved recipes
  */
 export const getSavedRecipes = async (): Promise<Recipe[]> => {
-  const { default: axios } = await import('axios')
-  const { auth } = await import('../config/firebase')
-
   const user = auth.currentUser
   if (!user) {
     throw new Error('User not authenticated')
@@ -560,9 +536,6 @@ export const getSavedRecipes = async (): Promise<Recipe[]> => {
  * @returns The updated recipe
  */
 export const updateRecipeSharing = async (id: string, isPublic: boolean): Promise<Recipe> => {
-  const { default: axios } = await import('axios')
-  const { auth } = await import('../config/firebase')
-  
   const user = auth.currentUser
   if (!user) {
     throw new Error('User not authenticated')
@@ -586,9 +559,6 @@ export const updateRecipeSharing = async (id: string, isPublic: boolean): Promis
  * @param id - The recipe ID to like
  */
 export const likeRecipe = async (id: string): Promise<void> => {
-  const { default: axios } = await import('axios')
-  const { auth } = await import('../config/firebase')
-
   const user = auth.currentUser
   if (!user) {
     throw new Error('User not authenticated')
@@ -610,9 +580,6 @@ export const likeRecipe = async (id: string): Promise<void> => {
  * @param id - The recipe ID to unlike
  */
 export const unlikeRecipe = async (id: string): Promise<void> => {
-  const { default: axios } = await import('axios')
-  const { auth } = await import('../config/firebase')
-
   const user = auth.currentUser
   if (!user) {
     throw new Error('User not authenticated')
