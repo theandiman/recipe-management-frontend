@@ -137,6 +137,11 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
               </svg>
               {recipe.servings} servings
             </span>
+            {(recipe as any).averageRating !== undefined && (recipe as any).averageRating > 0 && (
+              <span className="flex items-center bg-amber-500/10 text-amber-500 font-semibold px-2 py-1 rounded-md">
+                ⭐ {(recipe as any).averageRating.toFixed(1)} {(recipe as any).ratingCount ? `(${(recipe as any).ratingCount})` : ''}
+              </span>
+            )}
           </div>
         </div>
       </div>

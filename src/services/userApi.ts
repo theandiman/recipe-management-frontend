@@ -148,3 +148,32 @@ export async function getFollowing(uid: string, page = 1): Promise<FollowListPag
   const response = await axios.get<FollowListPage>(url, { headers })
   return response.data
 }
+
+export interface UserSearchResponse {
+  users: UserProfile[]
+  hasMore: boolean
+}
+
+export async function searchUsers(q: string, page = 0, pageSize = 20): Promise<UserSearchResponse> {
+  const url = buildApiUrl(USER_API_BASE, `/api/users/search`)
+  const headers = await getUserApiHeaders(false)
+  const response = await axios.get<UserSearchResponse>(url, {
+    headers,
+    params: { q, page, pageSize },
+  })
+  return response.data
+}
+
+export interface FeaturedCreatorsResponse {
+  creators: UserProfile[]
+}
+
+export async function getFeaturedCreators(limit = 10): Promise<FeaturedCreatorsResponse> {
+  const url = buildApiUrl(USER_API_BASE, `/api/users/featured`)
+  const headers = await getUserApiHeaders(false)
+  const response = await axios.get<FeaturedCreatorsResponse>(url, {
+    headers,
+    params: { limit },
+  })
+  return response.data
+}
