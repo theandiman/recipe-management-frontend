@@ -20,6 +20,7 @@ import { AI_BUTTON_CLASS } from './components/aiStyles'
 import { FIELD_LABELS } from './constants/aiConstants'
 import { getRecipe } from '../../services/recipeStorageApi'
 import { useAuth } from '../auth/AuthContext'
+import { useAIImageGeneration } from './hooks/useAIImageGeneration'
 import type { Recipe } from '../../types/nutrition'
 import { mapEstimateToNutritionalInfo, useNutritionEstimate } from './hooks/useNutritionEstimate'
 import { NutritionEstimatePanel } from './components/NutritionEstimatePanel'
@@ -151,6 +152,16 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     clearEstimate: clearNutritionEstimate,
     acceptEstimate: acceptNutritionEstimate,
   } = useNutritionEstimate()
+
+  const { status: aiImageStatus, error: aiImageError, generateImage } = useAIImageGeneration()
+
+  const handleGenerateAIImage = useCallback(async () => {
+    if (!form.title.trim()) return
+    const url = await generateImage(form.title.trim(), form.description.trim() || undefined)
+    if (url) {
+      form.setImagePreview(url)
+    }
+  }, [form.title, form.description, form.setImagePreview, generateImage])
 
   const buildSuggestionRequest = () => ({
     recipeName: form.title || undefined,
@@ -944,12 +955,53 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
             onToggle={sections.photo.toggle}
             data-testid="section-photo"
           >
-            {!form.imagePreview ? (
-              <div className="flex items-center justify-center w-full">
-                <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 dark:border-slate-600 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-slate-900 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+            <div className="space-y-4">
+              {!form.imagePreview ? (
+                <div className="flex items-center justify-center w-full">
+                  <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 dark:border-slate-600 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-slate-900 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <svg
+                        className="w-10 h-10 mb-3 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <p className="mb-2 text-sm text-gray-500">
+                        <span className="font-semibold">Click to upload</span> or drag and drop
+                      </p>
+                      <p className="text-xs text-gray-500">PNG, JPG, or WEBP (max 5MB)</p>
+                    </div>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={form.handleImageUpload}
+                    />
+                  </label>
+                </div>
+              ) : (
+                <div className="relative">
+                  <img
+                    src={form.imagePreview}
+                    alt="Recipe preview"
+                    className="w-full h-64 object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={form.removeImage}
+                    className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                    aria-label="Remove image"
+                  >
                     <svg
-                      className="w-10 h-10 mb-3 text-gray-400"
+                      className="w-5 h-5"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -959,52 +1011,40 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        d="M6 18L18 6M6 6l12 12"
                       />
                     </svg>
-                    <p className="mb-2 text-sm text-gray-500">
-                      <span className="font-semibold">Click to upload</span> or drag and drop
-                    </p>
-                    <p className="text-xs text-gray-500">PNG, JPG, or WEBP (max 5MB)</p>
-                  </div>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={form.handleImageUpload}
-                  />
-                </label>
-              </div>
-            ) : (
-              <div className="relative">
-                <img
-                  src={form.imagePreview}
-                  alt="Recipe preview"
-                  className="w-full h-64 object-cover rounded-lg"
-                />
+                  </button>
+                </div>
+              )}
+
+              <div className="flex flex-col items-start gap-2 pt-2 border-t border-gray-100 dark:border-slate-700">
                 <button
                   type="button"
-                  onClick={form.removeImage}
-                  className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
-                  aria-label="Remove image"
+                  onClick={handleGenerateAIImage}
+                  disabled={!form.title.trim() || aiImageStatus === 'loading'}
+                  aria-label={form.imagePreview ? 'Regenerate image with AI' : 'Generate image with AI'}
+                  className={AI_BUTTON_CLASS}
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  {aiImageStatus === 'loading' ? (
+                    <>
+                      <AISpinnerIcon />
+                      Generating image...
+                    </>
+                  ) : (
+                    <>
+                      <AIBadge />
+                      {form.imagePreview ? 'Regenerate image with AI' : 'Generate image with AI'}
+                    </>
+                  )}
                 </button>
+                {aiImageError && (
+                  <p className="text-xs text-red-600 flex items-center gap-1" role="alert">
+                    <span aria-hidden="true">⚠️</span> {aiImageError}
+                  </p>
+                )}
               </div>
-            )}
+            </div>
           </CollapsibleSection>
         </div>
 
