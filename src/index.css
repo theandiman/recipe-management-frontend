@@ -81,3 +81,40 @@
     }
   }
 }
+
+/* Printable Recipe Card Stylesheet */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 12pt !important;
+  }
+
+  nav,
+  header,
+  footer,
+  aside,
+  button,
+  .print\:hidden,
+  #recipe-comments-section,
+  #recipe-options-button,
+  #recipe-options-menu {
+    display: none !important;
+  }
+
+  .max-w-4xl,
+  .max-w-7xl {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .bg-white,
+  .dark\:bg-slate-800,
+  .dark\:bg-slate-900 {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+}
+
