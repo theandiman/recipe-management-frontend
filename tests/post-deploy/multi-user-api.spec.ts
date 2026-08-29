@@ -102,11 +102,12 @@ test.describe('Multi-user API post-deployment @post-deploy', () => {
       data: {
         title: 'Hijacked',
         description: 'Unauthorized update attempt',
-        ingredients: [],
-        instructions: [],
-        prepTimeMinutes: 1,
-        cookTimeMinutes: 1,
+        ingredients: ['1 cup Water'],
+        instructions: ['Boil water'],
+        prepTime: 1,
+        cookTime: 1,
         servings: 1,
+        source: 'manual',
         isPublic: false,
       },
     })

@@ -311,26 +311,47 @@ export const getRecipes = async (): Promise<Recipe[]> => {
  * @param id - The recipe ID
  * @returns The recipe
  */
+export const getPublicRecipe = async (id: string): Promise<Recipe> => {
+  const { default: axios } = await import('axios')
+  const url = buildApiUrl(MANAGEMENT_API_BASE, `/api/recipes/${id}/public`)
+
+  const response = await axios.get(url, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+
+  return normalizeRecipe(response.data)
+}
+
 export const getRecipe = async (id: string): Promise<Recipe> => {
   const { default: axios } = await import('axios')
   const { auth } = await import('../config/firebase')
-  
+
   const user = auth.currentUser
   if (!user) {
-    throw new Error('User not authenticated')
+    return getPublicRecipe(id)
   }
 
   const token = await user.getIdToken()
   const url = buildApiUrl(MANAGEMENT_API_BASE, `/api/recipes/${id}`)
-  
-  const response = await axios.get(url, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
+
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+
+    return normalizeRecipe(response.data)
+  } catch (err: unknown) {
+    const apiError = err as { response?: { status?: number } }
+    if (apiError.response?.status === 403 || apiError.response?.status === 404) {
+      return getPublicRecipe(id)
     }
-  })
-  
-  return normalizeRecipe(response.data)
+    throw err
+  }
 }
 
 /**
@@ -612,6 +633,7 @@ export default {
   saveRecipe,
   getRecipes,
   getPublicRecipes,
+  getPublicRecipe,
   getFeed,
   getRecipe,
   updateRecipe,
