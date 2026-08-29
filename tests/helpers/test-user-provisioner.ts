@@ -1,5 +1,6 @@
 import * as crypto from 'crypto'
-import * as admin from 'firebase-admin'
+import { initializeApp, getApps, cert } from 'firebase-admin/app'
+import { getAuth } from 'firebase-admin/auth'
 
 export interface TestUser {
   uid: string
@@ -15,11 +16,11 @@ export class TestUserProvisioner {
 
   constructor() {
     this.runId = `t${Date.now()}-${crypto.randomBytes(3).toString('hex')}`
-    if (!admin.apps.length) {
+    if (getApps().length === 0) {
       const serviceAccount = process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT
       if (!serviceAccount) throw new Error('FIREBASE_ADMIN_SERVICE_ACCOUNT env var not set')
-      admin.initializeApp({
-        credential: admin.credential.cert(JSON.parse(serviceAccount)),
+      initializeApp({
+        credential: cert(JSON.parse(serviceAccount)),
       })
     }
   }
@@ -29,7 +30,7 @@ export class TestUserProvisioner {
     const password = `Test${crypto.randomBytes(8).toString('hex')}Aa1!`
     const displayName = `Test ${role} ${this.runId}`
 
-    const record = await admin.auth().createUser({
+    const record = await getAuth().createUser({
       email,
       password,
       displayName,
@@ -65,8 +66,9 @@ export class TestUserProvisioner {
   }
 
   async cleanup(): Promise<void> {
+    const auth = getAuth()
     const results = await Promise.allSettled(
-      this.createdUids.map((uid) => admin.auth().deleteUser(uid))
+      this.createdUids.map((uid) => auth.deleteUser(uid))
     )
     const errors = results
       .filter((r): r is PromiseRejectedResult => r.status === 'rejected')

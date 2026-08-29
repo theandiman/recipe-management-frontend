@@ -98,11 +98,12 @@ test.describe('Multi-user frontend post-deployment @post-deploy', () => {
       data: {
         title: `Frontend E2E Recipe ${provisioner.runId}`,
         description: 'A recipe created during post-deploy frontend tests',
-        ingredients: [{ name: 'Flour', quantity: '200', unit: 'g' }],
-        instructions: [{ stepNumber: 1, instruction: 'Mix the flour' }],
-        prepTimeMinutes: 10,
-        cookTimeMinutes: 20,
+        ingredients: ['200g Flour'],
+        instructions: ['Mix the flour'],
+        prepTime: 10,
+        cookTime: 20,
         servings: 4,
+        source: 'manual',
         isPublic: false,
       },
     })
