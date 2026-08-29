@@ -1,0 +1,18 @@
+rules_version = '2';
+
+// Firebase Storage Security Rules for Recipe Management App
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Recipe images: viewable by everyone, uploaded/deleted by authenticated users
+    match /recipes/{recipeId}/{allPaths=**} {
+      allow read: if true;
+      allow write, delete: if request.auth != null;
+    }
+
+    // User profile avatars: viewable by everyone, created/updated/deleted by the profile owner
+    match /avatars/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write, delete: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

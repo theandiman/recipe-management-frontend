@@ -387,6 +387,17 @@ jobs:
         env:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
 
+      - name: Deploy Storage Rules to Firebase
+        env:
+          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEV }}
+        run: |
+          if [ -n "$GCP_SA_KEY" ]; then
+            echo "$GCP_SA_KEY" > sa.json
+            export GOOGLE_APPLICATION_CREDENTIALS=sa.json
+            npx firebase-tools deploy --only storage --project "${{ secrets.FIREBASE_PROJECT_ID_DEV || 'recipe-mgmt-dev' }}" || true
+            rm -f sa.json
+          fi
+
   # Post-deployment testing (main branch only, after deploy)
   post-deploy-tests:
     name: Post-Deployment Tests
