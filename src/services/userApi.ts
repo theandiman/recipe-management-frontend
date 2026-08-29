@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { auth } from '../config/firebase'
 import { buildApiUrl } from '../utils/apiUtils'
 import type { Recipe } from '../types/nutrition'
 
@@ -54,7 +55,6 @@ const getUserApiHeaders = async (requireAuth = false): Promise<Record<string, st
   }
 
   if (!IS_TEST_MODE) {
-    const { auth } = await import('../config/firebase')
     const user = auth.currentUser
 
     if (requireAuth && !user) {
