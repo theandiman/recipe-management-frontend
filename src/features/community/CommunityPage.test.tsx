@@ -39,8 +39,14 @@ const mockFeedRecipes = [
   { id: '3', recipeName: 'Avocado Toast', description: 'Simple breakfast', servings: 1 },
 ] as unknown as Recipe[]
 
+import { OmniSearchProvider, useOmniSearch } from '../../components/search/OmniSearchContext'
+
 const renderWithRouter = (ui: React.ReactElement, initialEntries = ['/community']) =>
-  render(<MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>)
+  render(
+    <MemoryRouter initialEntries={initialEntries}>
+      <OmniSearchProvider>{ui}</OmniSearchProvider>
+    </MemoryRouter>
+  )
 
 describe('CommunityPage', () => {
   beforeEach(() => {
@@ -93,16 +99,31 @@ describe('CommunityPage', () => {
     expect(screen.getByText('Network error')).toBeInTheDocument()
   })
 
-  it('filters recipes by name when search text is entered', async () => {
+  it('filters recipes by name when search text is entered via search bar', async () => {
     const user = userEvent.setup()
     vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue(mockRecipes)
-    renderWithRouter(<CommunityPage />)
+
+    const SearchWrapper = () => {
+      const { searchQuery, setSearchQuery } = useOmniSearch()
+      return (
+        <div>
+          <input
+            placeholder="Search recipes, tags..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <CommunityPage />
+        </div>
+      )
+    }
+
+    renderWithRouter(<SearchWrapper />)
 
     await waitFor(() => {
       expect(screen.getByText('Spaghetti Carbonara')).toBeInTheDocument()
     })
 
-    const searchInput = screen.getByPlaceholderText('Search by recipe name...')
+    const searchInput = screen.getByPlaceholderText('Search recipes, tags...')
     await user.type(searchInput, 'spaghetti')
 
     expect(screen.getByText('Spaghetti Carbonara')).toBeInTheDocument()
@@ -112,13 +133,28 @@ describe('CommunityPage', () => {
   it('shows "no recipes match" message when search yields no results', async () => {
     const user = userEvent.setup()
     vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue(mockRecipes)
-    renderWithRouter(<CommunityPage />)
+
+    const SearchWrapper = () => {
+      const { searchQuery, setSearchQuery } = useOmniSearch()
+      return (
+        <div>
+          <input
+            placeholder="Search recipes, tags..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <CommunityPage />
+        </div>
+      )
+    }
+
+    renderWithRouter(<SearchWrapper />)
 
     await waitFor(() => {
       expect(screen.getByText('Spaghetti Carbonara')).toBeInTheDocument()
     })
 
-    const searchInput = screen.getByPlaceholderText('Search by recipe name...')
+    const searchInput = screen.getByPlaceholderText('Search recipes, tags...')
     await user.type(searchInput, 'zzznomatch')
 
     expect(screen.getByText(/No community recipes found/i)).toBeInTheDocument()
