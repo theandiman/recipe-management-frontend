@@ -543,7 +543,7 @@ jobs:
     env:
       FIREBASE_ADMIN_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_ADMIN_SERVICE_ACCOUNT || secrets.FIREBASE_SERVICE_ACCOUNT_DEV }}
       FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY || secrets.VITE_FIREBASE_API_KEY }}
-      MANAGEMENT_API_URL: ${{ secrets.VITE_MANAGEMENT_API_URL || secrets.VITE_STORAGE_API_URL || secrets.VITE_API_URL }}
+      MANAGEMENT_API_URL: ${{ secrets.VITE_MANAGEMENT_API_URL || 'https://recipe-management-service-341866919859.europe-west2.run.app' }}
       DEPLOYED_APP_URL: https://recipe-mgmt-dev.web.app
     steps:
       - name: Checkout code
