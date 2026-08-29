@@ -84,7 +84,7 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
 
       {/* Ingredients */}
       {scaledIngredients.length > 0 && (
-        <div className="mt-8">
+        <div id="ingredients-section" className="mt-8 scroll-mt-24">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Ingredients</h2>
             {multiplier !== 1 && (
@@ -111,15 +111,15 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
 
       {/* Instructions */}
       {recipe.instructions && recipe.instructions.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Instructions</h2>
+        <div id="instructions-section" className="mt-8 scroll-mt-24">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Instructions</h2>
           <ol className="space-y-4">
             {recipe.instructions.map((instruction: string, index: number) => (
               <li key={index} className="flex items-start">
                 <span className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-600 text-white font-bold text-sm mr-4 flex-shrink-0 mt-0.5">
                   {index + 1}
                 </span>
-                <p className="text-gray-700 pt-1">{instruction}</p>
+                <p className="text-gray-700 dark:text-gray-300 pt-1">{instruction}</p>
               </li>
             ))}
           </ol>
@@ -163,7 +163,7 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
 
       {/* Nutrition Facts */}
       {recipe.nutritionalInfo?.perServing && (
-        <div className="mt-8 pt-6 border-t border-gray-200">
+        <div id="nutrition-section" className="mt-8 pt-6 border-t border-gray-200 scroll-mt-24">
           <NutritionFacts nutritionalInfo={recipe.nutritionalInfo} />
         </div>
       )}

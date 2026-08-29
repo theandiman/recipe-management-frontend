@@ -8,6 +8,8 @@ import BookmarkButton from '../../components/BookmarkButton'
 import LikeButton from '../../components/LikeButton'
 import type { Recipe } from '../../types/nutrition'
 import RecipeBody from './components/RecipeBody'
+import { HeroMetadataOverlay } from './components/HeroMetadataOverlay'
+import { QuickJumpNav } from './components/QuickJumpNav'
 import { RecipeReviewsSection } from './components/RecipeReviewsSection'
 import { RecipeCommentsSection } from './components/RecipeCommentsSection'
 import { useAuth } from '../../features/auth/AuthContext'
@@ -403,17 +405,24 @@ export const RecipeDetail: React.FC = () => {
         )}
       </div>
 
-      {/* Recipe image */}
+      {/* Hero photo with glassmorphism metadata overlay */}
       {recipe.imageUrl && (
-        <div className="mb-8 rounded-xl overflow-hidden shadow-lg">
+        <div className="relative mb-6 rounded-2xl overflow-hidden shadow-lg border border-gray-200/80 dark:border-slate-800">
           <img
             src={recipe.imageUrl}
             alt={recipe.recipeName}
             loading="lazy"
-            className="w-full h-96 object-cover"
+            className="w-full h-80 sm:h-96 object-cover"
           />
+          <HeroMetadataOverlay recipe={recipe} />
         </div>
       )}
+
+      {/* Sticky Quick Jump Anchor Bar */}
+      <QuickJumpNav
+        hasNutrition={!!recipe.nutritionalInfo?.perServing}
+        hasComments={true}
+      />
 
       {/* Recipe details */}
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 sm:p-8 transition-colors duration-300">
