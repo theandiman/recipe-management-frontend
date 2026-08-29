@@ -480,17 +480,22 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
                   {/* Left Side: Step-Specific Ingredients Collapsible Panel */}
                   <div className="hidden lg:flex flex-col transition-all duration-300">
                     {isSidePanelOpen ? (
-                      <div className="w-72 bg-slate-950/60 rounded-2xl p-4 border border-slate-800/80 overflow-hidden flex flex-col flex-shrink-0 h-full">
-                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
-                          <span className="text-xs font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5 truncate">
-                            <span>🥗</span> {isStepSpecific ? `Step ${currentStep + 1} Ingredients (${stepIngredients.length})` : `Ingredients (${stepIngredients.length})`}
+                      <div className="w-72 bg-slate-950/70 rounded-2xl p-4 border border-slate-800/80 overflow-hidden flex flex-col flex-shrink-0 h-full shadow-xl">
+                        <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-slate-800/80">
+                          <span className="text-xs font-black uppercase tracking-wider text-slate-200 flex items-center gap-2 truncate">
+                            <span className="p-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">🥗</span>
+                            <span className="truncate">
+                              {isStepSpecific
+                                ? `Step ${currentStep + 1} Ingredients (${stepIngredients.length})`
+                                : `Ingredients (${stepIngredients.length})`}
+                            </span>
                           </span>
                           <button
                             onClick={() => setIsSidePanelOpen(false)}
-                            className="text-xs text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition-colors flex-shrink-0 cursor-pointer"
+                            className="text-xs font-bold text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-slate-800 transition-colors flex-shrink-0 cursor-pointer flex items-center gap-1 border border-transparent hover:border-slate-700"
                             title="Collapse ingredients panel"
                           >
-                            ‹ Hide
+                            <span>‹</span> Hide
                           </button>
                         </div>
 
@@ -498,10 +503,12 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
                           {stepIngredients.map((ingredient: string, index: number) => (
                             <div
                               key={index}
-                              className="flex items-start gap-2 p-2.5 rounded-xl border border-slate-800/60 bg-slate-900/50 text-slate-200 text-xs"
+                              className="flex items-start gap-2.5 p-3 rounded-xl border border-slate-800/80 bg-slate-900/60 text-slate-200 text-xs text-left transition-colors hover:border-slate-700/80"
                             >
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
-                              <span className="leading-snug font-medium">{ingredient}</span>
+                              <span className="w-2 h-2 rounded-full bg-emerald-400 mt-1 flex-shrink-0 shadow-xs shadow-emerald-400/50" />
+                              <span className="text-xs font-medium text-slate-200 text-left leading-relaxed flex-1 min-w-0">
+                                {ingredient}
+                              </span>
                             </div>
                           ))}
                         </div>
@@ -509,12 +516,25 @@ export const CookingMode: React.FC<CookingModeProps> = ({ recipe, onClose }) => 
                     ) : (
                       <button
                         onClick={() => setIsSidePanelOpen(true)}
-                        className="h-full px-3 py-4 bg-slate-950/60 hover:bg-slate-900 border border-slate-800/80 rounded-2xl text-xs font-bold text-slate-300 hover:text-white flex flex-col items-center justify-center gap-2 transition-all cursor-pointer"
+                        className="group h-full w-14 bg-slate-950/70 hover:bg-slate-900/90 border border-slate-800/80 hover:border-emerald-500/40 rounded-2xl px-2 py-4 flex flex-col items-center justify-between transition-all cursor-pointer shadow-lg"
                         title="Expand ingredients panel"
                       >
-                        <span>🥗</span>
-                        <span className="writing-mode-vertical uppercase tracking-wider text-[11px]">Ingredients</span>
-                        <span>›</span>
+                        <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 group-hover:scale-110 transition-transform text-base">
+                          🥗
+                        </div>
+
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-emerald-400 transition-colors [writing-mode:vertical-lr] rotate-180">
+                            Ingredients
+                          </span>
+                          <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-800/60 px-1.5 py-0.5 rounded-full">
+                            {stepIngredients.length}
+                          </span>
+                        </div>
+
+                        <div className="text-slate-400 group-hover:text-white group-hover:translate-x-0.5 transition-all text-sm font-bold">
+                          ›
+                        </div>
                       </button>
                     )}
                   </div>
