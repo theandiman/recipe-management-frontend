@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.10.1",
-    "@theandiman/recipe-management-shared": "1.0.22",
+    "@theandiman/recipe-management-shared": "1.0.23",
     "axios": "^1.13.2",
     "firebase": "^12.5.0",
     "motion": "^12.23.24",
