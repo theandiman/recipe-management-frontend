@@ -43,7 +43,9 @@ vi.mock('firebase/auth', () => ({
   signOut: vi.fn(),
   updateProfile: vi.fn(),
   GoogleAuthProvider: vi.fn(),
-  signInWithPopup: vi.fn()
+  signInWithPopup: vi.fn(),
+  signInWithRedirect: vi.fn(),
+  getRedirectResult: vi.fn().mockResolvedValue(null)
 }))
 
 // Mock Firebase Storage
