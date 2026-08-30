@@ -108,21 +108,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(convertFirebaseUser(userCredential.user))
     } catch (err: unknown) {
       console.error('Google sign-in error:', err)
-      const firebaseError = err as { code?: string; message?: string }
+      const firebaseError = err as { code?: string }
 
-      // Fallback to redirect only if popup was blocked by browser or framing failed
+      // If user closed or cancelled the popup, clear banner error but throw to cancel navigation
       if (
-        firebaseError.code === 'auth/popup-blocked' ||
-        (firebaseError.message && firebaseError.message.includes('Frame'))
+        firebaseError.code === 'auth/popup-closed-by-user' ||
+        firebaseError.code === 'auth/cancelled-popup-request'
       ) {
-        try {
-          await signInWithRedirect(auth, provider)
-          return
-        } catch (redirectErr) {
-          const errorMessage = getFirebaseErrorMessage(redirectErr)
-          setError(errorMessage)
-          throw new Error(errorMessage)
-        }
+        setError(null)
+        throw new Error('Sign-in cancelled by user')
       }
 
       const errorMessage = getFirebaseErrorMessage(err)
