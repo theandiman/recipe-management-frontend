@@ -110,11 +110,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Google sign-in error:', err)
       const firebaseError = err as { code?: string; message?: string }
 
-      // Fallback to redirect if popup or framing is blocked/cancelled
+      // Fallback to redirect only if popup was blocked by browser or framing failed
       if (
         firebaseError.code === 'auth/popup-blocked' ||
-        firebaseError.code === 'auth/popup-closed-by-user' ||
-        firebaseError.code === 'auth/cancelled-popup-request' ||
         (firebaseError.message && firebaseError.message.includes('Frame'))
       ) {
         try {
