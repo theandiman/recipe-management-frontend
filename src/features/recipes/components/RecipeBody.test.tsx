@@ -48,7 +48,8 @@ describe('RecipeBody', () => {
     render(<RecipeBody recipe={baseRecipe} />)
     expect(screen.getByText('Instructions')).toBeInTheDocument()
     expect(screen.getByText('Mix ingredients')).toBeInTheDocument()
-    expect(screen.getByText('Bake for 30 minutes')).toBeInTheDocument()
+    expect(screen.getByText(/Bake for/i)).toBeInTheDocument()
+    expect(screen.getByText(/30 minutes/i)).toBeInTheDocument()
   })
 
   it('renders tags', () => {

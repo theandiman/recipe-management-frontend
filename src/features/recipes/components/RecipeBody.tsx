@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import NutritionFacts from '../../../components/NutritionFacts'
 import { scaleIngredient } from '../../../utils/quantityUtils'
 import type { Recipe } from '../../../types/nutrition'
+import { InstructionStepWithTimers } from './InstructionStepWithTimers'
+import { FloatingKitchenTimer, type KitchenTimerState } from './FloatingKitchenTimer'
 
 interface RecipeBodyProps {
   recipe: Recipe
@@ -10,9 +12,20 @@ interface RecipeBodyProps {
 const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
   const baseServings = typeof recipe.servings === 'number' && recipe.servings > 0 ? recipe.servings : 4
   const [currentServings, setCurrentServings] = useState<number>(baseServings)
+  const [activeTimer, setActiveTimer] = useState<KitchenTimerState | null>(null)
 
   const multiplier = currentServings / baseServings
   const scaledIngredients = (recipe.ingredients || []).map(ing => scaleIngredient(ing, multiplier) as string)
+
+  const handleStartTimer = (label: string, totalSeconds: number) => {
+    setActiveTimer({
+      id: `timer-${Date.now()}`,
+      label,
+      totalSeconds,
+      remainingSeconds: totalSeconds,
+      isRunning: true,
+    })
+  }
 
   return (
     <>
@@ -119,7 +132,13 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
                 <span className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-600 text-white font-bold text-sm mr-4 flex-shrink-0 mt-0.5">
                   {index + 1}
                 </span>
-                <p className="text-gray-700 dark:text-gray-300 pt-1">{instruction}</p>
+                <div className="pt-1 flex-1">
+                  <InstructionStepWithTimers
+                    stepText={instruction}
+                    stepIndex={index}
+                    onStartTimer={handleStartTimer}
+                  />
+                </div>
               </li>
             ))}
           </ol>
@@ -230,6 +249,13 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
           </div>
         </div>
       )}
+
+      {/* Floating Kitchen Countdown Timer Widget */}
+      <FloatingKitchenTimer
+        timer={activeTimer}
+        onClose={() => setActiveTimer(null)}
+        onUpdateTimer={setActiveTimer}
+      />
     </>
   )
 }
