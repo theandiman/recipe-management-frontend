@@ -5,6 +5,20 @@
   ],
   "platformAutomerge": true,
   "rebaseWhen": "behind-base-branch",
+  "npmrc": "@theandiman:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=${RENOVATE_TOKEN}",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true,
+    "schedule": ["before 4am on monday"]
+  },
+  "postUpdateOptions": ["npmDedupe"],
+  "hostRules": [
+    {
+      "matchHost": "npm.pkg.github.com",
+      "hostType": "npm",
+      "token": "{{ secrets.RENOVATE_TOKEN }}"
+    }
+  ],
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch"],
