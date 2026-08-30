@@ -686,7 +686,7 @@ jobs:
           sleep 30
 
       - name: Run Nuclei DAST Scan
-        uses: projectdiscovery/nuclei-action@v1
+        uses: projectdiscovery/nuclei-action@v3.1.1
         with:
           target: "https://recipe-mgmt-dev.web.app/"
           flags: "-severity critical,high,medium -tags misconfig,exposure,cve,owasp-top10"
