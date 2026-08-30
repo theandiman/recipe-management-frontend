@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { generateRecipe, generateImage, clearImage } from './recipeSlice'
+import { generateRecipe, remixRecipe, generateImage, clearImage } from './recipeSlice'
 import { motion } from 'framer-motion'
 import ServingsStepper from '../../components/ServingsStepper'
 import { scaleIngredient } from '../../utils/quantityUtils'
@@ -8,6 +8,7 @@ import { saveRecipe } from '../../services/recipeStorageApi'
 import type { Recipe } from '../../types/nutrition'
 import type { RootState } from '../../store'
 import RecipeBody from './components/RecipeBody'
+import { AIRemixToolbar } from './components/AIRemixToolbar'
 
 export const AIGenerator: React.FC = () => {
   const dispatch = useAppDispatch()
@@ -64,6 +65,14 @@ export const AIGenerator: React.FC = () => {
       prompt,
       pantryItems,
       dietaryPreferences: selectedDiets.length > 0 ? selectedDiets : undefined
+    }))
+  }
+
+  const handleRemixRecipe = (instruction: string) => {
+    if (!parsedRecipe) return
+    dispatch(remixRecipe({
+      currentRecipe: parsedRecipe,
+      instruction,
     }))
   }
 
@@ -276,6 +285,13 @@ export const AIGenerator: React.FC = () => {
       {/* Recipe Result */}
       {result && parsedRecipe && (
         <div className="space-y-6">
+          {/* AI Recipe Remix & Tweak Toolbar */}
+          <AIRemixToolbar
+            recipe={parsedRecipe}
+            isLoading={loading}
+            onRemix={handleRemixRecipe}
+          />
+
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-6">
               <div className="flex-1">
