@@ -1024,4 +1024,85 @@ describe('RecipeDetail', () => {
       expect(screen.queryByRole('button', { name: /more options/i })).not.toBeInTheDocument()
     })
   })
+
+  describe('Recipe Deletion', () => {
+    it('should show Delete recipe menu item when current user owns the recipe', async () => {
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipeOwnedByUser)
+      vi.mocked(useAuth).mockReturnValue({
+        user: { uid: 'owner-uid', email: null, displayName: null, photoURL: null },
+      } as any)
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      await openMoreMenu()
+      expect(screen.getByRole('menuitem', { name: /delete recipe/i })).toBeInTheDocument()
+    })
+
+    it('should open confirmation modal when clicking Delete recipe', async () => {
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipeOwnedByUser)
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      await openMoreMenu()
+      await userEvent.click(screen.getByRole('menuitem', { name: /delete recipe/i }))
+
+      expect(screen.getByRole('dialog', { name: /delete recipe\?/i })).toBeInTheDocument()
+      expect(screen.getByText(/are you sure you want to delete/i)).toBeInTheDocument()
+    })
+
+    it('should call deleteRecipe and navigate to library when deletion is confirmed', async () => {
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipeOwnedByUser)
+      vi.mocked(recipeStorageApi.deleteRecipe).mockResolvedValue(undefined)
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      await openMoreMenu()
+      await userEvent.click(screen.getByRole('menuitem', { name: /delete recipe/i }))
+
+      const confirmDeleteBtn = screen.getByRole('button', { name: /^delete recipe$/i })
+      await userEvent.click(confirmDeleteBtn)
+
+      await waitFor(() => {
+        expect(recipeStorageApi.deleteRecipe).toHaveBeenCalledWith('recipe-1')
+        expect(screen.getByText('Recipe Library')).toBeInTheDocument()
+      })
+    })
+
+    it('should display error message if delete API fails', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipeOwnedByUser)
+      vi.mocked(recipeStorageApi.deleteRecipe).mockRejectedValue(new Error('Permission denied'))
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      await openMoreMenu()
+      await userEvent.click(screen.getByRole('menuitem', { name: /delete recipe/i }))
+
+      const confirmDeleteBtn = screen.getByRole('button', { name: /^delete recipe$/i })
+      await userEvent.click(confirmDeleteBtn)
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument()
+        expect(screen.getByText('Permission denied')).toBeInTheDocument()
+      })
+
+      consoleErrorSpy.mockRestore()
+    })
+  })
 })
