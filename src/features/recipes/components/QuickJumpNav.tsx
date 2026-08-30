@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react'
 
 interface QuickJumpNavProps {
   hasNutrition?: boolean
+  hasTips?: boolean
   hasComments?: boolean
 }
 
 export const QuickJumpNav: React.FC<QuickJumpNavProps> = ({
   hasNutrition = true,
+  hasTips = true,
   hasComments = true,
 }) => {
   const [activeId, setActiveId] = useState<string>('ingredients-section')
@@ -15,6 +17,7 @@ export const QuickJumpNav: React.FC<QuickJumpNavProps> = ({
     { id: 'ingredients-section', label: 'Ingredients', icon: '📋' },
     { id: 'instructions-section', label: 'Instructions', icon: '👩‍🍳' },
     ...(hasNutrition ? [{ id: 'nutrition-section', label: 'Nutrition', icon: '🥗' }] : []),
+    ...(hasTips ? [{ id: 'tips-section', label: 'Tips', icon: '💡' }] : []),
     ...(hasComments ? [{ id: 'recipe-comments-section', label: 'Discussion', icon: '💬' }] : []),
   ]
 
