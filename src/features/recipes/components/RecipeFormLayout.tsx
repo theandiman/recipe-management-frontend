@@ -453,8 +453,10 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     const storage = storageInstructions?.trim()
     const makeAhead = makeAheadTips?.trim()
     const reheating = reheatingInstructions?.trim()
+    const subs = substitutions?.length ? substitutions : undefined
+    const vars = variations?.length ? variations : undefined
 
-    if (!storage && !makeAhead && !reheating && !substitutions?.length && !variations?.length) {
+    if (!storage && !makeAhead && !reheating && !subs && !vars) {
       return undefined
     }
 
@@ -462,8 +464,8 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
       ...(storage && { storage }),
       ...(makeAhead && { makeAhead }),
       ...(reheating && { reheating }),
-      ...(substitutions?.length && { substitutions }),
-      ...(variations?.length && { variations }),
+      ...(subs && { substitutions: subs }),
+      ...(vars && { variations: vars }),
     }
   }, [storageInstructions, makeAheadTips, reheatingInstructions, substitutions, variations])
 
