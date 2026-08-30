@@ -205,7 +205,7 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Ingredient Substitutions */}
             {recipe.tips.substitutions && recipe.tips.substitutions.length > 0 && (
-              <div className="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-2xl p-4.5 shadow-xs flex flex-col justify-between">
+              <div className="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-amber-200/60 dark:border-amber-800/40">
                     <span className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-sm">🔄</span>
@@ -225,7 +225,7 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
 
             {/* Recipe Variations */}
             {recipe.tips.variations && recipe.tips.variations.length > 0 && (
-              <div className="bg-purple-50/80 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/40 rounded-2xl p-4.5 shadow-xs flex flex-col justify-between">
+              <div className="bg-purple-50/80 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/40 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-purple-200/60 dark:border-purple-800/40">
                     <span className="p-1.5 rounded-lg bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-sm">✨</span>
@@ -245,7 +245,7 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
 
             {/* Storage Instructions */}
             {recipe.tips.storage && (
-              <div className="bg-sky-50/80 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-800/40 rounded-2xl p-4.5 shadow-xs flex flex-col justify-between">
+              <div className="bg-sky-50/80 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-800/40 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-sky-200/60 dark:border-sky-800/40">
                     <span className="p-1.5 rounded-lg bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 text-sm">📦</span>
@@ -258,7 +258,7 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
 
             {/* Make-Ahead Tips */}
             {recipe.tips.makeAhead && (
-              <div className="bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 rounded-2xl p-4.5 shadow-xs flex flex-col justify-between">
+              <div className="bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-emerald-200/60 dark:border-emerald-800/40">
                     <span className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-sm">⏰</span>
@@ -271,7 +271,7 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
 
             {/* Reheating Instructions */}
             {recipe.tips.reheating && (
-              <div className="bg-orange-50/80 dark:bg-orange-950/30 border border-orange-200/80 dark:border-orange-800/40 rounded-2xl p-4.5 shadow-xs flex flex-col justify-between">
+              <div className="bg-orange-50/80 dark:bg-orange-950/30 border border-orange-200/80 dark:border-orange-800/40 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-orange-200/60 dark:border-orange-800/40">
                     <span className="p-1.5 rounded-lg bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 text-sm">🔥</span>

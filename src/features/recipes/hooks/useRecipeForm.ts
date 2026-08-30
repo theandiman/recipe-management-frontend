@@ -249,12 +249,12 @@ export function useRecipeForm(initialState?: Partial<RecipeFormState>): RecipeFo
   }, [])
 
   // Tips handlers
-  const [storageInstructions, setStorageInstructions] = useState('')
-  const [makeAheadTips, setMakeAheadTips] = useState('')
-  const [reheatingInstructions, setReheatingInstructions] = useState('')
-  const [substitutions, setSubstitutions] = useState<string[]>([])
+  const [storageInstructions, setStorageInstructions] = useState(initialState?.storageInstructions || '')
+  const [makeAheadTips, setMakeAheadTips] = useState(initialState?.makeAheadTips || '')
+  const [reheatingInstructions, setReheatingInstructions] = useState(initialState?.reheatingInstructions || '')
+  const [substitutions, setSubstitutions] = useState<string[]>(initialState?.substitutions || [])
   const [substitutionInput, setSubstitutionInput] = useState('')
-  const [variations, setVariations] = useState<string[]>([])
+  const [variations, setVariations] = useState<string[]>(initialState?.variations || [])
   const [variationInput, setVariationInput] = useState('')
 
   const addSubstitution = useCallback(() => {

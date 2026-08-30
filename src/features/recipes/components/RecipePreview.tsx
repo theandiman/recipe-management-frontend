@@ -192,7 +192,7 @@ export const RecipePreview = React.memo<RecipePreviewProps>(({
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {tips.substitutions && tips.substitutions.length > 0 && (
-              <div className="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-2xl p-4.5 shadow-xs">
+              <div className="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-2xl p-5 shadow-xs">
                 <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-amber-200/60 dark:border-amber-800/40">
                   <span className="text-sm">🔄</span>
                   <h3 className="font-bold text-amber-950 dark:text-amber-200 text-sm">Ingredient Substitutions</h3>
@@ -208,7 +208,7 @@ export const RecipePreview = React.memo<RecipePreviewProps>(({
               </div>
             )}
             {tips.variations && tips.variations.length > 0 && (
-              <div className="bg-purple-50/80 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/40 rounded-2xl p-4.5 shadow-xs">
+              <div className="bg-purple-50/80 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/40 rounded-2xl p-5 shadow-xs">
                 <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-purple-200/60 dark:border-purple-800/40">
                   <span className="text-sm">✨</span>
                   <h3 className="font-bold text-purple-950 dark:text-purple-200 text-sm">Recipe Variations</h3>
@@ -224,7 +224,7 @@ export const RecipePreview = React.memo<RecipePreviewProps>(({
               </div>
             )}
             {tips.storage && (
-              <div className="bg-sky-50/80 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-800/40 rounded-2xl p-4.5 shadow-xs">
+              <div className="bg-sky-50/80 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-800/40 rounded-2xl p-5 shadow-xs">
                 <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-sky-200/60 dark:border-sky-800/40">
                   <span className="text-sm">📦</span>
                   <h3 className="font-bold text-sky-950 dark:text-sky-200 text-sm">Storage Instructions</h3>
@@ -233,7 +233,7 @@ export const RecipePreview = React.memo<RecipePreviewProps>(({
               </div>
             )}
             {tips.makeAhead && (
-              <div className="bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 rounded-2xl p-4.5 shadow-xs">
+              <div className="bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 rounded-2xl p-5 shadow-xs">
                 <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-emerald-200/60 dark:border-emerald-800/40">
                   <span className="text-sm">⏰</span>
                   <h3 className="font-bold text-emerald-950 dark:text-emerald-200 text-sm">Make-Ahead Tips</h3>
@@ -242,7 +242,7 @@ export const RecipePreview = React.memo<RecipePreviewProps>(({
               </div>
             )}
             {tips.reheating && (
-              <div className="bg-orange-50/80 dark:bg-orange-950/30 border border-orange-200/80 dark:border-orange-800/40 rounded-2xl p-4.5 shadow-xs">
+              <div className="bg-orange-50/80 dark:bg-orange-950/30 border border-orange-200/80 dark:border-orange-800/40 rounded-2xl p-5 shadow-xs">
                 <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-orange-200/60 dark:border-orange-800/40">
                   <span className="text-sm">🔥</span>
                   <h3 className="font-bold text-orange-950 dark:text-orange-200 text-sm">Reheating Instructions</h3>

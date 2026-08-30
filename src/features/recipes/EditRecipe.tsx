@@ -25,22 +25,24 @@ export const EditRecipe: React.FC = () => {
   const { validateForm, buildRecipeObject } = useRecipeValidation()
 
   const currentTips = useMemo(() => {
-    const hasTips = Boolean(
-      form.storageInstructions?.trim() ||
-      form.makeAheadTips?.trim() ||
-      form.reheatingInstructions?.trim() ||
-      form.substitutions?.length ||
-      form.variations?.length
-    )
-    if (!hasTips) return recipeOverrides.tips
-    return {
-      storage: form.storageInstructions?.trim() || undefined,
-      makeAhead: form.makeAheadTips?.trim() || undefined,
-      reheating: form.reheatingInstructions?.trim() || undefined,
-      substitutions: form.substitutions?.length ? form.substitutions : undefined,
-      variations: form.variations?.length ? form.variations : undefined,
+    const storage = form.storageInstructions?.trim() || undefined
+    const makeAhead = form.makeAheadTips?.trim() || undefined
+    const reheating = form.reheatingInstructions?.trim() || undefined
+    const substitutions = form.substitutions?.length ? form.substitutions : undefined
+    const variations = form.variations?.length ? form.variations : undefined
+
+    if (!storage && !makeAhead && !reheating && !substitutions && !variations) {
+      return undefined
     }
-  }, [form.storageInstructions, form.makeAheadTips, form.reheatingInstructions, form.substitutions, form.variations, recipeOverrides.tips])
+
+    return {
+      storage,
+      makeAhead,
+      reheating,
+      substitutions,
+      variations,
+    }
+  }, [form.storageInstructions, form.makeAheadTips, form.reheatingInstructions, form.substitutions, form.variations])
 
   // Use shared save logic with recipeId for edit mode
   const { handleSubmit } = useRecipeSave({
