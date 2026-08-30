@@ -82,6 +82,23 @@ interface RecipeFormStepsProps {
   onGenerateAIImage?: (recipeName: string, description?: string) => Promise<void>
   generatingAIImage?: boolean
   aiImageError?: string | null
+  // Tips & Tricks
+  storageInstructions?: string
+  setStorageInstructions?: (value: string) => void
+  makeAheadTips?: string
+  setMakeAheadTips?: (value: string) => void
+  reheatingInstructions?: string
+  setReheatingInstructions?: (value: string) => void
+  substitutions?: string[]
+  substitutionInput?: string
+  setSubstitutionInput?: (value: string) => void
+  addSubstitution?: () => void
+  removeSubstitution?: (index: number) => void
+  variations?: string[]
+  variationInput?: string
+  setVariationInput?: (value: string) => void
+  addVariation?: () => void
+  removeVariation?: (index: number) => void
 }
 
 
@@ -140,6 +157,22 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
   onGenerateAIImage,
   generatingAIImage = false,
   aiImageError,
+  storageInstructions,
+  setStorageInstructions,
+  makeAheadTips,
+  setMakeAheadTips,
+  reheatingInstructions,
+  setReheatingInstructions,
+  substitutions,
+  substitutionInput,
+  setSubstitutionInput,
+  addSubstitution,
+  removeSubstitution,
+  variations,
+  variationInput,
+  setVariationInput,
+  addVariation,
+  removeVariation,
 }) => {
   const getFieldStatus = (field: string): SuggestionStatus =>
     fieldStatus?.get(field) ?? 'idle'
@@ -689,6 +722,155 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
   stringifySuggestionList(dietaryRestrictions),
   dietaryRestrictions
 )}
+          </div>
+
+          {/* Tips & Tricks Section */}
+          <div className="space-y-6 pt-6 border-t border-gray-200 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <span>💡</span> Tips &amp; Tricks (Optional)
+            </h3>
+
+            {/* Storage Instructions */}
+            {setStorageInstructions && (
+              <div>
+                <label className={`block mb-1.5 text-sm font-medium ${UI_STYLES.label}`}>
+                  📦 Storage Instructions
+                </label>
+                <textarea
+                  value={storageInstructions || ''}
+                  onChange={(e) => setStorageInstructions(e.target.value)}
+                  rows={2}
+                  placeholder="e.g., Refrigerate in an airtight container for up to three days."
+                  className={UI_STYLES.input}
+                />
+              </div>
+            )}
+
+            {/* Make-Ahead Tips */}
+            {setMakeAheadTips && (
+              <div>
+                <label className={`block mb-1.5 text-sm font-medium ${UI_STYLES.label}`}>
+                  ⏰ Make-Ahead Tips
+                </label>
+                <textarea
+                  value={makeAheadTips || ''}
+                  onChange={(e) => setMakeAheadTips(e.target.value)}
+                  rows={2}
+                  placeholder="e.g., Can be chopped and prepped 1 day in advance."
+                  className={UI_STYLES.input}
+                />
+              </div>
+            )}
+
+            {/* Reheating Instructions */}
+            {setReheatingInstructions && (
+              <div>
+                <label className={`block mb-1.5 text-sm font-medium ${UI_STYLES.label}`}>
+                  🔥 Reheating Instructions
+                </label>
+                <textarea
+                  value={reheatingInstructions || ''}
+                  onChange={(e) => setReheatingInstructions(e.target.value)}
+                  rows={2}
+                  placeholder="e.g., Reheat in oven at 350°F for 10 minutes until warm."
+                  className={UI_STYLES.input}
+                />
+              </div>
+            )}
+
+            {/* Ingredient Substitutions */}
+            {addSubstitution && removeSubstitution && setSubstitutionInput && (
+              <div className="space-y-3">
+                <label className={`block text-sm font-medium ${UI_STYLES.label}`}>
+                  🔄 Ingredient Substitutions
+                </label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={substitutionInput || ''}
+                    onChange={(e) => setSubstitutionInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        addSubstitution()
+                      }
+                    }}
+                    placeholder="e.g., 'Use coconut milk instead of heavy cream'"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={addSubstitution}
+                    className={UI_STYLES.secondaryButton}
+                  >
+                    Add
+                  </button>
+                </div>
+                {substitutions && substitutions.length > 0 && (
+                  <ul className="space-y-1.5">
+                    {substitutions.map((sub, index) => (
+                      <li key={index} className="flex items-center justify-between px-3 py-1.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-amber-900 dark:text-amber-200 rounded-lg text-xs font-medium">
+                        <span>🔄 {sub}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeSubstitution(index)}
+                          className="ml-2 text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 font-bold"
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {/* Recipe Variations */}
+            {addVariation && removeVariation && setVariationInput && (
+              <div className="space-y-3">
+                <label className={`block text-sm font-medium ${UI_STYLES.label}`}>
+                  ✨ Recipe Variations
+                </label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={variationInput || ''}
+                    onChange={(e) => setVariationInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        addVariation()
+                      }
+                    }}
+                    placeholder="e.g., 'Add red chili flakes for extra heat'"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={addVariation}
+                    className={UI_STYLES.secondaryButton}
+                  >
+                    Add
+                  </button>
+                </div>
+                {variations && variations.length > 0 && (
+                  <ul className="space-y-1.5">
+                    {variations.map((variation, index) => (
+                      <li key={index} className="flex items-center justify-between px-3 py-1.5 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900/50 text-purple-900 dark:text-purple-200 rounded-lg text-xs font-medium">
+                        <span>✨ {variation}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeVariation(index)}
+                          className="ml-2 text-purple-700 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 font-bold"
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

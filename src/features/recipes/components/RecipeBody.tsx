@@ -188,7 +188,7 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
       )}
 
       {/* Tips & Tricks */}
-      {recipe.tips && (
+      {recipe.tips && (recipe.tips.substitutions?.length || recipe.tips.variations?.length || recipe.tips.storage || recipe.tips.makeAhead || recipe.tips.reheating) ? (
         <div id="tips-section" className="mt-10 pt-8 border-t border-gray-200 dark:border-slate-800 scroll-mt-24">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2.5 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shadow-xs">
@@ -198,106 +198,92 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
             </div>
             <div>
               <h2 className="text-2xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">Tips &amp; Tricks</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Substitutions, variations, and storage suggestions for best results</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Substitutions, variations, storage, make-ahead, and reheating recommendations</p>
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Ingredient Substitutions */}
             {recipe.tips.substitutions && recipe.tips.substitutions.length > 0 && (
-              <div className="bg-gradient-to-br from-amber-50/70 via-amber-50/30 to-orange-50/40 dark:from-amber-950/30 dark:via-amber-900/15 dark:to-orange-950/20 border border-amber-200/80 dark:border-amber-800/40 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all">
-                <div className="flex items-center gap-3 mb-4 pb-3 border-b border-amber-200/60 dark:border-amber-800/30">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-300 font-bold text-sm">
-                    🔄
-                  </span>
-                  <h3 className="font-bold text-gray-900 dark:text-amber-200 text-base">
-                    Ingredient Substitutions
-                  </h3>
-                  <span className="ml-auto text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-200/60 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300">
-                    {recipe.tips.substitutions.length} {recipe.tips.substitutions.length === 1 ? 'option' : 'options'}
-                  </span>
+              <div className="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-2xl p-4.5 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-amber-200/60 dark:border-amber-800/40">
+                    <span className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-sm">🔄</span>
+                    <h3 className="font-bold text-amber-950 dark:text-amber-200 text-sm">Ingredient Substitutions</h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {recipe.tips.substitutions.map((sub: string, idx: number) => (
+                      <li key={idx} className="text-xs text-amber-950/90 dark:text-amber-300/90 flex items-start gap-2 leading-relaxed">
+                        <span className="text-amber-600 dark:text-amber-400 font-bold mt-0.5">•</span>
+                        <span>{sub}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <ul className="grid grid-cols-1 gap-2.5">
-                  {recipe.tips.substitutions.map((sub: string, idx: number) => (
-                    <li key={idx} className="flex items-start gap-3 bg-white/80 dark:bg-slate-900/60 p-3 rounded-xl border border-amber-100 dark:border-amber-900/30 shadow-2xs text-gray-800 dark:text-gray-200 text-sm leading-relaxed">
-                      <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 flex items-center justify-center text-xs font-bold mt-0.5">
-                        ⇄
-                      </span>
-                      <span className="flex-1">{sub}</span>
-                    </li>
-                  ))}
-                </ul>
               </div>
             )}
 
             {/* Recipe Variations */}
             {recipe.tips.variations && recipe.tips.variations.length > 0 && (
-              <div className="bg-gradient-to-br from-indigo-50/70 via-purple-50/30 to-violet-50/40 dark:from-indigo-950/30 dark:via-purple-900/15 dark:to-violet-950/20 border border-indigo-200/80 dark:border-indigo-800/40 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all">
-                <div className="flex items-center gap-3 mb-4 pb-3 border-b border-indigo-200/60 dark:border-indigo-800/30">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 font-bold text-sm">
-                    ✨
-                  </span>
-                  <h3 className="font-bold text-gray-900 dark:text-indigo-200 text-base">
-                    Recipe Variations
-                  </h3>
-                  <span className="ml-auto text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-200/60 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300">
-                    {recipe.tips.variations.length} {recipe.tips.variations.length === 1 ? 'idea' : 'ideas'}
-                  </span>
+              <div className="bg-purple-50/80 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/40 rounded-2xl p-4.5 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-purple-200/60 dark:border-purple-800/40">
+                    <span className="p-1.5 rounded-lg bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-sm">✨</span>
+                    <h3 className="font-bold text-purple-950 dark:text-purple-200 text-sm">Recipe Variations</h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {recipe.tips.variations.map((variation: string, idx: number) => (
+                      <li key={idx} className="text-xs text-purple-950/90 dark:text-purple-300/90 flex items-start gap-2 leading-relaxed">
+                        <span className="text-purple-600 dark:text-purple-400 font-bold mt-0.5">•</span>
+                        <span>{variation}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <ul className="grid grid-cols-1 gap-2.5">
-                  {recipe.tips.variations.map((variation: string, idx: number) => (
-                    <li key={idx} className="flex items-start gap-3 bg-white/80 dark:bg-slate-900/60 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/30 shadow-2xs text-gray-800 dark:text-gray-200 text-sm leading-relaxed">
-                      <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs font-bold mt-0.5">
-                        ✦
-                      </span>
-                      <span className="flex-1">{variation}</span>
-                    </li>
-                  ))}
-                </ul>
               </div>
             )}
 
-            {/* Storage, Make-Ahead & Reheating Grid */}
-            {(recipe.tips.storage || recipe.tips.makeAhead || recipe.tips.reheating) && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                {recipe.tips.storage && (
-                  <div className="bg-sky-50/70 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-800/40 rounded-2xl p-4 shadow-xs flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="p-1.5 rounded-lg bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 text-sm">📦</span>
-                        <h3 className="font-bold text-sky-950 dark:text-sky-200 text-sm">Storage Instructions</h3>
-                      </div>
-                      <p className="text-xs text-sky-900/90 dark:text-sky-300/90 leading-relaxed">{recipe.tips.storage}</p>
-                    </div>
+            {/* Storage Instructions */}
+            {recipe.tips.storage && (
+              <div className="bg-sky-50/80 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-800/40 rounded-2xl p-4.5 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-sky-200/60 dark:border-sky-800/40">
+                    <span className="p-1.5 rounded-lg bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 text-sm">📦</span>
+                    <h3 className="font-bold text-sky-950 dark:text-sky-200 text-sm">Storage Instructions</h3>
                   </div>
-                )}
-                {recipe.tips.makeAhead && (
-                  <div className="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 rounded-2xl p-4 shadow-xs flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-sm">⏰</span>
-                        <h3 className="font-bold text-emerald-950 dark:text-emerald-200 text-sm">Make-Ahead Tips</h3>
-                      </div>
-                      <p className="text-xs text-emerald-900/90 dark:text-emerald-300/90 leading-relaxed">{recipe.tips.makeAhead}</p>
-                    </div>
+                  <p className="text-xs text-sky-950/90 dark:text-sky-300/90 leading-relaxed">{recipe.tips.storage}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Make-Ahead Tips */}
+            {recipe.tips.makeAhead && (
+              <div className="bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 rounded-2xl p-4.5 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-emerald-200/60 dark:border-emerald-800/40">
+                    <span className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-sm">⏰</span>
+                    <h3 className="font-bold text-emerald-950 dark:text-emerald-200 text-sm">Make-Ahead Tips</h3>
                   </div>
-                )}
-                {recipe.tips.reheating && (
-                  <div className="bg-orange-50/70 dark:bg-orange-950/30 border border-orange-200/80 dark:border-orange-800/40 rounded-2xl p-4 shadow-xs flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="p-1.5 rounded-lg bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 text-sm">🔥</span>
-                        <h3 className="font-bold text-orange-950 dark:text-orange-200 text-sm">Reheating Instructions</h3>
-                      </div>
-                      <p className="text-xs text-orange-900/90 dark:text-orange-300/90 leading-relaxed">{recipe.tips.reheating}</p>
-                    </div>
+                  <p className="text-xs text-emerald-950/90 dark:text-emerald-300/90 leading-relaxed">{recipe.tips.makeAhead}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Reheating Instructions */}
+            {recipe.tips.reheating && (
+              <div className="bg-orange-50/80 dark:bg-orange-950/30 border border-orange-200/80 dark:border-orange-800/40 rounded-2xl p-4.5 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-orange-200/60 dark:border-orange-800/40">
+                    <span className="p-1.5 rounded-lg bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 text-sm">🔥</span>
+                    <h3 className="font-bold text-orange-950 dark:text-orange-200 text-sm">Reheating Instructions</h3>
                   </div>
-                )}
+                  <p className="text-xs text-orange-950/90 dark:text-orange-300/90 leading-relaxed">{recipe.tips.reheating}</p>
+                </div>
               </div>
             )}
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Floating Kitchen Countdown Timer Widget */}
       <FloatingKitchenTimer

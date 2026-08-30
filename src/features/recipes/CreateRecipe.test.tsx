@@ -967,9 +967,8 @@ describe('CreateRecipe - Multi-Step Wizard', () => {
       const dietaryInput = screen.getByPlaceholderText(/vegan.*gluten-free.*nut-free/i)
       fireEvent.change(dietaryInput, { target: { value: 'vegan' } })
 
-      const addButtons = screen.getAllByRole('button', { name: /^Add$/i })
-      // Click the last Add button (dietary restrictions)
-      fireEvent.click(addButtons[addButtons.length - 1])
+      const addButton = dietaryInput.parentElement?.querySelector('button')!
+      fireEvent.click(addButton)
 
       expect(screen.getByText('vegan')).toBeInTheDocument()
     })

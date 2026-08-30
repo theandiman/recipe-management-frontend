@@ -75,6 +75,22 @@ interface RecipeFormLayoutProps {
   setDietaryInput: (value: string) => void
   addDietaryRestriction: () => void
   removeDietaryRestriction: (index: number) => void
+  storageInstructions?: string
+  setStorageInstructions?: (value: string) => void
+  makeAheadTips?: string
+  setMakeAheadTips?: (value: string) => void
+  reheatingInstructions?: string
+  setReheatingInstructions?: (value: string) => void
+  substitutions?: string[]
+  substitutionInput?: string
+  setSubstitutionInput?: (value: string) => void
+  addSubstitution?: () => void
+  removeSubstitution?: (index: number) => void
+  variations?: string[]
+  variationInput?: string
+  setVariationInput?: (value: string) => void
+  addVariation?: () => void
+  removeVariation?: (index: number) => void
   fieldErrors: Record<string, string>
   clearFieldError: (fieldName: string, stepNumber: number) => void
   setFieldErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>
@@ -145,6 +161,22 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   setDietaryInput,
   addDietaryRestriction,
   removeDietaryRestriction,
+  storageInstructions,
+  setStorageInstructions,
+  makeAheadTips,
+  setMakeAheadTips,
+  reheatingInstructions,
+  setReheatingInstructions,
+  substitutions,
+  substitutionInput,
+  setSubstitutionInput,
+  addSubstitution,
+  removeSubstitution,
+  variations,
+  variationInput,
+  setVariationInput,
+  addVariation,
+  removeVariation,
   fieldErrors,
   clearFieldError,
   setFieldErrors,
@@ -417,6 +449,24 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
     [visibleSuggestions]
   )
 
+  const previewTips = useMemo(() => {
+    const hasTips = Boolean(
+      storageInstructions?.trim() ||
+      makeAheadTips?.trim() ||
+      reheatingInstructions?.trim() ||
+      substitutions?.length ||
+      variations?.length
+    )
+    if (!hasTips) return undefined
+    return {
+      storage: storageInstructions?.trim() || undefined,
+      makeAhead: makeAheadTips?.trim() || undefined,
+      reheating: reheatingInstructions?.trim() || undefined,
+      substitutions: substitutions?.length ? substitutions : undefined,
+      variations: variations?.length ? variations : undefined,
+    }
+  }, [storageInstructions, makeAheadTips, reheatingInstructions, substitutions, variations])
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Header with Step Indicator */}
@@ -501,6 +551,7 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
           ingredients={ingredients}
           instructions={instructions}
           tags={tags}
+          tips={previewTips}
           prevStep={handlePreviousStepClick}
           handleCancel={handleCancel}
           handleSubmit={handleSubmit}
@@ -542,6 +593,22 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
                 setDietaryInput={setDietaryInput}
                 addDietaryRestriction={addDietaryRestriction}
                 removeDietaryRestriction={removeDietaryRestriction}
+                storageInstructions={storageInstructions}
+                setStorageInstructions={setStorageInstructions}
+                makeAheadTips={makeAheadTips}
+                setMakeAheadTips={setMakeAheadTips}
+                reheatingInstructions={reheatingInstructions}
+                setReheatingInstructions={setReheatingInstructions}
+                substitutions={substitutions}
+                substitutionInput={substitutionInput}
+                setSubstitutionInput={setSubstitutionInput}
+                addSubstitution={addSubstitution}
+                removeSubstitution={removeSubstitution}
+                variations={variations}
+                variationInput={variationInput}
+                setVariationInput={setVariationInput}
+                addVariation={addVariation}
+                removeVariation={removeVariation}
                 fieldErrors={fieldErrors}
                 clearFieldError={clearFieldError}
                 recipeName={title}
