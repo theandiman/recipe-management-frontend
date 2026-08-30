@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getRecipe } from '../../services/recipeStorageApi'
 import { RecipeFormLayout } from './components/RecipeFormLayout'
@@ -23,7 +23,25 @@ export const EditRecipe: React.FC = () => {
   const navigation = useRecipeFormNavigation()
   const form = useRecipeForm()
   const { validateForm, buildRecipeObject } = useRecipeValidation()
-  
+
+  const currentTips = useMemo(() => {
+    const hasTips = Boolean(
+      form.storageInstructions?.trim() ||
+      form.makeAheadTips?.trim() ||
+      form.reheatingInstructions?.trim() ||
+      form.substitutions?.length ||
+      form.variations?.length
+    )
+    if (!hasTips) return recipeOverrides.tips
+    return {
+      storage: form.storageInstructions?.trim() || undefined,
+      makeAhead: form.makeAheadTips?.trim() || undefined,
+      reheating: form.reheatingInstructions?.trim() || undefined,
+      substitutions: form.substitutions?.length ? form.substitutions : undefined,
+      variations: form.variations?.length ? form.variations : undefined,
+    }
+  }, [form.storageInstructions, form.makeAheadTips, form.reheatingInstructions, form.substitutions, form.variations, recipeOverrides.tips])
+
   // Use shared save logic with recipeId for edit mode
   const { handleSubmit } = useRecipeSave({
     recipeId: id,
@@ -37,7 +55,10 @@ export const EditRecipe: React.FC = () => {
     tags: form.tags,
     dietaryRestrictions: form.dietaryRestrictions,
     imagePreview: form.imagePreview,
-    recipeOverrides,
+    recipeOverrides: {
+      ...recipeOverrides,
+      tips: currentTips,
+    },
     setFieldErrors: form.setFieldErrors,
     setStepsWithErrors: form.setStepsWithErrors,
     setSaveLoading: form.setSaveLoading,
@@ -90,6 +111,13 @@ export const EditRecipe: React.FC = () => {
         form.setTags(data.tags || [])
         form.setDietaryRestrictions(data.dietaryRestrictions || [])
         form.setImagePreview(data.imageUrl || null)
+        if (data.tips) {
+          if (data.tips.storage) form.setStorageInstructions(data.tips.storage)
+          if (data.tips.makeAhead) form.setMakeAheadTips(data.tips.makeAhead)
+          if (data.tips.reheating) form.setReheatingInstructions(data.tips.reheating)
+          if (data.tips.substitutions) form.setSubstitutions(data.tips.substitutions)
+          if (data.tips.variations) form.setVariations(data.tips.variations)
+        }
         setRecipeOverrides({
           nutritionalInfo: data.nutritionalInfo,
           tips: data.tips,

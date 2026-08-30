@@ -16,6 +16,13 @@ interface RecipeFormState {
   dietaryRestrictions: string[]
   dietaryInput: string
   imagePreview: string | null
+  storageInstructions: string
+  makeAheadTips: string
+  reheatingInstructions: string
+  substitutions: string[]
+  substitutionInput: string
+  variations: string[]
+  variationInput: string
   
   // Validation state
   fieldErrors: Record<string, string>
@@ -38,6 +45,13 @@ interface RecipeFormActions {
   setTags: (value: string[]) => void
   setTagInput: (value: string) => void
   setImagePreview: (value: string | null) => void
+  setStorageInstructions: (value: string) => void
+  setMakeAheadTips: (value: string) => void
+  setReheatingInstructions: (value: string) => void
+  setSubstitutions: (value: string[]) => void
+  setSubstitutionInput: (value: string) => void
+  setVariations: (value: string[]) => void
+  setVariationInput: (value: string) => void
   setFieldErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>
   setStepsWithErrors: React.Dispatch<React.SetStateAction<Set<number>>>
   setSaveLoading: (value: boolean) => void
@@ -62,6 +76,12 @@ interface RecipeFormActions {
   setDietaryInput: (value: string) => void
   addDietaryRestriction: () => void
   removeDietaryRestriction: (index: number) => void
+
+  // Tips handlers
+  addSubstitution: () => void
+  removeSubstitution: (index: number) => void
+  addVariation: () => void
+  removeVariation: (index: number) => void
   
   // Image handlers
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
@@ -228,6 +248,39 @@ export function useRecipeForm(initialState?: Partial<RecipeFormState>): RecipeFo
     setImagePreview(null)
   }, [])
 
+  // Tips handlers
+  const [storageInstructions, setStorageInstructions] = useState('')
+  const [makeAheadTips, setMakeAheadTips] = useState('')
+  const [reheatingInstructions, setReheatingInstructions] = useState('')
+  const [substitutions, setSubstitutions] = useState<string[]>([])
+  const [substitutionInput, setSubstitutionInput] = useState('')
+  const [variations, setVariations] = useState<string[]>([])
+  const [variationInput, setVariationInput] = useState('')
+
+  const addSubstitution = useCallback(() => {
+    const trimmed = substitutionInput.trim()
+    if (trimmed && !substitutions.includes(trimmed)) {
+      setSubstitutions(prev => [...prev, trimmed])
+      setSubstitutionInput('')
+    }
+  }, [substitutionInput, substitutions])
+
+  const removeSubstitution = useCallback((index: number) => {
+    setSubstitutions(prev => prev.filter((_, i) => i !== index))
+  }, [])
+
+  const addVariation = useCallback(() => {
+    const trimmed = variationInput.trim()
+    if (trimmed && !variations.includes(trimmed)) {
+      setVariations(prev => [...prev, trimmed])
+      setVariationInput('')
+    }
+  }, [variationInput, variations])
+
+  const removeVariation = useCallback((index: number) => {
+    setVariations(prev => prev.filter((_, i) => i !== index))
+  }, [])
+
   return useMemo(() => ({
     // State
     title,
@@ -242,6 +295,13 @@ export function useRecipeForm(initialState?: Partial<RecipeFormState>): RecipeFo
     dietaryRestrictions,
     dietaryInput,
     imagePreview,
+    storageInstructions,
+    makeAheadTips,
+    reheatingInstructions,
+    substitutions,
+    substitutionInput,
+    variations,
+    variationInput,
     fieldErrors,
     stepsWithErrors,
     saveLoading,
@@ -260,6 +320,13 @@ export function useRecipeForm(initialState?: Partial<RecipeFormState>): RecipeFo
     setDietaryRestrictions,
     setDietaryInput,
     setImagePreview,
+    setStorageInstructions,
+    setMakeAheadTips,
+    setReheatingInstructions,
+    setSubstitutions,
+    setSubstitutionInput,
+    setVariations,
+    setVariationInput,
     setFieldErrors,
     setStepsWithErrors,
     setSaveLoading,
@@ -276,11 +343,15 @@ export function useRecipeForm(initialState?: Partial<RecipeFormState>): RecipeFo
     removeTag,
     addDietaryRestriction,
     removeDietaryRestriction,
+    addSubstitution,
+    removeSubstitution,
+    addVariation,
+    removeVariation,
     handleImageUpload,
     removeImage,
     clearFieldError
   }), [
-    title, description, prepTime, cookTime, servings, ingredients, instructions, tags, tagInput, dietaryRestrictions, dietaryInput, imagePreview, fieldErrors, stepsWithErrors, saveLoading, saveError,
-    addIngredient, updateIngredient, removeIngredient, addInstruction, updateInstruction, removeInstruction, addTag, removeTag, addDietaryRestriction, removeDietaryRestriction, handleImageUpload, removeImage, clearFieldError
+    title, description, prepTime, cookTime, servings, ingredients, instructions, tags, tagInput, dietaryRestrictions, dietaryInput, imagePreview, storageInstructions, makeAheadTips, reheatingInstructions, substitutions, substitutionInput, variations, variationInput, fieldErrors, stepsWithErrors, saveLoading, saveError,
+    addIngredient, updateIngredient, removeIngredient, addInstruction, updateInstruction, removeInstruction, addTag, removeTag, addDietaryRestriction, removeDietaryRestriction, addSubstitution, removeSubstitution, addVariation, removeVariation, handleImageUpload, removeImage, clearFieldError
   ])
 }

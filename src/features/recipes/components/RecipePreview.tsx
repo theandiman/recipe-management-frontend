@@ -1,5 +1,6 @@
 import React from 'react'
 import { UI_STYLES } from '../../../utils/uiStyles'
+import type { RecipeTips } from '../../../types/nutrition'
 
 interface RecipePreviewProps {
   title: string
@@ -14,6 +15,7 @@ interface RecipePreviewProps {
   }>
   instructions: string[]
   tags: string[]
+  tips?: RecipeTips
   imagePreview: string | null
   saveError: string | null
   setSaveError: (error: string | null) => void
@@ -32,6 +34,7 @@ export const RecipePreview = React.memo<RecipePreviewProps>(({
   ingredients,
   instructions,
   tags,
+  tips,
   imagePreview,
   saveError,
   setSaveError,
@@ -180,6 +183,76 @@ export const RecipePreview = React.memo<RecipePreviewProps>(({
           </div>
         </div>
       )}
+
+      {/* Tips & Tricks */}
+      {tips && (tips.substitutions?.length || tips.variations?.length || tips.storage || tips.makeAhead || tips.reheating) ? (
+        <div className="mt-8 pt-6 border-t border-gray-200 dark:border-slate-700">
+          <h2 className={`text-2xl font-bold mb-4 flex items-center gap-2 ${UI_STYLES.heading}`}>
+            <span>💡</span> Tips &amp; Tricks
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {tips.substitutions && tips.substitutions.length > 0 && (
+              <div className="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-2xl p-4.5 shadow-xs">
+                <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-amber-200/60 dark:border-amber-800/40">
+                  <span className="text-sm">🔄</span>
+                  <h3 className="font-bold text-amber-950 dark:text-amber-200 text-sm">Ingredient Substitutions</h3>
+                </div>
+                <ul className="space-y-1.5">
+                  {tips.substitutions.map((sub, idx) => (
+                    <li key={idx} className="text-xs text-amber-950/90 dark:text-amber-300/90 flex items-start gap-2 leading-relaxed">
+                      <span className="font-bold">•</span>
+                      <span>{sub}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {tips.variations && tips.variations.length > 0 && (
+              <div className="bg-purple-50/80 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/40 rounded-2xl p-4.5 shadow-xs">
+                <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-purple-200/60 dark:border-purple-800/40">
+                  <span className="text-sm">✨</span>
+                  <h3 className="font-bold text-purple-950 dark:text-purple-200 text-sm">Recipe Variations</h3>
+                </div>
+                <ul className="space-y-1.5">
+                  {tips.variations.map((variation, idx) => (
+                    <li key={idx} className="text-xs text-purple-950/90 dark:text-purple-300/90 flex items-start gap-2 leading-relaxed">
+                      <span className="font-bold">•</span>
+                      <span>{variation}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {tips.storage && (
+              <div className="bg-sky-50/80 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-800/40 rounded-2xl p-4.5 shadow-xs">
+                <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-sky-200/60 dark:border-sky-800/40">
+                  <span className="text-sm">📦</span>
+                  <h3 className="font-bold text-sky-950 dark:text-sky-200 text-sm">Storage Instructions</h3>
+                </div>
+                <p className="text-xs text-sky-950/90 dark:text-sky-300/90 leading-relaxed">{tips.storage}</p>
+              </div>
+            )}
+            {tips.makeAhead && (
+              <div className="bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 rounded-2xl p-4.5 shadow-xs">
+                <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-emerald-200/60 dark:border-emerald-800/40">
+                  <span className="text-sm">⏰</span>
+                  <h3 className="font-bold text-emerald-950 dark:text-emerald-200 text-sm">Make-Ahead Tips</h3>
+                </div>
+                <p className="text-xs text-emerald-950/90 dark:text-emerald-300/90 leading-relaxed">{tips.makeAhead}</p>
+              </div>
+            )}
+            {tips.reheating && (
+              <div className="bg-orange-50/80 dark:bg-orange-950/30 border border-orange-200/80 dark:border-orange-800/40 rounded-2xl p-4.5 shadow-xs">
+                <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-orange-200/60 dark:border-orange-800/40">
+                  <span className="text-sm">🔥</span>
+                  <h3 className="font-bold text-orange-950 dark:text-orange-200 text-sm">Reheating Instructions</h3>
+                </div>
+                <p className="text-xs text-orange-950/90 dark:text-orange-300/90 leading-relaxed">{tips.reheating}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       {/* Action buttons in preview mode */}
       <div className="flex items-center justify-between pt-8 mt-8 border-t border-gray-200 dark:border-slate-700">
