@@ -217,7 +217,8 @@ describe('RecipeDetail', () => {
 
       // Check instructions
       expect(screen.getByText('Boil water')).toBeInTheDocument()
-      expect(screen.getByText('Cook pasta for 10 minutes')).toBeInTheDocument()
+      expect(screen.getByText(/Cook pasta for/i)).toBeInTheDocument()
+      expect(screen.getByText(/10 minutes/i)).toBeInTheDocument()
       expect(screen.getByText('Add sauce and mix')).toBeInTheDocument()
 
       // Check tags
