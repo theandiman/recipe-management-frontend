@@ -1,15 +1,71 @@
 import React, { useState } from 'react'
 import NutritionFacts from '../../../components/NutritionFacts'
 import { scaleIngredient } from '../../../utils/quantityUtils'
-import type { Recipe } from '../../../types/nutrition'
+import type { Recipe, RecipeTips } from '../../../types/nutrition'
 import { InstructionStepWithTimers } from './InstructionStepWithTimers'
 import { FloatingKitchenTimer, type KitchenTimerState } from './FloatingKitchenTimer'
+
+export const getEffectiveTips = (recipe?: Recipe | null): RecipeTips | undefined => {
+  if (!recipe) return undefined
+  const t = ((recipe.tips || {}) as unknown) as Record<string, unknown>
+  const r = (recipe as unknown) as Record<string, unknown>
+
+  const getFirst = (keys: string[]): unknown => {
+    for (const k of keys) {
+      if (t[k] !== undefined && t[k] !== null) return t[k]
+      if (r[k] !== undefined && r[k] !== null) return r[k]
+    }
+    return undefined
+  }
+
+  const rawSubstitutions = getFirst(['substitutions', 'ingredientSubstitutions', 'ingredient_substitutions'])
+  const rawVariations = getFirst(['variations', 'recipeVariations', 'recipe_variations'])
+  const rawStorage = getFirst(['storage', 'storageInstructions', 'storage_instructions'])
+  const rawMakeAhead = getFirst(['makeAhead', 'makeAheadTips', 'make_ahead', 'make_ahead_tips'])
+  const rawReheating = getFirst(['reheating', 'reheatingInstructions', 'reheating_instructions'])
+
+  const formatText = (val: unknown): string | undefined => {
+    if (typeof val === 'string' && val.trim()) return val.trim()
+    if (Array.isArray(val)) {
+      const filtered = val.filter((i): i is string => typeof i === 'string' && i.trim() !== '')
+      return filtered.length ? filtered.join(' • ') : undefined
+    }
+    return undefined
+  }
+
+  const formatList = (val: unknown): string[] | undefined => {
+    if (Array.isArray(val)) {
+      const filtered = val.filter((i): i is string => typeof i === 'string' && i.trim() !== '')
+      return filtered.length ? filtered : undefined
+    }
+    if (typeof val === 'string' && val.trim()) {
+      return [val.trim()]
+    }
+    return undefined
+  }
+
+  const result: RecipeTips = {}
+  const subs = formatList(rawSubstitutions)
+  const vars = formatList(rawVariations)
+  const stor = formatText(rawStorage)
+  const make = formatText(rawMakeAhead)
+  const reht = formatText(rawReheating)
+
+  if (subs) result.substitutions = subs
+  if (vars) result.variations = vars
+  if (stor) result.storage = stor
+  if (make) result.makeAhead = make
+  if (reht) result.reheating = reht
+
+  return Object.keys(result).length > 0 ? result : undefined
+}
 
 interface RecipeBodyProps {
   recipe: Recipe
 }
 
 const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
+  const effectiveTips = getEffectiveTips(recipe)
   const baseServings = typeof recipe.servings === 'number' && recipe.servings > 0 ? recipe.servings : 4
   const [currentServings, setCurrentServings] = useState<number>(baseServings)
   const [activeTimer, setActiveTimer] = useState<KitchenTimerState | null>(null)
@@ -188,7 +244,7 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
       )}
 
       {/* Tips & Tricks */}
-      {recipe.tips && (recipe.tips.substitutions?.length || recipe.tips.variations?.length || recipe.tips.storage || recipe.tips.makeAhead || recipe.tips.reheating) ? (
+      {effectiveTips && (
         <div id="tips-section" className="mt-10 pt-8 border-t border-gray-200 dark:border-slate-800 scroll-mt-24">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2.5 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shadow-xs">
@@ -204,7 +260,7 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Ingredient Substitutions */}
-            {recipe.tips.substitutions && recipe.tips.substitutions.length > 0 && (
+            {effectiveTips.substitutions && effectiveTips.substitutions.length > 0 && (
               <div className="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-amber-200/60 dark:border-amber-800/40">
@@ -212,7 +268,7 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
                     <h3 className="font-bold text-amber-950 dark:text-amber-200 text-sm">Ingredient Substitutions</h3>
                   </div>
                   <ul className="space-y-2">
-                    {recipe.tips.substitutions.map((sub: string, idx: number) => (
+                    {effectiveTips.substitutions.map((sub: string, idx: number) => (
                       <li key={idx} className="text-xs text-amber-950/90 dark:text-amber-300/90 flex items-start gap-2 leading-relaxed">
                         <span className="text-amber-600 dark:text-amber-400 font-bold mt-0.5">•</span>
                         <span>{sub}</span>
@@ -224,7 +280,7 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
             )}
 
             {/* Recipe Variations */}
-            {recipe.tips.variations && recipe.tips.variations.length > 0 && (
+            {effectiveTips.variations && effectiveTips.variations.length > 0 && (
               <div className="bg-purple-50/80 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/40 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-purple-200/60 dark:border-purple-800/40">
@@ -232,7 +288,7 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
                     <h3 className="font-bold text-purple-950 dark:text-purple-200 text-sm">Recipe Variations</h3>
                   </div>
                   <ul className="space-y-2">
-                    {recipe.tips.variations.map((variation: string, idx: number) => (
+                    {effectiveTips.variations.map((variation: string, idx: number) => (
                       <li key={idx} className="text-xs text-purple-950/90 dark:text-purple-300/90 flex items-start gap-2 leading-relaxed">
                         <span className="text-purple-600 dark:text-purple-400 font-bold mt-0.5">•</span>
                         <span>{variation}</span>
@@ -244,46 +300,46 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
             )}
 
             {/* Storage Instructions */}
-            {recipe.tips.storage && (
+            {effectiveTips.storage && (
               <div className="bg-sky-50/80 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-800/40 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-sky-200/60 dark:border-sky-800/40">
                     <span className="p-1.5 rounded-lg bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 text-sm">📦</span>
                     <h3 className="font-bold text-sky-950 dark:text-sky-200 text-sm">Storage Instructions</h3>
                   </div>
-                  <p className="text-xs text-sky-950/90 dark:text-sky-300/90 leading-relaxed">{recipe.tips.storage}</p>
+                  <p className="text-xs text-sky-950/90 dark:text-sky-300/90 leading-relaxed whitespace-pre-line">{effectiveTips.storage}</p>
                 </div>
               </div>
             )}
 
             {/* Make-Ahead Tips */}
-            {recipe.tips.makeAhead && (
+            {effectiveTips.makeAhead && (
               <div className="bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-emerald-200/60 dark:border-emerald-800/40">
                     <span className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-sm">⏰</span>
                     <h3 className="font-bold text-emerald-950 dark:text-emerald-200 text-sm">Make-Ahead Tips</h3>
                   </div>
-                  <p className="text-xs text-emerald-950/90 dark:text-emerald-300/90 leading-relaxed">{recipe.tips.makeAhead}</p>
+                  <p className="text-xs text-emerald-950/90 dark:text-emerald-300/90 leading-relaxed whitespace-pre-line">{effectiveTips.makeAhead}</p>
                 </div>
               </div>
             )}
 
             {/* Reheating Instructions */}
-            {recipe.tips.reheating && (
+            {effectiveTips.reheating && (
               <div className="bg-orange-50/80 dark:bg-orange-950/30 border border-orange-200/80 dark:border-orange-800/40 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-orange-200/60 dark:border-orange-800/40">
                     <span className="p-1.5 rounded-lg bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 text-sm">🔥</span>
                     <h3 className="font-bold text-orange-950 dark:text-orange-200 text-sm">Reheating Instructions</h3>
                   </div>
-                  <p className="text-xs text-orange-950/90 dark:text-orange-300/90 leading-relaxed">{recipe.tips.reheating}</p>
+                  <p className="text-xs text-orange-950/90 dark:text-orange-300/90 leading-relaxed whitespace-pre-line">{effectiveTips.reheating}</p>
                 </div>
               </div>
             )}
           </div>
         </div>
-      ) : null}
+      )}
 
       {/* Floating Kitchen Countdown Timer Widget */}
       <FloatingKitchenTimer

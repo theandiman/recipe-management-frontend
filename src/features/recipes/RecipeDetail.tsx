@@ -458,7 +458,7 @@ export const RecipeDetail: React.FC = () => {
       {/* Sticky Quick Jump Anchor Bar */}
       <QuickJumpNav
         hasNutrition={!!recipe.nutritionalInfo?.perServing}
-        hasTips={!!(recipe.tips?.substitutions?.length || recipe.tips?.variations?.length || recipe.tips?.storage || recipe.tips?.makeAhead || recipe.tips?.reheating)}
+        hasTips={!!(recipe.tips && Object.keys(recipe.tips).length > 0)}
         hasComments={true}
       />
 
