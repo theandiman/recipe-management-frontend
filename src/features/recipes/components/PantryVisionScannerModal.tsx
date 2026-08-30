@@ -18,6 +18,7 @@ export const PantryVisionScannerModal: React.FC<PantryVisionScannerModalProps> =
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [customItem, setCustomItem] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const scanIdRef = useRef(0)
 
   if (!isOpen) return null
 
@@ -25,23 +26,29 @@ export const PantryVisionScannerModal: React.FC<PantryVisionScannerModalProps> =
     const file = e.target.files?.[0]
     if (!file) return
 
+    const currentScanId = ++scanIdRef.current
     const reader = new FileReader()
     reader.onload = async () => {
+      if (currentScanId !== scanIdRef.current) return
       const dataUrl = reader.result as string
       setImagePreview(dataUrl)
       setIsAnalyzing(true)
 
       try {
         const ingredients = await scanIngredientsFromImage(dataUrl)
+        if (currentScanId !== scanIdRef.current) return
         setDetectedItems(ingredients)
         setSelectedItems(ingredients)
       } catch (err) {
         console.error('Failed to scan image:', err)
+        if (currentScanId !== scanIdRef.current) return
         const fallback = ['tomatoes', 'bell pepper', 'eggs', 'cheddar cheese', 'garlic', 'onion']
         setDetectedItems(fallback)
         setSelectedItems(fallback)
       } finally {
-        setIsAnalyzing(false)
+        if (currentScanId === scanIdRef.current) {
+          setIsAnalyzing(false)
+        }
       }
     }
     reader.readAsDataURL(file)
@@ -60,8 +67,8 @@ export const PantryVisionScannerModal: React.FC<PantryVisionScannerModalProps> =
     if (!customItem.trim()) return
     const formatted = customItem.trim().toLowerCase()
     if (!detectedItems.includes(formatted)) {
-      setDetectedItems([...detectedItems, formatted])
-      setSelectedItems([...selectedItems, formatted])
+      setDetectedItems((prev) => [...prev, formatted])
+      setSelectedItems((prev) => [...prev, formatted])
     }
     setCustomItem('')
   }
@@ -74,10 +81,14 @@ export const PantryVisionScannerModal: React.FC<PantryVisionScannerModalProps> =
   }
 
   const handleResetAndClose = () => {
+    scanIdRef.current++
     setImagePreview(null)
     setDetectedItems([])
     setSelectedItems([])
     setIsAnalyzing(false)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
     onClose()
   }
 
