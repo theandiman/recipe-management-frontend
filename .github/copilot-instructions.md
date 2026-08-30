@@ -26,13 +26,13 @@ The recipe management frontend is ready for development with:
 - No Terraform files in this repository
 - See INFRASTRUCTURE.md for complete guide
 
-## Development
+## Development & PR Workflow Rules
 Start development: `npm run dev`
 Build for production: `npm run build`
 Deploy to Firebase: `firebase deploy` (after configuring Firebase CLI with project from infrastructure repo)
 
 Once work has completed:
-
 - Mark PR as ready to review
 - Monitor PR for build failures and fix
-- Monitor PR for comments and address
+- MANDATORY: Inspect PR comments (`gh pr view <pr> --comments` & `gh api repos/:owner/:repo/pulls/:pr/comments`) and resolve all review feedback before merging
+- Never merge with `--admin` flag; merge via standard `gh pr merge --squash --delete-branch`
