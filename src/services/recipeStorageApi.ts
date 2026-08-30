@@ -58,6 +58,14 @@ const parseTimeToMinutes = (value?: string | number | unknown): number | undefin
   return Number.isNaN(num) || num <= 0 ? undefined : num
 }
 
+const getFirstField = (obj: Record<string, unknown> | null | undefined, keys: string[]): unknown => {
+  if (!obj) return undefined
+  for (const key of keys) {
+    if (obj[key] !== undefined && obj[key] !== null) return obj[key]
+  }
+  return undefined
+}
+
 const normalizeTipText = (value: unknown): string | undefined => {
   if (typeof value === 'string') {
     const trimmed = value.trim()
@@ -65,21 +73,43 @@ const normalizeTipText = (value: unknown): string | undefined => {
   }
 
   const items = normalizeStringArray(value)
-  return items.length ? items.join(' ') : undefined
+  return items.length ? items.join(' • ') : undefined
 }
 
-const normalizeTips = (tips?: Record<string, unknown> | RecipeTips | null): RecipeTips | undefined => {
-  if (!tips || typeof tips !== 'object') {
-    return undefined
-  }
+const normalizeTips = (
+  tips?: Record<string, unknown> | RecipeTips | null,
+  rawRecipe?: Record<string, unknown> | null
+): RecipeTips | undefined => {
+  const tipsObj = tips && typeof tips === 'object' ? (tips as Record<string, unknown>) : null
+  const rawObj = rawRecipe && typeof rawRecipe === 'object' ? rawRecipe : null
+
+  const substitutionsRaw =
+    getFirstField(tipsObj, ['substitutions', 'ingredientSubstitutions', 'ingredient_substitutions']) ??
+    getFirstField(rawObj, ['substitutions', 'ingredientSubstitutions', 'ingredient_substitutions'])
+
+  const variationsRaw =
+    getFirstField(tipsObj, ['variations', 'recipeVariations', 'recipe_variations']) ??
+    getFirstField(rawObj, ['variations', 'recipeVariations', 'recipe_variations'])
+
+  const makeAheadRaw =
+    getFirstField(tipsObj, ['makeAhead', 'makeAheadTips', 'make_ahead', 'make_ahead_tips']) ??
+    getFirstField(rawObj, ['makeAhead', 'makeAheadTips', 'make_ahead', 'make_ahead_tips'])
+
+  const storageRaw =
+    getFirstField(tipsObj, ['storage', 'storageInstructions', 'storage_instructions']) ??
+    getFirstField(rawObj, ['storage', 'storageInstructions', 'storage_instructions'])
+
+  const reheatingRaw =
+    getFirstField(tipsObj, ['reheating', 'reheatingInstructions', 'reheating_instructions']) ??
+    getFirstField(rawObj, ['reheating', 'reheatingInstructions', 'reheating_instructions'])
+
+  const substitutions = normalizeStringArray(substitutionsRaw)
+  const variations = normalizeStringArray(variationsRaw)
+  const makeAhead = normalizeTipText(makeAheadRaw)
+  const storage = normalizeTipText(storageRaw)
+  const reheating = normalizeTipText(reheatingRaw)
 
   const normalizedTips: RecipeTips = {}
-  const substitutions = normalizeStringArray((tips as { substitutions?: unknown }).substitutions)
-  const variations = normalizeStringArray((tips as { variations?: unknown }).variations)
-  const makeAhead = normalizeTipText((tips as { makeAhead?: unknown }).makeAhead)
-  const storage = normalizeTipText((tips as { storage?: unknown }).storage)
-  const reheating = normalizeTipText((tips as { reheating?: unknown }).reheating)
-
   if (substitutions.length) normalizedTips.substitutions = substitutions
   if (variations.length) normalizedTips.variations = variations
   if (makeAhead) normalizedTips.makeAhead = makeAhead
@@ -132,7 +162,7 @@ const normalizeRecipe = (recipe: ManagementRecipePayload): Recipe => {
     normalized.nutritionalInfo = { perServing: recipe.nutrition }
   }
 
-  const normalizedTips = normalizeTips(recipe.tips)
+  const normalizedTips = normalizeTips(recipe.tips, recipe as Record<string, unknown>)
   if (normalizedTips) {
     normalized.tips = normalizedTips
   }

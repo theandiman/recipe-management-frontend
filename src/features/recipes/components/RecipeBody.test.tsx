@@ -110,4 +110,24 @@ describe('RecipeBody', () => {
     expect(screen.getByText('Gluten-Free')).toBeInTheDocument()
     expect(screen.getByText('Vegan')).toBeInTheDocument()
   })
+
+  it('renders tips sections when using alias field names', () => {
+    const recipe: Recipe = {
+      ...baseRecipe,
+      tips: {
+        ingredientSubstitutions: ['Use almond milk'],
+        recipeVariations: ['Add cinnamon'],
+        storageInstructions: ['Keep refrigerated'],
+        makeAheadTips: ['Freeze before baking'],
+        reheatingInstructions: ['Microwave 45 seconds'],
+      } as any,
+    }
+    render(<RecipeBody recipe={recipe} />)
+    expect(screen.getByText(/Tips & Tricks/i)).toBeInTheDocument()
+    expect(screen.getByText('Use almond milk')).toBeInTheDocument()
+    expect(screen.getByText('Add cinnamon')).toBeInTheDocument()
+    expect(screen.getByText('Keep refrigerated')).toBeInTheDocument()
+    expect(screen.getByText('Freeze before baking')).toBeInTheDocument()
+    expect(screen.getByText('Microwave 45 seconds')).toBeInTheDocument()
+  })
 })
