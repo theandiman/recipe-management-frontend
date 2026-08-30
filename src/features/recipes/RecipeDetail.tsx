@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { getRecipe, updateRecipeSharing } from '../../services/recipeStorageApi'
+import { getRecipe, updateRecipeSharing, deleteRecipe } from '../../services/recipeStorageApi'
 import { getUserProfile, type UserProfile } from '../../services/userApi'
 import { CookingMode } from '../../components/CookingMode'
 import GlobeIcon from '../../components/GlobeIcon'
@@ -37,6 +37,11 @@ const LinkIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
   </svg>
 )
+const TrashIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  </svg>
+)
 
 export const RecipeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -55,10 +60,31 @@ export const RecipeDetail: React.FC = () => {
   const [topRating, setTopRating] = useState<number>(0)
   const [topRatingCount, setTopRatingCount] = useState<number>(0)
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const isOwner = !!currentUser && !!recipe?.userId && currentUser.uid === recipe.userId
   const hasTips = useMemo(() => !!getEffectiveTips(recipe), [recipe])
+
+  const handleDeleteRecipe = async () => {
+    if (!id || !recipe || !isOwner) return
+    try {
+      setIsDeleting(true)
+      setDeleteError(null)
+      await deleteRecipe(id)
+      setIsDeleteModalOpen(false)
+      navigate('/dashboard/recipes', { replace: true })
+    } catch (err: unknown) {
+      console.error('Failed to delete recipe:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete recipe'
+      const apiError = err as { response?: { data?: { message?: string } } }
+      setDeleteError(apiError.response?.data?.message || errorMessage)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   useRecipeKeyboardShortcuts({
     onCookMode: () => setIsCookingMode(true),
@@ -346,6 +372,17 @@ export const RecipeDetail: React.FC = () => {
                     <span className="text-sm">🖨️</span>
                     Print recipe
                   </button>
+
+                  {isOwner && (
+                    <button
+                      role="menuitem"
+                      onClick={() => { setIsMenuOpen(false); setDeleteError(null); setIsDeleteModalOpen(true) }}
+                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors border-t border-gray-100 dark:border-slate-700/60 font-medium"
+                    >
+                      <TrashIcon />
+                      Delete recipe
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -511,6 +548,63 @@ export const RecipeDetail: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-[fadeIn_0.15s_ease]"
+        >
+          <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-200 dark:border-slate-700 space-y-4">
+            <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
+              <div className="p-2.5 bg-red-100 dark:bg-red-950/60 rounded-full">
+                <TrashIcon />
+              </div>
+              <h3 id="delete-modal-title" className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                Delete Recipe?
+              </h3>
+            </div>
+
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Are you sure you want to delete <span className="font-semibold text-gray-900 dark:text-gray-100">&ldquo;{recipe.recipeName}&rdquo;</span>? This action cannot be undone.
+            </p>
+
+            {deleteError && (
+              <div role="alert" className="p-3 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-xs text-red-700 dark:text-red-300 rounded-lg">
+                {deleteError}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => { setIsDeleteModalOpen(false); setDeleteError(null) }}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteRecipe}
+                disabled={isDeleting}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <span>Delete Recipe</span>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

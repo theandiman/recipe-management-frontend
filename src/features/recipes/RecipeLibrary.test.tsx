@@ -11,6 +11,13 @@ vi.mock('../../services/recipeStorageApi', () => ({
   deleteRecipe: vi.fn()
 }))
 
+// Mock AuthContext
+vi.mock('../../features/auth/AuthContext', () => ({
+  useAuth: () => ({
+    user: { uid: 'user-123', email: 'test@example.com' },
+  }),
+}))
+
 // Mock BookmarkButton to avoid AuthContext and SavedRecipesContext dependencies
 vi.mock('../../components/BookmarkButton', () => ({
   default: () => null,

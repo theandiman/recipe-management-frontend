@@ -10,9 +10,11 @@ import { useRecipeSearchFilters } from './hooks/useRecipeSearchFilters'
 import { SORT_OPTIONS, type SortOption } from './utils/recipeSorting'
 import { getActiveFilterCount } from './utils/recipeFiltering'
 import type { Recipe } from '../../types/nutrition'
+import { useAuth } from '../auth/AuthContext'
 
 export const RecipeLibrary: React.FC = () => {
   const navigate = useNavigate()
+  const { user: currentUser } = useAuth()
   const { searchQuery, setSearchQuery } = useOmniSearch()
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
@@ -406,7 +408,7 @@ export const RecipeLibrary: React.FC = () => {
                       key={recipe.id}
                       recipe={recipe}
                       onView={(id) => navigate(`/dashboard/recipes/${id}`)}
-                      onDelete={(r) => r.id && setDeleteConfirm({ id: r.id, title: r.recipeName })}
+                      onDelete={(currentUser && (!recipe.userId || recipe.userId === currentUser.uid)) ? ((r) => r.id && setDeleteConfirm({ id: r.id, title: r.recipeName })) : undefined}
                       showBookmark
                     />
                   ))}
@@ -459,18 +461,20 @@ export const RecipeLibrary: React.FC = () => {
                             ⏱ {recipe.prepTime} min
                           </span>
                         )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (recipe.id) setDeleteConfirm({ id: recipe.id, title: recipe.recipeName })
-                          }}
-                          className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-                          title="Delete recipe"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
+                        {Boolean(currentUser && (!recipe.userId || recipe.userId === currentUser.uid)) && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (recipe.id) setDeleteConfirm({ id: recipe.id, title: recipe.recipeName })
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                            title="Delete recipe"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
