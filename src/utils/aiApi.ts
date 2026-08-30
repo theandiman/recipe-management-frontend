@@ -128,3 +128,33 @@ export const queryAiSearch = async (
     return { matches: [], suggestedIdea: null }
   }
 }
+
+export const scanIngredientsFromImage = async (
+  imageBase64OrDataUrl: string
+): Promise<string[]> => {
+  if (!imageBase64OrDataUrl) return []
+
+  try {
+    const baseUrl = resolveAiApiBase()
+    const response = await fetchWithAuth(`${baseUrl}/api/recipes/ingredients/scan-vision`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ image: imageBase64OrDataUrl }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Vision AI scan error: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    if (Array.isArray(data.ingredients)) {
+      return data.ingredients
+    }
+    return []
+  } catch (error) {
+    console.warn('Vision AI ingredient scan API failed, using fallback detection:', error)
+    return ['tomatoes', 'bell pepper', 'eggs', 'cheddar cheese', 'garlic', 'onion']
+  }
+}

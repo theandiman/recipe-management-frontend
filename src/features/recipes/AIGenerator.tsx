@@ -9,6 +9,7 @@ import type { Recipe } from '../../types/nutrition'
 import type { RootState } from '../../store'
 import RecipeBody from './components/RecipeBody'
 import { AIRemixToolbar } from './components/AIRemixToolbar'
+import { PantryVisionScannerModal } from './components/PantryVisionScannerModal'
 
 export const AIGenerator: React.FC = () => {
   const dispatch = useAppDispatch()
@@ -23,6 +24,7 @@ export const AIGenerator: React.FC = () => {
   const [saveLoading, setSaveLoading] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [isVisionScannerOpen, setIsVisionScannerOpen] = useState(false)
   const progressRef = useRef<number>(0)
 
   let parsedRecipe: Recipe | null = null
@@ -45,6 +47,13 @@ export const AIGenerator: React.FC = () => {
 
   const handleRemoveIngredient = (index: number) => {
     setPantryItems(pantryItems.filter((_, i) => i !== index))
+  }
+
+  const handleImportScannedIngredients = (newItems: string[]) => {
+    const unique = newItems.map((i) => i.trim().toLowerCase()).filter((item) => item && !pantryItems.includes(item))
+    if (unique.length > 0) {
+      setPantryItems([...pantryItems, ...unique])
+    }
   }
 
   const handlePantryInputChange = (value: string) => {
@@ -185,9 +194,19 @@ export const AIGenerator: React.FC = () => {
 
             {/* Pantry Items */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-                Available Ingredients ({pantryItems.length})
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                  Available Ingredients ({pantryItems.length})
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsVisionScannerOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-semibold text-xs rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                >
+                  <span>📷</span>
+                  <span>Scan Fridge / Pantry</span>
+                </button>
+              </div>
               <div className="relative">
                 <input
                   type="text"
@@ -449,6 +468,13 @@ export const AIGenerator: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Pantry Vision AI Scanner Modal */}
+      <PantryVisionScannerModal
+        isOpen={isVisionScannerOpen}
+        onClose={() => setIsVisionScannerOpen(false)}
+        onImportIngredients={handleImportScannedIngredients}
+      />
     </div>
   )
 }
