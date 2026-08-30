@@ -7,6 +7,8 @@ import {
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   type User as FirebaseUser
 } from 'firebase/auth'
 import { auth } from '../../config/firebase'
@@ -52,6 +54,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return
     }
 
+    // Process redirect sign-in result if returning from a redirect login flow
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          setUser(convertFirebaseUser(result.user))
+        }
+      })
+      .catch((err) => {
+        console.error('Redirect sign-in error:', err)
+      })
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         setUser(convertFirebaseUser(firebaseUser))
@@ -89,15 +102,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true)
     setError(null)
     
+    const provider = new GoogleAuthProvider()
     try {
-      const provider = new GoogleAuthProvider()
       const userCredential = await signInWithPopup(auth, provider)
-      
-      // Note: Email allowlist is enforced by Firebase Cloud Functions
-      // If we get here, the email was allowed
       setUser(convertFirebaseUser(userCredential.user))
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Google sign-in error:', err)
+      const firebaseError = err as { code?: string; message?: string }
+
+      // Fallback to redirect if popup or framing is blocked/cancelled
+      if (
+        firebaseError.code === 'auth/popup-blocked' ||
+        firebaseError.code === 'auth/popup-closed-by-user' ||
+        firebaseError.code === 'auth/cancelled-popup-request' ||
+        (firebaseError.message && firebaseError.message.includes('Frame'))
+      ) {
+        try {
+          await signInWithRedirect(auth, provider)
+          return
+        } catch (redirectErr) {
+          const errorMessage = getFirebaseErrorMessage(redirectErr)
+          setError(errorMessage)
+          throw new Error(errorMessage)
+        }
+      }
+
       const errorMessage = getFirebaseErrorMessage(err)
       setError(errorMessage)
       throw new Error(errorMessage)
