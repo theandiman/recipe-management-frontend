@@ -190,7 +190,8 @@ export const AIGenerator: React.FC = () => {
         {result && (
           <button
             onClick={handleNewRecipe}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white hover:bg-emerald-700 font-semibold text-sm rounded-xl transition-all shadow-sm hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+            disabled={loading}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white hover:bg-emerald-700 font-semibold text-sm rounded-xl transition-all shadow-sm hover:scale-105 active:scale-95 disabled:hover:scale-100 disabled:active:scale-100 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
           >
             <span>✨</span>
             <span>Create New Recipe</span>
