@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { generateRecipe, remixRecipe, generateImage, clearImage } from './recipeSlice'
+import { generateRecipe, remixRecipe, generateImage, clearImage, clearRecipe } from './recipeSlice'
 import { motion } from 'framer-motion'
 import ServingsStepper from '../../components/ServingsStepper'
 import { scaleIngredient } from '../../utils/quantityUtils'
@@ -133,6 +133,17 @@ export const AIGenerator: React.FC = () => {
     dispatch(clearImage())
   }
 
+  const handleNewRecipe = () => {
+    dispatch(clearRecipe())
+    setPrompt('')
+    setPantryItems([])
+    setPantryInput('')
+    setSelectedDiets([])
+    setTargetServings(null)
+    setSaveSuccess(false)
+    setSaveError(null)
+  }
+
   // Progress simulation during loading
   useEffect(() => {
     if (loading) {
@@ -165,14 +176,26 @@ export const AIGenerator: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <div className="flex items-center space-x-3 mb-2">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">AI Recipe Generator</h1>
-          <span className="px-3 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100 rounded-full">
-            POWERED BY AI
-          </span>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center space-x-3 mb-2">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">AI Recipe Generator</h1>
+            <span className="px-3 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 rounded-full">
+              POWERED BY AI
+            </span>
+          </div>
+          <p className="text-gray-600 dark:text-gray-300">Generate custom recipes based on your preferences and ingredients</p>
         </div>
-        <p className="text-gray-600 dark:text-gray-300">Generate custom recipes based on your preferences and ingredients</p>
+
+        {result && (
+          <button
+            onClick={handleNewRecipe}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white hover:bg-emerald-700 font-semibold text-sm rounded-xl transition-all shadow-sm hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+          >
+            <span>✨</span>
+            <span>Create New Recipe</span>
+          </button>
+        )}
       </div>
 
       {!result && (
@@ -377,6 +400,17 @@ export const AIGenerator: React.FC = () => {
                       <span>Regenerate</span>
                     </>
                   )}
+                </button>
+
+                <button
+                  onClick={handleNewRecipe}
+                  disabled={loading}
+                  aria-label="New recipe"
+                  title="Create another recipe"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                >
+                  <span>✨</span>
+                  <span>New Recipe</span>
                 </button>
               </div>
             </div>
