@@ -740,7 +740,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   value={storageInstructions || ''}
                   onChange={(e) => setStorageInstructions(e.target.value)}
                   rows={2}
-                  placeholder="e.g., Refrigerate in an airtight container for up to 4 days."
+                  placeholder="e.g., Refrigerate in an airtight container for up to three days."
                   className={UI_STYLES.input}
                 />
               </div>
