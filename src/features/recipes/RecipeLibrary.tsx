@@ -408,7 +408,7 @@ export const RecipeLibrary: React.FC = () => {
                       key={recipe.id}
                       recipe={recipe}
                       onView={(id) => navigate(`/dashboard/recipes/${id}`)}
-                      onDelete={(!currentUser || !recipe.userId || recipe.userId === currentUser.uid) ? ((r) => r.id && setDeleteConfirm({ id: r.id, title: r.recipeName })) : undefined}
+                      onDelete={(currentUser && (!recipe.userId || recipe.userId === currentUser.uid)) ? ((r) => r.id && setDeleteConfirm({ id: r.id, title: r.recipeName })) : undefined}
                       showBookmark
                     />
                   ))}
@@ -461,7 +461,7 @@ export const RecipeLibrary: React.FC = () => {
                             ⏱ {recipe.prepTime} min
                           </span>
                         )}
-                        {(!currentUser || !recipe.userId || recipe.userId === currentUser.uid) && (
+                        {Boolean(currentUser && (!recipe.userId || recipe.userId === currentUser.uid)) && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
