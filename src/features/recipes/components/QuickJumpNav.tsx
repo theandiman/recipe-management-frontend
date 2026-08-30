@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 interface QuickJumpNavProps {
   hasNutrition?: boolean
@@ -8,18 +8,21 @@ interface QuickJumpNavProps {
 
 export const QuickJumpNav: React.FC<QuickJumpNavProps> = ({
   hasNutrition = true,
-  hasTips = true,
+  hasTips = false,
   hasComments = true,
 }) => {
   const [activeId, setActiveId] = useState<string>('ingredients-section')
 
-  const navItems = [
-    { id: 'ingredients-section', label: 'Ingredients', icon: '📋' },
-    { id: 'instructions-section', label: 'Instructions', icon: '👩‍🍳' },
-    ...(hasNutrition ? [{ id: 'nutrition-section', label: 'Nutrition', icon: '🥗' }] : []),
-    ...(hasTips ? [{ id: 'tips-section', label: 'Tips', icon: '💡' }] : []),
-    ...(hasComments ? [{ id: 'recipe-comments-section', label: 'Discussion', icon: '💬' }] : []),
-  ]
+  const navItems = useMemo(
+    () => [
+      { id: 'ingredients-section', label: 'Ingredients', icon: '📋' },
+      { id: 'instructions-section', label: 'Instructions', icon: '👩‍🍳' },
+      ...(hasNutrition ? [{ id: 'nutrition-section', label: 'Nutrition', icon: '🥗' }] : []),
+      ...(hasTips ? [{ id: 'tips-section', label: 'Tips', icon: '💡' }] : []),
+      ...(hasComments ? [{ id: 'recipe-comments-section', label: 'Discussion', icon: '💬' }] : []),
+    ],
+    [hasNutrition, hasTips, hasComments]
+  )
 
   useEffect(() => {
     const handleScroll = () => {
