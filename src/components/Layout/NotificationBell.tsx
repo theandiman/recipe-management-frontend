@@ -47,13 +47,22 @@ export const NotificationBell: React.FC = () => {
     }
   }
 
+  const handleMarkItemRead = async (id: string) => {
+    try {
+      await markNotificationsAsRead([id])
+      fetchNotifications()
+    } catch (err) {
+      console.error('Failed to mark notification read:', err)
+    }
+  }
+
   const unreadCount = data?.unreadCount || 0
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors focus:outline-none"
+        className="relative p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors focus:outline-none cursor-pointer"
         aria-label="Activity Notifications"
         title="Activity Notifications"
       >
@@ -70,6 +79,7 @@ export const NotificationBell: React.FC = () => {
           notifications={data?.notifications || []}
           unreadCount={unreadCount}
           onMarkAllRead={handleMarkAllRead}
+          onMarkItemRead={handleMarkItemRead}
           onClose={() => setIsOpen(false)}
         />
       )}
