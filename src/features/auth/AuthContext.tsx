@@ -7,8 +7,6 @@ import {
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
   type User as FirebaseUser
 } from 'firebase/auth'
 import { auth } from '../../config/firebase'
@@ -53,17 +51,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false)
       return
     }
-
-    // Process redirect sign-in result if returning from a redirect login flow
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result?.user) {
-          setUser(convertFirebaseUser(result.user))
-        }
-      })
-      .catch((err) => {
-        console.error('Redirect sign-in error:', err)
-      })
 
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
