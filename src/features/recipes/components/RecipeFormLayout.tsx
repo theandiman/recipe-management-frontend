@@ -450,20 +450,22 @@ export const RecipeFormLayout: React.FC<RecipeFormLayoutProps> = ({
   )
 
   const previewTips = useMemo(() => {
-    const hasTips = Boolean(
-      storageInstructions?.trim() ||
-      makeAheadTips?.trim() ||
-      reheatingInstructions?.trim() ||
-      substitutions?.length ||
-      variations?.length
-    )
-    if (!hasTips) return undefined
+    const storage = storageInstructions?.trim()
+    const makeAhead = makeAheadTips?.trim()
+    const reheating = reheatingInstructions?.trim()
+    const subs = substitutions?.length ? substitutions : undefined
+    const vars = variations?.length ? variations : undefined
+
+    if (!storage && !makeAhead && !reheating && !subs && !vars) {
+      return undefined
+    }
+
     return {
-      storage: storageInstructions?.trim() || undefined,
-      makeAhead: makeAheadTips?.trim() || undefined,
-      reheating: reheatingInstructions?.trim() || undefined,
-      substitutions: substitutions?.length ? substitutions : undefined,
-      variations: variations?.length ? variations : undefined,
+      ...(storage && { storage }),
+      ...(makeAhead && { makeAhead }),
+      ...(reheating && { reheating }),
+      ...(subs && { substitutions: subs }),
+      ...(vars && { variations: vars }),
     }
   }, [storageInstructions, makeAheadTips, reheatingInstructions, substitutions, variations])
 

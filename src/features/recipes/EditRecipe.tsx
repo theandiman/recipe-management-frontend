@@ -25,9 +25,9 @@ export const EditRecipe: React.FC = () => {
   const { validateForm, buildRecipeObject } = useRecipeValidation()
 
   const currentTips = useMemo(() => {
-    const storage = form.storageInstructions?.trim() || undefined
-    const makeAhead = form.makeAheadTips?.trim() || undefined
-    const reheating = form.reheatingInstructions?.trim() || undefined
+    const storage = form.storageInstructions?.trim()
+    const makeAhead = form.makeAheadTips?.trim()
+    const reheating = form.reheatingInstructions?.trim()
     const substitutions = form.substitutions?.length ? form.substitutions : undefined
     const variations = form.variations?.length ? form.variations : undefined
 
@@ -36,11 +36,11 @@ export const EditRecipe: React.FC = () => {
     }
 
     return {
-      storage,
-      makeAhead,
-      reheating,
-      substitutions,
-      variations,
+      ...(storage && { storage }),
+      ...(makeAhead && { makeAhead }),
+      ...(reheating && { reheating }),
+      ...(substitutions && { substitutions }),
+      ...(variations && { variations }),
     }
   }, [form.storageInstructions, form.makeAheadTips, form.reheatingInstructions, form.substitutions, form.variations])
 
