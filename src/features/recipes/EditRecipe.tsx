@@ -113,20 +113,20 @@ export const EditRecipe: React.FC = () => {
         form.setTags(data.tags || [])
         form.setDietaryRestrictions(data.dietaryRestrictions || [])
         form.setImagePreview(data.imageUrl || null)
-        const effectiveTips = data.tips || (data as unknown as Record<string, unknown>)
-        if (effectiveTips) {
-          const storage = effectiveTips.storage || (effectiveTips as Record<string, unknown>).storageInstructions
-          const makeAhead = effectiveTips.makeAhead || (effectiveTips as Record<string, unknown>).makeAheadTips
-          const reheating = effectiveTips.reheating || (effectiveTips as Record<string, unknown>).reheatingInstructions
-          const substitutions = effectiveTips.substitutions || (effectiveTips as Record<string, unknown>).ingredientSubstitutions
-          const variations = effectiveTips.variations || (effectiveTips as Record<string, unknown>).recipeVariations
+        const tips = (data.tips || {}) as Record<string, unknown>
+        const raw = data as unknown as Record<string, unknown>
 
-          if (typeof storage === 'string' && storage) form.setStorageInstructions(storage)
-          if (typeof makeAhead === 'string' && makeAhead) form.setMakeAheadTips(makeAhead)
-          if (typeof reheating === 'string' && reheating) form.setReheatingInstructions(reheating)
-          if (Array.isArray(substitutions)) form.setSubstitutions(substitutions)
-          if (Array.isArray(variations)) form.setVariations(variations)
-        }
+        const storage = tips.storage || tips.storageInstructions || raw.storage || raw.storageInstructions
+        const makeAhead = tips.makeAhead || tips.makeAheadTips || raw.makeAhead || raw.makeAheadTips
+        const reheating = tips.reheating || tips.reheatingInstructions || raw.reheating || raw.reheatingInstructions
+        const substitutions = tips.substitutions || tips.ingredientSubstitutions || raw.substitutions || raw.ingredientSubstitutions
+        const variations = tips.variations || tips.recipeVariations || raw.variations || raw.recipeVariations
+
+        if (typeof storage === 'string' && storage) form.setStorageInstructions(storage)
+        if (typeof makeAhead === 'string' && makeAhead) form.setMakeAheadTips(makeAhead)
+        if (typeof reheating === 'string' && reheating) form.setReheatingInstructions(reheating)
+        if (Array.isArray(substitutions)) form.setSubstitutions(substitutions)
+        if (Array.isArray(variations)) form.setVariations(variations)
         setRecipeOverrides({
           nutritionalInfo: data.nutritionalInfo,
           tips: data.tips,
