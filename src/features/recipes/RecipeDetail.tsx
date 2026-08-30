@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getRecipe, updateRecipeSharing } from '../../services/recipeStorageApi'
 import { getUserProfile, type UserProfile } from '../../services/userApi'
@@ -7,7 +7,7 @@ import GlobeIcon from '../../components/GlobeIcon'
 import BookmarkButton from '../../components/BookmarkButton'
 import LikeButton from '../../components/LikeButton'
 import type { Recipe } from '../../types/nutrition'
-import RecipeBody from './components/RecipeBody'
+import RecipeBody, { getEffectiveTips } from './components/RecipeBody'
 import { HeroMetadataOverlay } from './components/HeroMetadataOverlay'
 import { QuickJumpNav } from './components/QuickJumpNav'
 import { RecipeReviewsSection } from './components/RecipeReviewsSection'
@@ -58,6 +58,7 @@ export const RecipeDetail: React.FC = () => {
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const isOwner = !!currentUser && !!recipe?.userId && currentUser.uid === recipe.userId
+  const hasTips = useMemo(() => !!getEffectiveTips(recipe), [recipe])
 
   useRecipeKeyboardShortcuts({
     onCookMode: () => setIsCookingMode(true),
@@ -458,7 +459,7 @@ export const RecipeDetail: React.FC = () => {
       {/* Sticky Quick Jump Anchor Bar */}
       <QuickJumpNav
         hasNutrition={!!recipe.nutritionalInfo?.perServing}
-        hasTips={!!(recipe.tips && Object.keys(recipe.tips).length > 0)}
+        hasTips={hasTips}
         hasComments={true}
       />
 
