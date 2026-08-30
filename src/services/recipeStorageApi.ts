@@ -221,6 +221,11 @@ export interface CreateRecipeRequest {
  * Convert AI-generated Recipe to CreateRecipeRequest
  */
 const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
+  const normalizedTips = normalizeTips(
+    recipe.tips as Record<string, unknown>,
+    recipe as unknown as Record<string, unknown>
+  )
+
   const mapTips = (tips?: RecipeTips): Record<string, string[]> | undefined => {
     if (!tips) return undefined
 
@@ -256,7 +261,7 @@ const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
     cookTime: recipe.cookTimeMinutes ?? parseTimeToMinutes(recipe.cookTime),
     servings: RecipeUtils.getServingsAsNumber(recipe.servings),
     nutrition: recipe.nutritionalInfo?.perServing,
-    tips: mapTips(recipe.tips),
+    tips: mapTips(normalizedTips),
     imageUrl,
     source: recipe.source || 'ai-generated',
     tags: recipe.tags || [],
