@@ -13,6 +13,7 @@ import { HelpPage } from '../../features/help/HelpPage'
 import { CommunityPage } from '../../features/community/CommunityPage'
 import { SavedRecipesPage } from '../../features/recipes/SavedRecipesPage'
 import { UserProfilePage } from '../../features/users/UserProfilePage'
+import { NotificationBell } from './NotificationBell'
 import { OmniSearchProvider, useOmniSearch } from '../search/OmniSearchContext'
 
 const DashboardLayoutInner: React.FC = () => {
@@ -328,6 +329,7 @@ const DashboardLayoutInner: React.FC = () => {
             </button>
           </div>
         )}
+        <NotificationBell />
         <button
           onClick={() => navigate('/dashboard/profile')}
           className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors shadow-sm"

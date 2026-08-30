@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useAppDispatch, useAppSelector } from '../../store'
-import { generateRecipe, generateImage, clearImage } from './recipeSlice'
+import { generateRecipe, remixRecipe, generateImage, clearImage, clearRecipe } from './recipeSlice'
 import { motion } from 'framer-motion'
 import ServingsStepper from '../../components/ServingsStepper'
 import { scaleIngredient } from '../../utils/quantityUtils'
@@ -8,6 +8,8 @@ import { saveRecipe } from '../../services/recipeStorageApi'
 import type { Recipe } from '../../types/nutrition'
 import type { RootState } from '../../store'
 import RecipeBody from './components/RecipeBody'
+import { AIRemixToolbar } from './components/AIRemixToolbar'
+import { PantryVisionScannerModal } from './components/PantryVisionScannerModal'
 
 export const AIGenerator: React.FC = () => {
   const dispatch = useAppDispatch()
@@ -22,6 +24,7 @@ export const AIGenerator: React.FC = () => {
   const [saveLoading, setSaveLoading] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [isVisionScannerOpen, setIsVisionScannerOpen] = useState(false)
   const progressRef = useRef<number>(0)
 
   let parsedRecipe: Recipe | null = null
@@ -46,6 +49,13 @@ export const AIGenerator: React.FC = () => {
     setPantryItems(pantryItems.filter((_, i) => i !== index))
   }
 
+  const handleImportScannedIngredients = (newItems: string[]) => {
+    const unique = newItems.map((i) => i.trim().toLowerCase()).filter((item) => item && !pantryItems.includes(item))
+    if (unique.length > 0) {
+      setPantryItems([...pantryItems, ...unique])
+    }
+  }
+
   const handlePantryInputChange = (value: string) => {
     setPantryInput(value)
   }
@@ -64,6 +74,14 @@ export const AIGenerator: React.FC = () => {
       prompt,
       pantryItems,
       dietaryPreferences: selectedDiets.length > 0 ? selectedDiets : undefined
+    }))
+  }
+
+  const handleRemixRecipe = (instruction: string) => {
+    if (!parsedRecipe) return
+    dispatch(remixRecipe({
+      currentRecipe: parsedRecipe,
+      instruction,
     }))
   }
 
@@ -115,6 +133,17 @@ export const AIGenerator: React.FC = () => {
     dispatch(clearImage())
   }
 
+  const handleNewRecipe = () => {
+    dispatch(clearRecipe())
+    setPrompt('')
+    setPantryItems([])
+    setPantryInput('')
+    setSelectedDiets([])
+    setTargetServings(null)
+    setSaveSuccess(false)
+    setSaveError(null)
+  }
+
   // Progress simulation during loading
   useEffect(() => {
     if (loading) {
@@ -147,14 +176,27 @@ export const AIGenerator: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <div className="flex items-center space-x-3 mb-2">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">AI Recipe Generator</h1>
-          <span className="px-3 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100 rounded-full">
-            POWERED BY AI
-          </span>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center space-x-3 mb-2">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">AI Recipe Generator</h1>
+            <span className="px-3 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 rounded-full">
+              POWERED BY AI
+            </span>
+          </div>
+          <p className="text-gray-600 dark:text-gray-300">Generate custom recipes based on your preferences and ingredients</p>
         </div>
-        <p className="text-gray-600 dark:text-gray-300">Generate custom recipes based on your preferences and ingredients</p>
+
+        {result && (
+          <button
+            onClick={handleNewRecipe}
+            disabled={loading}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white hover:bg-emerald-700 font-semibold text-sm rounded-xl transition-all shadow-sm hover:scale-105 active:scale-95 disabled:hover:scale-100 disabled:active:scale-100 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
+          >
+            <span>✨</span>
+            <span>Create New Recipe</span>
+          </button>
+        )}
       </div>
 
       {!result && (
@@ -176,9 +218,19 @@ export const AIGenerator: React.FC = () => {
 
             {/* Pantry Items */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-                Available Ingredients ({pantryItems.length})
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                  Available Ingredients ({pantryItems.length})
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsVisionScannerOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-semibold text-xs rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                >
+                  <span>📷</span>
+                  <span>Scan Fridge / Pantry</span>
+                </button>
+              </div>
               <div className="relative">
                 <input
                   type="text"
@@ -276,6 +328,13 @@ export const AIGenerator: React.FC = () => {
       {/* Recipe Result */}
       {result && parsedRecipe && (
         <div className="space-y-6">
+          {/* AI Recipe Remix & Tweak Toolbar */}
+          <AIRemixToolbar
+            recipe={parsedRecipe}
+            isLoading={loading}
+            onRemix={handleRemixRecipe}
+          />
+
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-6">
               <div className="flex-1">
@@ -342,6 +401,17 @@ export const AIGenerator: React.FC = () => {
                       <span>Regenerate</span>
                     </>
                   )}
+                </button>
+
+                <button
+                  onClick={handleNewRecipe}
+                  disabled={loading}
+                  aria-label="New recipe"
+                  title="Create another recipe"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                >
+                  <span>✨</span>
+                  <span>New Recipe</span>
                 </button>
               </div>
             </div>
@@ -433,6 +503,13 @@ export const AIGenerator: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Pantry Vision AI Scanner Modal */}
+      <PantryVisionScannerModal
+        isOpen={isVisionScannerOpen}
+        onClose={() => setIsVisionScannerOpen(false)}
+        onImportIngredients={handleImportScannedIngredients}
+      />
     </div>
   )
 }

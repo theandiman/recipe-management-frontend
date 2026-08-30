@@ -1,12 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getRecipe, updateRecipeSharing } from '../../services/recipeStorageApi'
+import { getUserProfile, type UserProfile } from '../../services/userApi'
 import { CookingMode } from '../../components/CookingMode'
 import GlobeIcon from '../../components/GlobeIcon'
 import BookmarkButton from '../../components/BookmarkButton'
 import LikeButton from '../../components/LikeButton'
 import type { Recipe } from '../../types/nutrition'
 import RecipeBody from './components/RecipeBody'
+import { HeroMetadataOverlay } from './components/HeroMetadataOverlay'
+import { QuickJumpNav } from './components/QuickJumpNav'
+import { RecipeReviewsSection } from './components/RecipeReviewsSection'
+import { RecipeCommentsSection } from './components/RecipeCommentsSection'
+import { useRecipeKeyboardShortcuts } from './hooks/useRecipeKeyboardShortcuts'
+import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal'
 import { useAuth } from '../../features/auth/AuthContext'
 
 // ── Icon helpers ────────────────────────────────────────────────────────────
@@ -36,6 +43,7 @@ export const RecipeDetail: React.FC = () => {
   const navigate = useNavigate()
   const { user: currentUser } = useAuth()
   const [recipe, setRecipe] = useState<Recipe | null>(null)
+  const [authorProfile, setAuthorProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isCookingMode, setIsCookingMode] = useState(false)
@@ -44,9 +52,34 @@ export const RecipeDetail: React.FC = () => {
   const [isCopied, setIsCopied] = useState(false)
   const [fallbackUrl, setFallbackUrl] = useState<string | null>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [topRating, setTopRating] = useState<number>(0)
+  const [topRatingCount, setTopRatingCount] = useState<number>(0)
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false)
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const isOwner = !!currentUser && !!recipe?.userId && currentUser.uid === recipe.userId
+
+  useRecipeKeyboardShortcuts({
+    onCookMode: () => setIsCookingMode(true),
+    onLike: () => {
+      const likeBtn = document.getElementById('recipe-like-button')
+      if (likeBtn) likeBtn.click()
+    },
+    onBookmark: () => {
+      const bookmarkBtn = document.getElementById('recipe-bookmark-button')
+      if (bookmarkBtn) bookmarkBtn.click()
+    },
+    onJumpIngredients: () => {
+      const el = document.getElementById('ingredients-section')
+      if (el) {
+        const yOffset = -90
+        const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset
+        window.scrollTo({ top: y, behavior: 'smooth' })
+      }
+    },
+    onToggleShortcutsModal: () => setIsShortcutsModalOpen((v) => !v),
+    disabled: isCookingMode,
+  })
 
   useEffect(() => {
     if (!sharingError) return
@@ -100,6 +133,34 @@ export const RecipeDetail: React.FC = () => {
 
     fetchRecipe()
   }, [id])
+
+  useEffect(() => {
+    if (!recipe?.userId) return
+
+    if (currentUser && currentUser.uid === recipe.userId && (currentUser.displayName || currentUser.email)) {
+      setAuthorProfile({
+        uid: currentUser.uid,
+        displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Chef',
+        avatarUrl: currentUser.photoURL || undefined,
+        publicRecipeCount: 0,
+        publicRecipes: [],
+      })
+      return
+    }
+
+    let isMounted = true
+    getUserProfile(recipe.userId)
+      .then((profile) => {
+        if (isMounted) setAuthorProfile(profile)
+      })
+      .catch(() => {
+        // Fall back gracefully if user profile is unavailable
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [recipe?.userId, currentUser])
 
   const handleCopyLink = async () => {
     if (!id) return
@@ -272,6 +333,18 @@ export const RecipeDetail: React.FC = () => {
                       {isCopied ? 'Copied!' : 'Copy link'}
                     </button>
                   )}
+
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setIsMenuOpen(false)
+                      window.print()
+                    }}
+                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-t border-gray-100 dark:border-slate-700/60"
+                  >
+                    <span className="text-sm">🖨️</span>
+                    Print recipe
+                  </button>
                 </div>
               )}
             </div>
@@ -315,39 +388,102 @@ export const RecipeDetail: React.FC = () => {
       )}
 
       {/* Recipe title */}
-      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">{recipe.recipeName}</h1>
+      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3">{recipe.recipeName}</h1>
 
-      {/* Author link */}
-      {recipe.userId ? (
-        <Link
-          to={`/user/${recipe.userId}`}
-          className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors mb-6"
-        >
-          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-semibold">
-            {(recipe.userId[0] || '?').toUpperCase()}
-          </div>
-          <span>View author profile</span>
-        </Link>
-      ) : (
-        <div className="mb-4" />
-      )}
+      {/* Author & Top Rating Meta Row */}
+      <div className="flex flex-wrap items-center gap-4 mb-6">
+        {recipe.userId && (() => {
+          const recipeWithAuthor = recipe as (Recipe & { authorName?: string; displayName?: string }) | null
+          const authorDisplayName = authorProfile?.displayName || recipeWithAuthor?.authorName || recipeWithAuthor?.displayName || (isOwner ? (currentUser?.displayName || currentUser?.email?.split('@')[0]) : null) || 'Chef'
+          const avatarInitial = (authorDisplayName[0] || 'C').toUpperCase()
 
-      {/* Recipe image */}
+          return (
+            <Link
+              to={`/user/${recipe.userId}`}
+              className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors group"
+            >
+              {authorProfile?.avatarUrl ? (
+                <img
+                  src={authorProfile.avatarUrl}
+                  alt={authorDisplayName}
+                  className="w-6 h-6 rounded-full object-cover border border-emerald-500/30 group-hover:scale-105 transition-transform flex-shrink-0"
+                />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-[10px] font-bold shadow-xs group-hover:scale-105 transition-transform flex-shrink-0">
+                  {avatarInitial}
+                </div>
+              )}
+              <span>
+                By{' '}
+                <span className="font-semibold underline decoration-emerald-500/40 group-hover:decoration-emerald-500">
+                  {authorDisplayName}
+                </span>
+              </span>
+            </Link>
+          )
+        })()}
+
+        {/* Top Average Rating Pill */}
+        {topRating > 0 ? (
+          <a
+            href="#recipe-ratings-section"
+            className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 font-bold text-xs rounded-full border border-amber-500/20 transition-all cursor-pointer"
+          >
+            <span>⭐ {topRating.toFixed(1)}</span>
+            <span className="text-amber-500/80 font-normal">({topRatingCount} rating{topRatingCount === 1 ? '' : 's'})</span>
+          </a>
+        ) : (
+          <a
+            href="#recipe-ratings-section"
+            className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400 font-medium text-xs rounded-full hover:text-amber-500 transition-colors cursor-pointer"
+          >
+            <span>⭐ Rate this recipe</span>
+          </a>
+        )}
+      </div>
+
+      {/* Hero photo with glassmorphism metadata overlay */}
       {recipe.imageUrl && (
-        <div className="mb-8 rounded-xl overflow-hidden shadow-lg">
+        <div className="relative mb-6 rounded-2xl overflow-hidden shadow-lg border border-gray-200/80 dark:border-slate-800">
           <img
             src={recipe.imageUrl}
             alt={recipe.recipeName}
             loading="lazy"
-            className="w-full h-96 object-cover"
+            className="w-full h-80 sm:h-96 object-cover"
           />
+          <HeroMetadataOverlay recipe={recipe} />
         </div>
       )}
+
+      {/* Sticky Quick Jump Anchor Bar */}
+      <QuickJumpNav
+        hasNutrition={!!recipe.nutritionalInfo?.perServing}
+        hasComments={true}
+      />
 
       {/* Recipe details */}
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 sm:p-8 transition-colors duration-300">
         <RecipeBody recipe={recipe} />
       </div>
+
+      {/* Social Ratings & Clean Discussion */}
+      {id && (
+        <>
+          <RecipeReviewsSection
+            recipeId={id}
+            currentUserId={currentUser?.uid}
+            onRatingsLoaded={(avg, count) => {
+              setTopRating(avg)
+              setTopRatingCount(count)
+            }}
+          />
+          <RecipeCommentsSection
+            recipeId={id}
+            currentUserId={currentUser?.uid}
+            currentUserInitial={(currentUser?.displayName || currentUser?.email || 'C')[0]}
+          />
+        </>
+      )}
 
       {/* Cooking Mode Modal */}
       {isCookingMode && recipe && (
@@ -375,6 +511,12 @@ export const RecipeDetail: React.FC = () => {
           </button>
         </div>
       )}
+
+      {/* Keyboard Shortcuts Floating Trigger & Modal */}
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsModalOpen}
+        onClose={() => setIsShortcutsModalOpen(false)}
+      />
     </div>
   )
 }

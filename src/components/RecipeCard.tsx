@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import type { Recipe } from '../types/nutrition'
 import GlobeIcon from './GlobeIcon'
@@ -19,13 +19,21 @@ interface RecipeCardProps {
 }
 
 export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete, compact, authorUid, authorName, showBookmark = false, showLike = false, matchReason }) => {
+  const navigate = useNavigate()
   const title = recipe.recipeName
   // Calculate total time safely
   const totalTime = recipe.totalTimeMinutes ||
     ((recipe.prepTimeMinutes || 0) + (recipe.cookTimeMinutes || 0)) ||
-    // Fallback to parsing strings if numbers are missing (though shared type suggests they might be optional)
-    // For now, let's just display what we have or skip
     undefined
+
+  const handleCardClick = () => {
+    if (!recipe.id) return
+    if (onView) {
+      onView(recipe.id)
+    } else {
+      navigate(`/recipes/${recipe.id}`)
+    }
+  }
 
   return (
     <motion.div
@@ -34,10 +42,10 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
-          if (recipe.id) onView?.(recipe.id)
+          handleCardClick()
         }
       }}
-      onClick={() => { if (recipe.id) onView?.(recipe.id) }}
+      onClick={handleCardClick}
       className={`bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-xl border border-gray-200 dark:border-slate-700 overflow-hidden relative group cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all duration-300 ${compact ? 'p-0' : ''}`}
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
@@ -137,6 +145,11 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
               </svg>
               {recipe.servings} servings
             </span>
+            {(recipe as any).averageRating !== undefined && (recipe as any).averageRating > 0 && (
+              <span className="flex items-center bg-amber-500/10 text-amber-500 font-semibold px-2 py-1 rounded-md">
+                ⭐ {(recipe as any).averageRating.toFixed(1)} {(recipe as any).ratingCount ? `(${(recipe as any).ratingCount})` : ''}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -155,9 +168,9 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
               aria-label={authorName ? `View ${authorName}'s profile` : 'View author profile'}
             >
               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 shadow-inner">
-                {((authorName || authorUid)[0] || '?').toUpperCase()}
+                {((authorName || (recipe as Recipe & { authorName?: string; displayName?: string }).authorName || (recipe as Recipe & { authorName?: string; displayName?: string }).displayName || 'Chef')[0] || 'C').toUpperCase()}
               </div>
-              <span className="truncate font-medium">{authorName || 'View Author'}</span>
+              <span className="truncate font-medium">{authorName || (recipe as Recipe & { authorName?: string; displayName?: string }).authorName || (recipe as Recipe & { authorName?: string; displayName?: string }).displayName || 'View Author'}</span>
             </Link>
           ) : null}
           {showLike && (
