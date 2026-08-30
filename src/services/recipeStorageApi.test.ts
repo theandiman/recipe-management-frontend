@@ -140,6 +140,33 @@ describe('recipeStorageApi', () => {
       )
     })
 
+    it('should map alias tip fields (storageInstructions, makeAheadTips, reheatingInstructions) into request tips', async () => {
+      const { postWithAuth } = await import('../utils/authApi')
+      const mockRecipe = createMockRecipe({
+        tips: {
+          storageInstructions: 'Keep in fridge',
+          makeAheadTips: 'Prep night before',
+          reheatingInstructions: 'Warm in oven'
+        } as any
+      })
+      const mockResponse = createAxiosResponse({ ...mockRecipe, id: 'saved-123' })
+
+      vi.mocked(postWithAuth).mockResolvedValue(mockResponse)
+
+      await saveRecipe(mockRecipe)
+
+      expect(postWithAuth).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          tips: {
+            storage: ['Keep in fridge'],
+            makeAhead: ['Prep night before'],
+            reheating: ['Warm in oven']
+          }
+        })
+      )
+    })
+
     it('should upload base64 image to Firebase Storage before saving', async () => {
       const { postWithAuth } = await import('../utils/authApi')
       const { uploadRecipeImage } = await import('../utils/imageStorage')

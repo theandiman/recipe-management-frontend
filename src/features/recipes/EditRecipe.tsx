@@ -113,13 +113,20 @@ export const EditRecipe: React.FC = () => {
         form.setTags(data.tags || [])
         form.setDietaryRestrictions(data.dietaryRestrictions || [])
         form.setImagePreview(data.imageUrl || null)
-        if (data.tips) {
-          if (data.tips.storage) form.setStorageInstructions(data.tips.storage)
-          if (data.tips.makeAhead) form.setMakeAheadTips(data.tips.makeAhead)
-          if (data.tips.reheating) form.setReheatingInstructions(data.tips.reheating)
-          if (data.tips.substitutions) form.setSubstitutions(data.tips.substitutions)
-          if (data.tips.variations) form.setVariations(data.tips.variations)
-        }
+        const tips = (data.tips || {}) as Record<string, unknown>
+        const raw = data as unknown as Record<string, unknown>
+
+        const storage = tips.storage || tips.storageInstructions || raw.storage || raw.storageInstructions
+        const makeAhead = tips.makeAhead || tips.makeAheadTips || raw.makeAhead || raw.makeAheadTips
+        const reheating = tips.reheating || tips.reheatingInstructions || raw.reheating || raw.reheatingInstructions
+        const substitutions = tips.substitutions || tips.ingredientSubstitutions || raw.substitutions || raw.ingredientSubstitutions
+        const variations = tips.variations || tips.recipeVariations || raw.variations || raw.recipeVariations
+
+        if (typeof storage === 'string' && storage) form.setStorageInstructions(storage)
+        if (typeof makeAhead === 'string' && makeAhead) form.setMakeAheadTips(makeAhead)
+        if (typeof reheating === 'string' && reheating) form.setReheatingInstructions(reheating)
+        if (Array.isArray(substitutions)) form.setSubstitutions(substitutions)
+        if (Array.isArray(variations)) form.setVariations(variations)
         setRecipeOverrides({
           nutritionalInfo: data.nutritionalInfo,
           tips: data.tips,
