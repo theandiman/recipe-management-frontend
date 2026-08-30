@@ -6,6 +6,7 @@ interface NotificationDropdownProps {
   notifications: SocialNotification[]
   unreadCount: number
   onMarkAllRead: () => void
+  onMarkItemRead?: (id: string) => void
   onClose: () => void
 }
 
@@ -37,6 +38,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   notifications,
   unreadCount,
   onMarkAllRead,
+  onMarkItemRead,
   onClose,
 }) => {
   const navigate = useNavigate()
@@ -58,8 +60,11 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
   const handleNotificationClick = (item: SocialNotification) => {
     onClose()
+    if (!item.isRead && onMarkItemRead) {
+      onMarkItemRead(item.id)
+    }
     if (item.targetRecipeId) {
-      navigate(`/dashboard/recipes/${item.targetRecipeId}`)
+      navigate(`/recipes/${item.targetRecipeId}`)
     } else if (item.actorUid) {
       navigate(`/user/${item.actorUid}`)
     }
