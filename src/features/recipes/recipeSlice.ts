@@ -38,6 +38,36 @@ export const generateRecipe = createAsyncThunk(
   }
 )
 
+export const remixRecipe = createAsyncThunk(
+  'recipe/remix',
+  async (payload: {
+    currentRecipe: Recipe
+    instruction: string
+  }, { rejectWithValue, signal }) => {
+    try {
+      const apiBase = resolveAiApiBase()
+      const prompt = `Modify the following recipe according to this instruction: "${payload.instruction}". Maintain the original style, title, and JSON structure while adjusting ingredients and steps. Current Recipe JSON: ${JSON.stringify(payload.currentRecipe)}`
+      const url = buildApiUrl(apiBase, '/api/recipes/generate')
+      const res = await postWithAuth(url, { prompt, pantryItems: [] }, { signal })
+      return res.data
+    } catch (err) {
+      if (axios.isCancel(err)) {
+        return rejectWithValue('cancelled')
+      }
+      if (axios.isAxiosError(err) && err.response) {
+        const data = err.response.data
+        if (typeof data === 'string') return rejectWithValue(data)
+        try {
+          return rejectWithValue(JSON.stringify(data))
+        } catch {
+          return rejectWithValue(String(data))
+        }
+      }
+      return rejectWithValue((err as Error).message ?? 'Failed to remix recipe')
+    }
+  }
+)
+
 export const generateImage = createAsyncThunk(
   'recipe/generateImage',
   async (payload: { prompt?: string; recipe?: Recipe }, { rejectWithValue, signal }) => {
@@ -120,6 +150,26 @@ const recipeSlice = createSlice({
           state.error = null
         } else {
           state.error = (action.payload as string) ?? action.error?.message ?? 'Failed to generate recipe'
+        }
+      })
+      .addCase(remixRecipe.pending, (state) => {
+        state.loading = true
+        state.error = null
+        state.imageUrl = null
+        state.imageError = null
+        state.imageLoading = false
+      })
+      .addCase(remixRecipe.fulfilled, (state, action) => {
+        state.loading = false
+        state.result = typeof action.payload === 'string' ? action.payload : JSON.stringify(action.payload)
+        state.error = null
+      })
+      .addCase(remixRecipe.rejected, (state, action) => {
+        state.loading = false
+        if (action.payload === 'cancelled') {
+          state.error = null
+        } else {
+          state.error = (action.payload as string) ?? action.error?.message ?? 'Failed to remix recipe'
         }
       })
       .addCase(generateImage.pending, (state) => {
