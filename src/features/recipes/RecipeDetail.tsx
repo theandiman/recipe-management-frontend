@@ -7,7 +7,7 @@ import GlobeIcon from '../../components/GlobeIcon'
 import BookmarkButton from '../../components/BookmarkButton'
 import LikeButton from '../../components/LikeButton'
 import type { Recipe } from '../../types/nutrition'
-import RecipeBody from './components/RecipeBody'
+import RecipeBody, { getEffectiveTips } from './components/RecipeBody'
 import { HeroMetadataOverlay } from './components/HeroMetadataOverlay'
 import { QuickJumpNav } from './components/QuickJumpNav'
 import { RecipeReviewsSection } from './components/RecipeReviewsSection'
@@ -458,7 +458,7 @@ export const RecipeDetail: React.FC = () => {
       {/* Sticky Quick Jump Anchor Bar */}
       <QuickJumpNav
         hasNutrition={!!recipe.nutritionalInfo?.perServing}
-        hasTips={!!(recipe.tips && Object.keys(recipe.tips).length > 0)}
+        hasTips={!!getEffectiveTips(recipe)}
         hasComments={true}
       />
 
