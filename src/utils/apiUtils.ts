@@ -1,11 +1,46 @@
 /**
- * Build API URL with optional base URL prefix and trailing slash normalization
- * @param apiBase - Optional API base URL (e.g., from VITE_API_URL environment variable)
- * @param endpoint - API endpoint path (should start with /)
- * @returns Full API URL with normalized trailing slashes
+ * Safely constructs an API URL by joining base URL and path.
  */
-export const buildApiUrl = (apiBase: string | undefined, endpoint: string): string => {
-  // If apiBase is provided and not empty, remove trailing slash and append endpoint
-  // Otherwise, return endpoint as-is (for relative URLs)
-  return apiBase ? `${String(apiBase).replace(/\/$/, '')}${endpoint}` : endpoint
+export function buildApiUrl(baseUrl: string | undefined, path: string): string {
+  if (!baseUrl) return path
+  const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
+  const cleanPath = path.startsWith('/') ? path : `/${path}`
+  return `${cleanBase}${cleanPath}`
+}
+
+/**
+ * Safely extracts error messages from API responses or Error instances.
+ */
+export function extractApiErrorMessage(err: unknown, defaultMessage = 'An unexpected error occurred'): string {
+  if (!err) return defaultMessage
+
+  if (typeof err === 'string') return err
+
+  const apiError = err as {
+    response?: {
+      data?: {
+        message?: string
+        error?: string
+      }
+    }
+    message?: string
+  }
+
+  if (apiError.response?.data?.message) {
+    return apiError.response.data.message
+  }
+
+  if (apiError.response?.data?.error) {
+    return apiError.response.data.error
+  }
+
+  if (err instanceof Error && err.message) {
+    return err.message
+  }
+
+  if (apiError.message) {
+    return apiError.message
+  }
+
+  return defaultMessage
 }

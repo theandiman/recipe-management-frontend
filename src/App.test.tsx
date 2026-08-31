@@ -42,54 +42,54 @@ vi.mock('./components/ProtectedRoute', () => ({
 }))
 
 describe('App', () => {
-  it('should render without crashing', () => {
+  it('should render without crashing', async () => {
     render(<App />)
-    expect(screen.getByTestId('auth-provider')).toBeInTheDocument()
+    expect(await screen.findByTestId('auth-provider')).toBeInTheDocument()
   })
 
-  it('should wrap app in AuthProvider', () => {
+  it('should wrap app in AuthProvider', async () => {
     render(<App />)
-    expect(screen.getByTestId('auth-provider')).toBeInTheDocument()
+    expect(await screen.findByTestId('auth-provider')).toBeInTheDocument()
   })
 
-  it('should render login page when navigating to /login', () => {
+  it('should render login page when navigating to /login', async () => {
     window.history.pushState({}, 'Login', '/login')
     render(<App />)
-    expect(screen.getByTestId('login-page')).toBeInTheDocument()
+    expect(await screen.findByTestId('login-page')).toBeInTheDocument()
   })
 
-  it('should render register page when navigating to /register', () => {
+  it('should render register page when navigating to /register', async () => {
     window.history.pushState({}, 'Register', '/register')
     render(<App />)
-    expect(screen.getByTestId('register-page')).toBeInTheDocument()
+    expect(await screen.findByTestId('register-page')).toBeInTheDocument()
   })
 
-  it('should render protected dashboard layout when navigating to /dashboard', () => {
+  it('should render protected dashboard layout when navigating to /dashboard', async () => {
     window.history.pushState({}, 'Dashboard', '/dashboard')
     render(<App />)
-    expect(screen.getByTestId('protected-route')).toBeInTheDocument()
-    expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument()
+    expect(await screen.findByTestId('protected-route')).toBeInTheDocument()
+    expect(await screen.findByTestId('dashboard-layout')).toBeInTheDocument()
   })
 
-  it('should redirect from root to /dashboard', () => {
+  it('should redirect from root to /dashboard', async () => {
     window.history.pushState({}, 'Home', '/')
     render(<App />)
     // Should attempt to render dashboard (which will be protected)
-    expect(screen.getByTestId('protected-route')).toBeInTheDocument()
+    expect(await screen.findByTestId('protected-route')).toBeInTheDocument()
   })
 
-  it('should redirect unknown paths to /dashboard', () => {
+  it('should redirect unknown paths to /dashboard', async () => {
     window.history.pushState({}, 'Unknown', '/does-not-exist')
     render(<App />)
     // Catch-all route should redirect to /dashboard (protected)
-    expect(screen.getByTestId('protected-route')).toBeInTheDocument()
-    expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument()
+    expect(await screen.findByTestId('protected-route')).toBeInTheDocument()
+    expect(await screen.findByTestId('dashboard-layout')).toBeInTheDocument()
   })
 
-  it('should render public recipe detail without authentication when navigating to /recipes/:id', () => {
+  it('should render public recipe detail without authentication when navigating to /recipes/:id', async () => {
     window.history.pushState({}, 'Public Recipe', '/recipes/test-recipe-123')
     render(<App />)
-    expect(screen.getByTestId('recipe-detail-public')).toBeInTheDocument()
+    expect(await screen.findByTestId('recipe-detail-public')).toBeInTheDocument()
     // The public route must NOT be wrapped in a ProtectedRoute
     expect(screen.queryByTestId('protected-route')).not.toBeInTheDocument()
   })

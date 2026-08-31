@@ -1,24 +1,33 @@
+import { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Toaster } from 'sonner'
 import { AuthProvider } from './features/auth/AuthContext'
 import { ThemeProvider } from './features/theme/ThemeContext'
-import { Login } from './features/auth/Login'
-import { Register } from './features/auth/Register'
-import { DashboardLayout } from './components/Layout/DashboardLayout'
 import { ProtectedRoute } from './components/ProtectedRoute'
-import { RecipeDetail } from './features/recipes/RecipeDetail'
-import { UserProfilePage } from './features/users/UserProfilePage'
 import { FollowProvider } from './features/users/FollowContext'
 import { LikeProvider } from './features/recipes/LikeContext'
 import { SavedRecipesProvider } from './features/recipes/SavedRecipesContext'
 import './App.css'
 
+const Login = lazy(() => import('./features/auth/Login').then(m => ({ default: m.Login })))
+const Register = lazy(() => import('./features/auth/Register').then(m => ({ default: m.Register })))
+const DashboardLayout = lazy(() => import('./components/Layout/DashboardLayout').then(m => ({ default: m.DashboardLayout })))
+const RecipeDetail = lazy(() => import('./features/recipes/RecipeDetail').then(m => ({ default: m.RecipeDetail })))
+const UserProfilePage = lazy(() => import('./features/users/UserProfilePage').then(m => ({ default: m.UserProfilePage })))
+
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+  </div>
+)
+
 function AnimatedRoutes() {
   const location = useLocation()
 
   return (
-    <Routes location={location} key={location.pathname}>
+    <Suspense fallback={<LoadingFallback />}>
+      <Routes location={location} key={location.pathname}>
       <Route 
         path="/login" 
         element={
@@ -86,6 +95,7 @@ function AnimatedRoutes() {
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
+    </Suspense>
   )
 }
 
