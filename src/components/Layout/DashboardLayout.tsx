@@ -1,20 +1,27 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense, lazy } from 'react'
 import { NavLink, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../features/auth/AuthContext'
-import { Dashboard } from '../Dashboard'
 import { ThemeToggle } from '../ThemeToggle'
-import { RecipeLibrary } from '../../features/recipes/RecipeLibrary'
-import { RecipeDetail } from '../../features/recipes/RecipeDetail'
-import { CreateRecipe } from '../../features/recipes/CreateRecipe'
-import { SimpleCreateRecipe } from '../../features/recipes/SimpleCreateRecipe'
-import { AIGenerator } from '../../features/recipes/AIGenerator'
-import { HelpPage } from '../../features/help/HelpPage'
-import { CommunityPage } from '../../features/community/CommunityPage'
-import { SavedRecipesPage } from '../../features/recipes/SavedRecipesPage'
-import { UserProfilePage } from '../../features/users/UserProfilePage'
 import { NotificationBell } from './NotificationBell'
 import { OmniSearchProvider, useOmniSearch } from '../search/OmniSearchContext'
+
+const Dashboard = lazy(() => import('../Dashboard').then(m => ({ default: m.Dashboard })))
+const RecipeLibrary = lazy(() => import('../../features/recipes/RecipeLibrary').then(m => ({ default: m.RecipeLibrary })))
+const RecipeDetail = lazy(() => import('../../features/recipes/RecipeDetail').then(m => ({ default: m.RecipeDetail })))
+const CreateRecipe = lazy(() => import('../../features/recipes/CreateRecipe').then(m => ({ default: m.CreateRecipe })))
+const SimpleCreateRecipe = lazy(() => import('../../features/recipes/SimpleCreateRecipe').then(m => ({ default: m.SimpleCreateRecipe })))
+const AIGenerator = lazy(() => import('../../features/recipes/AIGenerator').then(m => ({ default: m.AIGenerator })))
+const HelpPage = lazy(() => import('../../features/help/HelpPage').then(m => ({ default: m.HelpPage })))
+const CommunityPage = lazy(() => import('../../features/community/CommunityPage').then(m => ({ default: m.CommunityPage })))
+const SavedRecipesPage = lazy(() => import('../../features/recipes/SavedRecipesPage').then(m => ({ default: m.SavedRecipesPage })))
+const UserProfilePage = lazy(() => import('../../features/users/UserProfilePage').then(m => ({ default: m.UserProfilePage })))
+
+const DashboardFallback = () => (
+  <div className="flex items-center justify-center min-h-[50vh]">
+    <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+  </div>
+)
 
 const DashboardLayoutInner: React.FC = () => {
   const { user, logout } = useAuth()
@@ -347,20 +354,22 @@ const DashboardLayoutInner: React.FC = () => {
 
         {/* Page Content */}
         <main className="p-4 bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
-          <Routes>
-            <Route index element={<Dashboard />} />
-            <Route path="profile" element={<UserProfilePage />} />
-            <Route path="user/:uid" element={<UserProfilePage />} />
-            <Route path="recipes/*" element={<RecipeLibrary />} />
-            <Route path="recipes/:id" element={<RecipeDetail />} />
-            <Route path="recipes/edit/:id" element={<SimpleCreateRecipe />} />
-            <Route path="create" element={<CreateRecipe />} />
-            <Route path="create/simple" element={<SimpleCreateRecipe />} />
-            <Route path="generate" element={<AIGenerator />} />
-            <Route path="community" element={<CommunityPage />} />
-            <Route path="help" element={<HelpPage />} />
-            <Route path="saved" element={<SavedRecipesPage />} />
-          </Routes>
+          <Suspense fallback={<DashboardFallback />}>
+            <Routes>
+              <Route index element={<Dashboard />} />
+              <Route path="profile" element={<UserProfilePage />} />
+              <Route path="user/:uid" element={<UserProfilePage />} />
+              <Route path="recipes/*" element={<RecipeLibrary />} />
+              <Route path="recipes/:id" element={<RecipeDetail />} />
+              <Route path="recipes/edit/:id" element={<SimpleCreateRecipe />} />
+              <Route path="create" element={<CreateRecipe />} />
+              <Route path="create/simple" element={<SimpleCreateRecipe />} />
+              <Route path="generate" element={<AIGenerator />} />
+              <Route path="community" element={<CommunityPage />} />
+              <Route path="help" element={<HelpPage />} />
+              <Route path="saved" element={<SavedRecipesPage />} />
+            </Routes>
+          </Suspense>
         </main>
       </div>
 

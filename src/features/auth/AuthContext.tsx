@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Listen to Firebase auth state changes
   useEffect(() => {
-    const isTestMode = import.meta.env.VITE_TEST_MODE === 'true'
+    const isTestMode = import.meta.env.MODE !== 'production' && import.meta.env.VITE_TEST_MODE === 'true'
     if (isTestMode) {
       setUser({
         uid: 'test-user-123',

@@ -68,28 +68,28 @@ describe('DashboardLayout routing', () => {
     Object.defineProperty(window, 'innerWidth', { value: 1280, writable: true, configurable: true })
   })
 
-  it('renders recipe detail for /dashboard/recipes/:id', () => {
+  it('renders recipe detail for /dashboard/recipes/:id', async () => {
     renderAt('/dashboard/recipes/1')
 
-    expect(screen.getByText('RecipeDetailStub')).toBeInTheDocument()
+    expect(await screen.findByText('RecipeDetailStub')).toBeInTheDocument()
   })
 
-  it('renders quick entry UI for /dashboard/recipes/edit/:id', () => {
+  it('renders quick entry UI for /dashboard/recipes/edit/:id', async () => {
     renderAt('/dashboard/recipes/edit/1')
 
-    expect(screen.getByText('SimpleCreateRecipeStub')).toBeInTheDocument()
+    expect(await screen.findByText('SimpleCreateRecipeStub')).toBeInTheDocument()
   })
 
-  it('renders My Cookbook link and profile header button', () => {
+  it('renders My Cookbook link and profile header button', async () => {
     renderAt('/dashboard')
 
-    expect(screen.getByRole('link', { name: /my cookbook/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /my profile/i })).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: /my cookbook/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /my profile/i })).toBeInTheDocument()
   })
 
-  it('renders UserProfilePage for /dashboard/profile', () => {
+  it('renders UserProfilePage for /dashboard/profile', async () => {
     renderAt('/dashboard/profile')
 
-    expect(screen.getByText('UserProfilePageStub')).toBeInTheDocument()
+    expect(await screen.findByText('UserProfilePageStub')).toBeInTheDocument()
   })
 })

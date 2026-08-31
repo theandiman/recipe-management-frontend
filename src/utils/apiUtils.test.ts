@@ -29,7 +29,7 @@ describe('apiUtils', () => {
     })
 
     it('should handle endpoints without leading slash', () => {
-      expect(buildApiUrl('http://localhost:8080', 'api/recipes')).toBe('http://localhost:8080api/recipes')
+      expect(buildApiUrl('http://localhost:8080', 'api/recipes')).toBe('http://localhost:8080/api/recipes')
     })
 
     it('should handle root endpoint', () => {
