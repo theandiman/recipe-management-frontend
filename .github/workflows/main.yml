@@ -15,10 +15,10 @@ permissions:
   issues: write
   checks: write
 
-# Cancel in-progress runs for the same PR
+# Cancel in-progress runs for the same PR (only cancel on pull requests to avoid interrupting main branch deployments)
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # Static Analysis Jobs
@@ -27,10 +27,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: 'npm'
@@ -53,10 +53,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: 'npm'
@@ -81,10 +81,10 @@ jobs:
     if: ${{ always() && needs.sonarcloud.result != 'cancelled' }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: 'npm'
@@ -102,7 +102,7 @@ jobs:
         run: npm test -- --run --coverage
 
       - name: Upload coverage reports
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@v5
         if: always()
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -116,10 +116,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: 'npm'
@@ -129,9 +129,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
-        run: |
-          rm -rf node_modules package-lock.json
-          npm install
+        run: npm ci
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -152,7 +150,7 @@ jobs:
           VITE_MANAGEMENT_API_URL: http://localhost:8081
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-report
@@ -165,10 +163,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: 'npm'
@@ -178,9 +176,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
-        run: |
-          rm -rf node_modules package-lock.json
-          npm install
+        run: npm ci
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -205,12 +201,12 @@ jobs:
     if: false
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Full history for better analysis
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: 'npm'
@@ -234,7 +230,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Upload coverage report as artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: sonar-coverage-report
@@ -250,12 +246,12 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: 'npm'
@@ -270,16 +266,14 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run npm audit
-        run: npm audit --audit-level=moderate
-        continue-on-error: true
+        run: npm audit --audit-level=high || true
 
       - name: Check for secrets
-        uses: trufflesecurity/trufflehog@main
+        uses: trufflesecurity/trufflehog@v3.88.0
         with:
           path: ./
           base: ${{ github.event.pull_request.base.sha }}
           head: ${{ github.event.pull_request.head.sha }}
-        continue-on-error: true
 
   dependency-review:
     name: Dependency Review
@@ -389,13 +383,11 @@ jobs:
 
       - name: Deploy Storage Rules to Firebase
         env:
-          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEV }}
+          FIREBASE_SERVICE_ACCOUNT_DEV: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEV }}
+          FIREBASE_PROJECT_ID_DEV: ${{ secrets.FIREBASE_PROJECT_ID_DEV || 'recipe-mgmt-dev' }}
         run: |
-          if [ -n "$GCP_SA_KEY" ]; then
-            echo "$GCP_SA_KEY" > sa.json
-            export GOOGLE_APPLICATION_CREDENTIALS=sa.json
-            npx firebase-tools deploy --only storage --project "${{ secrets.FIREBASE_PROJECT_ID_DEV || 'recipe-mgmt-dev' }}" || true
-            rm -f sa.json
+          if [ -n "$FIREBASE_SERVICE_ACCOUNT_DEV" ]; then
+            npx firebase-tools deploy --only storage --project "$FIREBASE_PROJECT_ID_DEV" --token "$FIREBASE_SERVICE_ACCOUNT_DEV" || npx firebase-tools deploy --only storage --project "$FIREBASE_PROJECT_ID_DEV"
           fi
 
   # Post-deployment testing (main branch only, after deploy)
@@ -412,10 +404,10 @@ jobs:
       }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
           node-version: '24'
 
@@ -558,10 +550,10 @@ jobs:
       DEPLOYED_APP_URL: https://recipe-mgmt-dev.web.app
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: 'npm'
@@ -571,9 +563,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Install dependencies
-        run: |
-          rm -rf node_modules package-lock.json
-          npm install
+        run: npm ci
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -602,7 +592,7 @@ jobs:
           CI: true
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         if: always() && steps.check-secrets.outputs.skip == 'false'
         with:
           name: multi-user-post-deploy-playwright-report
@@ -623,7 +613,7 @@ jobs:
       }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Wait for deployment to be ready
         run: |
@@ -654,7 +644,7 @@ jobs:
           echo "✅ ZAP scan completed"
 
       - name: Upload ZAP Scan Report
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: zap-scan-report
@@ -678,7 +668,7 @@ jobs:
       }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Wait for deployment to be ready
         run: |
