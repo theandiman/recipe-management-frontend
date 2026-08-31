@@ -625,7 +625,12 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
               Instructions <span className="text-red-500">*</span>
             </h2>
             <div className="flex gap-2">
-              <button type="button" onClick={form.addInstruction} className={UI_STYLES.addButton}>
+              <button
+                type="button"
+                onClick={form.addInstruction}
+                disabled={instructionRefinementLoading === 'loading'}
+                className={`${UI_STYLES.addButton} ${instructionRefinementLoading === 'loading' ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
                 <svg
                   className="w-4 h-4"
                   fill="none"
@@ -676,7 +681,8 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                       onChange={(e) => form.updateInstruction(index, e.target.value)}
                       placeholder="Describe this step in detail..."
                       rows={2}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-y"
+                      disabled={instructionRefinementLoading === 'loading'}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-y disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     {isPending && refinementState && (
                       <div className="mt-2">
@@ -707,8 +713,9 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                       <button
                         type="button"
                         onClick={() => form.removeInstruction(index)}
+                        disabled={instructionRefinementLoading === 'loading'}
                         aria-label={`Remove step ${index + 1}`}
-                        className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <svg
                           className="w-5 h-5"
