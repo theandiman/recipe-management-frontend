@@ -233,6 +233,11 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     servings: setServings,
     tags: (value: string) => setTags(parseSuggestedList(value)),
     dietaryRestrictions: (value: string) => setDietaryRestrictions(parseSuggestedList(value)),
+    storageInstructions: form.setStorageInstructions,
+    makeAheadTips: form.setMakeAheadTips,
+    reheatingInstructions: form.setReheatingInstructions,
+    substitutions: (value: string) => form.setSubstitutions(parseSuggestedList(value)),
+    variations: (value: string) => form.setVariations(parseSuggestedList(value)),
   }), [
     setTitle,
     setDescription,
@@ -241,6 +246,11 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     setServings,
     setTags,
     setDietaryRestrictions,
+    form.setStorageInstructions,
+    form.setMakeAheadTips,
+    form.setReheatingInstructions,
+    form.setSubstitutions,
+    form.setVariations,
   ])
 
   const currentValues: Partial<Record<string, string>> = useMemo(() => ({
@@ -251,6 +261,11 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     servings: form.servings,
     tags: stringifySuggestionList(form.tags),
     dietaryRestrictions: stringifySuggestionList(form.dietaryRestrictions),
+    storageInstructions: form.storageInstructions,
+    makeAheadTips: form.makeAheadTips,
+    reheatingInstructions: form.reheatingInstructions,
+    substitutions: stringifySuggestionList(form.substitutions),
+    variations: stringifySuggestionList(form.variations),
   }), [
     form.title,
     form.description,
@@ -259,6 +274,11 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     form.servings,
     form.tags,
     form.dietaryRestrictions,
+    form.storageInstructions,
+    form.makeAheadTips,
+    form.reheatingInstructions,
+    form.substitutions,
+    form.variations,
   ])
 
   const previousSuggestionValues = useMemo<Record<string, unknown>>(() => ({
@@ -269,6 +289,11 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     servings: form.servings,
     tags: form.tags,
     dietaryRestrictions: form.dietaryRestrictions,
+    storageInstructions: form.storageInstructions,
+    makeAheadTips: form.makeAheadTips,
+    reheatingInstructions: form.reheatingInstructions,
+    substitutions: form.substitutions,
+    variations: form.variations,
   }), [
     form.title,
     form.description,
@@ -277,6 +302,11 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     form.servings,
     form.tags,
     form.dietaryRestrictions,
+    form.storageInstructions,
+    form.makeAheadTips,
+    form.reheatingInstructions,
+    form.substitutions,
+    form.variations,
   ])
 
   const handleEnhanceField = useCallback(<K extends SuggestibleFieldKey>(field: K, currentValue: SuggestibleFieldValue<K>) => {
@@ -1069,9 +1099,17 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
             <div className="space-y-6">
               {/* Storage Instructions */}
               <div>
-                <label className="block mb-1.5 text-sm font-semibold text-gray-700 dark:text-gray-200">
-                  📦 Storage Instructions
-                </label>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                    📦 Storage Instructions
+                  </label>
+                  <FieldAIEnhanceButton
+                    field="storageInstructions"
+                    currentValue={form.storageInstructions || ''}
+                    status={fieldStatus.get('storageInstructions') ?? 'idle'}
+                    onEnhance={() => handleEnhanceField('storageInstructions', form.storageInstructions || '')}
+                  />
+                </div>
                 <textarea
                   value={form.storageInstructions || ''}
                   onChange={(e) => form.setStorageInstructions(e.target.value)}
@@ -1079,13 +1117,22 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                   placeholder="e.g., Refrigerate in an airtight container for up to three days."
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
                 />
+                {renderFieldAIFeedback('storageInstructions', form.storageInstructions || '', form.storageInstructions || '')}
               </div>
 
               {/* Make-Ahead Tips */}
               <div>
-                <label className="block mb-1.5 text-sm font-semibold text-gray-700 dark:text-gray-200">
-                  ⏰ Make-Ahead Tips
-                </label>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                    ⏰ Make-Ahead Tips
+                  </label>
+                  <FieldAIEnhanceButton
+                    field="makeAheadTips"
+                    currentValue={form.makeAheadTips || ''}
+                    status={fieldStatus.get('makeAheadTips') ?? 'idle'}
+                    onEnhance={() => handleEnhanceField('makeAheadTips', form.makeAheadTips || '')}
+                  />
+                </div>
                 <textarea
                   value={form.makeAheadTips || ''}
                   onChange={(e) => form.setMakeAheadTips(e.target.value)}
@@ -1093,13 +1140,22 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                   placeholder="e.g., Can be chopped and prepped 1 day in advance."
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
                 />
+                {renderFieldAIFeedback('makeAheadTips', form.makeAheadTips || '', form.makeAheadTips || '')}
               </div>
 
               {/* Reheating Instructions */}
               <div>
-                <label className="block mb-1.5 text-sm font-semibold text-gray-700 dark:text-gray-200">
-                  🔥 Reheating Instructions
-                </label>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                    🔥 Reheating Instructions
+                  </label>
+                  <FieldAIEnhanceButton
+                    field="reheatingInstructions"
+                    currentValue={form.reheatingInstructions || ''}
+                    status={fieldStatus.get('reheatingInstructions') ?? 'idle'}
+                    onEnhance={() => handleEnhanceField('reheatingInstructions', form.reheatingInstructions || '')}
+                  />
+                </div>
                 <textarea
                   value={form.reheatingInstructions || ''}
                   onChange={(e) => form.setReheatingInstructions(e.target.value)}
@@ -1107,13 +1163,22 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                   placeholder="e.g., Reheat in oven at 350°F for 10 minutes until warm."
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
                 />
+                {renderFieldAIFeedback('reheatingInstructions', form.reheatingInstructions || '', form.reheatingInstructions || '')}
               </div>
 
               {/* Substitutions */}
               <div className="space-y-3">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
-                  🔄 Ingredient Substitutions
-                </label>
+                <div className="flex items-center gap-1.5">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                    🔄 Ingredient Substitutions
+                  </label>
+                  <FieldAIEnhanceButton
+                    field="substitutions"
+                    currentValue={stringifySuggestionList(form.substitutions)}
+                    status={fieldStatus.get('substitutions') ?? 'idle'}
+                    onEnhance={() => handleEnhanceField('substitutions', form.substitutions)}
+                  />
+                </div>
                 <div className="flex items-center space-x-2">
                   <input
                     type="text"
@@ -1152,13 +1217,22 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                     ))}
                   </ul>
                 )}
+                {renderFieldAIFeedback('substitutions', stringifySuggestionList(form.substitutions), form.substitutions)}
               </div>
 
               {/* Variations */}
               <div className="space-y-3">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
-                  ✨ Recipe Variations
-                </label>
+                <div className="flex items-center gap-1.5">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                    ✨ Recipe Variations
+                  </label>
+                  <FieldAIEnhanceButton
+                    field="variations"
+                    currentValue={stringifySuggestionList(form.variations)}
+                    status={fieldStatus.get('variations') ?? 'idle'}
+                    onEnhance={() => handleEnhanceField('variations', form.variations)}
+                  />
+                </div>
                 <div className="flex items-center space-x-2">
                   <input
                     type="text"
@@ -1197,6 +1271,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
                     ))}
                   </ul>
                 )}
+                {renderFieldAIFeedback('variations', stringifySuggestionList(form.variations), form.variations)}
               </div>
             </div>
           </CollapsibleSection>

@@ -806,3 +806,23 @@ describe('AI Instruction Refinement in Quick Entry', () => {
     expect(screen.getByDisplayValue('Boil salted water in a large pot and cook pasta for 10 minutes.')).toBeInTheDocument()
   })
 })
+
+describe('AI Field Enhancement for Tips & Tricks in Quick Entry', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    setDefaultAuthMock()
+  })
+
+  it('renders AI enhance buttons for Tips & Tricks fields when section is expanded', () => {
+    const { container } = renderWithRouter(<SimpleCreateRecipe />)
+
+    const tipsHeader = screen.getByText(/Tips & Tricks/i)
+    fireEvent.click(tipsHeader)
+
+    expect(container.querySelector('button[data-field="storageInstructions"]')).not.toBeNull()
+    expect(container.querySelector('button[data-field="makeAheadTips"]')).not.toBeNull()
+    expect(container.querySelector('button[data-field="reheatingInstructions"]')).not.toBeNull()
+    expect(container.querySelector('button[data-field="substitutions"]')).not.toBeNull()
+    expect(container.querySelector('button[data-field="variations"]')).not.toBeNull()
+  })
+})
