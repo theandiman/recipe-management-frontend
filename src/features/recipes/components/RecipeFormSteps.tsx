@@ -403,7 +403,8 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                 <button
                   type="button"
                   onClick={addInstruction}
-                  className={UI_STYLES.addButton}
+                  disabled={instructionRefinementLoading === 'loading'}
+                  className={`${UI_STYLES.addButton} ${instructionRefinementLoading === 'loading' ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -447,7 +448,8 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
           placeholder="Describe this step in detail..."
           required={index === 0}
           rows={2}
-          className={`${UI_STYLES.input} resize-none`}
+          disabled={instructionRefinementLoading === 'loading'}
+          className={`${UI_STYLES.input} resize-none disabled:opacity-50 disabled:cursor-not-allowed`}
         />
         {isPending && refinementState && onAcceptInstructionRefinement && onRejectInstructionRefinement && (
           <div className="mt-2">
@@ -478,7 +480,9 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
           <button
             type="button"
             onClick={() => removeInstruction(index)}
-            className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            disabled={instructionRefinementLoading === 'loading'}
+            aria-label={`Remove step ${index + 1}`}
+            className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
