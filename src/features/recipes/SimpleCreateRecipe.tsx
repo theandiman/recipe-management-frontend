@@ -16,11 +16,14 @@ import { FieldAISuggestionChip } from './components/FieldAISuggestionChip'
 import { AIUndoButton } from './components/AIUndoButton'
 import { AIBadge } from './components/AIBadge'
 import { AISpinnerIcon } from './components/AISpinnerIcon'
-import { AI_BUTTON_CLASS } from './components/aiStyles'
+import { AI_BUTTON_CLASS, AI_BUTTON_COMPACT_CLASS, AI_STEP_ACTION_BUTTON_CLASS } from './components/aiStyles'
 import { FIELD_LABELS } from './constants/aiConstants'
 import { getRecipe } from '../../services/recipeStorageApi'
 import { useAuth } from '../auth/AuthContext'
 import { useAIImageGeneration } from './hooks/useAIImageGeneration'
+import { useInstructionRefinement } from './hooks/useInstructionRefinement'
+import { InstructionDiffView } from './components/InstructionDiffView'
+import { useIngredientNormalization } from './hooks/useIngredientNormalization'
 import type { Recipe } from '../../types/nutrition'
 import { mapEstimateToNutritionalInfo, useNutritionEstimate } from './hooks/useNutritionEstimate'
 import { NutritionEstimatePanel } from './components/NutritionEstimatePanel'
@@ -173,6 +176,32 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
   } = useNutritionEstimate()
 
   const { status: aiImageStatus, error: aiImageError, generateImage } = useAIImageGeneration()
+
+  const {
+    normalizationStates,
+    applyNormalization,
+    dismissNormalization,
+  } = useIngredientNormalization(form.updateIngredient)
+
+  const {
+    stepStates: instructionRefinementStates,
+    loadingState: instructionRefinementLoading,
+    refineSingle: refineSingleInstruction,
+    refineAll: refineAllInstructions,
+    acceptStep: acceptInstructionRefinement,
+    rejectStep: rejectInstructionRefinement,
+  } = useInstructionRefinement(form.updateInstruction)
+
+  const handleRefineInstruction = useCallback(
+    (index: number, instruction: string) => {
+      refineSingleInstruction(index, instruction, form.title || undefined)
+    },
+    [refineSingleInstruction, form.title]
+  )
+
+  const handleRefineAllInstructions = useCallback(() => {
+    refineAllInstructions(form.instructions, form.title || undefined)
+  }, [refineAllInstructions, form.instructions, form.title])
 
   const handleGenerateAIImage = useCallback(async () => {
     if (!form.title.trim()) return
@@ -563,6 +592,9 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
             onAddIngredient={form.addIngredient}
             onUpdateIngredient={form.updateIngredient}
             onRemoveIngredient={form.removeIngredient}
+            normalizationStates={normalizationStates}
+            onApplyNormalization={applyNormalization}
+            onDismissNormalization={dismissNormalization}
           />
           {form.fieldErrors.ingredients && (
             <div
@@ -588,69 +620,116 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
 
         {/* ─── Required: Instructions ─── */}
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
-          <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100 dark:border-slate-700">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               Instructions <span className="text-red-500">*</span>
             </h2>
-            <button type="button" onClick={form.addInstruction} className={UI_STYLES.addButton}>
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
+            <div className="flex gap-2">
+              <button type="button" onClick={form.addInstruction} className={UI_STYLES.addButton}>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                <span>Add Step</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleRefineAllInstructions}
+                disabled={instructionRefinementLoading === 'loading' || !form.instructions.some(i => i.trim())}
+                aria-label="Refine all instructions with AI"
+                className={AI_BUTTON_COMPACT_CLASS}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              <span>Add Step</span>
-            </button>
+                {instructionRefinementLoading === 'loading' ? (
+                  <AISpinnerIcon />
+                ) : (
+                  <AIBadge />
+                )}
+                Refine all
+              </button>
+            </div>
           </div>
 
           <div className="space-y-3">
-            {form.instructions.map((instruction, index) => (
-              <div key={index} className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-8 h-10 flex items-center justify-center">
-                  <span className="w-7 h-7 flex items-center justify-center rounded-full bg-emerald-600 text-white text-sm font-bold">
-                    {index + 1}
+            {form.instructions.map((instruction, index) => {
+              const refinementState = instructionRefinementStates.get(index)
+              const isPending = refinementState?.status === 'pending'
+              return (
+                <div key={index} className="flex items-start space-x-3">
+                  <span className="flex-shrink-0 w-8 h-10 flex items-center justify-center">
+                    <span className="w-7 h-7 flex items-center justify-center rounded-full bg-emerald-600 text-white text-sm font-bold">
+                      {index + 1}
+                    </span>
                   </span>
-                </span>
-                <textarea
-                  value={instruction}
-                  onChange={(e) => form.updateInstruction(index, e.target.value)}
-                  placeholder="Describe this step in detail..."
-                  rows={2}
-                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-y"
-                />
-                {form.instructions.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => form.removeInstruction(index)}
-                    aria-label={`Remove step ${index + 1}`}
-                    className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  </button>
-                )}
-              </div>
-            ))}
+                  <div className="flex-1">
+                    <textarea
+                      value={instruction}
+                      onChange={(e) => form.updateInstruction(index, e.target.value)}
+                      placeholder="Describe this step in detail..."
+                      rows={2}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-y"
+                    />
+                    {isPending && refinementState && (
+                      <div className="mt-2">
+                        <InstructionDiffView
+                          original={refinementState.original}
+                          refined={refinementState.refined}
+                          onAccept={() => acceptInstructionRefinement(index)}
+                          onReject={() => rejectInstructionRefinement(index)}
+                          isLoading={instructionRefinementLoading === 'loading'}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    {instruction.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => handleRefineInstruction(index, instruction)}
+                        disabled={instructionRefinementLoading === 'loading'}
+                        aria-label={`Refine step ${index + 1} with AI`}
+                        title="Refine this step with AI"
+                        className={AI_STEP_ACTION_BUTTON_CLASS}
+                      >
+                        <span aria-hidden="true">AI</span>
+                      </button>
+                    )}
+                    {form.instructions.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => form.removeInstruction(index)}
+                        aria-label={`Remove step ${index + 1}`}
+                        className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
           {form.fieldErrors.instructions && (

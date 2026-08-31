@@ -758,3 +758,51 @@ describe('AI error recovery', () => {
     })
   })
 })
+
+describe('AI Instruction Refinement in Quick Entry', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    setDefaultAuthMock()
+  })
+
+  it('renders "Refine all" button in instructions header', () => {
+    renderWithRouter(<SimpleCreateRecipe />)
+    expect(screen.getByRole('button', { name: /Refine all instructions with AI/i })).toBeInTheDocument()
+  })
+
+  it('refines an instruction step and allows accepting diff view in quick entry mode', async () => {
+    const { postWithAuth } = await import('../../utils/authApi')
+    vi.mocked(postWithAuth).mockResolvedValueOnce({
+      data: {
+        refinements: [
+          {
+            stepIndex: 0,
+            original: 'Boil pasta',
+            refined: 'Boil salted water in a large pot and cook pasta for 10 minutes.',
+            changesSummary: 'Added timing and salt detail',
+          },
+        ],
+      },
+    } as Awaited<ReturnType<typeof postWithAuth>>)
+
+    renderWithRouter(<SimpleCreateRecipe />)
+
+    fireEvent.change(screen.getByPlaceholderText(/Describe this step in detail/i), {
+      target: { value: 'Boil pasta' },
+    })
+
+    const refineBtn = screen.getByRole('button', { name: /Refine step 1 with AI/i })
+    expect(refineBtn).toBeInTheDocument()
+    fireEvent.click(refineBtn)
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Accept/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /Accept/i }))
+
+    expect(screen.getByDisplayValue(/Boil salted water/i)).toBeInTheDocument()
+
+    expect(screen.getByDisplayValue('Boil salted water in a large pot and cook pasta for 10 minutes.')).toBeInTheDocument()
+  })
+})
