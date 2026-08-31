@@ -397,6 +397,8 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
       {
         tags: form.setTags,
         dietaryRestrictions: form.setDietaryRestrictions,
+        substitutions: form.setSubstitutions,
+        variations: form.setVariations,
       }[result.field]
     if (listFieldSetter) {
       listFieldSetter(normalizeSuggestionListValue(result.previousValue))
@@ -404,7 +406,7 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     }
     const setter = fieldSetters[result.field]
     if (setter) setter(String(result.previousValue ?? ''))
-  }, [undoLastAIChange, fieldSetters, form.setTags, form.setDietaryRestrictions])
+  }, [undoLastAIChange, fieldSetters, form.setTags, form.setDietaryRestrictions, form.setSubstitutions, form.setVariations])
   const hasIngredients = form.ingredients.some((ingredient) => ingredient.item.trim())
   const hasSavedNutrition = Boolean(activeRecipeOverrides.nutritionalInfo?.perServing)
 

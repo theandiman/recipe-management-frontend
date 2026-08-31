@@ -757,7 +757,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   placeholder="e.g., Refrigerate in an airtight container for up to three days."
                   className={UI_STYLES.input}
                 />
-                {onEnhanceField && renderFieldAIFeedback && renderFieldAIFeedback('storageInstructions', storageInstructions || '', storageInstructions || '')}
+                {onEnhanceField && renderFieldAIFeedback('storageInstructions', storageInstructions || '', storageInstructions || '')}
               </div>
             )}
 
@@ -784,7 +784,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   placeholder="e.g., Can be chopped and prepped 1 day in advance."
                   className={UI_STYLES.input}
                 />
-                {onEnhanceField && renderFieldAIFeedback && renderFieldAIFeedback('makeAheadTips', makeAheadTips || '', makeAheadTips || '')}
+                {onEnhanceField && renderFieldAIFeedback('makeAheadTips', makeAheadTips || '', makeAheadTips || '')}
               </div>
             )}
 
@@ -811,7 +811,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   placeholder="e.g., Reheat in oven at 350°F for 10 minutes until warm."
                   className={UI_STYLES.input}
                 />
-                {onEnhanceField && renderFieldAIFeedback && renderFieldAIFeedback('reheatingInstructions', reheatingInstructions || '', reheatingInstructions || '')}
+                {onEnhanceField && renderFieldAIFeedback('reheatingInstructions', reheatingInstructions || '', reheatingInstructions || '')}
               </div>
             )}
 
@@ -869,7 +869,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                     ))}
                   </ul>
                 )}
-                {onEnhanceField && renderFieldAIFeedback && renderFieldAIFeedback('substitutions', stringifySuggestionList(substitutions || []), substitutions || [])}
+                {onEnhanceField && renderFieldAIFeedback('substitutions', stringifySuggestionList(substitutions || []), substitutions || [])}
               </div>
             )}
 
@@ -927,7 +927,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                     ))}
                   </ul>
                 )}
-                {onEnhanceField && renderFieldAIFeedback && renderFieldAIFeedback('variations', stringifySuggestionList(variations || []), variations || [])}
+                {onEnhanceField && renderFieldAIFeedback('variations', stringifySuggestionList(variations || []), variations || [])}
               </div>
             )}
           </div>
