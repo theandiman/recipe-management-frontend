@@ -59,20 +59,34 @@ const mapIngredientStringToFormValue = (ingredient: string) => {
   return { quantity, unit, item }
 }
 
-const getInitialFormState = (recipe: Recipe): RecipeFormInitialState => ({
-  title: recipe.recipeName || '',
-  description: recipe.description || '',
-  prepTime: recipe.prepTimeMinutes?.toString() || '',
-  cookTime: recipe.cookTimeMinutes?.toString() || '',
-  servings: recipe.servings?.toString() || '',
-  ingredients: recipe.ingredients?.length
-    ? recipe.ingredients.map(mapIngredientStringToFormValue)
-    : [EMPTY_INGREDIENT],
-  instructions: recipe.instructions?.length ? recipe.instructions : [''],
-  tags: recipe.tags || [],
-  dietaryRestrictions: recipe.dietaryRestrictions || [],
-  imagePreview: recipe.imageUrl || null,
-})
+const getInitialFormState = (recipe: Recipe): RecipeFormInitialState => {
+  const tips = (recipe.tips || {}) as Record<string, unknown>
+  const storage = (tips.storage || tips.storageInstructions || '') as string
+  const makeAhead = (tips.makeAhead || tips.makeAheadTips || '') as string
+  const reheating = (tips.reheating || tips.reheatingInstructions || '') as string
+  const substitutions = (Array.isArray(tips.substitutions) ? tips.substitutions : []) as string[]
+  const variations = (Array.isArray(tips.variations) ? tips.variations : []) as string[]
+
+  return {
+    title: recipe.recipeName || '',
+    description: recipe.description || '',
+    prepTime: recipe.prepTimeMinutes?.toString() || '',
+    cookTime: recipe.cookTimeMinutes?.toString() || '',
+    servings: recipe.servings?.toString() || '',
+    ingredients: recipe.ingredients?.length
+      ? recipe.ingredients.map(mapIngredientStringToFormValue)
+      : [EMPTY_INGREDIENT],
+    instructions: recipe.instructions?.length ? recipe.instructions : [''],
+    tags: recipe.tags || [],
+    dietaryRestrictions: recipe.dietaryRestrictions || [],
+    imagePreview: recipe.imageUrl || null,
+    storageInstructions: storage,
+    makeAheadTips: makeAhead,
+    reheatingInstructions: reheating,
+    substitutions,
+    variations,
+  }
+}
 
 interface QuickEntryRecipeFormProps {
   isEditMode: boolean
@@ -114,6 +128,11 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
     instructions: form.instructions,
     tags: form.tags,
     dietaryRestrictions: form.dietaryRestrictions,
+    storageInstructions: form.storageInstructions,
+    makeAheadTips: form.makeAheadTips,
+    reheatingInstructions: form.reheatingInstructions,
+    substitutions: form.substitutions,
+    variations: form.variations,
     imagePreview: form.imagePreview,
     recipeOverrides: activeRecipeOverrides,
     setFieldErrors: form.setFieldErrors,
@@ -942,6 +961,156 @@ const QuickEntryRecipeForm: React.FC<QuickEntryRecipeFormProps> = ({
   stringifySuggestionList(form.dietaryRestrictions),
   form.dietaryRestrictions
 )}
+              </div>
+            </div>
+          </CollapsibleSection>
+
+          {/* 💡 Tips & Tricks */}
+          <CollapsibleSection
+            title="Tips & Tricks"
+            icon="💡"
+            isOpen={sections.tips.isOpen}
+            isFilled={sections.tips.isFilled(
+              form.storageInstructions,
+              form.makeAheadTips,
+              form.reheatingInstructions,
+              form.substitutions,
+              form.variations
+            )}
+            onToggle={sections.tips.toggle}
+            data-testid="section-tips"
+          >
+            <div className="space-y-6">
+              {/* Storage Instructions */}
+              <div>
+                <label className="block mb-1.5 text-sm font-semibold text-gray-700 dark:text-gray-200">
+                  📦 Storage Instructions
+                </label>
+                <textarea
+                  value={form.storageInstructions || ''}
+                  onChange={(e) => form.setStorageInstructions(e.target.value)}
+                  rows={2}
+                  placeholder="e.g., Refrigerate in an airtight container for up to three days."
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+
+              {/* Make-Ahead Tips */}
+              <div>
+                <label className="block mb-1.5 text-sm font-semibold text-gray-700 dark:text-gray-200">
+                  ⏰ Make-Ahead Tips
+                </label>
+                <textarea
+                  value={form.makeAheadTips || ''}
+                  onChange={(e) => form.setMakeAheadTips(e.target.value)}
+                  rows={2}
+                  placeholder="e.g., Can be chopped and prepped 1 day in advance."
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+
+              {/* Reheating Instructions */}
+              <div>
+                <label className="block mb-1.5 text-sm font-semibold text-gray-700 dark:text-gray-200">
+                  🔥 Reheating Instructions
+                </label>
+                <textarea
+                  value={form.reheatingInstructions || ''}
+                  onChange={(e) => form.setReheatingInstructions(e.target.value)}
+                  rows={2}
+                  placeholder="e.g., Reheat in oven at 350°F for 10 minutes until warm."
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+
+              {/* Substitutions */}
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                  🔄 Ingredient Substitutions
+                </label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={form.substitutionInput || ''}
+                    onChange={(e) => form.setSubstitutionInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        form.addSubstitution()
+                      }
+                    }}
+                    placeholder="e.g., 'Use coconut milk instead of heavy cream'"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={form.addSubstitution}
+                    className={UI_STYLES.secondaryButton}
+                  >
+                    Add
+                  </button>
+                </div>
+                {form.substitutions && form.substitutions.length > 0 && (
+                  <ul className="space-y-1.5">
+                    {form.substitutions.map((sub, index) => (
+                      <li key={index} className="flex items-center justify-between px-3 py-1.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-amber-900 dark:text-amber-200 rounded-lg text-xs font-medium">
+                        <span>🔄 {sub}</span>
+                        <button
+                          type="button"
+                          onClick={() => form.removeSubstitution(index)}
+                          className="ml-2 text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 font-bold"
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* Variations */}
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                  ✨ Recipe Variations
+                </label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={form.variationInput || ''}
+                    onChange={(e) => form.setVariationInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        form.addVariation()
+                      }
+                    }}
+                    placeholder="e.g., 'Add red chili flakes for extra heat'"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={form.addVariation}
+                    className={UI_STYLES.secondaryButton}
+                  >
+                    Add
+                  </button>
+                </div>
+                {form.variations && form.variations.length > 0 && (
+                  <ul className="space-y-1.5">
+                    {form.variations.map((variation, index) => (
+                      <li key={index} className="flex items-center justify-between px-3 py-1.5 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900/50 text-purple-900 dark:text-purple-200 rounded-lg text-xs font-medium">
+                        <span>✨ {variation}</span>
+                        <button
+                          type="button"
+                          onClick={() => form.removeVariation(index)}
+                          className="ml-2 text-purple-700 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 font-bold"
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           </CollapsibleSection>

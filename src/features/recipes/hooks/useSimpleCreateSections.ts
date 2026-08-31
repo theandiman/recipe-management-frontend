@@ -14,6 +14,7 @@ interface SectionState {
   serving: boolean
   nutrition: boolean
   tags: boolean
+  tips: boolean
   photo: boolean
 }
 
@@ -22,6 +23,7 @@ const DEFAULT_SECTION_STATE: SectionState = {
   serving: false,
   nutrition: false,
   tags: false,
+  tips: false,
   photo: false,
 }
 
@@ -90,6 +92,22 @@ export function useSimpleCreateSections() {
       toggle: () => toggle('tags'),
       isFilled: (tags: string[], dietaryRestrictions: string[]) =>
         tags.length > 0 || dietaryRestrictions.length > 0,
+    },
+    tips: {
+      isOpen: open.tips,
+      toggle: () => toggle('tips'),
+      isFilled: (
+        storage?: string,
+        makeAhead?: string,
+        reheating?: string,
+        subs?: string[],
+        vars?: string[]
+      ) =>
+        !!storage ||
+        !!makeAhead ||
+        !!reheating ||
+        (Boolean(subs) && subs!.length > 0) ||
+        (Boolean(vars) && vars!.length > 0),
     },
     photo: {
       isOpen: open.photo,
