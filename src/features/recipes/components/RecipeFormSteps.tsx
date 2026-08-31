@@ -737,9 +737,19 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
             {/* Storage Instructions */}
             {setStorageInstructions && (
               <div>
-                <label className={`block mb-1.5 text-sm font-medium ${UI_STYLES.label}`}>
-                  📦 Storage Instructions
-                </label>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <label className={`block text-sm font-medium ${UI_STYLES.label}`}>
+                    📦 Storage Instructions
+                  </label>
+                  {onEnhanceField && fieldStatus && (
+                    <FieldAIEnhanceButton
+                      field="storageInstructions"
+                      currentValue={storageInstructions || ''}
+                      status={fieldStatus.get('storageInstructions') ?? 'idle'}
+                      onEnhance={() => onEnhanceField('storageInstructions', storageInstructions || '')}
+                    />
+                  )}
+                </div>
                 <textarea
                   value={storageInstructions || ''}
                   onChange={(e) => setStorageInstructions(e.target.value)}
@@ -747,15 +757,26 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   placeholder="e.g., Refrigerate in an airtight container for up to three days."
                   className={UI_STYLES.input}
                 />
+                {onEnhanceField && renderFieldAIFeedback('storageInstructions', storageInstructions || '', storageInstructions || '')}
               </div>
             )}
 
             {/* Make-Ahead Tips */}
             {setMakeAheadTips && (
               <div>
-                <label className={`block mb-1.5 text-sm font-medium ${UI_STYLES.label}`}>
-                  ⏰ Make-Ahead Tips
-                </label>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <label className={`block text-sm font-medium ${UI_STYLES.label}`}>
+                    ⏰ Make-Ahead Tips
+                  </label>
+                  {onEnhanceField && fieldStatus && (
+                    <FieldAIEnhanceButton
+                      field="makeAheadTips"
+                      currentValue={makeAheadTips || ''}
+                      status={fieldStatus.get('makeAheadTips') ?? 'idle'}
+                      onEnhance={() => onEnhanceField('makeAheadTips', makeAheadTips || '')}
+                    />
+                  )}
+                </div>
                 <textarea
                   value={makeAheadTips || ''}
                   onChange={(e) => setMakeAheadTips(e.target.value)}
@@ -763,15 +784,26 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   placeholder="e.g., Can be chopped and prepped 1 day in advance."
                   className={UI_STYLES.input}
                 />
+                {onEnhanceField && renderFieldAIFeedback('makeAheadTips', makeAheadTips || '', makeAheadTips || '')}
               </div>
             )}
 
             {/* Reheating Instructions */}
             {setReheatingInstructions && (
               <div>
-                <label className={`block mb-1.5 text-sm font-medium ${UI_STYLES.label}`}>
-                  🔥 Reheating Instructions
-                </label>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <label className={`block text-sm font-medium ${UI_STYLES.label}`}>
+                    🔥 Reheating Instructions
+                  </label>
+                  {onEnhanceField && fieldStatus && (
+                    <FieldAIEnhanceButton
+                      field="reheatingInstructions"
+                      currentValue={reheatingInstructions || ''}
+                      status={fieldStatus.get('reheatingInstructions') ?? 'idle'}
+                      onEnhance={() => onEnhanceField('reheatingInstructions', reheatingInstructions || '')}
+                    />
+                  )}
+                </div>
                 <textarea
                   value={reheatingInstructions || ''}
                   onChange={(e) => setReheatingInstructions(e.target.value)}
@@ -779,15 +811,26 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                   placeholder="e.g., Reheat in oven at 350°F for 10 minutes until warm."
                   className={UI_STYLES.input}
                 />
+                {onEnhanceField && renderFieldAIFeedback('reheatingInstructions', reheatingInstructions || '', reheatingInstructions || '')}
               </div>
             )}
 
             {/* Ingredient Substitutions */}
             {addSubstitution && removeSubstitution && setSubstitutionInput && (
               <div className="space-y-3">
-                <label className={`block text-sm font-medium ${UI_STYLES.label}`}>
-                  🔄 Ingredient Substitutions
-                </label>
+                <div className="flex items-center gap-1.5">
+                  <label className={`block text-sm font-medium ${UI_STYLES.label}`}>
+                    🔄 Ingredient Substitutions
+                  </label>
+                  {onEnhanceField && fieldStatus && (
+                    <FieldAIEnhanceButton
+                      field="substitutions"
+                      currentValue={stringifySuggestionList(substitutions || [])}
+                      status={fieldStatus.get('substitutions') ?? 'idle'}
+                      onEnhance={() => onEnhanceField('substitutions', substitutions || [])}
+                    />
+                  )}
+                </div>
                 <div className="flex items-center space-x-2">
                   <input
                     type="text"
@@ -826,15 +869,26 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                     ))}
                   </ul>
                 )}
+                {onEnhanceField && renderFieldAIFeedback('substitutions', stringifySuggestionList(substitutions || []), substitutions || [])}
               </div>
             )}
 
             {/* Recipe Variations */}
             {addVariation && removeVariation && setVariationInput && (
               <div className="space-y-3">
-                <label className={`block text-sm font-medium ${UI_STYLES.label}`}>
-                  ✨ Recipe Variations
-                </label>
+                <div className="flex items-center gap-1.5">
+                  <label className={`block text-sm font-medium ${UI_STYLES.label}`}>
+                    ✨ Recipe Variations
+                  </label>
+                  {onEnhanceField && fieldStatus && (
+                    <FieldAIEnhanceButton
+                      field="variations"
+                      currentValue={stringifySuggestionList(variations || [])}
+                      status={fieldStatus.get('variations') ?? 'idle'}
+                      onEnhance={() => onEnhanceField('variations', variations || [])}
+                    />
+                  )}
+                </div>
                 <div className="flex items-center space-x-2">
                   <input
                     type="text"
@@ -873,6 +927,7 @@ export const RecipeFormSteps = React.memo<RecipeFormStepsProps>(({
                     ))}
                   </ul>
                 )}
+                {onEnhanceField && renderFieldAIFeedback('variations', stringifySuggestionList(variations || []), variations || [])}
               </div>
             )}
           </div>

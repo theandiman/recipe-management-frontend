@@ -43,6 +43,11 @@ export interface FieldSuggestionRequest {
   servings?: string
   tags?: string[]
   dietaryRestrictions?: string[]
+  storageInstructions?: string
+  makeAheadTips?: string
+  reheatingInstructions?: string
+  substitutions?: string[]
+  variations?: string[]
   ingredients?: string[]
   instructions?: string[]
 }
@@ -51,7 +56,7 @@ export type SuggestionStatus = 'idle' | 'loading' | 'success' | 'error'
 
 /** Suggestible keys of FieldSuggestionRequest (excludes context-only array fields like ingredients/instructions). */
 export type SuggestibleFieldKey = Exclude<keyof FieldSuggestionRequest, 'ingredients' | 'instructions'>
-export type ListSuggestibleFieldKey = Extract<SuggestibleFieldKey, 'tags' | 'dietaryRestrictions'>
+export type ListSuggestibleFieldKey = Extract<SuggestibleFieldKey, 'tags' | 'dietaryRestrictions' | 'substitutions' | 'variations'>
 export type ScalarSuggestibleFieldKey = Exclude<SuggestibleFieldKey, ListSuggestibleFieldKey>
 export type SuggestibleFieldValue<K extends SuggestibleFieldKey = SuggestibleFieldKey> =
   K extends ListSuggestibleFieldKey ? string[] : string
@@ -153,7 +158,7 @@ export function useAISuggestions(): UseAISuggestionsReturn {
     })
 
     const request: FieldSuggestionRequest =
-      field === 'tags' || field === 'dietaryRestrictions'
+      field === 'tags' || field === 'dietaryRestrictions' || field === 'substitutions' || field === 'variations'
         ? {
             ...context,
             [field]: Array.isArray(currentValue) ? currentValue : [],
