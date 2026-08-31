@@ -14,6 +14,11 @@ interface UseRecipeSaveOptions {
   instructions: string[]
   tags: string[]
   dietaryRestrictions?: string[]
+  storageInstructions?: string
+  makeAheadTips?: string
+  reheatingInstructions?: string
+  substitutions?: string[]
+  variations?: string[]
   imagePreview: string | null
   recipeOverrides?: Partial<Recipe>
   setFieldErrors: (errors: Record<string, string>) => void
@@ -36,6 +41,13 @@ interface UseRecipeSaveOptions {
     tags: string[],
     imagePreview: string | null,
     dietaryRestrictions?: string[],
+    tips?: {
+      storageInstructions?: string
+      makeAheadTips?: string
+      reheatingInstructions?: string
+      substitutions?: string[]
+      variations?: string[]
+    },
     overrides?: Partial<Recipe>
   ) => Recipe
   goToStep: (step: number) => void
@@ -52,6 +64,11 @@ export function useRecipeSave({
   instructions,
   tags,
   dietaryRestrictions,
+  storageInstructions,
+  makeAheadTips,
+  reheatingInstructions,
+  substitutions,
+  variations,
   imagePreview,
   recipeOverrides,
   setFieldErrors,
@@ -108,6 +125,13 @@ export function useRecipeSave({
         tags,
         imagePreview,
         dietaryRestrictions,
+        {
+          storageInstructions,
+          makeAheadTips,
+          reheatingInstructions,
+          substitutions,
+          variations,
+        },
         recipeOverrides
       )
       
@@ -140,6 +164,11 @@ export function useRecipeSave({
     instructions,
     tags,
     dietaryRestrictions,
+    storageInstructions,
+    makeAheadTips,
+    reheatingInstructions,
+    substitutions,
+    variations,
     imagePreview,
     recipeOverrides,
     setFieldErrors,

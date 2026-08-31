@@ -48,6 +48,14 @@ export function useRecipeValidation() {
     tags: string[],
     imagePreview: string | null,
     dietaryRestrictions?: string[],
+    tipsOrOverrides?: {
+      storageInstructions?: string
+      makeAheadTips?: string
+      reheatingInstructions?: string
+      substitutions?: string[]
+      variations?: string[]
+      [key: string]: unknown
+    },
     overrides?: Partial<Recipe>
   ): Recipe => {
     const ingredientStrings = ingredients
@@ -56,7 +64,39 @@ export function useRecipeValidation() {
 
     const validInstructions = instructions.filter(inst => inst.trim())
 
+    let tips = tipsOrOverrides
+    let actualOverrides = overrides
+
+    if (tipsOrOverrides && ('source' in tipsOrOverrides || 'nutritionalInfo' in tipsOrOverrides || 'id' in tipsOrOverrides || 'tips' in tipsOrOverrides)) {
+      actualOverrides = { ...tipsOrOverrides, ...overrides } as Partial<Recipe>
+    }
+
+    const rawStorage = tips?.storageInstructions?.trim()
+    const rawMakeAhead = tips?.makeAheadTips?.trim()
+    const rawReheating = tips?.reheatingInstructions?.trim()
+    const rawSubs = tips?.substitutions?.filter(s => s.trim())
+    const rawVars = tips?.variations?.filter(v => v.trim())
+
+    const tipsObj = {
+      storage: rawStorage || undefined,
+      storageInstructions: rawStorage || undefined,
+      makeAhead: rawMakeAhead || undefined,
+      makeAheadTips: rawMakeAhead || undefined,
+      reheating: rawReheating || undefined,
+      reheatingInstructions: rawReheating || undefined,
+      substitutions: rawSubs && rawSubs.length > 0 ? rawSubs : undefined,
+      variations: rawVars && rawVars.length > 0 ? rawVars : undefined,
+      ...actualOverrides?.tips
+    }
+
+    const hasTips = Boolean(
+      tipsObj.storage || tipsObj.makeAhead || tipsObj.reheating ||
+      (tipsObj.substitutions && tipsObj.substitutions.length > 0) ||
+      (tipsObj.variations && tipsObj.variations.length > 0)
+    )
+
     return {
+      source: 'manual' as const,
       recipeName: title.trim(),
       description: description.trim() || undefined,
       ingredients: ingredientStrings,
@@ -67,8 +107,8 @@ export function useRecipeValidation() {
       tags: tags.length > 0 ? tags : undefined,
       dietaryRestrictions: dietaryRestrictions && dietaryRestrictions.length > 0 ? dietaryRestrictions : undefined,
       imageUrl: imagePreview || undefined,
-      source: 'manual' as const,
-      ...overrides
+      ...(hasTips ? { tips: tipsObj } : {}),
+      ...actualOverrides
     }
   }, [])
 

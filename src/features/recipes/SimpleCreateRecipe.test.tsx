@@ -139,7 +139,7 @@ describe('SimpleCreateRecipe', () => {
 
   it('renders the Instructions section header', () => {
     renderWithRouter(<SimpleCreateRecipe />)
-    expect(screen.getByText(/Instructions/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /^Instructions/i })).toBeInTheDocument()
   })
 
   it('renders the Save Recipe button', () => {
@@ -191,6 +191,14 @@ describe('SimpleCreateRecipe', () => {
     renderWithRouter(<SimpleCreateRecipe />)
     fireEvent.click(screen.getByRole('button', { name: /Photo/i }))
     expect(screen.getByText(/Click to upload/i)).toBeInTheDocument()
+  })
+
+  it('expands Tips & Tricks section when clicked and allows editing tips', () => {
+    renderWithRouter(<SimpleCreateRecipe />)
+    fireEvent.click(screen.getByRole('button', { name: /Tips & Tricks/i }))
+    expect(screen.getByPlaceholderText(/Refrigerate in an airtight container/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/Can be chopped and prepped/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/Reheat in oven at 350°F/i)).toBeInTheDocument()
   })
 
   it('collapses an open section when clicked again', () => {
