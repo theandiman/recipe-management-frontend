@@ -94,11 +94,6 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.4 }}
             />
-            {/* Title overlay at bottom of image */}
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/20 to-transparent pointer-events-none"></div>
-            <div className="absolute bottom-0 left-0 right-0 px-4 pt-6 pb-4">
-              <h3 className="text-white font-bold text-lg sm:text-xl line-clamp-2 drop-shadow-md">{title}</h3>
-            </div>
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none">
               <div className="bg-white/30 dark:bg-slate-900/50 backdrop-blur-md rounded-full p-3 shadow-lg">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -108,14 +103,14 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
             </div>
           </div>
         ) : (
-          <div className="h-40 sm:h-48 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center">
+          <div className="h-48 sm:h-56 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center">
             <svg className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
         )}
         <div className={`p-4 sm:p-5 ${compact ? 'p-3 sm:p-4' : ''}`}>
-          {!recipe.imageUrl && <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">{title}</h3>}
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">{title}</h3>
           {matchReason && (
             <div className="mb-3 px-2.5 py-1.5 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-indigo-500/10 border border-emerald-500/30 rounded-lg flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
               <span className="flex-shrink-0">✨</span>
