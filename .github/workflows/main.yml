@@ -387,7 +387,10 @@ jobs:
           FIREBASE_PROJECT_ID_DEV: ${{ secrets.FIREBASE_PROJECT_ID_DEV || 'recipe-mgmt-dev' }}
         run: |
           if [ -n "$FIREBASE_SERVICE_ACCOUNT_DEV" ]; then
-            npx firebase-tools deploy --only storage --project "$FIREBASE_PROJECT_ID_DEV" --token "$FIREBASE_SERVICE_ACCOUNT_DEV" || npx firebase-tools deploy --only storage --project "$FIREBASE_PROJECT_ID_DEV"
+            echo "$FIREBASE_SERVICE_ACCOUNT_DEV" > firebase-service-account.json
+            export GOOGLE_APPLICATION_CREDENTIALS="${PWD}/firebase-service-account.json"
+            npx firebase-tools deploy --only storage --project "$FIREBASE_PROJECT_ID_DEV" --non-interactive || (rm firebase-service-account.json && exit 1)
+            rm firebase-service-account.json
           fi
 
   # Post-deployment testing (main branch only, after deploy)
