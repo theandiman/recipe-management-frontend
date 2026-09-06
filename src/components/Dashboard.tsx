@@ -112,13 +112,15 @@ export const Dashboard: React.FC = () => {
       // For now, we pseudo-shuffle based on the day of the month so it changes daily but doesn't jump on every render.
       const seed = new Date().getDate()
       const shuffled = [...recipes].sort((a, b) => {
-        const hashA = (a.id || a.recipeName).charCodeAt(0) * seed
-        const hashB = (b.id || b.recipeName).charCodeAt(0) * seed
+        const hashA = (a.id || a.recipeName || 'a').charCodeAt(0) * seed
+        const hashB = (b.id || b.recipeName || 'b').charCodeAt(0) * seed
         return (hashA % 10) - (hashB % 10)
       })
       // Filter out recipes already in 'Recent' to avoid duplication if possible, 
       // though simple slice is fine for this UX upgrade.
       setRecommendedRecipes(shuffled.slice(0, 3))
+    } else {
+      setRecommendedRecipes([])
     }
   }, [recipes])
 
@@ -216,16 +218,16 @@ export const Dashboard: React.FC = () => {
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-              <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
               </svg>
               Recommended For You
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {recommendedRecipes.map((recipe) => (
+            {recommendedRecipes.map((recipe, index) => (
               <RecipeCard
-                key={`rec-${recipe.id}`}
+                key={`rec-${recipe.id || index}`}
                 recipe={recipe}
                 onView={(id) => navigate(`/dashboard/recipes/${id}`)}
                 compact
