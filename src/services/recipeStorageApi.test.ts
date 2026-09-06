@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { deleteRecipe, saveRecipe, getRecipes, getRecipe, updateRecipe, updateRecipeSharing, getPublicRecipes, getSavedRecipes, getFeed } from './recipeStorageApi'
-import type { Recipe } from '../types/nutrition'
+import type { Recipe, RecipeTips } from '../types/nutrition'
 import type { AxiosResponse } from 'axios'
 
 // Mock dependencies using factory functions
