@@ -484,17 +484,27 @@ export const getFeed = async (): Promise<Recipe[]> => {
 }
 
 /**
- * Fetch all public recipes from all users (no authentication required)
+ * Fetch all public recipes from all users (authentication is optional;
+ * attaching a token allows user-specific fields like isLikedByCurrentUser to be returned).
  * @returns List of public recipes
  */
 export const getPublicRecipes = async (): Promise<Recipe[]> => {
   const url = buildApiUrl(MANAGEMENT_API_BASE, '/api/recipes/public')
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
 
-  const response = await axios.get(url, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
+  const user = auth.currentUser
+  if (user) {
+    try {
+      const token = await user.getIdToken()
+      headers['Authorization'] = `Bearer ${token}`
+    } catch (e) {
+      console.warn('Failed to get auth token for public recipes request', e)
+    }
+  }
+
+  const response = await axios.get(url, { headers })
 
   return extractRecipes(response.data)
 }
