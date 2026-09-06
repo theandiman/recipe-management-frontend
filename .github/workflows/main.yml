@@ -398,7 +398,7 @@ jobs:
 
             if [ $deploy_status -ne 0 ]; then
               if printf '%s' "$deploy_output" | grep -qiE "Permission.*firebasestorage|defaultBucket|Firebase Storage has not been set up"; then
-                echo "::warning::Skipping storage rules deployment because Firebase Storage default bucket is not initialized or accessible on $FIREBASE_PROJECT_ID_DEV. Hosting deploy already succeeded; initialize Storage in the Firebase Console (https://console.firebase.google.com/project/$FIREBASE_PROJECT_ID_DEV/storage) to deploy storage rules."
+                echo "::warning::Skipping storage rules deployment: Firebase Storage may be uninitialized (visit https://console.firebase.google.com/project/$FIREBASE_PROJECT_ID_DEV/storage) or the service account lacks required Storage permissions (e.g., roles/firebasestorage.admin). Hosting deploy already succeeded."
               else
                 exit $deploy_status
               fi
