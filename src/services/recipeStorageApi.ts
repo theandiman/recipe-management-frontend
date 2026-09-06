@@ -484,7 +484,8 @@ export const getFeed = async (): Promise<Recipe[]> => {
 }
 
 /**
- * Fetch all public recipes from all users (no authentication required)
+ * Fetch all public recipes from all users (authentication is optional;
+ * attaching a token allows user-specific fields like isLikedByCurrentUser to be returned).
  * @returns List of public recipes
  */
 export const getPublicRecipes = async (): Promise<Recipe[]> => {

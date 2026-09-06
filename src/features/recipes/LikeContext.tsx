@@ -66,7 +66,12 @@ export const LikeProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const existing = prev[id]
         if (existing !== undefined) {
-          return prev
+          if (existing.isLiked !== isLiked) {
+            return prev
+          }
+          if (existing.likeCount === likeCount) {
+            return prev
+          }
         }
         return { ...prev, [id]: { isLiked, likeCount } }
       })

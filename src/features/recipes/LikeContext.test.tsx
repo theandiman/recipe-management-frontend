@@ -27,6 +27,7 @@ const TestConsumer = ({ recipeId }: { recipeId: string }) => {
       <div data-testid="like-count">{state?.likeCount ?? 'undefined'}</div>
       <button onClick={() => initRecipe(recipeId, false, 5)}>Init</button>
       <button onClick={() => initRecipe(recipeId, true, 10)}>Init Liked</button>
+      <button onClick={() => initRecipe(recipeId, false, 8)}>Init Higher Count</button>
       <button onClick={() => toggleLike(recipeId)}>Toggle</button>
     </div>
   )
@@ -337,5 +338,25 @@ describe('LikeContext', () => {
 
     // Context should be reset for new user session
     expect(screen.getByTestId('is-liked')).toHaveTextContent('false')
+  })
+
+  it('updates likeCount when initRecipe is called with matching isLiked but updated server count', async () => {
+    renderProvider()
+
+    // 1. Initial seed: unliked, count 5
+    await act(async () => {
+      screen.getByText('Init').click()
+    })
+    expect(screen.getByTestId('is-liked')).toHaveTextContent('false')
+    expect(screen.getByTestId('like-count')).toHaveTextContent('5')
+
+    // 2. Refetch from server with new count 8 (isLiked is still false)
+    await act(async () => {
+      screen.getByText('Init Higher Count').click()
+    })
+
+    // 3. likeCount should update to 8
+    expect(screen.getByTestId('is-liked')).toHaveTextContent('false')
+    expect(screen.getByTestId('like-count')).toHaveTextContent('8')
   })
 })
