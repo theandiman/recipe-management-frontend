@@ -109,10 +109,10 @@ describe('recipeStorageApi', () => {
       )
     })
 
-    it('should sanitize cookTime and prepTime when zero', async () => {
+    it('should sanitize cookTime and prepTime when numeric zero', async () => {
       const { postWithAuth } = await import('../utils/authApi')
       const mockRecipe = createMockRecipe({
-        prepTimeMinutes: 10,
+        prepTimeMinutes: 0,
         cookTimeMinutes: 0
       })
       const mockResponse = createAxiosResponse({ ...mockRecipe, id: 'saved-123' })
@@ -124,7 +124,28 @@ describe('recipeStorageApi', () => {
       expect(postWithAuth).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          prepTime: 10,
+          prepTime: undefined,
+          cookTime: undefined
+        })
+      )
+    })
+
+    it('should sanitize cookTime and prepTime when zero or non-positive strings', async () => {
+      const { postWithAuth } = await import('../utils/authApi')
+      const mockRecipe = createMockRecipe({
+        prepTime: '0 minutes',
+        cookTime: '0'
+      })
+      const mockResponse = createAxiosResponse({ ...mockRecipe, id: 'saved-123' })
+
+      vi.mocked(postWithAuth).mockResolvedValue(mockResponse)
+
+      await saveRecipe(mockRecipe)
+
+      expect(postWithAuth).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          prepTime: undefined,
           cookTime: undefined
         })
       )
@@ -583,15 +604,18 @@ describe('recipeStorageApi', () => {
         .rejects.toEqual(mockError)
     })
 
-    it('should handle network errors when both PATCH and PUT fail', async () => {
+    it('should propagate PUT error when fallback fails', async () => {
       const axios = (await import('axios')).default
-      const networkError = new Error('Network Error')
+      const patchNetworkError = new Error('Network Error')
+      const putForbiddenError = {
+        response: { status: 403, data: { message: 'Forbidden: Cannot update sharing' } }
+      }
       
-      vi.mocked(axios.patch).mockRejectedValue(networkError)
-      vi.mocked(axios.put).mockRejectedValue(networkError)
+      vi.mocked(axios.patch).mockRejectedValue(patchNetworkError)
+      vi.mocked(axios.put).mockRejectedValue(putForbiddenError)
 
       await expect(updateRecipeSharing('test-recipe-id', false))
-        .rejects.toThrow('Network Error')
+        .rejects.toEqual(putForbiddenError)
     })
 
     it('should fallback to PUT if PATCH fails with network error / CORS', async () => {

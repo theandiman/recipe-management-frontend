@@ -51,7 +51,8 @@ const parseTimeToMinutes = (value?: string | number | unknown): number | undefin
   if (match) {
     const amount = parseInt(match[1], 10)
     const unit = match[2].toLowerCase()
-    return unit.startsWith('hour') || unit.startsWith('hr') ? amount * 60 : amount
+    const minutes = unit.startsWith('hour') || unit.startsWith('hr') ? amount * 60 : amount
+    return minutes > 0 ? minutes : undefined
   }
 
   const num = parseInt(timeStr, 10)
@@ -614,12 +615,8 @@ export const updateRecipeSharing = async (id: string, isPublic: boolean): Promis
     }
 
     if (isNetworkOrMethodError(error)) {
-      try {
-        const fallbackResponse = await axios.put(url, { isPublic }, { headers })
-        return normalizeRecipe(fallbackResponse.data)
-      } catch {
-        throw error
-      }
+      const fallbackResponse = await axios.put(url, { isPublic }, { headers })
+      return normalizeRecipe(fallbackResponse.data)
     }
 
     throw error
