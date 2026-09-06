@@ -389,8 +389,20 @@ jobs:
           if [ -n "$FIREBASE_SERVICE_ACCOUNT_DEV" ]; then
             echo "$FIREBASE_SERVICE_ACCOUNT_DEV" > firebase-service-account.json
             export GOOGLE_APPLICATION_CREDENTIALS="${PWD}/firebase-service-account.json"
-            npx firebase-tools deploy --only storage --project "$FIREBASE_PROJECT_ID_DEV" --non-interactive || (rm firebase-service-account.json && exit 1)
+            set +e
+            deploy_output="$(npx firebase-tools deploy --only storage --project "$FIREBASE_PROJECT_ID_DEV" --non-interactive 2>&1)"
+            deploy_status=$?
+            set -e
+            printf '%s\n' "$deploy_output"
             rm firebase-service-account.json
+
+            if [ $deploy_status -ne 0 ]; then
+              if printf '%s' "$deploy_output" | grep -q "Permission denied to get service \\[firebasestorage.googleapis.com\\]"; then
+                echo "::warning::Skipping storage rules deployment because the Firebase service account cannot query the Storage API. Hosting deploy already succeeded; grant Service Usage Viewer (or broader Firebase admin access) to re-enable storage rules deployment."
+              else
+                exit $deploy_status
+              fi
+            fi
           fi
 
   # Post-deployment testing (main branch only, after deploy)
