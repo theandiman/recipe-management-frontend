@@ -274,4 +274,68 @@ describe('LikeContext', () => {
     expect(screen.getByTestId('like-count')).toHaveTextContent('4')
     expect(mockLikeRecipe).toHaveBeenCalledWith('r1')
   })
+
+  it('does not overwrite active like state when initRecipe is called again with stale props', async () => {
+    renderProvider()
+
+    // 1. Initial seed: unliked, count 5
+    await act(async () => {
+      screen.getByText('Init').click()
+    })
+    expect(screen.getByTestId('is-liked')).toHaveTextContent('false')
+    expect(screen.getByTestId('like-count')).toHaveTextContent('5')
+
+    // 2. User toggles like -> liked, count 6
+    await act(async () => {
+      screen.getByText('Toggle').click()
+    })
+    expect(screen.getByTestId('is-liked')).toHaveTextContent('true')
+    expect(screen.getByTestId('like-count')).toHaveTextContent('6')
+
+    // 3. Parent re-renders with stale props (Init: unliked, count 5)
+    await act(async () => {
+      screen.getByText('Init').click()
+    })
+
+    // 4. Must NOT revert to unliked or count 5
+    expect(screen.getByTestId('is-liked')).toHaveTextContent('true')
+    expect(screen.getByTestId('like-count')).toHaveTextContent('6')
+  })
+
+  it('clears likeMap when a new user logs in', async () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: false })
+    const { rerender } = renderProvider()
+
+    // User logs in
+    mockUseAuth.mockReturnValue({ isAuthenticated: true })
+    rerender(
+      <LikeProvider>
+        <TestConsumer recipeId="r1" />
+      </LikeProvider>
+    )
+
+    await act(async () => {
+      screen.getByText('Init Liked').click()
+    })
+    expect(screen.getByTestId('is-liked')).toHaveTextContent('true')
+
+    // User logs out
+    mockUseAuth.mockReturnValue({ isAuthenticated: false })
+    rerender(
+      <LikeProvider>
+        <TestConsumer recipeId="r1" />
+      </LikeProvider>
+    )
+
+    // Another user logs in
+    mockUseAuth.mockReturnValue({ isAuthenticated: true })
+    rerender(
+      <LikeProvider>
+        <TestConsumer recipeId="r1" />
+      </LikeProvider>
+    )
+
+    // Context should be reset for new user session
+    expect(screen.getByTestId('is-liked')).toHaveTextContent('false')
+  })
 })

@@ -589,7 +589,7 @@ describe('recipeStorageApi', () => {
       expect(result).toEqual(mockRecipes)
     })
 
-    it('should not include an Authorization header', async () => {
+    it('should include an Authorization header when authenticated', async () => {
       const axios = (await import('axios')).default
 
       vi.mocked(axios.get).mockResolvedValue(createAxiosResponse([createMockRecipe()]))
@@ -598,7 +598,33 @@ describe('recipeStorageApi', () => {
 
       const callArgs = vi.mocked(axios.get).mock.calls[0]
       const config = callArgs[1] as { headers?: Record<string, unknown> }
-      expect(config?.headers?.['Authorization']).toBeUndefined()
+      expect(config?.headers?.['Authorization']).toBe('Bearer mock-token')
+    })
+
+    it('should not include an Authorization header when unauthenticated', async () => {
+      const { auth } = await import('../config/firebase')
+      const originalCurrentUser = auth.currentUser
+
+      Object.defineProperty(auth, 'currentUser', {
+        get: () => null,
+        configurable: true
+      })
+
+      const axios = (await import('axios')).default
+      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse([createMockRecipe()]))
+
+      try {
+        await getPublicRecipes()
+
+        const callArgs = vi.mocked(axios.get).mock.calls[0]
+        const config = callArgs[1] as { headers?: Record<string, unknown> }
+        expect(config?.headers?.['Authorization']).toBeUndefined()
+      } finally {
+        Object.defineProperty(auth, 'currentUser', {
+          get: () => originalCurrentUser,
+          configurable: true
+        })
+      }
     })
   })
 

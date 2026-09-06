@@ -46,6 +46,9 @@ export const LikeProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return next
       })
       pendingRef.current.clear()
+    } else if (!prevAuthRef.current && isAuthenticated) {
+      setLikeMap({})
+      pendingRef.current.clear()
     }
     prevAuthRef.current = isAuthenticated
   }, [isAuthenticated])
@@ -62,11 +65,7 @@ export const LikeProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (pendingRef.current.has(id)) return prev
 
         const existing = prev[id]
-        if (
-          existing !== undefined &&
-          existing.isLiked === isLiked &&
-          existing.likeCount === likeCount
-        ) {
+        if (existing !== undefined) {
           return prev
         }
         return { ...prev, [id]: { isLiked, likeCount } }
