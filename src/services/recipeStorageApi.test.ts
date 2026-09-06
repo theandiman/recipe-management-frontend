@@ -64,7 +64,7 @@ describe('recipeStorageApi', () => {
     status: 200,
     statusText: 'OK',
     headers: {},
-    config: {} as any
+    config: {} as AxiosResponse<T>['config']
   })
 
   describe('saveRecipe', () => {
@@ -109,6 +109,27 @@ describe('recipeStorageApi', () => {
       )
     })
 
+    it('should sanitize cookTime and prepTime when zero', async () => {
+      const { postWithAuth } = await import('../utils/authApi')
+      const mockRecipe = createMockRecipe({
+        prepTimeMinutes: 10,
+        cookTimeMinutes: 0
+      })
+      const mockResponse = createAxiosResponse({ ...mockRecipe, id: 'saved-123' })
+
+      vi.mocked(postWithAuth).mockResolvedValue(mockResponse)
+
+      await saveRecipe(mockRecipe)
+
+      expect(postWithAuth).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          prepTime: 10,
+          cookTime: undefined
+        })
+      )
+    })
+
     it('should handle recipe with tips', async () => {
       const { postWithAuth } = await import('../utils/authApi')
       const mockRecipe = createMockRecipe({
@@ -147,7 +168,7 @@ describe('recipeStorageApi', () => {
           storageInstructions: 'Keep in fridge',
           makeAheadTips: 'Prep night before',
           reheatingInstructions: 'Warm in oven'
-        } as any
+        } as unknown as RecipeTips
       })
       const mockResponse = createAxiosResponse({ ...mockRecipe, id: 'saved-123' })
 
@@ -562,14 +583,55 @@ describe('recipeStorageApi', () => {
         .rejects.toEqual(mockError)
     })
 
-    it('should handle network errors', async () => {
+    it('should handle network errors when both PATCH and PUT fail', async () => {
       const axios = (await import('axios')).default
       const networkError = new Error('Network Error')
       
       vi.mocked(axios.patch).mockRejectedValue(networkError)
+      vi.mocked(axios.put).mockRejectedValue(networkError)
 
       await expect(updateRecipeSharing('test-recipe-id', false))
         .rejects.toThrow('Network Error')
+    })
+
+    it('should fallback to PUT if PATCH fails with network error / CORS', async () => {
+      const axios = (await import('axios')).default
+      const mockRecipe = createMockRecipe({ isPublic: true })
+      const networkError = new Error('Network Error')
+
+      vi.mocked(axios.patch).mockRejectedValue(networkError)
+      vi.mocked(axios.put).mockResolvedValue(createAxiosResponse(mockRecipe))
+
+      const result = await updateRecipeSharing('test-recipe-id', true)
+
+      expect(axios.patch).toHaveBeenCalled()
+      expect(axios.put).toHaveBeenCalledWith(
+        expect.stringContaining('/api/recipes/test-recipe-id/sharing'),
+        { isPublic: true },
+        expect.any(Object)
+      )
+      expect(result).toEqual(mockRecipe)
+    })
+
+    it('should fallback to PUT if PATCH returns 405 Method Not Allowed', async () => {
+      const axios = (await import('axios')).default
+      const mockRecipe = createMockRecipe({ isPublic: false })
+      const methodNotAllowedError = {
+        response: { status: 405, data: { message: 'Method Not Allowed' } }
+      }
+
+      vi.mocked(axios.patch).mockRejectedValue(methodNotAllowedError)
+      vi.mocked(axios.put).mockResolvedValue(createAxiosResponse(mockRecipe))
+
+      const result = await updateRecipeSharing('test-recipe-id', false)
+
+      expect(axios.patch).toHaveBeenCalled()
+      expect(axios.put).toHaveBeenCalledWith(
+        expect.stringContaining('/api/recipes/test-recipe-id/sharing'),
+        { isPublic: false },
+        expect.any(Object)
+      )
+      expect(result).toEqual(mockRecipe)
     })
   })
 
