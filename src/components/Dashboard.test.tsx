@@ -127,10 +127,10 @@ describe('Dashboard', () => {
     )
 
     await waitFor(() => {
-      // Should show the 3 most recent recipes
-      expect(screen.getByText('Salad')).toBeInTheDocument()
-      expect(screen.getByText('Pasta')).toBeInTheDocument()
-      expect(screen.getByText('Chocolate Cake')).toBeInTheDocument()
+      // Should show the 3 most recent recipes (using getAllByText since they might be in FYP too)
+      expect(screen.getAllByText('Salad').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('Pasta').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('Chocolate Cake').length).toBeGreaterThan(0)
     })
   })
 
@@ -181,7 +181,7 @@ describe('Dashboard', () => {
     })
   })
 
-  it('should display recipe statistics', async () => {
+  it('should display recommended recipes FYP', async () => {
     vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
 
     render(
@@ -191,9 +191,8 @@ describe('Dashboard', () => {
     )
 
     await waitFor(() => {
-      // Should show total recipes count
-      expect(screen.getByText('3')).toBeInTheDocument()
-      expect(screen.getByText('Total Recipes')).toBeInTheDocument()
+      // Should show the FYP section header
+      expect(screen.getByText('Recommended For You')).toBeInTheDocument()
     })
   })
 

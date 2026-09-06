@@ -5,7 +5,7 @@ import { useAuth } from '../features/auth/AuthContext'
 import { useOmniSearch } from './search/OmniSearchContext'
 import { getRecipes } from '../services/recipeStorageApi'
 import RecipeCard from '../components/RecipeCard'
-import { StatsSkeleton } from '../components/skeletons/StatsSkeleton'
+
 import { RecentRecipesSkeleton } from '../components/skeletons/RecentRecipesSkeleton'
 import type { Recipe } from '../types/nutrition'
 
@@ -103,40 +103,26 @@ export const Dashboard: React.FC = () => {
     }
   ]
 
-  const stats = [
-    {
-      label: 'Total Recipes',
-      value: recipes.length,
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-      ),
-      color: 'text-blue-600'
-    },
-    {
-      label: 'This Week',
-      value: recipes.filter(recipe =>
-        recipe.createdAt && new Date(recipe.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-      ).length,
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-      ),
-      color: 'text-green-600'
-    },
-    {
-      label: 'Tags',
-      value: new Set(recipes.flatMap(r => r.tags || []).filter(Boolean)).size,
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-        </svg>
-      ),
-      color: 'text-purple-600'
+  // Generate FYP recommendations
+  const [recommendedRecipes, setRecommendedRecipes] = useState<Recipe[]>([])
+  
+  useEffect(() => {
+    if (recipes.length > 0) {
+      // In a real app, this would use a personalized recommendation engine.
+      // For now, we pseudo-shuffle based on the day of the month so it changes daily but doesn't jump on every render.
+      const seed = new Date().getDate()
+      const shuffled = [...recipes].sort((a, b) => {
+        const hashA = (a.id || a.recipeName || 'a').charCodeAt(0) * seed
+        const hashB = (b.id || b.recipeName || 'b').charCodeAt(0) * seed
+        return (hashA % 10) - (hashB % 10)
+      })
+      // Filter out recipes already in 'Recent' to avoid duplication if possible, 
+      // though simple slice is fine for this UX upgrade.
+      setRecommendedRecipes(shuffled.slice(0, 3))
+    } else {
+      setRecommendedRecipes([])
     }
-  ]
+  }, [recipes])
 
   return (
     <motion.div
@@ -222,47 +208,35 @@ export const Dashboard: React.FC = () => {
         </motion.div>
       </motion.div>
 
-      {/* Quick Stats */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        className="grid grid-cols-1 md:grid-cols-3 gap-6"
-      >
-        {loading ? (
-          Array.from({ length: 3 }).map((_, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.4 + index * 0.1, duration: 0.3 }}
-              className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6 transition-colors duration-300"
-            >
-              <StatsSkeleton />
-            </motion.div>
-          ))
-        ) : (
-          stats.map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.4 + index * 0.1, duration: 0.3 }}
-              className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6 transition-colors duration-300"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">{stat.label}</p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stat.value}</p>
-                </div>
-                <div className={`p-3 rounded-full bg-gray-50 dark:bg-slate-700/60 ${stat.color}`}>
-                  {stat.icon}
-                </div>
-              </div>
-            </motion.div>
-          ))
-        )}
-      </motion.div>
+      {/* Recommended For You (FYP) */}
+      {!loading && recommendedRecipes.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6 transition-colors duration-300"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+              Recommended For You
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {recommendedRecipes.map((recipe, index) => (
+              <RecipeCard
+                key={`rec-${recipe.id || index}`}
+                recipe={recipe}
+                onView={(id) => navigate(`/dashboard/recipes/${id}`)}
+                compact
+                showBookmark
+              />
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Quick Actions */}
       <motion.div
