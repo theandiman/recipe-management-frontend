@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { toast } from 'sonner'
 import type { Recipe } from '../types/nutrition'
 import GlobeIcon from './GlobeIcon'
 import BookmarkButton from './BookmarkButton'
@@ -10,25 +11,69 @@ interface RecipeCardProps {
   recipe: Recipe
   onView?: (id: string) => void
   onDelete?: (recipe: Recipe) => void
+  onEdit?: (recipe: Recipe) => void
+  isOwner?: boolean
   compact?: boolean
   authorUid?: string
   authorName?: string
   showBookmark?: boolean
   showLike?: boolean
+  showMenu?: boolean
   matchReason?: string
 }
 
-export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete, compact, authorUid, authorName, showBookmark = false, showLike = false, matchReason }) => {
+export const RecipeCard: React.FC<RecipeCardProps> = ({
+  recipe,
+  onView,
+  onDelete,
+  onEdit,
+  isOwner,
+  compact,
+  authorUid,
+  authorName,
+  showBookmark = false,
+  showLike = false,
+  showMenu,
+  matchReason,
+}) => {
   const navigate = useNavigate()
   const [isFlipped, setIsFlipped] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
   const title = recipe.recipeName
-  
+  const canEdit = Boolean(onEdit || isOwner || (recipe.id && onDelete))
+  const canDelete = Boolean(onDelete)
+  const hasMenuActions = Boolean(canEdit || canDelete || recipe.id)
+  const shouldShowMenu = showMenu !== undefined ? showMenu : hasMenuActions
+
+  // Close menu when clicking outside or pressing Escape
+  useEffect(() => {
+    if (!isMenuOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false)
+      }
+    }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown, true)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown, true)
+    }
+  }, [isMenuOpen])
+
   const totalTime = recipe.totalTimeMinutes ||
     ((recipe.prepTimeMinutes || 0) + (recipe.cookTimeMinutes || 0)) ||
     undefined
 
   const handleCardClick = () => {
-    if (!recipe.id) return
+    if (!recipe.id || isMenuOpen) return
     if (onView) {
       onView(recipe.id)
     } else {
@@ -52,22 +97,28 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
           }
         }}
         onClick={handleCardClick}
-        onHoverStart={() => setIsFlipped(true)}
-        onHoverEnd={() => setIsFlipped(false)}
-        onFocus={() => setIsFlipped(true)}
+        onHoverStart={() => {
+          if (!isMenuOpen) setIsFlipped(true)
+        }}
+        onHoverEnd={() => {
+          if (!isMenuOpen) setIsFlipped(false)
+        }}
+        onFocus={() => {
+          if (!isMenuOpen) setIsFlipped(true)
+        }}
         onBlur={(e) => {
           if (!e.currentTarget.contains(e.relatedTarget as Node)) {
             setIsFlipped(false)
           }
         }}
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        animate={{ rotateY: (isFlipped && !isMenuOpen) ? 180 : 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
         className={`relative w-full h-full rounded-2xl shadow-sm hover:shadow-xl [transform-style:preserve-3d] cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 ${compact ? 'p-0' : ''}`}
       >
         {/* --- FRONT FACE --- */}
         <div 
           className="relative w-full h-full bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden [backface-visibility:hidden] [-webkit-backface-visibility:hidden] flex flex-col"
-          inert={isFlipped ? true : undefined}
+          inert={(isFlipped && !isMenuOpen) ? true : undefined}
         >
           {recipe.isPublic && (
             <div data-testid="public-badge" className="absolute top-3 left-3 z-10 flex items-center gap-1 bg-emerald-500 text-white text-xs font-medium px-2 py-0.5 rounded-full pointer-events-none">
@@ -75,25 +126,129 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
               Public
             </div>
           )}
-          
-          {showBookmark && (
-            <div className={`absolute top-3 ${onDelete ? 'right-14' : 'right-3'} z-10`} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-              <BookmarkButton recipe={recipe} className="bg-white/90 shadow-sm hover:bg-white" />
-            </div>
-          )}
 
-          {onDelete && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onDelete(recipe) }}
-              className="absolute top-3 right-3 z-10 bg-red-500 text-white p-2.5 md:p-2 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
-              title={`Delete ${title}`}
-              aria-label={`Delete ${title}`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          )}
+          {/* Top-Right Action Cluster (Bookmark + 3-Dots Menu) */}
+          <div
+            className="absolute top-3 right-3 z-20 flex items-center gap-1.5"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setIsMenuOpen(false)
+              }
+              e.stopPropagation()
+            }}
+          >
+            {showBookmark && (
+              <BookmarkButton
+                recipe={recipe}
+                className="bg-white/90 dark:bg-slate-800/90 shadow-sm hover:bg-white dark:hover:bg-slate-800"
+              />
+            )}
+
+            {shouldShowMenu && (
+              <div className="relative" ref={menuRef}>
+                <button
+                  type="button"
+                  data-testid="recipe-card-menu-button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setIsMenuOpen((prev) => !prev)
+                  }}
+                  onKeyDown={(e) => {
+                    e.stopPropagation()
+                  }}
+                  aria-label={`More options for ${title}`}
+                  aria-haspopup="menu"
+                  aria-expanded={isMenuOpen}
+                  title={`More options for ${title}`}
+                  className="flex items-center justify-center p-2 rounded-full bg-white/90 dark:bg-slate-800/90 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white shadow-sm hover:bg-white dark:hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="5" r="2" />
+                    <circle cx="12" cy="12" r="2" />
+                    <circle cx="12" cy="19" r="2" />
+                  </svg>
+                </button>
+
+                {isMenuOpen && (
+                  <div
+                    role="menu"
+                    aria-label={`Options for ${title}`}
+                    className="absolute right-0 top-full mt-1.5 w-40 rounded-xl bg-white dark:bg-slate-800 shadow-xl ring-1 ring-black/5 dark:ring-white/10 border border-gray-200 dark:border-slate-700 py-1 z-30 overflow-hidden animate-[fadeIn_0.1s_ease]"
+                  >
+                    {canEdit && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setIsMenuOpen(false)
+                          if (onEdit) {
+                            onEdit(recipe)
+                          } else if (recipe.id) {
+                            navigate(`/dashboard/recipes/edit/${recipe.id}`)
+                          }
+                        }}
+                        aria-label={`Edit ${title}`}
+                        className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors text-left cursor-pointer"
+                      >
+                        <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit recipe
+                      </button>
+                    )}
+
+                    {recipe.id && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          setIsMenuOpen(false)
+                          try {
+                            const url = `${window.location.origin}/recipes/${recipe.id}`
+                            if (navigator.clipboard?.writeText) {
+                              await navigator.clipboard.writeText(url)
+                            }
+                            toast.success('Recipe link copied to clipboard!')
+                          } catch {
+                            toast.error('Failed to copy link')
+                          }
+                        }}
+                        aria-label={`Copy link for ${title}`}
+                        className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors text-left cursor-pointer"
+                      >
+                        <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                        Copy link
+                      </button>
+                    )}
+
+                    {canDelete && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setIsMenuOpen(false)
+                          onDelete?.(recipe)
+                        }}
+                        aria-label={`Delete ${title}`}
+                        className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors text-left border-t border-gray-100 dark:border-slate-700/60 cursor-pointer"
+                      >
+                        <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete recipe
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {recipe.imageUrl ? (
             <div className="relative h-48 sm:h-56 overflow-hidden flex-shrink-0">
@@ -150,6 +305,14 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onDelete
                 <span className="flex items-center bg-amber-500/10 text-amber-500 font-semibold px-2 py-1 rounded-md">
                   ⭐ {recipeWithAuthor.averageRating.toFixed(1)} {recipeWithAuthor.ratingCount ? `(${recipeWithAuthor.ratingCount})` : ''}
                 </span>
+              )}
+              {showLike && (
+                <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} className="ml-auto flex-shrink-0">
+                  <LikeButton
+                    recipe={recipe}
+                    className="bg-gray-100 dark:bg-slate-700/50 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                  />
+                </div>
               )}
             </div>
           </div>
