@@ -109,28 +109,85 @@ describe('RecipeCard', () => {
     expect(onView).toHaveBeenCalledWith('123')
   })
 
-  it('should call onDelete when delete button is clicked', async () => {
-    const user = userEvent.setup()
-    const onDelete = vi.fn()
-    
-    render(<RecipeCard recipe={mockRecipe} onDelete={onDelete} />)
-    
-    await user.click(screen.getByLabelText('Delete Test Recipe'))
-    
-    expect(onDelete).toHaveBeenCalledWith(mockRecipe)
+  it('should render delete button on both mobile (front) and back face when onDelete is provided', () => {
+    render(<RecipeCard recipe={mockRecipe} onDelete={vi.fn()} />)
+    const deleteButtons = screen.getAllByLabelText('Delete Test Recipe')
+    expect(deleteButtons).toHaveLength(2)
   })
 
-  it('should not call onView when delete button is clicked', async () => {
+  it('should call onDelete when mobile delete button is clicked without flipping', async () => {
+    const user = userEvent.setup()
+    const onDelete = vi.fn()
+    const onView = vi.fn()
+    
+    render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
+    
+    const [mobileDeleteButton] = screen.getAllByLabelText('Delete Test Recipe')
+    await user.click(mobileDeleteButton)
+    
+    expect(onDelete).toHaveBeenCalledWith(mockRecipe)
+    expect(onView).not.toHaveBeenCalled()
+  })
+
+  it('should call onDelete when back face delete button is clicked', async () => {
+    const user = userEvent.setup()
+    const onDelete = vi.fn()
+    const onView = vi.fn()
+    
+    const { container } = render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
+    
+    // Focus the card first to flip it and make the back face interactive (non-inert)
+    const card = container.querySelector('[role="button"][tabindex="0"]') as HTMLElement
+    card.focus()
+    
+    const [, backFaceDeleteButton] = screen.getAllByLabelText('Delete Test Recipe')
+    await user.click(backFaceDeleteButton)
+    
+    expect(onDelete).toHaveBeenCalledWith(mockRecipe)
+    expect(onView).not.toHaveBeenCalled()
+  })
+
+  it('should call onDelete and not onView when Enter key is pressed on back face delete button', async () => {
     const user = userEvent.setup()
     const onView = vi.fn()
     const onDelete = vi.fn()
     
-    render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
+    const { container } = render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
     
-    await user.click(screen.getByLabelText('Delete Test Recipe'))
+    // Focus the card first to flip it and make the back face interactive (non-inert)
+    const card = container.querySelector('[role="button"][tabindex="0"]') as HTMLElement
+    card.focus()
     
-    expect(onDelete).toHaveBeenCalled()
+    const [, backFaceDeleteButton] = screen.getAllByLabelText('Delete Test Recipe')
+    backFaceDeleteButton.focus()
+    await user.keyboard('{Enter}')
+    
+    expect(onDelete).toHaveBeenCalledWith(mockRecipe)
     expect(onView).not.toHaveBeenCalled()
+  })
+
+  it('should call onDelete and not onView when Space key is pressed on back face delete button', async () => {
+    const user = userEvent.setup()
+    const onView = vi.fn()
+    const onDelete = vi.fn()
+    
+    const { container } = render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
+    
+    // Focus the card first to flip it and make the back face interactive (non-inert)
+    const card = container.querySelector('[role="button"][tabindex="0"]') as HTMLElement
+    card.focus()
+    
+    const [, backFaceDeleteButton] = screen.getAllByLabelText('Delete Test Recipe')
+    backFaceDeleteButton.focus()
+    await user.keyboard(' ')
+    
+    expect(onDelete).toHaveBeenCalledWith(mockRecipe)
+    expect(onView).not.toHaveBeenCalled()
+  })
+
+  it('should not render delete button when onDelete is not provided', () => {
+    render(<RecipeCard recipe={mockRecipe} />)
+    expect(screen.queryByLabelText('Delete Test Recipe')).not.toBeInTheDocument()
   })
 
   it('should calculate total time from prep and cook when totalTimeMinutes is not provided', () => {
