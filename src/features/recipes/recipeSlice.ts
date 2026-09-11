@@ -45,9 +45,15 @@ export const remixRecipe = createAsyncThunk(
     instruction: string
   }, { rejectWithValue, signal }) => {
     try {
+      const instruction = payload?.instruction?.trim()
+      if (!instruction) {
+        return rejectWithValue('Instruction cannot be empty')
+      }
+      if (!payload?.currentRecipe) {
+        return rejectWithValue('Current recipe is required for modification')
+      }
       const apiBase = resolveAiApiBase()
       const url = buildApiUrl(apiBase, '/api/recipes/modify')
-      const instruction = payload.instruction?.trim() ?? ''
       const res = await postWithAuth(url, {
         currentRecipe: payload.currentRecipe,
         instruction,

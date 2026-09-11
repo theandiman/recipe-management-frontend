@@ -603,5 +603,31 @@ describe('recipeSlice', () => {
       expect(state.loading).toBe(false)
       expect(state.error).toBe(JSON.stringify({ error: 'Validation failed' }))
     })
+
+    it('should reject early when instruction is empty or whitespace-only without calling API', async () => {
+      const store = configureStore({ reducer: { recipe: recipeReducer } })
+      await store.dispatch(remixRecipe({
+        currentRecipe: mockCurrentRecipe,
+        instruction: '   '
+      }))
+
+      const state = store.getState().recipe
+      expect(state.loading).toBe(false)
+      expect(state.error).toBe('Instruction cannot be empty')
+      expect(authApi.postWithAuth).not.toHaveBeenCalled()
+    })
+
+    it('should reject early when currentRecipe is missing without calling API', async () => {
+      const store = configureStore({ reducer: { recipe: recipeReducer } })
+      await store.dispatch(remixRecipe({
+        currentRecipe: null as unknown as Recipe,
+        instruction: 'Make vegan'
+      }))
+
+      const state = store.getState().recipe
+      expect(state.loading).toBe(false)
+      expect(state.error).toBe('Current recipe is required for modification')
+      expect(authApi.postWithAuth).not.toHaveBeenCalled()
+    })
   })
 })
