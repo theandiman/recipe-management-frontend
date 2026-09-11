@@ -256,6 +256,18 @@ describe('RecipeCard', () => {
     expect(onDelete).toHaveBeenCalledWith(mockRecipe)
   })
 
+  it('should not render duplicate delete option inside back-face menu when opened', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<RecipeCard recipe={mockRecipe} onDelete={vi.fn()} />)
+    
+    const card = container.querySelector('[role="button"][tabindex="0"]') as HTMLElement
+    card.focus()
+    
+    await user.click(screen.getByTestId('recipe-card-back-menu-button'))
+    expect(screen.queryByRole('menuitem', { name: /Delete/i })).not.toBeInTheDocument()
+    expect(screen.getByTestId('recipe-card-back-delete-button')).toBeInTheDocument()
+  })
+
   it('should calculate total time from prep and cook when totalTimeMinutes is not provided', () => {
     const recipeWithoutTotal = {
       ...mockRecipe,

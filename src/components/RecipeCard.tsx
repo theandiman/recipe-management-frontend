@@ -47,7 +47,9 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
   const canEdit = Boolean(recipe.id && (onEdit || isOwner))
   const canDelete = Boolean(onDelete)
   const hasMenuActions = Boolean(canEdit || canDelete || recipe.id)
+  const hasBackMenuActions = Boolean(canEdit || recipe.id)
   const shouldShowMenu = showMenu !== undefined ? showMenu : hasMenuActions
+  const shouldShowBackMenu = showMenu !== undefined ? showMenu : hasBackMenuActions
 
   // Close menu when clicking outside or pressing Escape
   useEffect(() => {
@@ -185,7 +187,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
               </button>
             )}
 
-            {canDelete && (
+            {canDelete && placement === 'front' && (
               <button
                 type="button"
                 role="menuitem"
@@ -277,7 +279,10 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
             {!shouldShowMenu && onDelete && (
               <button
                 type="button"
-                onClick={() => onDelete(recipe)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDelete(recipe)
+                }}
                 className="flex items-center justify-center p-2 rounded-full bg-red-500 hover:bg-red-600 text-white focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors shadow-sm"
                 title={`Delete ${title}`}
                 aria-label={`Delete ${title}`}
@@ -387,19 +392,22 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                  }
                }}
              >
-               {showBookmark && (
-                 <BookmarkButton recipe={recipe} className="bg-white/90 shadow-sm hover:bg-white" />
-               )}
-               {shouldShowMenu && renderMenu('back')}
-               {onDelete && (
-                 <button
-                   type="button"
-                   data-testid="recipe-card-back-delete-button"
-                   onClick={() => onDelete(recipe)}
-                   className="flex items-center justify-center p-2 rounded-full bg-red-500 hover:bg-red-600 text-white focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors shadow-sm cursor-pointer"
-                   title={`Delete ${title}`}
-                   aria-label={`Delete ${title}`}
-                 >
+                {showBookmark && (
+                  <BookmarkButton recipe={recipe} className="bg-white/90 shadow-sm hover:bg-white" />
+                )}
+                {shouldShowBackMenu && renderMenu('back')}
+                {onDelete && (
+                  <button
+                    type="button"
+                    data-testid="recipe-card-back-delete-button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDelete(recipe)
+                    }}
+                    className="flex items-center justify-center p-2 rounded-full bg-red-500 hover:bg-red-600 text-white focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors shadow-sm cursor-pointer"
+                    title={`Delete ${title}`}
+                    aria-label={`Delete ${title}`}
+                  >
                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                    </svg>
