@@ -51,7 +51,8 @@ const parseTimeToMinutes = (value?: string | number | unknown): number | undefin
   if (match) {
     const amount = parseInt(match[1], 10)
     const unit = match[2].toLowerCase()
-    return unit.startsWith('hour') || unit.startsWith('hr') ? amount * 60 : amount
+    const minutes = unit.startsWith('hour') || unit.startsWith('hr') ? amount * 60 : amount
+    return minutes > 0 ? minutes : undefined
   }
 
   const num = parseInt(timeStr, 10)
@@ -252,13 +253,21 @@ const mapRecipeToCreateRequest = (recipe: Recipe): CreateRecipeRequest => {
 
   const imageUrl = recipe.imageUrl?.startsWith('data:') ? undefined : recipe.imageUrl
 
+  const prepTime = (typeof recipe.prepTimeMinutes === 'number' && recipe.prepTimeMinutes > 0)
+    ? recipe.prepTimeMinutes
+    : parseTimeToMinutes(recipe.prepTime)
+
+  const cookTime = (typeof recipe.cookTimeMinutes === 'number' && recipe.cookTimeMinutes > 0)
+    ? recipe.cookTimeMinutes
+    : parseTimeToMinutes(recipe.cookTime)
+
   return {
     title: recipe.recipeName,
     description: recipe.description,
     ingredients: recipe.ingredients,
     instructions: recipe.instructions,
-    prepTime: recipe.prepTimeMinutes ?? parseTimeToMinutes(recipe.prepTime),
-    cookTime: recipe.cookTimeMinutes ?? parseTimeToMinutes(recipe.cookTime),
+    prepTime,
+    cookTime,
     servings: RecipeUtils.getServingsAsNumber(recipe.servings),
     nutrition: recipe.nutritionalInfo?.perServing,
     tips: mapTips(normalizedTips),
@@ -589,14 +598,29 @@ export const updateRecipeSharing = async (id: string, isPublic: boolean): Promis
   const token = await user.getIdToken()
   const url = buildApiUrl(MANAGEMENT_API_BASE, `/api/recipes/${id}/sharing`)
   
-  const response = await axios.patch(url, { isPublic }, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
+  const headers = {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+
+  try {
+    const response = await axios.patch(url, { isPublic }, { headers })
+    return normalizeRecipe(response.data)
+  } catch (error: unknown) {
+    const isNetworkOrMethodError = (err: unknown): boolean => {
+      if (!err || typeof err !== 'object') return false
+      const maybeAxios = err as { response?: { status?: number } }
+      // Fallback on network/CORS error (no response) or 405 Method Not Allowed
+      return !maybeAxios.response || maybeAxios.response.status === 405
     }
-  })
-  
-  return normalizeRecipe(response.data)
+
+    if (isNetworkOrMethodError(error)) {
+      const fallbackResponse = await axios.put(url, { isPublic }, { headers })
+      return normalizeRecipe(fallbackResponse.data)
+    }
+
+    throw error
+  }
 }
 
 /**
