@@ -113,7 +113,11 @@ describe('RecipeCard', () => {
     const user = userEvent.setup()
     const onDelete = vi.fn()
     
-    render(<RecipeCard recipe={mockRecipe} onDelete={onDelete} />)
+    const { container } = render(<RecipeCard recipe={mockRecipe} onDelete={onDelete} />)
+    
+    // Focus the card first to flip it and make the back face interactive (non-inert)
+    const card = container.querySelector('[role="button"][tabindex="0"]') as HTMLElement
+    card.focus()
     
     await user.click(screen.getByLabelText('Delete Test Recipe'))
     
@@ -125,7 +129,11 @@ describe('RecipeCard', () => {
     const onView = vi.fn()
     const onDelete = vi.fn()
     
-    render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
+    const { container } = render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
+    
+    // Focus the card first to flip it and make the back face interactive (non-inert)
+    const card = container.querySelector('[role="button"][tabindex="0"]') as HTMLElement
+    card.focus()
     
     await user.click(screen.getByLabelText('Delete Test Recipe'))
     
@@ -138,7 +146,11 @@ describe('RecipeCard', () => {
     const onView = vi.fn()
     const onDelete = vi.fn()
     
-    render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
+    const { container } = render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
+    
+    // Focus the card first to flip it and make the back face interactive (non-inert)
+    const card = container.querySelector('[role="button"][tabindex="0"]') as HTMLElement
+    card.focus()
     
     const deleteButton = screen.getByLabelText('Delete Test Recipe')
     deleteButton.focus()
@@ -153,7 +165,11 @@ describe('RecipeCard', () => {
     const onView = vi.fn()
     const onDelete = vi.fn()
     
-    render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
+    const { container } = render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
+    
+    // Focus the card first to flip it and make the back face interactive (non-inert)
+    const card = container.querySelector('[role="button"][tabindex="0"]') as HTMLElement
+    card.focus()
     
     const deleteButton = screen.getByLabelText('Delete Test Recipe')
     deleteButton.focus()
