@@ -46,9 +46,12 @@ export const remixRecipe = createAsyncThunk(
   }, { rejectWithValue, signal }) => {
     try {
       const apiBase = resolveAiApiBase()
-      const prompt = `Modify the following recipe according to this instruction: "${payload.instruction}". Maintain the original style, title, and JSON structure while adjusting ingredients and steps. Current Recipe JSON: ${JSON.stringify(payload.currentRecipe)}`
-      const url = buildApiUrl(apiBase, '/api/recipes/generate')
-      const res = await postWithAuth(url, { prompt, pantryItems: [] }, { signal })
+      const url = buildApiUrl(apiBase, '/api/recipes/modify')
+      const instruction = payload.instruction?.trim() ?? ''
+      const res = await postWithAuth(url, {
+        currentRecipe: payload.currentRecipe,
+        instruction,
+      }, { signal })
       return res.data
     } catch (err) {
       if (axios.isCancel(err)) {
@@ -67,6 +70,8 @@ export const remixRecipe = createAsyncThunk(
     }
   }
 )
+
+export const modifyRecipe = remixRecipe
 
 export const generateImage = createAsyncThunk(
   'recipe/generateImage',

@@ -79,9 +79,11 @@ export const AIGenerator: React.FC = () => {
 
   const handleRemixRecipe = (instruction: string) => {
     if (!parsedRecipe) return
+    const trimmed = instruction?.trim()
+    if (!trimmed) return
     dispatch(remixRecipe({
       currentRecipe: parsedRecipe,
-      instruction,
+      instruction: trimmed,
     }))
   }
 
