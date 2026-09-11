@@ -133,7 +133,7 @@ describe('RecipeCard', () => {
     render(<RecipeCard recipe={mockRecipe} onDelete={onDelete} />)
     
     await user.click(screen.getByTestId('recipe-card-menu-button'))
-    await user.click(screen.getByLabelText('Delete Test Recipe'))
+    await user.click(screen.getByRole('menuitem', { name: /Delete/i }))
     
     expect(onDelete).toHaveBeenCalledWith(mockRecipe)
   })
@@ -146,13 +146,13 @@ describe('RecipeCard', () => {
     render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
     
     await user.click(screen.getByTestId('recipe-card-menu-button'))
-    await user.click(screen.getByLabelText('Delete Test Recipe'))
+    await user.click(screen.getByRole('menuitem', { name: /Delete/i }))
     
     expect(onDelete).toHaveBeenCalled()
     expect(onView).not.toHaveBeenCalled()
   })
 
-  it('should call onDelete when delete button is clicked in the back face menu', async () => {
+  it('should call onDelete when back face dedicated delete button is clicked', async () => {
     const user = userEvent.setup()
     const onDelete = vi.fn()
     const onView = vi.fn()
@@ -163,8 +163,43 @@ describe('RecipeCard', () => {
     const card = container.querySelector('[role="button"][tabindex="0"]') as HTMLElement
     card.focus()
     
-    await user.click(screen.getByTestId('recipe-card-back-menu-button'))
-    await user.click(screen.getByLabelText('Delete Test Recipe'))
+    await user.click(screen.getByTestId('recipe-card-back-delete-button'))
+    
+    expect(onDelete).toHaveBeenCalledWith(mockRecipe)
+    expect(onView).not.toHaveBeenCalled()
+  })
+
+  it('should call onDelete and not onView when Enter key is pressed on dedicated back-face delete button', async () => {
+    const user = userEvent.setup()
+    const onView = vi.fn()
+    const onDelete = vi.fn()
+    
+    const { container } = render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
+    
+    const card = container.querySelector('[role="button"][tabindex="0"]') as HTMLElement
+    card.focus()
+    
+    const deleteButton = screen.getByTestId('recipe-card-back-delete-button')
+    deleteButton.focus()
+    await user.keyboard('{Enter}')
+    
+    expect(onDelete).toHaveBeenCalledWith(mockRecipe)
+    expect(onView).not.toHaveBeenCalled()
+  })
+
+  it('should call onDelete and not onView when Space key is pressed on dedicated back-face delete button', async () => {
+    const user = userEvent.setup()
+    const onView = vi.fn()
+    const onDelete = vi.fn()
+    
+    const { container } = render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
+    
+    const card = container.querySelector('[role="button"][tabindex="0"]') as HTMLElement
+    card.focus()
+    
+    const deleteButton = screen.getByTestId('recipe-card-back-delete-button')
+    deleteButton.focus()
+    await user.keyboard(' ')
     
     expect(onDelete).toHaveBeenCalledWith(mockRecipe)
     expect(onView).not.toHaveBeenCalled()
@@ -178,8 +213,8 @@ describe('RecipeCard', () => {
     render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
     
     await user.click(screen.getByTestId('recipe-card-menu-button'))
-    const deleteButton = screen.getByLabelText('Delete Test Recipe')
-    deleteButton.focus()
+    const deleteItem = screen.getByRole('menuitem', { name: /Delete/i })
+    deleteItem.focus()
     await user.keyboard('{Enter}')
     
     expect(onDelete).toHaveBeenCalledWith(mockRecipe)
@@ -194,8 +229,8 @@ describe('RecipeCard', () => {
     render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
     
     await user.click(screen.getByTestId('recipe-card-menu-button'))
-    const deleteButton = screen.getByLabelText('Delete Test Recipe')
-    deleteButton.focus()
+    const deleteItem = screen.getByRole('menuitem', { name: /Delete/i })
+    deleteItem.focus()
     await user.keyboard(' ')
     
     expect(onDelete).toHaveBeenCalledWith(mockRecipe)
@@ -205,8 +240,9 @@ describe('RecipeCard', () => {
   it('should not render delete option when onDelete is not provided', async () => {
     const user = userEvent.setup()
     render(<RecipeCard recipe={mockRecipe} />)
+    expect(screen.queryByTestId('recipe-card-back-delete-button')).not.toBeInTheDocument()
     await user.click(screen.getByTestId('recipe-card-menu-button'))
-    expect(screen.queryByLabelText('Delete Test Recipe')).not.toBeInTheDocument()
+    expect(screen.queryByRole('menuitem', { name: /Delete/i })).not.toBeInTheDocument()
   })
 
   it('should render standalone delete button when showMenu is false and onDelete is provided', async () => {

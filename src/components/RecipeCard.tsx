@@ -391,11 +391,12 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                  <BookmarkButton recipe={recipe} className="bg-white/90 shadow-sm hover:bg-white" />
                )}
                {shouldShowMenu && renderMenu('back')}
-               {!shouldShowMenu && onDelete && (
+               {onDelete && (
                  <button
                    type="button"
+                   data-testid="recipe-card-back-delete-button"
                    onClick={() => onDelete(recipe)}
-                   className="flex items-center justify-center p-2 rounded-full bg-red-500 hover:bg-red-600 text-white focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors shadow-sm"
+                   className="flex items-center justify-center p-2 rounded-full bg-red-500 hover:bg-red-600 text-white focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors shadow-sm cursor-pointer"
                    title={`Delete ${title}`}
                    aria-label={`Delete ${title}`}
                  >
