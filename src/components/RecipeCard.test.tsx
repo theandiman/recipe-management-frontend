@@ -133,6 +133,41 @@ describe('RecipeCard', () => {
     expect(onView).not.toHaveBeenCalled()
   })
 
+  it('should call onDelete and not onView when Enter key is pressed on delete button', async () => {
+    const user = userEvent.setup()
+    const onView = vi.fn()
+    const onDelete = vi.fn()
+    
+    render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
+    
+    const deleteButton = screen.getByLabelText('Delete Test Recipe')
+    deleteButton.focus()
+    await user.keyboard('{Enter}')
+    
+    expect(onDelete).toHaveBeenCalledWith(mockRecipe)
+    expect(onView).not.toHaveBeenCalled()
+  })
+
+  it('should call onDelete and not onView when Space key is pressed on delete button', async () => {
+    const user = userEvent.setup()
+    const onView = vi.fn()
+    const onDelete = vi.fn()
+    
+    render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
+    
+    const deleteButton = screen.getByLabelText('Delete Test Recipe')
+    deleteButton.focus()
+    await user.keyboard(' ')
+    
+    expect(onDelete).toHaveBeenCalledWith(mockRecipe)
+    expect(onView).not.toHaveBeenCalled()
+  })
+
+  it('should not render delete button when onDelete is not provided', () => {
+    render(<RecipeCard recipe={mockRecipe} />)
+    expect(screen.queryByLabelText('Delete Test Recipe')).not.toBeInTheDocument()
+  })
+
   it('should calculate total time from prep and cook when totalTimeMinutes is not provided', () => {
     const recipeWithoutTotal = {
       ...mockRecipe,
