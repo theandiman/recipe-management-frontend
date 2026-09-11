@@ -1,8 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { configureStore } from '@reduxjs/toolkit'
 import axios from 'axios'
-import recipeReducer, { generateRecipe, generateImage, clearImage, clearRecipe } from './recipeSlice'
+import recipeReducer, {
+  generateRecipe,
+  remixRecipe,
+  modifyRecipe,
+  generateImage,
+  clearImage,
+  clearRecipe
+} from './recipeSlice'
 import * as authApi from '../../utils/authApi'
+import type { Recipe } from '../../types/nutrition'
 
 // Mock modules
 vi.mock('axios')
@@ -461,6 +469,165 @@ describe('recipeSlice', () => {
 
       const state = store.getState().recipe
       expect(state.imageError).toBe('Failed to generate image')
+    })
+  })
+
+  describe('remixRecipe async thunk', () => {
+    const mockCurrentRecipe = {
+      recipeName: 'Pancakes',
+      ingredients: ['flour', 'milk', 'egg'],
+      instructions: ['Mix', 'Cook']
+    } as unknown as Recipe
+
+    it('exports modifyRecipe as an alias for remixRecipe', () => {
+      expect(modifyRecipe).toBe(remixRecipe)
+    })
+
+    it('should handle remixRecipe.pending', () => {
+      const state = recipeReducer(
+        undefined,
+        remixRecipe.pending('', { currentRecipe: mockCurrentRecipe, instruction: 'Make vegan' })
+      )
+      expect(state.loading).toBe(true)
+      expect(state.error).toBe(null)
+    })
+
+    it('should handle remixRecipe.fulfilled', () => {
+      const modifiedRecipe = { ...mockCurrentRecipe, recipeName: 'Vegan Pancakes' }
+      const state = recipeReducer(
+        undefined,
+        remixRecipe.fulfilled(modifiedRecipe, '', { currentRecipe: mockCurrentRecipe, instruction: 'Make vegan' })
+      )
+      expect(state.loading).toBe(false)
+      expect(state.result).toBe(JSON.stringify(modifiedRecipe))
+      expect(state.error).toBe(null)
+    })
+
+    it('should handle remixRecipe.rejected', () => {
+      const state = recipeReducer(
+        undefined,
+        remixRecipe.rejected(new Error('Remix failed'), '', { currentRecipe: mockCurrentRecipe, instruction: 'Make vegan' })
+      )
+      expect(state.loading).toBe(false)
+      expect(state.error).toBe('Remix failed')
+    })
+
+    it('should post structured payload to /api/recipes/modify and trim instruction', async () => {
+      const modifiedRecipe = { recipeName: 'Vegan Pancakes', ingredients: ['flour', 'oat milk'] }
+      vi.mocked(authApi.postWithAuth).mockResolvedValue({
+        data: modifiedRecipe,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as unknown as Parameters<typeof authApi.postWithAuth>[2]
+      } as unknown as Awaited<ReturnType<typeof authApi.postWithAuth>>)
+
+      const store = configureStore({ reducer: { recipe: recipeReducer } })
+      await store.dispatch(remixRecipe({
+        currentRecipe: mockCurrentRecipe,
+        instruction: '  Make it vegan!  '
+      }))
+
+      const state = store.getState().recipe
+      expect(state.loading).toBe(false)
+      expect(state.result).toBe(JSON.stringify(modifiedRecipe))
+      expect(state.error).toBe(null)
+      expect(authApi.postWithAuth).toHaveBeenCalledWith(
+        'https://api.example.com/api/recipes/modify',
+        {
+          currentRecipe: mockCurrentRecipe,
+          instruction: 'Make it vegan!'
+        },
+        { signal: expect.any(AbortSignal) }
+      )
+    })
+
+    it('prefers VITE_AI_API_URL when remixing recipes', async () => {
+      vi.mocked(authApi.postWithAuth).mockResolvedValue({
+        data: { recipeName: 'Remixed' },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as unknown as Parameters<typeof authApi.postWithAuth>[2]
+      } as unknown as Awaited<ReturnType<typeof authApi.postWithAuth>>)
+      vi.stubEnv('VITE_AI_API_URL', 'https://ai.example.com')
+
+      const store = configureStore({ reducer: { recipe: recipeReducer } })
+      await store.dispatch(remixRecipe({
+        currentRecipe: mockCurrentRecipe,
+        instruction: 'Less salt'
+      }))
+
+      expect(authApi.postWithAuth).toHaveBeenCalledWith(
+        'https://ai.example.com/api/recipes/modify',
+        {
+          currentRecipe: mockCurrentRecipe,
+          instruction: 'Less salt'
+        },
+        { signal: expect.any(AbortSignal) }
+      )
+    })
+
+    it('should handle cancelled remix requests', async () => {
+      vi.mocked(authApi.postWithAuth).mockRejectedValue(new Error('cancelled'))
+      vi.mocked(axios.isCancel).mockReturnValue(true)
+
+      const store = configureStore({ reducer: { recipe: recipeReducer } })
+      await store.dispatch(remixRecipe({
+        currentRecipe: mockCurrentRecipe,
+        instruction: 'Faster'
+      }))
+
+      const state = store.getState().recipe
+      expect(state.loading).toBe(false)
+      expect(state.error).toBe(null)
+    })
+
+    it('should handle axios error responses', async () => {
+      const axiosError = {
+        isAxiosError: true,
+        response: {
+          data: { error: 'Validation failed' }
+        }
+      }
+      vi.mocked(authApi.postWithAuth).mockRejectedValue(axiosError)
+      vi.mocked(axios.isAxiosError).mockReturnValue(true)
+
+      const store = configureStore({ reducer: { recipe: recipeReducer } })
+      await store.dispatch(remixRecipe({
+        currentRecipe: mockCurrentRecipe,
+        instruction: 'Bad request'
+      }))
+
+      const state = store.getState().recipe
+      expect(state.loading).toBe(false)
+      expect(state.error).toBe(JSON.stringify({ error: 'Validation failed' }))
+    })
+
+    it('should reject early when instruction is empty or whitespace-only without calling API', async () => {
+      const store = configureStore({ reducer: { recipe: recipeReducer } })
+      await store.dispatch(remixRecipe({
+        currentRecipe: mockCurrentRecipe,
+        instruction: '   '
+      }))
+
+      const state = store.getState().recipe
+      expect(state.loading).toBe(false)
+      expect(state.error).toBe('Instruction cannot be empty')
+      expect(authApi.postWithAuth).not.toHaveBeenCalled()
+    })
+
+    it('should reject early when currentRecipe is missing without calling API', async () => {
+      const store = configureStore({ reducer: { recipe: recipeReducer } })
+      await store.dispatch(remixRecipe({
+        currentRecipe: null as unknown as Recipe,
+        instruction: 'Make vegan'
+      }))
+
+      const state = store.getState().recipe
+      expect(state.loading).toBe(false)
+      expect(state.error).toBe('Current recipe is required for modification')
+      expect(authApi.postWithAuth).not.toHaveBeenCalled()
     })
   })
 })

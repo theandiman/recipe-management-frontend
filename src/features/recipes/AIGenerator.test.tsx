@@ -67,4 +67,85 @@ describe('AIGenerator Component', () => {
 
     expect((textarea as HTMLTextAreaElement).value).toBe('Crispy Garlic Butter Salmon')
   })
+
+  it('renders recipe and displays error when remix fails', () => {
+    const customStore = configureStore({
+      reducer: {
+        recipe: recipeReducer,
+      },
+      preloadedState: {
+        recipe: {
+          recipes: [],
+          currentRecipe: null,
+          loading: false,
+          aiLoading: false,
+          error: 'Failed to remix recipe due to network error',
+          auditLogs: [],
+          result: JSON.stringify({
+            recipeName: 'Remixable Stew',
+            description: 'A hearty beef stew',
+            ingredients: ['1 lb beef', '2 carrots'],
+            instructions: ['Brown beef', 'Simmer with carrots'],
+          }),
+          imageUrl: null,
+          imageLoading: false,
+          imageError: null,
+        },
+      },
+    })
+
+    render(
+      <Provider store={customStore}>
+        <BrowserRouter>
+          <AIGenerator />
+        </BrowserRouter>
+      </Provider>
+    )
+
+    expect(screen.getByText('Remixable Stew')).toBeDefined()
+    expect(screen.getByText(/Failed to remix recipe due to network error/i)).toBeDefined()
+  })
+
+  it('does not dispatch remixRecipe when custom instruction is whitespace only', () => {
+    const customStore = configureStore({
+      reducer: {
+        recipe: recipeReducer,
+      },
+      preloadedState: {
+        recipe: {
+          recipes: [],
+          currentRecipe: null,
+          loading: false,
+          aiLoading: false,
+          error: null,
+          auditLogs: [],
+          result: JSON.stringify({
+            recipeName: 'Remixable Stew',
+            ingredients: ['1 lb beef'],
+            instructions: ['Brown beef'],
+          }),
+          imageUrl: null,
+          imageLoading: false,
+          imageError: null,
+        },
+      },
+    })
+
+    const dispatchSpy = vi.spyOn(customStore, 'dispatch')
+
+    render(
+      <Provider store={customStore}>
+        <BrowserRouter>
+          <AIGenerator />
+        </BrowserRouter>
+      </Provider>
+    )
+
+    const input = screen.getByPlaceholderText(/Use coconut milk instead of cream/i)
+    fireEvent.change(input, { target: { value: '   ' } })
+    const remixButton = screen.getByRole('button', { name: /Remix/i })
+    fireEvent.click(remixButton)
+
+    expect(dispatchSpy).not.toHaveBeenCalled()
+  })
 })

@@ -79,9 +79,11 @@ export const AIGenerator: React.FC = () => {
 
   const handleRemixRecipe = (instruction: string) => {
     if (!parsedRecipe) return
+    const trimmed = instruction?.trim()
+    if (!trimmed) return
     dispatch(remixRecipe({
       currentRecipe: parsedRecipe,
-      instruction,
+      instruction: trimmed,
     }))
   }
 
@@ -334,6 +336,13 @@ export const AIGenerator: React.FC = () => {
             isLoading={loading}
             onRemix={handleRemixRecipe}
           />
+
+          {/* Remix Error Message */}
+          {error && (
+            <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-500/40 rounded-lg text-red-700 dark:text-red-300">
+              {error}
+            </div>
+          )}
 
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-6">
