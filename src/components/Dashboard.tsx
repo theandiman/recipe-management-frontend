@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../features/auth/AuthContext'
@@ -14,7 +14,6 @@ export const Dashboard: React.FC = () => {
   const { user } = useAuth()
   const { setSearchQuery: setOmniSearchQuery } = useOmniSearch()
   const [recipes, setRecipes] = useState<Recipe[]>([])
-  const [recentRecipes, setRecentRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
@@ -58,13 +57,11 @@ export const Dashboard: React.FC = () => {
   }, [])
 
   // Get recent recipes (last 3 created)
-  useEffect(() => {
-    if (recipes.length > 0) {
-      const sorted = [...recipes]
-        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
-        .slice(0, 3)
-      setRecentRecipes(sorted)
-    }
+  const recentRecipes = useMemo(() => {
+    if (recipes.length === 0) return []
+    return [...recipes]
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+      .slice(0, 3)
   }, [recipes])
 
   const quickActions = [
@@ -104,24 +101,17 @@ export const Dashboard: React.FC = () => {
   ]
 
   // Generate FYP recommendations
-  const [recommendedRecipes, setRecommendedRecipes] = useState<Recipe[]>([])
-  
-  useEffect(() => {
-    if (recipes.length > 0) {
-      // In a real app, this would use a personalized recommendation engine.
-      // For now, we pseudo-shuffle based on the day of the month so it changes daily but doesn't jump on every render.
-      const seed = new Date().getDate()
-      const shuffled = [...recipes].sort((a, b) => {
-        const hashA = (a.id || a.recipeName || 'a').charCodeAt(0) * seed
-        const hashB = (b.id || b.recipeName || 'b').charCodeAt(0) * seed
-        return (hashA % 10) - (hashB % 10)
-      })
-      // Filter out recipes already in 'Recent' to avoid duplication if possible, 
-      // though simple slice is fine for this UX upgrade.
-      setRecommendedRecipes(shuffled.slice(0, 3))
-    } else {
-      setRecommendedRecipes([])
-    }
+  const recommendedRecipes = useMemo(() => {
+    if (recipes.length === 0) return []
+    // In a real app, this would use a personalized recommendation engine.
+    // For now, we pseudo-shuffle based on the day of the month so it changes daily but doesn't jump on every render.
+    const seed = new Date().getDate()
+    const shuffled = [...recipes].sort((a, b) => {
+      const hashA = (a.id || a.recipeName || 'a').charCodeAt(0) * seed
+      const hashB = (b.id || b.recipeName || 'b').charCodeAt(0) * seed
+      return (hashA % 10) - (hashB % 10)
+    })
+    return shuffled.slice(0, 3)
   }, [recipes])
 
   return (
@@ -304,7 +294,6 @@ export const Dashboard: React.FC = () => {
                 key={recipe.id}
                 recipe={recipe}
                 onView={(id) => navigate(`/dashboard/recipes/${id}`)}
-                onDelete={() => { /* don't show delete on recent list */ }}
                 compact
                 showBookmark
               />

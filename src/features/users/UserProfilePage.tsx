@@ -267,6 +267,8 @@ export const UserProfilePage: React.FC = () => {
                   <RecipeCard
                     recipe={recipe}
                     onView={(id) => navigate(`/dashboard/recipes/${id}`)}
+                    showBookmark
+                    showLike
                   />
                 </motion.div>
               ))}

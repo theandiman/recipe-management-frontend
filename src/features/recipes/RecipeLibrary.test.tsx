@@ -337,7 +337,7 @@ describe('RecipeLibrary', () => {
   })
 
   describe('Delete Functionality', () => {
-    it('should show delete button on hover', async () => {
+    it('should show delete option in the action menu', async () => {
       vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
 
       renderRecipeLibrary()
@@ -346,10 +346,11 @@ describe('RecipeLibrary', () => {
         expect(screen.getByText('Chocolate Cake')).toBeInTheDocument()
       })
 
-      // Delete buttons exist but are hidden (opacity-0)
-      // Title now includes recipe name (e.g., "Delete Chocolate Cake"), so look for "Delete" via regex
-      const deleteButtons = screen.getAllByTitle(/Delete/i)
-      expect(deleteButtons).toHaveLength(2)
+      const menuButtons = screen.getAllByTestId('recipe-card-menu-button')
+      expect(menuButtons).toHaveLength(2)
+
+      fireEvent.click(menuButtons[0])
+      expect(screen.getByRole('menuitem', { name: /Delete/i })).toBeInTheDocument()
     })
 
     it('should open confirmation modal when delete is clicked', async () => {
@@ -361,8 +362,10 @@ describe('RecipeLibrary', () => {
         expect(screen.getByText('Chocolate Cake')).toBeInTheDocument()
       })
 
-      const deleteButtons = screen.getAllByTitle(/Delete/i)
-      fireEvent.click(deleteButtons[0])
+      const menuButtons = screen.getAllByTestId('recipe-card-menu-button')
+      fireEvent.click(menuButtons[0])
+      const deleteMenuItem = screen.getByRole('menuitem', { name: /Delete/i })
+      fireEvent.click(deleteMenuItem)
 
       // Modal should appear
       expect(screen.getByText('Delete Recipe')).toBeInTheDocument()
@@ -380,8 +383,10 @@ describe('RecipeLibrary', () => {
       })
 
       // Open modal
-      const deleteButtons = screen.getAllByTitle(/Delete/i)
-      fireEvent.click(deleteButtons[0])
+      const menuButtons = screen.getAllByTestId('recipe-card-menu-button')
+      fireEvent.click(menuButtons[0])
+      const deleteMenuItem = screen.getByRole('menuitem', { name: /Delete/i })
+      fireEvent.click(deleteMenuItem)
 
       // Click cancel
       const cancelButton = screen.getByRole('button', { name: /cancel/i })
@@ -404,8 +409,10 @@ describe('RecipeLibrary', () => {
       })
 
       // Open modal
-      const deleteButtons = screen.getAllByTitle(/Delete/i)
-      fireEvent.click(deleteButtons[0])
+      const menuButtons = screen.getAllByTestId('recipe-card-menu-button')
+      fireEvent.click(menuButtons[0])
+      const deleteMenuItem = screen.getByRole('menuitem', { name: /Delete/i })
+      fireEvent.click(deleteMenuItem)
 
       // Click delete
       const deleteButton = screen.getByRole('button', { name: /^Delete$/i })
@@ -437,8 +444,10 @@ describe('RecipeLibrary', () => {
       })
 
       // Open modal
-      const deleteButtons = screen.getAllByTitle(/Delete/i)
-      fireEvent.click(deleteButtons[0])
+      const menuButtons = screen.getAllByTestId('recipe-card-menu-button')
+      fireEvent.click(menuButtons[0])
+      const deleteMenuItem = screen.getByRole('menuitem', { name: /Delete/i })
+      fireEvent.click(deleteMenuItem)
 
       // Click delete
       const deleteButton = screen.getByRole('button', { name: /^Delete$/i })
@@ -466,8 +475,10 @@ describe('RecipeLibrary', () => {
       })
 
       // Open modal and delete
-      const deleteButtons = screen.getAllByTitle(/Delete/i)
-      fireEvent.click(deleteButtons[0])
+      const menuButtons = screen.getAllByTestId('recipe-card-menu-button')
+      fireEvent.click(menuButtons[0])
+      const deleteMenuItem = screen.getByRole('menuitem', { name: /Delete/i })
+      fireEvent.click(deleteMenuItem)
       
       const deleteButton = screen.getByRole('button', { name: /^Delete$/i })
       fireEvent.click(deleteButton)
@@ -487,8 +498,10 @@ describe('RecipeLibrary', () => {
         expect(screen.getByText('Chocolate Cake')).toBeInTheDocument()
       })
 
-      const deleteButtons = screen.getAllByTitle(/Delete/i)
-      fireEvent.click(deleteButtons[0])
+      const menuButtons = screen.getAllByTestId('recipe-card-menu-button')
+      fireEvent.click(menuButtons[0])
+      const deleteMenuItem = screen.getByRole('menuitem', { name: /Delete/i })
+      fireEvent.click(deleteMenuItem)
 
       // Should NOT navigate
       expect(mockNavigate).not.toHaveBeenCalled()

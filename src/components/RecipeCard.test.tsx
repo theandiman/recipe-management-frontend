@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
+import { toast } from 'sonner'
 import RecipeCard from './RecipeCard'
 import type { Recipe } from '../types/nutrition'
 
@@ -13,6 +14,21 @@ vi.mock('react-router-dom', async () => {
     useNavigate: () => mockNavigate,
   }
 })
+
+vi.mock('sonner', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}))
+
+vi.mock('./BookmarkButton', () => ({
+  default: () => <button data-testid="bookmark-button">Bookmark</button>,
+}))
+
+vi.mock('./LikeButton', () => ({
+  default: () => <button data-testid="like-button">Like</button>,
+}))
 
 const renderWithRouter = (ui: React.ReactElement) =>
   render(<MemoryRouter>{ui}</MemoryRouter>)
@@ -30,8 +46,12 @@ describe('RecipeCard', () => {
     ingredients: [],
     instructions: [],
     userId: 'user123',
-    source: 'manual'
+    source: 'manual',
   }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
 
   it('should render recipe name and description', () => {
     render(<RecipeCard recipe={mockRecipe} />)
@@ -55,7 +75,6 @@ describe('RecipeCard', () => {
   it('should display recipe image', () => {
     render(<RecipeCard recipe={mockRecipe} />)
     
-    // Image is decorative (alt="") because the title is conveyed via visible text overlay
     const img = document.querySelector('img')
     expect(img).toBeInTheDocument()
     expect(img).toHaveAttribute('src', 'https://example.com/recipe.jpg')
@@ -66,7 +85,6 @@ describe('RecipeCard', () => {
     const recipeWithoutImage = { ...mockRecipe, imageUrl: undefined }
     render(<RecipeCard recipe={recipeWithoutImage} />)
     
-    // Should show SVG placeholder instead of img tag
     expect(screen.queryByAltText('Test Recipe')).not.toBeInTheDocument()
   })
 
@@ -76,7 +94,6 @@ describe('RecipeCard', () => {
     
     const { container } = render(<RecipeCard recipe={mockRecipe} onView={onView} />)
     
-    // Click on the card div (not the delete button)
     const card = container.querySelector('[role="button"][tabindex="0"]')
     await user.click(card!)
     
@@ -109,27 +126,33 @@ describe('RecipeCard', () => {
     expect(onView).toHaveBeenCalledWith('123')
   })
 
-  it('should render delete button on both mobile (front) and back face when onDelete is provided', () => {
-    render(<RecipeCard recipe={mockRecipe} onDelete={vi.fn()} />)
-    const deleteButtons = screen.getAllByLabelText('Delete Test Recipe')
-    expect(deleteButtons).toHaveLength(2)
-  })
-
-  it('should call onDelete when mobile delete button is clicked without flipping', async () => {
+  it('should call onDelete when delete button is clicked in the front menu', async () => {
     const user = userEvent.setup()
     const onDelete = vi.fn()
+    
+    render(<RecipeCard recipe={mockRecipe} onDelete={onDelete} />)
+    
+    await user.click(screen.getByTestId('recipe-card-menu-button'))
+    await user.click(screen.getByLabelText('Delete Test Recipe'))
+    
+    expect(onDelete).toHaveBeenCalledWith(mockRecipe)
+  })
+
+  it('should not call onView when delete button is clicked in the front menu', async () => {
+    const user = userEvent.setup()
     const onView = vi.fn()
+    const onDelete = vi.fn()
     
     render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
     
-    const [mobileDeleteButton] = screen.getAllByLabelText('Delete Test Recipe')
-    await user.click(mobileDeleteButton)
+    await user.click(screen.getByTestId('recipe-card-menu-button'))
+    await user.click(screen.getByLabelText('Delete Test Recipe'))
     
-    expect(onDelete).toHaveBeenCalledWith(mockRecipe)
+    expect(onDelete).toHaveBeenCalled()
     expect(onView).not.toHaveBeenCalled()
   })
 
-  it('should call onDelete when back face delete button is clicked', async () => {
+  it('should call onDelete when delete button is clicked in the back face menu', async () => {
     const user = userEvent.setup()
     const onDelete = vi.fn()
     const onView = vi.fn()
@@ -140,60 +163,67 @@ describe('RecipeCard', () => {
     const card = container.querySelector('[role="button"][tabindex="0"]') as HTMLElement
     card.focus()
     
-    const [, backFaceDeleteButton] = screen.getAllByLabelText('Delete Test Recipe')
-    await user.click(backFaceDeleteButton)
+    await user.click(screen.getByTestId('recipe-card-back-menu-button'))
+    await user.click(screen.getByLabelText('Delete Test Recipe'))
     
     expect(onDelete).toHaveBeenCalledWith(mockRecipe)
     expect(onView).not.toHaveBeenCalled()
   })
 
-  it('should call onDelete and not onView when Enter key is pressed on back face delete button', async () => {
+  it('should call onDelete and not onView when Enter key is pressed on delete menu item', async () => {
     const user = userEvent.setup()
     const onView = vi.fn()
     const onDelete = vi.fn()
     
-    const { container } = render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
+    render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
     
-    // Focus the card first to flip it and make the back face interactive (non-inert)
-    const card = container.querySelector('[role="button"][tabindex="0"]') as HTMLElement
-    card.focus()
-    
-    const [, backFaceDeleteButton] = screen.getAllByLabelText('Delete Test Recipe')
-    backFaceDeleteButton.focus()
+    await user.click(screen.getByTestId('recipe-card-menu-button'))
+    const deleteButton = screen.getByLabelText('Delete Test Recipe')
+    deleteButton.focus()
     await user.keyboard('{Enter}')
     
     expect(onDelete).toHaveBeenCalledWith(mockRecipe)
     expect(onView).not.toHaveBeenCalled()
   })
 
-  it('should call onDelete and not onView when Space key is pressed on back face delete button', async () => {
+  it('should call onDelete and not onView when Space key is pressed on delete menu item', async () => {
     const user = userEvent.setup()
     const onView = vi.fn()
     const onDelete = vi.fn()
     
-    const { container } = render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
+    render(<RecipeCard recipe={mockRecipe} onView={onView} onDelete={onDelete} />)
     
-    // Focus the card first to flip it and make the back face interactive (non-inert)
-    const card = container.querySelector('[role="button"][tabindex="0"]') as HTMLElement
-    card.focus()
-    
-    const [, backFaceDeleteButton] = screen.getAllByLabelText('Delete Test Recipe')
-    backFaceDeleteButton.focus()
+    await user.click(screen.getByTestId('recipe-card-menu-button'))
+    const deleteButton = screen.getByLabelText('Delete Test Recipe')
+    deleteButton.focus()
     await user.keyboard(' ')
     
     expect(onDelete).toHaveBeenCalledWith(mockRecipe)
     expect(onView).not.toHaveBeenCalled()
   })
 
-  it('should not render delete button when onDelete is not provided', () => {
+  it('should not render delete option when onDelete is not provided', async () => {
+    const user = userEvent.setup()
     render(<RecipeCard recipe={mockRecipe} />)
+    await user.click(screen.getByTestId('recipe-card-menu-button'))
     expect(screen.queryByLabelText('Delete Test Recipe')).not.toBeInTheDocument()
+  })
+
+  it('should render standalone delete button when showMenu is false and onDelete is provided', async () => {
+    const user = userEvent.setup()
+    const onDelete = vi.fn()
+    render(<RecipeCard recipe={mockRecipe} showMenu={false} onDelete={onDelete} />)
+    
+    const deleteButtons = screen.getAllByLabelText('Delete Test Recipe')
+    expect(deleteButtons.length).toBeGreaterThanOrEqual(1)
+    await user.click(deleteButtons[0])
+    expect(onDelete).toHaveBeenCalledWith(mockRecipe)
   })
 
   it('should calculate total time from prep and cook when totalTimeMinutes is not provided', () => {
     const recipeWithoutTotal = {
       ...mockRecipe,
-      totalTimeMinutes: undefined
+      totalTimeMinutes: undefined,
     }
     render(<RecipeCard recipe={recipeWithoutTotal} />)
     
@@ -207,7 +237,7 @@ describe('RecipeCard', () => {
       prepTimeMinutes: undefined,
       cookTimeMinutes: undefined,
       prepTime: '15 min',
-      cookTime: '30 min'
+      cookTime: '30 min',
     } as unknown as Recipe
     
     render(<RecipeCard recipe={recipeWithStrings} />)
@@ -220,11 +250,10 @@ describe('RecipeCard', () => {
       ...mockRecipe,
       totalTimeMinutes: undefined,
       prepTimeMinutes: undefined,
-      cookTimeMinutes: undefined
+      cookTimeMinutes: undefined,
     }
     render(<RecipeCard recipe={recipeWithoutTime} />)
     
-    // Should only show servings, not time
     expect(screen.getByText('4 servings')).toBeInTheDocument()
     expect(screen.queryByText(/min/)).not.toBeInTheDocument()
   })
@@ -268,7 +297,6 @@ describe('RecipeCard', () => {
 
   it('should render in compact mode', () => {
     const { container } = render(<RecipeCard recipe={mockRecipe} compact />)
-    // Select the main card container (assumed to be [role="button"][tabindex="0"])
     const card = container.querySelector('[role="button"][tabindex="0"]')
     expect(card).toBeInTheDocument()
     expect(card?.classList.contains('p-0')).toBe(true)
@@ -345,6 +373,113 @@ describe('RecipeCard', () => {
       link.focus()
       await user.keyboard(' ')
       expect(onView).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('3-dots action menu', () => {
+    it('should render 3-dots menu button and open menu on click', async () => {
+      const user = userEvent.setup()
+      render(<RecipeCard recipe={mockRecipe} />)
+
+      const menuBtn = screen.getByTestId('recipe-card-menu-button')
+      expect(menuBtn).toBeInTheDocument()
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+
+      await user.click(menuBtn)
+      expect(screen.getByRole('menu')).toBeInTheDocument()
+      expect(screen.getByText('Copy link')).toBeInTheDocument()
+    })
+
+    it('should call onEdit when edit option is clicked', async () => {
+      const user = userEvent.setup()
+      const onEdit = vi.fn()
+      render(<RecipeCard recipe={mockRecipe} onEdit={onEdit} />)
+
+      await user.click(screen.getByTestId('recipe-card-menu-button'))
+      const editBtn = screen.getByRole('menuitem', { name: /Edit Test Recipe/i })
+      await user.click(editBtn)
+
+      expect(onEdit).toHaveBeenCalledWith(mockRecipe)
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    })
+
+    it('should navigate to edit route when onEdit is not provided but recipe is editable', async () => {
+      const user = userEvent.setup()
+      render(<RecipeCard recipe={mockRecipe} isOwner />)
+
+      await user.click(screen.getByTestId('recipe-card-menu-button'))
+      const editBtn = screen.getByRole('menuitem', { name: /Edit Test Recipe/i })
+      await user.click(editBtn)
+
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard/recipes/edit/123')
+    })
+
+    it('should not show edit option if recipe has no id even if isOwner is true', () => {
+      const recipeNoId = { ...mockRecipe, id: undefined }
+      render(<RecipeCard recipe={recipeNoId} isOwner />)
+
+      expect(screen.queryByTestId('recipe-card-menu-button')).not.toBeInTheDocument()
+    })
+
+    it('should copy recipe URL to clipboard and show toast', async () => {
+      const user = userEvent.setup()
+      const writeTextMock = vi.fn().mockResolvedValue(undefined)
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: writeTextMock },
+        writable: true,
+        configurable: true,
+      })
+
+      render(<RecipeCard recipe={mockRecipe} />)
+
+      await user.click(screen.getByTestId('recipe-card-menu-button'))
+      const copyBtn = screen.getByRole('menuitem', { name: /Copy link for Test Recipe/i })
+      await user.click(copyBtn)
+
+      expect(writeTextMock).toHaveBeenCalledWith(`${window.location.origin}/recipes/123`)
+      expect(toast.success).toHaveBeenCalledWith('Recipe link copied to clipboard!')
+    })
+
+    it('should show error toast if clipboard API is not supported', async () => {
+      const user = userEvent.setup()
+      Object.defineProperty(navigator, 'clipboard', {
+        value: undefined,
+        writable: true,
+        configurable: true,
+      })
+
+      render(<RecipeCard recipe={mockRecipe} />)
+
+      await user.click(screen.getByTestId('recipe-card-menu-button'))
+      const copyBtn = screen.getByRole('menuitem', { name: /Copy link for Test Recipe/i })
+      await user.click(copyBtn)
+
+      expect(toast.error).toHaveBeenCalledWith('Failed to copy link: Clipboard API not supported')
+    })
+
+    it('should close menu when pressing Escape', async () => {
+      const user = userEvent.setup()
+      render(<RecipeCard recipe={mockRecipe} />)
+
+      await user.click(screen.getByTestId('recipe-card-menu-button'))
+      expect(screen.getByRole('menu')).toBeInTheDocument()
+
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('front-facing actions', () => {
+    it('should render front-facing LikeButton when showLike is true', () => {
+      render(<RecipeCard recipe={mockRecipe} showLike />)
+
+      expect(screen.getAllByTestId('like-button').length).toBeGreaterThanOrEqual(1)
+    })
+
+    it('should render BookmarkButton when showBookmark is true', () => {
+      render(<RecipeCard recipe={mockRecipe} showBookmark />)
+
+      expect(screen.getAllByTestId('bookmark-button').length).toBeGreaterThanOrEqual(1)
     })
   })
 })

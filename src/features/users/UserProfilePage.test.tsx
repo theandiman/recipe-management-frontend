@@ -26,6 +26,17 @@ vi.mock('sonner', () => ({
   Toaster: () => null,
 }))
 
+// Mock BookmarkButton and LikeButton to avoid SavedRecipesContext and LikeContext dependencies
+vi.mock('../../components/BookmarkButton', () => ({
+  default: () => null,
+  BookmarkButton: () => null,
+}))
+
+vi.mock('../../components/LikeButton', () => ({
+  default: () => null,
+  LikeButton: () => null,
+}))
+
 const mockRecipe: Recipe = {
   id: 'r1',
   recipeName: 'Pasta Carbonara',
