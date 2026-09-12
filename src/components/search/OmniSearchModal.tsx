@@ -125,7 +125,12 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
         .sort((a, b) => (aiSearchResults.matchesMap[b.id!].score || 0) - (aiSearchResults.matchesMap[a.id!].score || 0))
     }
 
-    return filterRecipes(recipes, DEFAULT_RECIPE_FILTERS, query).slice(0, 6)
+    // Use plain-text match first; fallback to conversational prompt filtering if conversational tokens are present
+    const plainMatches = filterRecipes(recipes, DEFAULT_RECIPE_FILTERS, query)
+    if (plainMatches.length > 0) {
+      return plainMatches.slice(0, 6)
+    }
+    return filterRecipes(recipes, DEFAULT_RECIPE_FILTERS, '', null, query).slice(0, 6)
   }, [recipes, query, aiSearchResults])
 
   const matchingTags = useMemo(() => {
