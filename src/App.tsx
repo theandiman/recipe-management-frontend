@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Toaster } from 'sonner'
 import { AuthProvider, useAuth } from './features/auth/AuthContext'
@@ -11,11 +11,11 @@ import { FollowProvider } from './features/users/FollowContext'
 import { LikeProvider } from './features/recipes/LikeContext'
 import { SavedRecipesProvider } from './features/recipes/SavedRecipesContext'
 import { NotificationProvider } from './features/notifications/NotificationContext'
+import DashboardLayout from './components/Layout/DashboardLayout'
 import './App.css'
 
 const Login = lazy(() => import('./features/auth/Login').then(m => ({ default: m.Login })))
 const Register = lazy(() => import('./features/auth/Register').then(m => ({ default: m.Register })))
-const DashboardLayout = lazy(() => import('./components/Layout/DashboardLayout').then(m => ({ default: m.DashboardLayout })))
 const RecipeDetail = lazy(() => import('./features/recipes/RecipeDetail').then(m => ({ default: m.RecipeDetail })))
 const UserProfilePage = lazy(() => import('./features/users/UserProfilePage').then(m => ({ default: m.UserProfilePage })))
 
@@ -41,82 +41,60 @@ function RootRedirect() {
 }
 
 function AnimatedRoutes() {
-  const location = useLocation()
-
   return (
     <Suspense fallback={<LoadingFallback />}>
-      <Routes location={location} key={location.pathname}>
-      <Route 
-        path="/login" 
-        element={
-          <PublicRoute>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Login />
-            </motion.div>
-          </PublicRoute>
-        } 
-      />
-      <Route 
-        path="/register" 
-        element={
-          <PublicRoute>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Register />
-            </motion.div>
-          </PublicRoute>
-        } 
-      />
-      <Route
-        path="/dashboard/*"
-        element={
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
-          >
+      <Routes>
+        <Route 
+          path="/login" 
+          element={
+            <PublicRoute>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Login />
+              </motion.div>
+            </PublicRoute>
+          } 
+        />
+        <Route 
+          path="/register" 
+          element={
+            <PublicRoute>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Register />
+              </motion.div>
+            </PublicRoute>
+          } 
+        />
+        <Route
+          path="/dashboard/*"
+          element={
             <ProtectedRoute>
               <DashboardLayout />
             </ProtectedRoute>
-          </motion.div>
-        }
-      />
-      <Route
-        path="/user/:uid"
-        element={
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
-          >
+          }
+        />
+        <Route
+          path="/user/:uid"
+          element={
             <ProtectedRoute>
               <UserProfilePage />
             </ProtectedRoute>
-          </motion.div>
-        }
-      />
-      <Route
-        path="/recipes/:id"
-        element={
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
-          >
-            <RecipeDetail />
-          </motion.div>
-        }
-      />
-      <Route path="/" element={<RootRedirect />} />
-      <Route path="*" element={<RootRedirect />} />
-    </Routes>
+          }
+        />
+        <Route
+          path="/recipes/:id"
+          element={<RecipeDetail />}
+        />
+        <Route path="/" element={<RootRedirect />} />
+        <Route path="*" element={<RootRedirect />} />
+      </Routes>
     </Suspense>
   )
 }

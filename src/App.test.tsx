@@ -12,6 +12,7 @@ vi.mock('./features/auth/Register', () => ({
 }))
 
 vi.mock('./components/Layout/DashboardLayout', () => ({
+  default: () => <div data-testid="dashboard-layout">Dashboard Layout</div>,
   DashboardLayout: () => <div data-testid="dashboard-layout">Dashboard Layout</div>
 }))
 
