@@ -712,6 +712,50 @@ describe('recipeStorageApi', () => {
         })
       }
     })
+
+    it('should preserve authorDisplayName, authorName, and authorAvatarUrl', async () => {
+      const axios = (await import('axios')).default
+      const mockRawRecipe = {
+        id: 'pub-author-1',
+        title: 'Public Author Recipe',
+        userId: 'cook-456',
+        authorDisplayName: 'Chef Julia',
+        authorAvatarUrl: 'https://example.com/julia.jpg',
+        ingredients: ['butter'],
+        instructions: ['melt'],
+        servings: 1,
+        source: 'user-created',
+      }
+
+      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse([mockRawRecipe]))
+
+      const [recipe] = await getPublicRecipes()
+      expect((recipe as unknown as { authorDisplayName: string }).authorDisplayName).toBe('Chef Julia')
+      expect((recipe as unknown as { authorName: string }).authorName).toBe('Chef Julia')
+      expect((recipe as unknown as { authorAvatarUrl: string }).authorAvatarUrl).toBe('https://example.com/julia.jpg')
+    })
+
+    it('should preserve distinct authorDisplayName and authorName when both are present', async () => {
+      const axios = (await import('axios')).default
+      const mockRawRecipe = {
+        id: 'pub-author-2',
+        title: 'Public Author Recipe 2',
+        userId: 'cook-789',
+        authorDisplayName: 'Chef Gordon Ramsay',
+        authorName: 'gramsay',
+        authorAvatarUrl: 'https://example.com/ramsay.jpg',
+        ingredients: ['salt'],
+        instructions: ['pinch'],
+        servings: 1,
+        source: 'user-created',
+      }
+
+      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse([mockRawRecipe]))
+
+      const [recipe] = await getPublicRecipes()
+      expect((recipe as unknown as { authorDisplayName: string }).authorDisplayName).toBe('Chef Gordon Ramsay')
+      expect((recipe as unknown as { authorName: string }).authorName).toBe('gramsay')
+    })
   })
 
   describe('getFeed', () => {
@@ -776,6 +820,28 @@ describe('recipeStorageApi', () => {
         get: () => ({ getIdToken: mockGetIdToken }),
         configurable: true,
       })
+    })
+
+    it('should preserve authorDisplayName, authorName, and authorAvatarUrl', async () => {
+      const axios = (await import('axios')).default
+      const mockRawRecipe = {
+        id: 'feed-author-1',
+        title: 'Feed Chef Recipe',
+        userId: 'cook-999',
+        authorDisplayName: 'Chef Gordon',
+        authorAvatarUrl: 'https://example.com/gordon.jpg',
+        ingredients: ['beef'],
+        instructions: ['sear'],
+        servings: 2,
+        source: 'user-created',
+      }
+
+      vi.mocked(axios.get).mockResolvedValue(createAxiosResponse([mockRawRecipe]))
+
+      const [recipe] = await getFeed()
+      expect((recipe as unknown as { authorDisplayName: string }).authorDisplayName).toBe('Chef Gordon')
+      expect((recipe as unknown as { authorName: string }).authorName).toBe('Chef Gordon')
+      expect((recipe as unknown as { authorAvatarUrl: string }).authorAvatarUrl).toBe('https://example.com/gordon.jpg')
     })
   })
 })

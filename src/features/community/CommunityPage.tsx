@@ -514,6 +514,7 @@ export const CommunityPage: React.FC = () => {
               >
                 <RecipeCard
                   recipe={recipe}
+                  authorUid={recipe.userId}
                   showBookmark={true}
                   showLike={true}
                   onView={(id) => navigate(`/recipes/${id}`)}

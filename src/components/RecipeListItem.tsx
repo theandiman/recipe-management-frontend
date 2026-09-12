@@ -39,6 +39,7 @@ export const RecipeListItem: React.FC<RecipeListItemProps> = ({
 
   const recipeWithAuthor = recipe as Recipe & {
     authorUid?: string
+    authorDisplayName?: string
     authorName?: string
     displayName?: string
     author?: string
@@ -50,7 +51,13 @@ export const RecipeListItem: React.FC<RecipeListItemProps> = ({
   }
 
   const resolvedAuthorUid = propAuthorUid || recipeWithAuthor.authorUid || recipe.userId
-  const resolvedAuthorName = propAuthorName || recipeWithAuthor.authorName || recipeWithAuthor.displayName || recipeWithAuthor.author
+  const resolvedAuthorName =
+    propAuthorName ||
+    recipeWithAuthor.authorDisplayName ||
+    recipeWithAuthor.authorName ||
+    recipeWithAuthor.displayName ||
+    recipeWithAuthor.author ||
+    (resolvedAuthorUid ? `Chef ${resolvedAuthorUid.slice(0, 5)}` : undefined)
   const resolvedAuthorAvatarUrl = propAuthorAvatarUrl || recipeWithAuthor.authorAvatarUrl || recipeWithAuthor.avatarUrl || recipeWithAuthor.photoUrl
 
   const canDelete = Boolean(onDelete && (isOwner || !recipe.userId))

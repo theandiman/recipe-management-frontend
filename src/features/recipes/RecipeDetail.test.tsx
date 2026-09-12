@@ -245,6 +245,25 @@ describe('RecipeDetail', () => {
       expect(screen.getByText('30 minutes')).toBeInTheDocument()
     })
 
+    it('should display author from recipe authorDisplayName when recipe has userId', async () => {
+      const recipeWithAuthor = {
+        ...mockRecipe,
+        userId: 'chef-456',
+        authorDisplayName: 'Chef Julia Child',
+      } as unknown as Recipe
+
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(recipeWithAuthor)
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Chef Julia Child')).toBeInTheDocument()
+      })
+
+      const authorLink = screen.getByText('Chef Julia Child').closest('a')
+      expect(authorLink).toHaveAttribute('href', '/user/chef-456')
+    })
+
     it('should display minimal recipe without optional fields', async () => {
       vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipeMinimal)
 
