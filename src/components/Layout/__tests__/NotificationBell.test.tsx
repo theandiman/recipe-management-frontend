@@ -2,12 +2,22 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { NotificationBell } from '../NotificationBell'
+import { NotificationProvider } from '../../../features/notifications/NotificationContext'
 import * as notificationApi from '../../../services/notificationApi'
 
 vi.mock('../../../services/notificationApi', () => ({
   getNotifications: vi.fn(),
   markNotificationsAsRead: vi.fn(),
 }))
+
+const renderComponent = () =>
+  render(
+    <MemoryRouter>
+      <NotificationProvider>
+        <NotificationBell />
+      </NotificationProvider>
+    </MemoryRouter>
+  )
 
 const mockNotifications = {
   unreadCount: 2,
@@ -44,11 +54,7 @@ describe('NotificationBell', () => {
   it('renders bell button and fetches unread count', async () => {
     vi.spyOn(notificationApi, 'getNotifications').mockResolvedValue(mockNotifications)
 
-    render(
-      <MemoryRouter>
-        <NotificationBell />
-      </MemoryRouter>
-    )
+    renderComponent()
 
     expect(screen.getByLabelText('Activity Notifications')).toBeInTheDocument()
 
@@ -60,11 +66,7 @@ describe('NotificationBell', () => {
   it('opens notification dropdown on click', async () => {
     vi.spyOn(notificationApi, 'getNotifications').mockResolvedValue(mockNotifications)
 
-    render(
-      <MemoryRouter>
-        <NotificationBell />
-      </MemoryRouter>
-    )
+    renderComponent()
 
     const bellBtn = screen.getByLabelText('Activity Notifications')
     fireEvent.click(bellBtn)
@@ -79,11 +81,7 @@ describe('NotificationBell', () => {
     vi.spyOn(notificationApi, 'getNotifications').mockResolvedValue(mockNotifications)
     vi.spyOn(notificationApi, 'markNotificationsAsRead').mockResolvedValue()
 
-    render(
-      <MemoryRouter>
-        <NotificationBell />
-      </MemoryRouter>
-    )
+    renderComponent()
 
     const bellBtn = screen.getByLabelText('Activity Notifications')
     fireEvent.click(bellBtn)

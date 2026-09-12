@@ -175,9 +175,9 @@ describe('Dashboard', () => {
     })
   })
 
-  it('handles fetch error gracefully without crashing dashboard', async () => {
+  it('handles fetch error gracefully without crashing dashboard and shows retry button instead of onboarding', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    vi.mocked(recipeStorageApi.getRecipes).mockRejectedValue(new Error('Failed to fetch recipes'))
+    vi.mocked(recipeStorageApi.getRecipes).mockRejectedValueOnce(new Error('Failed to fetch recipes'))
 
     render(
       <BrowserRouter>
@@ -190,6 +190,11 @@ describe('Dashboard', () => {
       // Dashboard still renders greeting and sections even if personal recipes fail
       expect(screen.getByText('Chef Andy')).toBeInTheDocument()
       expect(screen.getByText('From cooks you follow')).toBeInTheDocument()
+      // Shows error alert with retry button and does NOT show onboarding to existing user
+      expect(screen.getByRole('alert')).toBeInTheDocument()
+      expect(screen.getByText('Failed to fetch recipes')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Retry/i })).toBeInTheDocument()
+      expect(screen.queryByText('Get started with CookFlow')).not.toBeInTheDocument()
     })
 
     consoleErrorSpy.mockRestore()

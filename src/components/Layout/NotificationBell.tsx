@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react'
-import { getNotifications, markNotificationsAsRead, type NotificationsResponse } from '../../services/notificationApi'
+import React, { useState, useEffect, useRef } from 'react'
+import { useNotifications } from '../../features/notifications/NotificationContext'
 import { NotificationDropdown } from './NotificationDropdown'
 
 const BellIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
@@ -10,23 +10,8 @@ const BellIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
 
 export const NotificationBell: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
-  const [data, setData] = useState<NotificationsResponse | null>(null)
+  const { notifications, unreadCount, markItemRead, markAllRead } = useNotifications()
   const dropdownRef = useRef<HTMLDivElement>(null)
-
-  const fetchNotifications = async () => {
-    try {
-      const res = await getNotifications(0, 20)
-      setData(res)
-    } catch {
-      // Ignore when unauthenticated
-    }
-  }
-
-  useEffect(() => {
-    fetchNotifications()
-    const interval = setInterval(fetchNotifications, 30000)
-    return () => clearInterval(interval)
-  }, [])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -37,26 +22,6 @@ export const NotificationBell: React.FC = () => {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
-
-  const handleMarkAllRead = async () => {
-    try {
-      await markNotificationsAsRead()
-      fetchNotifications()
-    } catch (err) {
-      console.error('Failed to mark notifications read:', err)
-    }
-  }
-
-  const handleMarkItemRead = async (id: string) => {
-    try {
-      await markNotificationsAsRead([id])
-      fetchNotifications()
-    } catch (err) {
-      console.error('Failed to mark notification read:', err)
-    }
-  }
-
-  const unreadCount = data?.unreadCount || 0
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -76,10 +41,10 @@ export const NotificationBell: React.FC = () => {
 
       {isOpen && (
         <NotificationDropdown
-          notifications={data?.notifications || []}
+          notifications={notifications}
           unreadCount={unreadCount}
-          onMarkAllRead={handleMarkAllRead}
-          onMarkItemRead={handleMarkItemRead}
+          onMarkAllRead={markAllRead}
+          onMarkItemRead={markItemRead}
           onClose={() => setIsOpen(false)}
         />
       )}

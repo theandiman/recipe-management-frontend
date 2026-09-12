@@ -10,6 +10,7 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { FollowProvider } from './features/users/FollowContext'
 import { LikeProvider } from './features/recipes/LikeContext'
 import { SavedRecipesProvider } from './features/recipes/SavedRecipesContext'
+import { NotificationProvider } from './features/notifications/NotificationContext'
 import './App.css'
 
 const Login = lazy(() => import('./features/auth/Login').then(m => ({ default: m.Login })))
@@ -128,10 +129,12 @@ function App() {
           <FollowProvider>
             <LikeProvider>
               <SavedRecipesProvider>
-                <Toaster position="top-right" richColors />
-                <ErrorBoundary>
-                  <AnimatedRoutes />
-                </ErrorBoundary>
+                <NotificationProvider>
+                  <Toaster position="top-right" richColors />
+                  <ErrorBoundary>
+                    <AnimatedRoutes />
+                  </ErrorBoundary>
+                </NotificationProvider>
               </SavedRecipesProvider>
             </LikeProvider>
           </FollowProvider>

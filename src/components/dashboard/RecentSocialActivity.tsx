@@ -1,42 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { getNotifications, markNotificationsAsRead, type SocialNotification } from '../../services/notificationApi'
+import { useNotifications } from '../../features/notifications/NotificationContext'
+import type { SocialNotification } from '../../services/notificationApi'
 import { UserAvatar } from '../UserAvatar'
+import { formatRelativeTime } from '../../utils/timeUtils'
 
 export const RecentSocialActivity: React.FC = () => {
   const navigate = useNavigate()
-  const [notifications, setNotifications] = useState<SocialNotification[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchActivity = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const res = await getNotifications(0, 5)
-      setNotifications(res.notifications || [])
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to load activity'
-      setError(msg)
-      setNotifications([])
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchActivity()
-  }, [fetchActivity])
+  const { notifications, isLoading, error, fetchNotifications, markItemRead } = useNotifications()
 
   const handleItemClick = (item: SocialNotification) => {
     if (!item.isRead) {
-      markNotificationsAsRead([item.id]).catch((err) => {
+      markItemRead(item.id).catch((err) => {
         console.error('Failed to mark notification read:', err)
       })
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n))
-      )
     }
 
     if (item.targetRecipeId) {
@@ -100,6 +78,8 @@ export const RecentSocialActivity: React.FC = () => {
     }
   }
 
+  const recentNotifications = notifications.slice(0, 5)
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 15 }}
@@ -121,8 +101,14 @@ export const RecentSocialActivity: React.FC = () => {
         </div>
       </div>
 
-      {loading ? (
-        <div className="space-y-3 animate-pulse" data-testid="activity-loading-skeleton">
+      {isLoading ? (
+        <div
+          role="status"
+          aria-label="Loading recent activity"
+          className="space-y-3 animate-pulse"
+          data-testid="activity-loading-skeleton"
+        >
+          <span className="sr-only">Loading recent activity...</span>
           {[1, 2, 3].map((n) => (
             <div key={n} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-750">
               <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-slate-700" />
@@ -137,13 +123,13 @@ export const RecentSocialActivity: React.FC = () => {
         <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-slate-850 text-xs text-gray-500 dark:text-gray-400 text-center">
           <span>Couldn't load recent activity.</span>
           <button
-            onClick={fetchActivity}
+            onClick={() => fetchNotifications()}
             className="ml-2 text-emerald-600 dark:text-emerald-400 font-medium hover:underline cursor-pointer"
           >
             Retry
           </button>
         </div>
-      ) : notifications.length === 0 ? (
+      ) : recentNotifications.length === 0 ? (
         <div className="text-center py-6 px-4 rounded-xl border border-dashed border-gray-200 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-850/50">
           <p className="text-xs text-gray-500 dark:text-gray-400">
             No recent activity yet. When cooks like, review, or comment on your recipes, updates will appear here!
@@ -151,7 +137,7 @@ export const RecentSocialActivity: React.FC = () => {
         </div>
       ) : (
         <ul className="divide-y divide-gray-100 dark:divide-slate-700/60" role="list">
-          {notifications.map((item) => (
+          {recentNotifications.map((item) => (
             <li key={item.id}>
               <button
                 type="button"
@@ -187,14 +173,7 @@ export const RecentSocialActivity: React.FC = () => {
                   )}
 
                   <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 block">
-                    {item.createdAt
-                      ? new Date(item.createdAt).toLocaleString([], {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })
-                      : 'Recently'}
+                    {item.createdAt ? formatRelativeTime(item.createdAt) : 'just now'}
                   </span>
                 </div>
 

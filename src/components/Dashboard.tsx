@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { getRecipes } from '../services/recipeStorageApi'
@@ -15,33 +15,27 @@ export const Dashboard: React.FC = () => {
   const navigate = useNavigate()
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
+  const [cookbookError, setCookbookError] = useState<string | null>(null)
 
   // Fetch current user's recipes
-  useEffect(() => {
-    let isMounted = true
-    const fetchRecipes = async () => {
-      try {
-        const data = await getRecipes()
-        if (isMounted) {
-          setRecipes(Array.isArray(data) ? data : [])
-        }
-      } catch (err) {
-        console.error('Failed to fetch recipes:', err)
-        if (isMounted) {
-          setRecipes([])
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
-    }
-
-    fetchRecipes()
-    return () => {
-      isMounted = false
+  const fetchRecipes = useCallback(async () => {
+    setLoading(true)
+    setCookbookError(null)
+    try {
+      const data = await getRecipes()
+      setRecipes(Array.isArray(data) ? data : [])
+    } catch (err) {
+      console.error('Failed to fetch recipes:', err)
+      setCookbookError(err instanceof Error ? err.message : 'Failed to load your recipes')
+      setRecipes([])
+    } finally {
+      setLoading(false)
     }
   }, [])
+
+  useEffect(() => {
+    fetchRecipes()
+  }, [fetchRecipes])
 
   // Recent own recipes (last 3 created)
   const recentRecipes = useMemo(() => {
@@ -51,7 +45,7 @@ export const Dashboard: React.FC = () => {
       .slice(0, 3)
   }, [recipes])
 
-  const isNewUser = !loading && recipes.length === 0
+  const isNewUser = !loading && !cookbookError && recipes.length === 0
 
   return (
     <motion.div
@@ -62,6 +56,22 @@ export const Dashboard: React.FC = () => {
     >
       {/* Compact Greeting with Creation Entry Points */}
       <DashboardGreeting />
+
+      {/* Error state for fetching recipes */}
+      {cookbookError && (
+        <div
+          role="alert"
+          className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center justify-between text-sm text-red-700 dark:text-red-300"
+        >
+          <span>{cookbookError}</span>
+          <button
+            onClick={() => fetchRecipes()}
+            className="px-3 py-1.5 rounded-lg bg-red-100 dark:bg-red-800/40 text-red-800 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-700/50 font-medium text-xs transition-colors cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Onboarding Banner for users without recipes */}
       {isNewUser && <NewUserOnboarding />}

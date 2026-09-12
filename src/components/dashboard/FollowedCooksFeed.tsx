@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { getFeed } from '../../services/recipeStorageApi'
 import RecipeCard from '../RecipeCard'
+import { UserAvatar } from '../UserAvatar'
 import type { Recipe } from '../../types/nutrition'
 
 export const FollowedCooksFeed: React.FC = () => {
@@ -72,7 +73,13 @@ export const FollowedCooksFeed: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse" data-testid="feed-loading-skeleton">
+        <div
+          role="status"
+          aria-label="Loading followed cooks recipes"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse"
+          data-testid="feed-loading-skeleton"
+        >
+          <span className="sr-only">Loading followed cooks recipes...</span>
           {[1, 2, 3].map((n) => (
             <div key={n} className="h-64 rounded-xl bg-gray-100 dark:bg-slate-700/50" />
           ))}
@@ -110,19 +117,36 @@ export const FollowedCooksFeed: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recipes.slice(0, 3).map((recipe, idx) => (
-            <RecipeCard
-              key={`followed-${recipe.id || idx}`}
-              recipe={recipe}
-              onView={(id) => navigate(`/recipes/${id}`)}
-              compact
-              showBookmark
-              showLike
-              authorUid={recipe.userId}
-              authorName={(recipe as { authorName?: string }).authorName}
-              authorAvatarUrl={(recipe as { authorAvatarUrl?: string }).authorAvatarUrl}
-            />
-          ))}
+          {recipes.slice(0, 3).map((recipe, idx) => {
+            const authorName = (recipe as { authorName?: string }).authorName || 'Cook'
+            const authorAvatar = (recipe as { authorAvatarUrl?: string }).authorAvatarUrl
+            return (
+              <div key={`followed-${recipe.id || idx}`} className="flex flex-col gap-1.5">
+                {recipe.userId && (
+                  <div className="flex items-center gap-2 px-1">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/user/${recipe.userId}`)}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                    >
+                      <UserAvatar src={authorAvatar} name={authorName} size="xs" />
+                      <span className="truncate">{authorName}</span>
+                    </button>
+                  </div>
+                )}
+                <RecipeCard
+                  recipe={recipe}
+                  onView={(id) => navigate(`/recipes/${id}`)}
+                  compact
+                  showBookmark
+                  showLike
+                  authorUid={recipe.userId}
+                  authorName={authorName}
+                  authorAvatarUrl={authorAvatar}
+                />
+              </div>
+            )
+          })}
         </div>
       )}
     </motion.section>

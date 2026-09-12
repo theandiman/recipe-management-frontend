@@ -49,7 +49,13 @@ export const SavedRecipeContinuation: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse" data-testid="saved-loading-skeleton">
+        <div
+          role="status"
+          aria-label="Loading saved recipes"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse"
+          data-testid="saved-loading-skeleton"
+        >
+          <span className="sr-only">Loading saved recipes...</span>
           {[1, 2, 3].map((n) => (
             <div key={n} className="h-64 rounded-xl bg-gray-100 dark:bg-slate-700/50" />
           ))}

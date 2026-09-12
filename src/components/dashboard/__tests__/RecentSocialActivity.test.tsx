@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { RecentSocialActivity } from '../RecentSocialActivity'
+import { NotificationProvider } from '../../../features/notifications/NotificationContext'
 import * as notificationApi from '../../../services/notificationApi'
 import type { SocialNotification } from '../../../services/notificationApi'
 
@@ -18,6 +19,15 @@ vi.mock('../../../services/notificationApi', () => ({
   getNotifications: vi.fn(),
   markNotificationsAsRead: vi.fn(),
 }))
+
+const renderComponent = () =>
+  render(
+    <BrowserRouter>
+      <NotificationProvider>
+        <RecentSocialActivity />
+      </NotificationProvider>
+    </BrowserRouter>
+  )
 
 describe('RecentSocialActivity', () => {
   const mockNotifications: SocialNotification[] = [
@@ -74,11 +84,7 @@ describe('RecentSocialActivity', () => {
   it('renders loading skeleton while fetching notifications', () => {
     vi.mocked(notificationApi.getNotifications).mockImplementation(() => new Promise(() => {}))
 
-    render(
-      <BrowserRouter>
-        <RecentSocialActivity />
-      </BrowserRouter>
-    )
+    renderComponent()
 
     expect(screen.getByTestId('activity-loading-skeleton')).toBeInTheDocument()
     expect(screen.getByText('Recent Activity')).toBeInTheDocument()
@@ -91,11 +97,7 @@ describe('RecentSocialActivity', () => {
       hasMore: false,
     })
 
-    render(
-      <BrowserRouter>
-        <RecentSocialActivity />
-      </BrowserRouter>
-    )
+    renderComponent()
 
     await waitFor(() => {
       expect(screen.getByText('Chef Remy')).toBeInTheDocument()
@@ -122,11 +124,7 @@ describe('RecentSocialActivity', () => {
     })
     vi.mocked(notificationApi.markNotificationsAsRead).mockResolvedValue()
 
-    render(
-      <BrowserRouter>
-        <RecentSocialActivity />
-      </BrowserRouter>
-    )
+    renderComponent()
 
     await waitFor(() => {
       expect(screen.getByText('Chef Remy')).toBeInTheDocument()
@@ -148,11 +146,7 @@ describe('RecentSocialActivity', () => {
       hasMore: false,
     })
 
-    render(
-      <BrowserRouter>
-        <RecentSocialActivity />
-      </BrowserRouter>
-    )
+    renderComponent()
 
     await waitFor(() => {
       expect(screen.getByText('Chef Gusteau')).toBeInTheDocument()
@@ -171,11 +165,7 @@ describe('RecentSocialActivity', () => {
       hasMore: false,
     })
 
-    render(
-      <BrowserRouter>
-        <RecentSocialActivity />
-      </BrowserRouter>
-    )
+    renderComponent()
 
     await waitFor(() => {
       expect(screen.getByText(/No recent activity yet/i)).toBeInTheDocument()
@@ -191,11 +181,7 @@ describe('RecentSocialActivity', () => {
         hasMore: false,
       })
 
-    render(
-      <BrowserRouter>
-        <RecentSocialActivity />
-      </BrowserRouter>
-    )
+    renderComponent()
 
     await waitFor(() => {
       expect(screen.getByText(/Couldn't load recent activity/i)).toBeInTheDocument()
