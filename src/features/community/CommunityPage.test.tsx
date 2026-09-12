@@ -22,6 +22,7 @@ vi.mock('../../utils/aiApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../utils/aiApi')>()
   return {
     ...actual,
+    queryAiSearch: vi.fn(),
     parseAiSearchIntent: vi.fn(),
   }
 })
@@ -313,11 +314,10 @@ describe('CommunityPage', () => {
     it('toggles AI prompt bar and executes AI prompt search with active pill', async () => {
       const user = userEvent.setup()
       vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue(mockRecipes)
-      const { parseAiSearchIntent } = await import('../../utils/aiApi')
-      vi.mocked(parseAiSearchIntent).mockResolvedValue({
-        queryKeywords: 'spaghetti',
-        dietaryTags: [],
-        explanation: 'Filtered Italian pasta',
+      const { queryAiSearch } = await import('../../utils/aiApi')
+      vi.mocked(queryAiSearch).mockResolvedValue({
+        matches: [{ recipeId: '1', matchScore: 0.95, matchReason: 'Filtered Italian pasta' }],
+        suggestedIdea: null,
       })
 
       renderWithRouter(<CommunityPage />)

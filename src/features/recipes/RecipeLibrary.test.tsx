@@ -28,6 +28,7 @@ vi.mock('../../utils/aiApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../utils/aiApi')>()
   return {
     ...actual,
+    queryAiSearch: vi.fn(),
     parseAiSearchIntent: vi.fn(),
   }
 })
@@ -561,11 +562,10 @@ describe('RecipeLibrary', () => {
 
     it('toggles AI prompt bar and executes AI prompt search', async () => {
       vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
-      const { parseAiSearchIntent } = await import('../../utils/aiApi')
-      vi.mocked(parseAiSearchIntent).mockResolvedValue({
-        queryKeywords: 'cake',
-        dietaryTags: [],
-        explanation: 'Filtered dessert cake',
+      const { queryAiSearch } = await import('../../utils/aiApi')
+      vi.mocked(queryAiSearch).mockResolvedValue({
+        matches: [{ recipeId: '1', matchScore: 0.95, matchReason: 'Filtered dessert cake' }],
+        suggestedIdea: null,
       })
 
       renderRecipeLibrary()

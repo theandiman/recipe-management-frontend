@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getRecipes } from '../../services/recipeStorageApi'
 import { queryAiSearch } from '../../utils/aiApi'
-import { filterRecipes, DEFAULT_RECIPE_FILTERS } from '../../features/recipes/utils/recipeFiltering'
+import { filterRecipes, DEFAULT_RECIPE_FILTERS, toRecipeSummaryForAi } from '../../features/recipes/utils/recipeFiltering'
 import type { Recipe } from '../../types/nutrition'
 
 const RECENT_SEARCHES_KEY = 'recipe_search_history_v1'
@@ -35,16 +35,7 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
 
     try {
       const summaryList = recipes
-        .map(r => ({
-          id: r.id || '',
-          recipeName: r.recipeName,
-          description: r.description,
-          tags: r.tags,
-          ingredients: Array.isArray(r.ingredients)
-            ? r.ingredients.map(ing => (typeof ing === 'string' ? ing : (ing as { item?: string })?.item || ''))
-            : [],
-          prepTimeMinutes: r.prepTimeMinutes,
-        }))
+        .map(toRecipeSummaryForAi)
         .filter(r => r.id)
 
       const result = await queryAiSearch(searchPrompt, summaryList)
@@ -119,18 +110,16 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
   const filteredRecipes = useMemo(() => {
     if (!query.trim()) return []
 
-    if (aiSearchResults?.matchesMap && Object.keys(aiSearchResults.matchesMap).length > 0) {
-      return recipes
-        .filter(r => r.id && aiSearchResults.matchesMap[r.id])
-        .sort((a, b) => (aiSearchResults.matchesMap[b.id!].score || 0) - (aiSearchResults.matchesMap[a.id!].score || 0))
+    if (aiSearchResults) {
+      if (aiSearchResults.matchesMap && Object.keys(aiSearchResults.matchesMap).length > 0) {
+        return recipes
+          .filter(r => r.id && aiSearchResults.matchesMap[r.id])
+          .sort((a, b) => (aiSearchResults.matchesMap[b.id!].score || 0) - (aiSearchResults.matchesMap[a.id!].score || 0))
+      }
+      return []
     }
 
-    // Use plain-text match first; fallback to conversational prompt filtering if conversational tokens are present
-    const plainMatches = filterRecipes(recipes, DEFAULT_RECIPE_FILTERS, query)
-    if (plainMatches.length > 0) {
-      return plainMatches.slice(0, 6)
-    }
-    return filterRecipes(recipes, DEFAULT_RECIPE_FILTERS, '', null, query).slice(0, 6)
+    return filterRecipes(recipes, DEFAULT_RECIPE_FILTERS, query).slice(0, 6)
   }, [recipes, query, aiSearchResults])
 
   const matchingTags = useMemo(() => {

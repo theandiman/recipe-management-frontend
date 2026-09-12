@@ -3,14 +3,14 @@ import { renderHook, act } from '@testing-library/react'
 import React from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { useRecipeSearchFilters } from './useRecipeSearchFilters'
-import { parseAiSearchIntent } from '../../../utils/aiApi'
+import { queryAiSearch } from '../../../utils/aiApi'
 import type { Recipe } from '../../../types/nutrition'
 
 vi.mock('../../../utils/aiApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../utils/aiApi')>()
   return {
     ...actual,
-    parseAiSearchIntent: vi.fn(),
+    queryAiSearch: vi.fn(),
   }
 })
 
@@ -66,17 +66,20 @@ describe('useRecipeSearchFilters', () => {
 
     expect(result.current.filteredAndSortedRecipes).toHaveLength(1)
     expect(result.current.filteredAndSortedRecipes[0].recipeName).toBe('Keto Avocado Salad')
-    // Crucial: plain-text search MUST NOT invoke parseAiSearchIntent
-    expect(vi.mocked(parseAiSearchIntent)).not.toHaveBeenCalled()
+    // Crucial: plain-text search MUST NOT invoke queryAiSearch
+    expect(vi.mocked(queryAiSearch)).not.toHaveBeenCalled()
   })
 
-  it('invokes parseAiSearchIntent on submitAiPrompt and updates nlpSummary', async () => {
-    vi.mocked(parseAiSearchIntent).mockResolvedValue({
-      queryKeywords: 'salad',
-      dietaryTags: ['Keto'],
-      maxCalories: 400,
-      maxPrepTime: 15,
-      explanation: 'Filtered keto salad under 400 kcal',
+  it('invokes queryAiSearch on submitAiPrompt and updates aiMatchesMap, nlpSummary, and filtered recipes', async () => {
+    vi.mocked(queryAiSearch).mockResolvedValue({
+      matches: [
+        {
+          recipeId: '1',
+          matchScore: 0.95,
+          matchReason: 'Healthy keto salad under 400 kcal',
+        },
+      ],
+      suggestedIdea: null,
     })
 
     const { result } = renderHook(() => useRecipeSearchFilters(sampleRecipes), { wrapper })
@@ -85,19 +88,32 @@ describe('useRecipeSearchFilters', () => {
       await result.current.submitAiPrompt('Quick keto salad under 400 kcal')
     })
 
-    expect(vi.mocked(parseAiSearchIntent)).toHaveBeenCalledWith('Quick keto salad under 400 kcal')
-    expect(result.current.nlpSummary).toBe('Filtered keto salad under 400 kcal')
+    expect(vi.mocked(queryAiSearch)).toHaveBeenCalledWith(
+      'Quick keto salad under 400 kcal',
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: '1',
+          recipeName: 'Keto Avocado Salad',
+          calories: 350,
+        }),
+      ])
+    )
+    expect(result.current.nlpSummary).toBe('1 matching recipe found')
     expect(result.current.aiPrompt).toBe('Quick keto salad under 400 kcal')
+    expect(result.current.aiMatchesMap).toEqual({
+      '1': { score: 0.95, reason: 'Healthy keto salad under 400 kcal' },
+    })
+    expect(result.current.filteredAndSortedRecipes).toHaveLength(1)
+    expect(result.current.filteredAndSortedRecipes[0].recipeName).toBe('Keto Avocado Salad')
     // Filter drawer state should remain untouched
     expect(result.current.filters.dietaryTags).toEqual([])
     expect(result.current.filters.maxCalories).toBeNull()
   })
 
-  it('resets search, aiPrompt and nlpSummary on clearAllFilters', async () => {
-    vi.mocked(parseAiSearchIntent).mockResolvedValue({
-      queryKeywords: 'salad',
-      dietaryTags: ['Keto'],
-      explanation: 'Filtered salad',
+  it('resets search, aiPrompt, aiMatchesMap and nlpSummary on clearAllFilters', async () => {
+    vi.mocked(queryAiSearch).mockResolvedValue({
+      matches: [{ recipeId: '1', matchScore: 0.9, matchReason: 'Salad match' }],
+      suggestedIdea: null,
     })
 
     const { result } = renderHook(() => useRecipeSearchFilters(sampleRecipes), { wrapper })
@@ -109,7 +125,7 @@ describe('useRecipeSearchFilters', () => {
       await result.current.submitAiPrompt('healthy salad')
     })
 
-    expect(result.current.nlpSummary).toBe('Filtered salad')
+    expect(result.current.nlpSummary).toBe('1 matching recipe found')
 
     act(() => {
       result.current.clearAllFilters()
@@ -117,15 +133,15 @@ describe('useRecipeSearchFilters', () => {
 
     expect(result.current.searchText).toBe('')
     expect(result.current.aiPrompt).toBe('')
+    expect(result.current.aiMatchesMap).toBeNull()
     expect(result.current.nlpSummary).toBeNull()
     expect(result.current.filteredAndSortedRecipes).toHaveLength(2)
   })
 
-  it('clears only AI prompt when clearAiPrompt is called', async () => {
-    vi.mocked(parseAiSearchIntent).mockResolvedValue({
-      queryKeywords: 'soup',
-      dietaryTags: [],
-      explanation: 'Filtered soup',
+  it('clears only AI prompt and aiMatchesMap when clearAiPrompt is called', async () => {
+    vi.mocked(queryAiSearch).mockResolvedValue({
+      matches: [{ recipeId: '2', matchScore: 0.88, matchReason: 'Soup match' }],
+      suggestedIdea: null,
     })
 
     const { result } = renderHook(() => useRecipeSearchFilters(sampleRecipes), { wrapper })
@@ -137,13 +153,14 @@ describe('useRecipeSearchFilters', () => {
       await result.current.submitAiPrompt('vegan soup')
     })
 
-    expect(result.current.nlpSummary).toBe('Filtered soup')
+    expect(result.current.nlpSummary).toBe('1 matching recipe found')
 
     act(() => {
       result.current.clearAiPrompt()
     })
 
     expect(result.current.aiPrompt).toBe('')
+    expect(result.current.aiMatchesMap).toBeNull()
     expect(result.current.nlpSummary).toBeNull()
     // searchText remains intact
     expect(result.current.searchText).toBe('soup')
@@ -151,8 +168,8 @@ describe('useRecipeSearchFilters', () => {
     expect(result.current.filteredAndSortedRecipes[0].recipeName).toBe('Vegan Lentil Soup')
   })
 
-  it('handles AI intent parser failure gracefully without disrupting search results', async () => {
-    vi.mocked(parseAiSearchIntent).mockRejectedValueOnce(new Error('AI Service Offline'))
+  it('handles AI query failure gracefully without disrupting search results', async () => {
+    vi.mocked(queryAiSearch).mockRejectedValueOnce(new Error('AI Service Offline'))
 
     const { result } = renderHook(() => useRecipeSearchFilters(sampleRecipes), { wrapper })
 
@@ -162,6 +179,8 @@ describe('useRecipeSearchFilters', () => {
 
     expect(result.current.isAiLoading).toBe(false)
     expect(result.current.nlpSummary).toBeNull()
+    expect(result.current.aiMatchesMap).toBeNull()
+    expect(result.current.filteredAndSortedRecipes).toHaveLength(2)
   })
 
   it('prevents race conditions when subsequent AI prompts or clear are called before previous finishes', async () => {
@@ -174,7 +193,7 @@ describe('useRecipeSearchFilters', () => {
       resolveSecond = resolve
     })
 
-    vi.mocked(parseAiSearchIntent)
+    vi.mocked(queryAiSearch)
       .mockImplementationOnce(() => firstPromise as any)
       .mockImplementationOnce(() => secondPromise as any)
 
@@ -199,9 +218,8 @@ describe('useRecipeSearchFilters', () => {
     // Stale first resolution must not clear the loading state for the newer request
     await act(async () => {
       resolveFirst!({
-        queryKeywords: 'slow',
-        dietaryTags: [],
-        explanation: 'First intent stale',
+        matches: [],
+        suggestedIdea: null,
       })
       await Promise.resolve()
     })
@@ -210,14 +228,13 @@ describe('useRecipeSearchFilters', () => {
 
     await act(async () => {
       resolveSecond!({
-        queryKeywords: 'salad',
-        dietaryTags: ['Keto'],
-        explanation: 'Second intent',
+        matches: [{ recipeId: '1', matchScore: 0.9, matchReason: 'Salad' }],
+        suggestedIdea: null,
       })
       await p2!
     })
 
-    expect(result.current.nlpSummary).toBe('Second intent')
+    expect(result.current.nlpSummary).toBe('1 matching recipe found')
     expect(result.current.isAiLoading).toBe(false)
 
     // Now let first promise resolve
@@ -225,8 +242,8 @@ describe('useRecipeSearchFilters', () => {
       await p1!
     })
 
-    // Should remain 'Second intent' and not be overwritten by stale first intent
-    expect(result.current.nlpSummary).toBe('Second intent')
+    // Should remain second result and not be overwritten by stale first intent
+    expect(result.current.nlpSummary).toBe('1 matching recipe found')
   })
 
   it('keeps AI filters cleared when a pending prompt resolves after clearAiPrompt', async () => {
@@ -235,7 +252,7 @@ describe('useRecipeSearchFilters', () => {
       resolvePending = resolve
     })
 
-    vi.mocked(parseAiSearchIntent).mockImplementationOnce(() => pendingPromise as any)
+    vi.mocked(queryAiSearch).mockImplementationOnce(() => pendingPromise as any)
 
     const { result } = renderHook(() => useRecipeSearchFilters(sampleRecipes), { wrapper })
 
@@ -254,9 +271,8 @@ describe('useRecipeSearchFilters', () => {
 
     await act(async () => {
       resolvePending!({
-        queryKeywords: 'slow',
-        dietaryTags: ['Keto'],
-        explanation: 'Stale intent',
+        matches: [{ recipeId: '1', matchScore: 0.9, matchReason: 'Stale' }],
+        suggestedIdea: null,
       })
       await pendingSubmit!
     })
@@ -266,13 +282,13 @@ describe('useRecipeSearchFilters', () => {
     expect(result.current.isAiLoading).toBe(false)
   })
 
-  it('does not prematurely flash intermediate regex results while isAiLoading is true', async () => {
+  it('does not prematurely filter results while isAiLoading is true', async () => {
     let resolveAi: (val: any) => void
     const aiPromise = new Promise((resolve) => {
       resolveAi = resolve
     })
 
-    vi.mocked(parseAiSearchIntent).mockImplementationOnce(() => aiPromise as any)
+    vi.mocked(queryAiSearch).mockImplementationOnce(() => aiPromise as any)
 
     const { result } = renderHook(() => useRecipeSearchFilters(sampleRecipes), { wrapper })
 
@@ -291,10 +307,8 @@ describe('useRecipeSearchFilters', () => {
     // When AI service resolves, atomic transition occurs
     await act(async () => {
       resolveAi!({
-        queryKeywords: 'salad',
-        dietaryTags: ['Keto'],
-        maxPrepTime: 15,
-        explanation: 'Quick keto salad',
+        matches: [{ recipeId: '1', matchScore: 0.95, matchReason: 'Quick keto salad' }],
+        suggestedIdea: null,
       })
       await submitPromise!
     })
@@ -302,5 +316,26 @@ describe('useRecipeSearchFilters', () => {
     expect(result.current.isAiLoading).toBe(false)
     expect(result.current.filteredAndSortedRecipes).toHaveLength(1)
     expect(result.current.filteredAndSortedRecipes[0].recipeName).toBe('Keto Avocado Salad')
+  })
+
+  it('sorts recipes by AI match score in descending order when relevance sorting is active', async () => {
+    vi.mocked(queryAiSearch).mockResolvedValue({
+      matches: [
+        { recipeId: '1', matchScore: 0.75, matchReason: 'Decent fit' },
+        { recipeId: '2', matchScore: 0.98, matchReason: 'Perfect fit' },
+      ],
+      suggestedIdea: null,
+    })
+
+    const { result } = renderHook(() => useRecipeSearchFilters(sampleRecipes), { wrapper })
+
+    await act(async () => {
+      await result.current.submitAiPrompt('delicious warm meal')
+    })
+
+    expect(result.current.filteredAndSortedRecipes).toHaveLength(2)
+    // Recipe 2 (0.98) should come before Recipe 1 (0.75)
+    expect(result.current.filteredAndSortedRecipes[0].id).toBe('2')
+    expect(result.current.filteredAndSortedRecipes[1].id).toBe('1')
   })
 })

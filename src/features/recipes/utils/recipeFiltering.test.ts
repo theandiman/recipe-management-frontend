@@ -124,162 +124,43 @@ describe('recipeFiltering', () => {
     expect(result[0].recipeName).toBe('Cheesy Garlic Bread')
   })
 
-  it('should parse numeric prep time limits from AI prompt without mutating filters', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', null, 'under 15 mins')
-    expect(result.map(r => r.recipeName)).toEqual(['Keto Avocado Salad', 'Cheesy Garlic Bread'])
-  })
-
-  it('should parse numeric calorie limits from AI prompt without mutating filters', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', null, 'under 400 cals')
+  it('should filter recipes using direct AI matches map when appliedAiPrompt is active', () => {
+    const aiMatchesMap = {
+      '1': { score: 0.95, reason: 'Great low carb choice' },
+    }
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', aiMatchesMap, 'low carb keto')
     expect(result).toHaveLength(1)
     expect(result[0].recipeName).toBe('Keto Avocado Salad')
   })
 
-  it('should handle natural language queries in AI prompt with conversational intent', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', {
-      queryKeywords: 'salad',
-      dietaryTags: ['Keto'],
-    }, 'show me quick salad for dinner')
-    expect(result).toHaveLength(1)
-    expect(result[0].recipeName).toBe('Keto Avocado Salad')
+  it('should return empty list when AI matches map contains no matching recipe IDs', () => {
+    const aiMatchesMap = {}
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', aiMatchesMap, 'lobster thermidor')
+    expect(result).toHaveLength(0)
   })
 
-  it('should parse multi-word dietary phrases in AI prompt like "low carb"', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', null, 'low carb salad')
-    expect(result).toHaveLength(1)
-    expect(result[0].recipeName).toBe('Keto Avocado Salad')
-  })
-
-  it('should support negative exclusions in AI prompt like "without cheese"', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', null, 'soup without cheese')
-    expect(result).toHaveLength(1)
-    expect(result[0].recipeName).toBe('Vegan Lentil Soup')
-  })
-
-  it('should combine natural language attributes, dietary intent, and time/calorie constraints in AI prompt', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', null, 'quick low-carb salad under 400 cals')
-    expect(result).toHaveLength(1)
-    expect(result[0].recipeName).toBe('Keto Avocado Salad')
-  })
-
-  it('should fall back to cleaned prompt keywords when AI intent uses standard keyword search', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', {
-      queryKeywords: 'Quick dinner under 30 mins',
-      dietaryTags: [],
-      explanation: 'Using standard keyword search.',
-    }, 'Quick dinner under 30 mins')
-    expect(result.map(r => r.recipeName)).toEqual(['Keto Avocado Salad', 'Cheesy Garlic Bread'])
-  })
-
-  it('should require ALL dietary groups to be satisfied in AI prompt (AND logic across groups)', () => {
-    // Vegan Lentil Soup is Vegan + Gluten-Free
-    // Keto Avocado Salad is Keto + Gluten-Free (NOT Vegan)
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', null, 'vegan gluten free')
-    expect(result).toHaveLength(1)
-    expect(result[0].recipeName).toBe('Vegan Lentil Soup')
-  })
-
-  it('should not exclude recipes when exclusion word in AI prompt is part of a -free compound (e.g. without dairy matches dairy-free)', () => {
-    // Vegan Lentil Soup is vegan (so dairy-free)
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', null, 'without dairy')
-    expect(result.map(r => r.recipeName)).toContain('Vegan Lentil Soup')
-  })
-
-  it('should support excluding allergens in AI prompt like gluten and nuts', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', null, 'without gluten')
-    // Cheesy Garlic Bread does not have gluten-free tag and is excluded if gluten is present
-    expect(result.map(r => r.recipeName)).toEqual(['Keto Avocado Salad', 'Vegan Lentil Soup'])
-  })
-
-  it('should support aiIntent parameter seamlessly', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'soup', {
-      dietaryTags: ['Vegan'],
-      maxCalories: 600,
-    })
-    expect(result).toHaveLength(1)
-    expect(result[0].recipeName).toBe('Vegan Lentil Soup')
-  })
-
-  it('should combine plain text search with AI prompt seamlessly', () => {
-    // AI prompt filters to < 15 mins (Keto Avocado Salad, Cheesy Garlic Bread)
-    // Plain text search filters to "salad" -> only Keto Avocado Salad
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'salad', null, 'under 15 mins')
-    expect(result).toHaveLength(1)
-    expect(result[0].recipeName).toBe('Keto Avocado Salad')
-  })
-
-  it('should match meal-type tags like Dinner and Quick & Easy without requiring literal Dinner tag on recipes', () => {
-    // Quick dinner under 30 mins with dietaryTags: ["Quick & Easy", "Dinner"], maxPrepTime: 30
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', {
-      queryKeywords: '',
-      dietaryTags: ['Quick & Easy', 'Dinner'],
-      maxPrepTime: 30,
-      explanation: 'Quick dinner recipes under 30 minutes',
-    })
-    expect(result.map(r => r.recipeName)).toEqual(['Keto Avocado Salad', 'Cheesy Garlic Bread'])
-  })
-
-  it('should match un-hyphenated Low Carb tag from AI intent to recipes with Low-Carb or Keto tags', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', {
-      queryKeywords: '',
-      dietaryTags: ['Low Carb'],
-      explanation: 'Low carb recipes',
-    })
-    expect(result).toHaveLength(1)
-    expect(result[0].recipeName).toBe('Keto Avocado Salad')
-  })
-
-  it('should match High Protein recipes via protein nutrition or high-protein ingredients', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', {
-      queryKeywords: '',
-      dietaryTags: ['High Protein', 'Vegan'],
-      explanation: 'High protein vegan meals',
-    })
-    expect(result).toHaveLength(1)
-    expect(result[0].recipeName).toBe('Vegan Lentil Soup')
-  })
-
-  it('should match recipes when AI queryKeywords include mood words like comfort', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', {
-      queryKeywords: 'comfort cheese garlic',
-      dietaryTags: [],
-      explanation: 'Comfort food with cheese and garlic',
-    })
+  it('should combine plain-text search with direct AI matches map', () => {
+    const aiMatchesMap = {
+      '1': { score: 0.9, reason: 'Keto option' },
+      '3': { score: 0.85, reason: 'Quick bread' },
+    }
+    // Search text 'bread' narrows down to Cheesy Garlic Bread
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'bread', aiMatchesMap, 'quick dinner')
     expect(result).toHaveLength(1)
     expect(result[0].recipeName).toBe('Cheesy Garlic Bread')
   })
 
-  it('should exclude pure desserts from dinner queries', () => {
-    const recipesWithDessert: Recipe[] = [
-      ...sampleRecipes,
-      {
-        id: '4',
-        recipeName: 'Chocolate Lava Cake',
-        description: 'Warm gooey chocolate cake',
-        tags: ['Dessert', 'Baking', 'Sweet'],
-        prepTimeMinutes: 10,
-        cookTimeMinutes: 15,
-        servings: 2,
-        instructions: ['Bake at 400F'],
-        source: 'manual',
-        nutritionalInfo: { perServing: { calories: 500 } },
-        ingredients: ['1 cup Chocolate', '1/2 cup Sugar'],
-      },
-    ]
-
-    const dinnerResult = filterRecipes(recipesWithDessert, DEFAULT_RECIPE_FILTERS, '', {
-      dietaryTags: ['Dinner'],
-      explanation: 'Dinner recipes',
-    })
-    expect(dinnerResult.map(r => r.recipeName)).not.toContain('Chocolate Lava Cake')
-    expect(dinnerResult.map(r => r.recipeName)).toContain('Keto Avocado Salad')
-    expect(dinnerResult.map(r => r.recipeName)).toContain('Cheesy Garlic Bread')
-
-    const dessertResult = filterRecipes(recipesWithDessert, DEFAULT_RECIPE_FILTERS, '', {
-      dietaryTags: ['Dessert'],
-      explanation: 'Dessert recipes',
-    })
-    expect(dessertResult).toHaveLength(1)
-    expect(dessertResult[0].recipeName).toBe('Chocolate Lava Cake')
+  it('should combine manual facet drawer filters with direct AI matches map', () => {
+    const aiMatchesMap = {
+      '1': { score: 0.9, reason: 'Salad' },
+      '2': { score: 0.85, reason: 'Soup' },
+    }
+    const filters: RecipeFilterState = {
+      ...DEFAULT_RECIPE_FILTERS,
+      dietaryTags: ['Vegan'],
+    }
+    const result = filterRecipes(sampleRecipes, filters, '', aiMatchesMap, 'healthy dinner')
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Vegan Lentil Soup')
   })
 })

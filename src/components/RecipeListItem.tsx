@@ -18,6 +18,7 @@ export interface RecipeListItemProps {
   showBookmark?: boolean
   showLike?: boolean
   className?: string
+  matchReason?: string
 }
 
 export const RecipeListItem: React.FC<RecipeListItemProps> = ({
@@ -32,6 +33,7 @@ export const RecipeListItem: React.FC<RecipeListItemProps> = ({
   showBookmark = false,
   showLike = false,
   className = '',
+  matchReason,
 }) => {
   const navigate = useNavigate()
 
@@ -130,9 +132,16 @@ export const RecipeListItem: React.FC<RecipeListItemProps> = ({
             </button>
           </h3>
 
-          <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-            {recipe.description || 'No description provided.'}
-          </p>
+          {matchReason ? (
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 truncate mt-0.5 font-medium flex items-center gap-1">
+              <span>✨</span>
+              <span className="truncate">{matchReason}</span>
+            </p>
+          ) : (
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+              {recipe.description || 'No description provided.'}
+            </p>
+          )}
 
           <div className="flex flex-wrap gap-1 mt-1.5">
             {(recipe.tags || []).slice(0, 3).map((tag) => (

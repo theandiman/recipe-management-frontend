@@ -81,6 +81,7 @@ export interface RecipeSummaryForAi {
   tags?: string[]
   ingredients?: string[]
   prepTimeMinutes?: number
+  calories?: number
 }
 
 export interface AiSearchQueryResult {
