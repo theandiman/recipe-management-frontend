@@ -23,6 +23,19 @@ vi.mock('./features/recipes/SavedRecipesContext', () => ({
   SavedRecipesProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
 
+vi.mock('./features/notifications/NotificationContext', () => ({
+  NotificationProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useNotifications: () => ({
+    notifications: [],
+    unreadCount: 0,
+    isLoading: false,
+    error: null,
+    fetchNotifications: vi.fn(),
+    markItemRead: vi.fn(),
+    markAllRead: vi.fn(),
+  }),
+}))
+
 import type { User } from './types/auth'
 
 const mockAuthState = {
@@ -38,6 +51,10 @@ const mockAuthState = {
 }
 
 vi.mock('./features/auth/AuthContext', () => ({
+  AuthContext: {
+    Provider: ({ children }: { children: React.ReactNode }) => children,
+    Consumer: ({ children }: { children: (val: any) => React.ReactNode }) => children(mockAuthState),
+  },
   AuthProvider: ({ children }: { children: React.ReactNode }) => <div data-testid="auth-provider">{children}</div>,
   useAuth: () => mockAuthState,
 }))

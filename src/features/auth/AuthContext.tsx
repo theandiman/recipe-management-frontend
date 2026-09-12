@@ -13,7 +13,7 @@ import { auth } from '../../config/firebase'
 import { getFirebaseErrorMessage } from '../../utils/firebaseErrors'
 import type { AuthContextType, LoginCredentials, RegisterData, User } from '../../types/auth'
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const useAuth = () => {
   const context = useContext(AuthContext)

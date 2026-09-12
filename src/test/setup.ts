@@ -82,6 +82,12 @@ vi.mock('framer-motion', () => {
   return {
     motion: {
       div: makeMock('div'),
+      section: makeMock('section'),
+      header: makeMock('header'),
+      footer: makeMock('footer'),
+      nav: makeMock('nav'),
+      main: makeMock('main'),
+      form: makeMock('form'),
       button: makeMock('button'),
       svg: makeMock('svg'),
       path: makeMock('path'),

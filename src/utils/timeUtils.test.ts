@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseMinutes, formatMinutes } from './timeUtils'
+import { parseMinutes, formatMinutes, formatRelativeTime } from './timeUtils'
 
 describe('timeUtils', () => {
   describe('parseMinutes', () => {
@@ -80,6 +80,34 @@ describe('timeUtils', () => {
     it('should handle large numbers', () => {
       expect(formatMinutes(1440)).toBe('24h')
       expect(formatMinutes(1441)).toBe('24h 1m')
+    })
+  })
+
+  describe('formatRelativeTime', () => {
+    it('should handle just now for timestamps within 60 seconds', () => {
+      const now = new Date()
+      expect(formatRelativeTime(now.toISOString())).toBe('just now')
+    })
+
+    it('should format minutes ago', () => {
+      const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000)
+      expect(formatRelativeTime(tenMinsAgo.toISOString())).toBe('10m ago')
+    })
+
+    it('should format hours ago', () => {
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000)
+      expect(formatRelativeTime(twoHoursAgo.toISOString())).toBe('2h ago')
+    })
+
+    it('should format days ago', () => {
+      const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
+      expect(formatRelativeTime(fiveDaysAgo.toISOString())).toBe('5d ago')
+    })
+
+    it('should return empty string for null, undefined, or invalid dates', () => {
+      expect(formatRelativeTime(null)).toBe('')
+      expect(formatRelativeTime(undefined)).toBe('')
+      expect(formatRelativeTime('invalid-date')).toBe('')
     })
   })
 })
