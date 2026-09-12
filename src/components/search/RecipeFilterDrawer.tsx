@@ -53,15 +53,20 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
   const modalRef = useRef<HTMLDivElement>(null)
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null)
 
-  const [prevFilters, setPrevFilters] = useState<RecipeFilterState>(filters)
   const [prevIsOpen, setPrevIsOpen] = useState<boolean>(isOpen)
 
-  // Adjust draft filters during render when dialog opens or parent filters change
-  if (isOpen !== prevIsOpen || filters !== prevFilters) {
+  // Adjust draft filters during render only when dialog opens
+  if (isOpen !== prevIsOpen) {
     setPrevIsOpen(isOpen)
-    setPrevFilters(filters)
-    setDraftFilters(filters)
+    if (isOpen) {
+      setDraftFilters(filters)
+    }
   }
+
+  const onToggleOpenRef = useRef(onToggleOpen)
+  useEffect(() => {
+    onToggleOpenRef.current = onToggleOpen
+  }, [onToggleOpen])
 
   // Count active filters for external trigger and modal draft
   const activeExternalCount = getActiveFilterCount(filters)
@@ -94,7 +99,7 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault()
-        onToggleOpen()
+        onToggleOpenRef.current()
         return
       }
 
@@ -131,7 +136,7 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
       window.removeEventListener('keydown', handleKeyDown)
       previouslyFocusedElementRef.current?.focus()
     }
-  }, [isOpen, onToggleOpen])
+  }, [isOpen])
 
   // Prevent background body scroll when modal is open
   useEffect(() => {

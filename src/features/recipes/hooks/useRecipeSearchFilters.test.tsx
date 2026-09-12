@@ -404,6 +404,46 @@ describe('useRecipeSearchFilters', () => {
     expect(result.current.filters.tags).toEqual([])
   })
 
+  it('gracefully handles malformed percent-encoded sequences in URL parameters without crashing', () => {
+    const customWrapper = ({ children, initialEntries }: { children: React.ReactNode; initialEntries: string[] }) => (
+      <MemoryRouter initialEntries={initialEntries}>
+        {children}
+      </MemoryRouter>
+    )
+
+    const { result } = renderHook(
+      () => useRecipeSearchFilters(sampleRecipes),
+      {
+        wrapper: ({ children }) => customWrapper({ children, initialEntries: ['/dashboard/recipes?tags=100%25,malformed%&diet=safe,bad%E0%A4%A'] }),
+      }
+    )
+
+    // Should decode valid sequences and keep fallback for malformed without throwing URIError
+    expect(result.current.filters.tags).toContain('100%')
+    expect(result.current.filters.tags).toContain('malformed%')
+    expect(result.current.filters.dietaryTags).toContain('safe')
+  })
+
+  it('synchronizes maxTime, maxCal, sort, and view bidirectionally from URL', () => {
+    const customWrapper = ({ children, initialEntries }: { children: React.ReactNode; initialEntries: string[] }) => (
+      <MemoryRouter initialEntries={initialEntries}>
+        {children}
+      </MemoryRouter>
+    )
+
+    const { result } = renderHook(
+      () => useRecipeSearchFilters(sampleRecipes),
+      {
+        wrapper: ({ children }) => customWrapper({ children, initialEntries: ['/dashboard/recipes?maxTime=30&maxCal=600&sort=prepTime&view=list'] }),
+      }
+    )
+
+    expect(result.current.filters.maxPrepTime).toBe(30)
+    expect(result.current.filters.maxCalories).toBe(600)
+    expect(result.current.sortOption).toBe('prepTime')
+    expect(result.current.viewMode).toBe('list')
+  })
+
   it('manages recipe category tags filtering and removeTag', () => {
     const { result } = renderHook(() => useRecipeSearchFilters(sampleRecipes), { wrapper })
 

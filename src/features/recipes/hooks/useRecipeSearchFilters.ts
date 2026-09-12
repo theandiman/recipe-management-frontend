@@ -51,6 +51,14 @@ export interface UseRecipeSearchFiltersReturn {
   appliedAiPrompt: string
 }
 
+const safeDecode = (str: string): string => {
+  try {
+    return decodeURIComponent(str)
+  } catch {
+    return str
+  }
+}
+
 export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFiltersReturn => {
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -60,14 +68,14 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
   const urlTagsParam = searchParams.get('tags')
   const initialTag = searchParams.get('tag')
   const initialTags = urlTagsParam
-    ? urlTagsParam.split(',').map(t => decodeURIComponent(t).trim()).filter(Boolean)
+    ? urlTagsParam.split(',').map(t => safeDecode(t).trim()).filter(Boolean)
     : initialTag && !DIETARY_OPTIONS.some(d => d.toLowerCase() === initialTag.toLowerCase())
-    ? [decodeURIComponent(initialTag).trim()].filter(Boolean)
+    ? [safeDecode(initialTag).trim()].filter(Boolean)
     : []
   const initialDiet = searchParams.get('diet')
-    ? searchParams.get('diet')!.split(',').map(d => decodeURIComponent(d).trim()).filter(Boolean)
+    ? searchParams.get('diet')!.split(',').map(d => safeDecode(d).trim()).filter(Boolean)
     : initialTag && DIETARY_OPTIONS.some(d => d.toLowerCase() === initialTag.toLowerCase())
-    ? [decodeURIComponent(initialTag).trim()].filter(Boolean)
+    ? [safeDecode(initialTag).trim()].filter(Boolean)
     : []
   const initialMaxTime = searchParams.get('maxTime') ? Number(searchParams.get('maxTime')) : null
   const initialMaxCal = searchParams.get('maxCal') ? Number(searchParams.get('maxCal')) : null
@@ -218,15 +226,19 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     const urlTagsParam = searchParams.get('tags')
     const urlTag = searchParams.get('tag')
     const urlTags = urlTagsParam
-      ? urlTagsParam.split(',').map(t => decodeURIComponent(t).trim()).filter(Boolean)
+      ? urlTagsParam.split(',').map(t => safeDecode(t).trim()).filter(Boolean)
       : urlTag && !DIETARY_OPTIONS.some(d => d.toLowerCase() === urlTag.toLowerCase())
-      ? [decodeURIComponent(urlTag).trim()].filter(Boolean)
+      ? [safeDecode(urlTag).trim()].filter(Boolean)
       : []
     const urlDiet = searchParams.get('diet')
-      ? searchParams.get('diet')!.split(',').map(d => decodeURIComponent(d).trim()).filter(Boolean)
+      ? searchParams.get('diet')!.split(',').map(d => safeDecode(d).trim()).filter(Boolean)
       : urlTag && DIETARY_OPTIONS.some(d => d.toLowerCase() === urlTag.toLowerCase())
-      ? [decodeURIComponent(urlTag).trim()].filter(Boolean)
+      ? [safeDecode(urlTag).trim()].filter(Boolean)
       : []
+    const urlMaxTime = searchParams.get('maxTime') ? Number(searchParams.get('maxTime')) : null
+    const urlMaxCal = searchParams.get('maxCal') ? Number(searchParams.get('maxCal')) : null
+    const urlSort = (searchParams.get('sort') as SortOption) || 'relevance'
+    const urlView = (searchParams.get('view') as ViewMode) || 'grid'
 
     if (urlQ !== lastSyncedUrlQRef.current) {
       lastSyncedUrlQRef.current = urlQ
@@ -238,21 +250,28 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
       submitAiPrompt(urlAi)
     }
 
-    // Bidirectional sync: keep filters.tags and filters.dietaryTags aligned with URL, including clearing when empty
+    // Bidirectional sync: keep sort, view, and filters aligned with URL, including clearing when empty
     // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSortOption(prev => (prev !== urlSort ? urlSort : prev))
+    setViewModeState(prev => (prev !== urlView ? urlView : prev))
+
     setFilters(prev => {
       const prevDiet = prev.dietaryTags || []
       const dietEqual = prevDiet.length === urlDiet.length && prevDiet.every((d, i) => d === urlDiet[i])
       const prevTags = prev.tags || []
       const tagsEqual = prevTags.length === urlTags.length && prevTags.every((t, i) => t === urlTags[i])
+      const maxTimeEqual = prev.maxPrepTime === urlMaxTime
+      const maxCalEqual = prev.maxCalories === urlMaxCal
 
-      if (dietEqual && tagsEqual) {
+      if (dietEqual && tagsEqual && maxTimeEqual && maxCalEqual) {
         return prev
       }
       return {
         ...prev,
         dietaryTags: dietEqual ? prev.dietaryTags : urlDiet,
         tags: tagsEqual ? prev.tags : urlTags,
+        maxPrepTime: maxTimeEqual ? prev.maxPrepTime : urlMaxTime,
+        maxCalories: maxCalEqual ? prev.maxCalories : urlMaxCal,
       }
     })
   }, [searchParams, submitAiPrompt])

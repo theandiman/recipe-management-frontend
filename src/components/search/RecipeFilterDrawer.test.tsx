@@ -271,4 +271,22 @@ describe('RecipeFilterDrawer', () => {
 
     document.body.removeChild(triggerButton)
   })
+
+  it('preserves uncommitted draft edits when parent filters prop changes reference while drawer is open', () => {
+    const { rerender } = render(<RecipeFilterDrawer {...defaultProps} isOpen={true} />)
+
+    // User selects Vegetarian in draft
+    const vegButton = screen.getByRole('button', { name: /\+ Vegetarian/i })
+    fireEvent.click(vegButton)
+
+    // Vegetarian chip is now visible in the draft
+    expect(screen.getByRole('button', { name: /Remove Vegetarian/i })).toBeInTheDocument()
+
+    // Parent re-renders with a new filters object reference
+    const newParentFilters = { ...DEFAULT_RECIPE_FILTERS }
+    rerender(<RecipeFilterDrawer {...defaultProps} isOpen={true} filters={newParentFilters} />)
+
+    // Draft edit must NOT be blown away
+    expect(screen.getByRole('button', { name: /Remove Vegetarian/i })).toBeInTheDocument()
+  })
 })
