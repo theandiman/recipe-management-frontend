@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import App from './App'
 
@@ -23,25 +23,40 @@ vi.mock('./features/recipes/SavedRecipesContext', () => ({
   SavedRecipesProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
 
+import type { User } from './types/auth'
+
+const mockAuthState = {
+  isAuthenticated: false,
+  isLoading: false,
+  user: null as User | null,
+  error: null,
+  login: vi.fn(),
+  register: vi.fn(),
+  logout: vi.fn(),
+  loginWithGoogle: vi.fn(),
+  refreshUser: vi.fn(),
+}
+
 vi.mock('./features/auth/AuthContext', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => <div data-testid="auth-provider">{children}</div>,
-  useAuth: () => ({
-    isAuthenticated: false,
-    isLoading: false,
-    user: null,
-    error: null,
-    login: vi.fn(),
-    register: vi.fn(),
-    logout: vi.fn(),
-    loginWithGoogle: vi.fn()
-  })
+  useAuth: () => mockAuthState,
 }))
 
 vi.mock('./components/ProtectedRoute', () => ({
-  ProtectedRoute: ({ children }: { children: React.ReactNode }) => <div data-testid="protected-route">{children}</div>
+  ProtectedRoute: ({ children }: { children: React.ReactNode }) => <div data-testid="protected-route">{children}</div>,
+}))
+
+vi.mock('./components/PublicRoute', () => ({
+  PublicRoute: ({ children }: { children: React.ReactNode }) => <div data-testid="public-route">{children}</div>,
 }))
 
 describe('App', () => {
+  beforeEach(() => {
+    mockAuthState.isAuthenticated = false
+    mockAuthState.isLoading = false
+    mockAuthState.user = null
+  })
+
   it('should render without crashing', async () => {
     render(<App />)
     expect(await screen.findByTestId('auth-provider')).toBeInTheDocument()
@@ -71,19 +86,27 @@ describe('App', () => {
     expect(await screen.findByTestId('dashboard-layout')).toBeInTheDocument()
   })
 
-  it('should redirect from root to /dashboard', async () => {
+  it('should redirect from root to /login when unauthenticated', async () => {
+    mockAuthState.isAuthenticated = false
     window.history.pushState({}, 'Home', '/')
     render(<App />)
-    // Should attempt to render dashboard (which will be protected)
-    expect(await screen.findByTestId('protected-route')).toBeInTheDocument()
+    expect(await screen.findByTestId('login-page')).toBeInTheDocument()
   })
 
-  it('should redirect unknown paths to /dashboard', async () => {
-    window.history.pushState({}, 'Unknown', '/does-not-exist')
+  it('should redirect from root to /dashboard when authenticated', async () => {
+    mockAuthState.isAuthenticated = true
+    mockAuthState.user = { uid: '123', email: 'user@example.com' }
+    window.history.pushState({}, 'Home', '/')
     render(<App />)
-    // Catch-all route should redirect to /dashboard (protected)
     expect(await screen.findByTestId('protected-route')).toBeInTheDocument()
     expect(await screen.findByTestId('dashboard-layout')).toBeInTheDocument()
+  })
+
+  it('should redirect unknown paths to /login when unauthenticated', async () => {
+    mockAuthState.isAuthenticated = false
+    window.history.pushState({}, 'Unknown', '/does-not-exist')
+    render(<App />)
+    expect(await screen.findByTestId('login-page')).toBeInTheDocument()
   })
 
   it('should render public recipe detail without authentication when navigating to /recipes/:id', async () => {

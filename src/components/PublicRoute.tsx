@@ -2,21 +2,17 @@ import React from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../features/auth/AuthContext'
 
-interface ProtectedRouteProps {
+interface PublicRouteProps {
   children: React.ReactNode
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+export const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth()
-  
-  // Bypass authentication in test mode
-  const isTestMode = import.meta.env.VITE_TEST_MODE === 'true'
-  
-  if (isTestMode) {
-    return <>{children}</>
-  }
 
-  if (isLoading) {
+  // In test mode without explicit auth, allow viewing public pages
+  const isTestMode = import.meta.env.VITE_TEST_MODE === 'true'
+
+  if (isLoading && !isTestMode) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-900 transition-colors">
         <div
@@ -29,8 +25,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     )
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />
+  if (isAuthenticated && !isTestMode) {
+    return <Navigate to="/dashboard" replace />
   }
 
   return <>{children}</>

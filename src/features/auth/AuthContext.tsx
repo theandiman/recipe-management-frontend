@@ -52,17 +52,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (firebaseUser) {
-        setUser(convertFirebaseUser(firebaseUser))
-      } else {
-        setUser(null)
-      }
+    // Fallback safety timeout so isLoading never hangs indefinitely
+    const timeoutId = setTimeout(() => {
       setIsLoading(false)
-    })
+    }, 5000)
+
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (firebaseUser) => {
+        clearTimeout(timeoutId)
+        if (firebaseUser) {
+          setUser(convertFirebaseUser(firebaseUser))
+        } else {
+          setUser(null)
+        }
+        setIsLoading(false)
+      },
+      (err) => {
+        clearTimeout(timeoutId)
+        console.error('Firebase auth state subscription error:', err)
+        setUser(null)
+        setIsLoading(false)
+      }
+    )
 
     // Cleanup subscription on unmount
-    return () => unsubscribe()
+    return () => {
+      clearTimeout(timeoutId)
+      if (typeof unsubscribe === 'function') {
+        unsubscribe()
+      }
+    }
   }, [])
 
   const login = async (credentials: LoginCredentials) => {

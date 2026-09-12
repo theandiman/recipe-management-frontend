@@ -2,9 +2,11 @@ import { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Toaster } from 'sonner'
-import { AuthProvider } from './features/auth/AuthContext'
+import { AuthProvider, useAuth } from './features/auth/AuthContext'
 import { ThemeProvider } from './features/theme/ThemeContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { PublicRoute } from './components/PublicRoute'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { FollowProvider } from './features/users/FollowContext'
 import { LikeProvider } from './features/recipes/LikeContext'
 import { SavedRecipesProvider } from './features/recipes/SavedRecipesContext'
@@ -22,6 +24,21 @@ const LoadingFallback = () => (
   </div>
 )
 
+function RootRedirect() {
+  const { isAuthenticated, isLoading } = useAuth()
+  const isTestMode = import.meta.env.VITE_TEST_MODE === 'true'
+
+  if (isTestMode) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  if (isLoading) {
+    return <LoadingFallback />
+  }
+
+  return <Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />
+}
+
 function AnimatedRoutes() {
   const location = useLocation()
 
@@ -31,25 +48,29 @@ function AnimatedRoutes() {
       <Route 
         path="/login" 
         element={
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Login />
-          </motion.div>
+          <PublicRoute>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Login />
+            </motion.div>
+          </PublicRoute>
         } 
       />
       <Route 
         path="/register" 
         element={
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Register />
-          </motion.div>
+          <PublicRoute>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Register />
+            </motion.div>
+          </PublicRoute>
         } 
       />
       <Route
@@ -92,8 +113,8 @@ function AnimatedRoutes() {
           </motion.div>
         }
       />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<RootRedirect />} />
+      <Route path="*" element={<RootRedirect />} />
     </Routes>
     </Suspense>
   )
@@ -108,7 +129,9 @@ function App() {
             <LikeProvider>
               <SavedRecipesProvider>
                 <Toaster position="top-right" richColors />
-                <AnimatedRoutes />
+                <ErrorBoundary>
+                  <AnimatedRoutes />
+                </ErrorBoundary>
               </SavedRecipesProvider>
             </LikeProvider>
           </FollowProvider>
