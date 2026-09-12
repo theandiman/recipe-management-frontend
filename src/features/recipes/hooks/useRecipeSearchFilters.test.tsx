@@ -265,4 +265,42 @@ describe('useRecipeSearchFilters', () => {
     expect(result.current.nlpSummary).toBeNull()
     expect(result.current.isAiLoading).toBe(false)
   })
+
+  it('does not prematurely flash intermediate regex results while isAiLoading is true', async () => {
+    let resolveAi: (val: any) => void
+    const aiPromise = new Promise((resolve) => {
+      resolveAi = resolve
+    })
+
+    vi.mocked(parseAiSearchIntent).mockImplementationOnce(() => aiPromise as any)
+
+    const { result } = renderHook(() => useRecipeSearchFilters(sampleRecipes), { wrapper })
+
+    expect(result.current.filteredAndSortedRecipes).toHaveLength(2)
+
+    let submitPromise: Promise<void>
+    act(() => {
+      submitPromise = result.current.submitAiPrompt('salad under 15 mins')
+    })
+
+    // While loading, user prompt is set in aiPrompt, but filtered recipes remain steady
+    expect(result.current.isAiLoading).toBe(true)
+    expect(result.current.aiPrompt).toBe('salad under 15 mins')
+    expect(result.current.filteredAndSortedRecipes).toHaveLength(2)
+
+    // When AI service resolves, atomic transition occurs
+    await act(async () => {
+      resolveAi!({
+        queryKeywords: 'salad',
+        dietaryTags: ['Keto'],
+        maxPrepTime: 15,
+        explanation: 'Quick keto salad',
+      })
+      await submitPromise!
+    })
+
+    expect(result.current.isAiLoading).toBe(false)
+    expect(result.current.filteredAndSortedRecipes).toHaveLength(1)
+    expect(result.current.filteredAndSortedRecipes[0].recipeName).toBe('Keto Avocado Salad')
+  })
 })

@@ -56,6 +56,7 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
   const [isAiLoading, setIsAiLoading] = useState(false)
   const [nlpSummary, setNlpSummary] = useState<string | null>(null)
   const [aiIntent, setAiIntent] = useState<AiSearchIntentResult | null>(null)
+  const [appliedAiPrompt, setAppliedAiPrompt] = useState('')
 
   // Guard against asynchronous race conditions and URL sync loops
   const aiRequestSequenceRef = useRef(0)
@@ -91,6 +92,7 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     setAiPrompt(trimmed)
 
     if (!trimmed) {
+      setAppliedAiPrompt('')
       setNlpSummary(null)
       setAiIntent(null)
       setIsAiLoading(false)
@@ -104,6 +106,7 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
         return
       }
       setAiIntent(intent)
+      setAppliedAiPrompt(trimmed)
 
       const summaryParts: string[] = []
       if (
@@ -133,6 +136,7 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
       if (aiRequestSequenceRef.current !== requestSequence) {
         return
       }
+      setAppliedAiPrompt(trimmed)
       setNlpSummary(null)
       setAiIntent(null)
     } finally {
@@ -147,6 +151,7 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     latestPromptRef.current = ''
     lastSyncedUrlAiRef.current = ''
     setAiPrompt('')
+    setAppliedAiPrompt('')
     setNlpSummary(null)
     setAiIntent(null)
     setIsAiLoading(false)
@@ -218,9 +223,9 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
 
   // Filter & Sort Pipeline
   const filteredAndSortedRecipes = useMemo(() => {
-    const filtered = filterRecipes(allRecipes, filters, searchText, aiIntent, aiPrompt)
+    const filtered = filterRecipes(allRecipes, filters, searchText, aiIntent, appliedAiPrompt)
     return sortRecipes(filtered, sortOption)
-  }, [allRecipes, filters, searchText, aiIntent, aiPrompt, sortOption])
+  }, [allRecipes, filters, searchText, aiIntent, appliedAiPrompt, sortOption])
 
   const clearAllFilters = useCallback(() => {
     setSearchText('')
