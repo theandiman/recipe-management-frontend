@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import React from 'react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useNavigate } from 'react-router-dom'
 import { useRecipeSearchFilters } from './useRecipeSearchFilters'
 import { queryAiSearch } from '../../../utils/aiApi'
 import type { Recipe } from '../../../types/nutrition'
@@ -339,11 +338,117 @@ describe('useRecipeSearchFilters', () => {
     expect(result.current.filteredAndSortedRecipes[1].id).toBe('1')
   })
 
-  it('provides availableTags and availableIngredients derived from all recipes', () => {
+  it('provides availableTags (excluding dietary options) and availableIngredients derived from all recipes', () => {
     const { result } = renderHook(() => useRecipeSearchFilters(sampleRecipes), { wrapper })
-    expect(result.current.availableTags).toEqual(['Gluten-Free', 'Keto', 'Salad', 'Soup', 'Vegan'])
+    // Dietary options (Keto, Vegan, Gluten-Free) must be excluded from availableTags
+    expect(result.current.availableTags).toEqual(['Salad', 'Soup'])
     expect(result.current.availableIngredients).toContain('Avocado')
     expect(result.current.availableIngredients).toContain('Garlic')
+  })
+
+  it('deduplicates availableTags case-insensitively and filters dietary options case-insensitively', () => {
+    const recipesWithCaseVariants: Recipe[] = [
+      {
+        id: '1',
+        recipeName: 'Pasta 1',
+        description: '',
+        tags: ['Italian', 'italian', 'VEGAN', 'vegan'],
+        prepTimeMinutes: 10,
+        cookTimeMinutes: 10,
+        servings: 1,
+        instructions: [],
+        ingredients: [],
+        source: 'manual',
+      },
+      {
+        id: '2',
+        recipeName: 'Pasta 2',
+        description: '',
+        tags: ['ITALIAN', 'Dinner', 'dinner', 'gluten-free'],
+        prepTimeMinutes: 10,
+        cookTimeMinutes: 10,
+        servings: 1,
+        instructions: [],
+        ingredients: [],
+        source: 'manual',
+      },
+    ]
+
+    const { result } = renderHook(() => useRecipeSearchFilters(recipesWithCaseVariants), { wrapper })
+    // Only category tags 'Dinner' and 'Italian' should remain, deduplicated case-insensitively
+    expect(result.current.availableTags).toEqual(['Dinner', 'Italian'])
+  })
+
+  it('synchronizes tags and dietaryTags with URL parameters and clears them when removed', () => {
+    let navigateFn: (to: string) => void = () => {}
+    const NavigationCapturer = () => {
+      const navigate = useNavigate()
+      navigateFn = navigate
+      return null
+    }
+
+    const { result } = renderHook(
+      () => useRecipeSearchFilters(sampleRecipes),
+      {
+        wrapper: ({ children }) => (
+          <MemoryRouter initialEntries={['/dashboard/recipes?tags=Soup&diet=Vegan']}>
+            <NavigationCapturer />
+            {children}
+          </MemoryRouter>
+        ),
+      }
+    )
+
+    expect(result.current.filters.tags).toEqual(['Soup'])
+    expect(result.current.filters.dietaryTags).toEqual(['Vegan'])
+
+    // Simulate URL navigation removing tags and diet query parameters
+    act(() => {
+      navigateFn('/dashboard/recipes')
+    })
+
+    expect(result.current.filters.tags).toEqual([])
+    expect(result.current.filters.dietaryTags).toEqual([])
+  })
+
+  it('gracefully handles malformed percent-encoded sequences in URL parameters without crashing', () => {
+    const customWrapper = ({ children, initialEntries }: { children: React.ReactNode; initialEntries: string[] }) => (
+      <MemoryRouter initialEntries={initialEntries}>
+        {children}
+      </MemoryRouter>
+    )
+
+    const { result } = renderHook(
+      () => useRecipeSearchFilters(sampleRecipes),
+      {
+        wrapper: ({ children }) => customWrapper({ children, initialEntries: ['/dashboard/recipes?tags=100%25,malformed%&diet=safe,bad%E0%A4%A'] }),
+      }
+    )
+
+    // Should decode valid sequences and keep fallback for malformed without throwing URIError
+    expect(result.current.filters.tags).toContain('100%')
+    expect(result.current.filters.tags).toContain('malformed%')
+    expect(result.current.filters.dietaryTags).toContain('safe')
+  })
+
+  it('synchronizes maxTime, maxCal, sort, and view bidirectionally from URL', () => {
+    const customWrapper = ({ children, initialEntries }: { children: React.ReactNode; initialEntries: string[] }) => (
+      <MemoryRouter initialEntries={initialEntries}>
+        {children}
+      </MemoryRouter>
+    )
+
+    const { result } = renderHook(
+      () => useRecipeSearchFilters(sampleRecipes),
+      {
+        wrapper: ({ children }) => customWrapper({ children, initialEntries: ['/dashboard/recipes?maxTime=30&maxCal=600&sort=prepTime&view=list'] }),
+      }
+    )
+
+    expect(result.current.filters.maxPrepTime).toBe(30)
+    expect(result.current.filters.maxCalories).toBe(600)
+    expect(result.current.sortOption).toBe('prepTime')
+    expect(result.current.viewMode).toBe('list')
   })
 
   it('manages recipe category tags filtering and removeTag', () => {
