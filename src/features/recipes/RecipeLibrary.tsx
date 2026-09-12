@@ -395,16 +395,19 @@ export const RecipeLibrary: React.FC = () => {
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {paged.map((recipe) => (
-                    <RecipeListItem
-                      key={recipe.id}
-                      recipe={recipe}
-                      onView={(id) => navigate(`/dashboard/recipes/${id}`)}
-                      onDelete={(currentUser && (!recipe.userId || recipe.userId === currentUser.uid)) ? ((r) => r.id && setDeleteConfirm({ id: r.id, title: r.recipeName })) : undefined}
-                      isOwner={Boolean(currentUser && (!recipe.userId || recipe.userId === currentUser.uid))}
-                      showBookmark
-                    />
-                  ))}
+                  {paged.map((recipe) => {
+                    const isOwner = Boolean(currentUser && (!recipe.userId || recipe.userId === currentUser.uid))
+                    return (
+                      <RecipeListItem
+                        key={recipe.id}
+                        recipe={recipe}
+                        onView={(id) => navigate(`/dashboard/recipes/${id}`)}
+                        onDelete={isOwner ? ((r) => r.id && setDeleteConfirm({ id: r.id, title: r.recipeName })) : undefined}
+                        isOwner={isOwner}
+                        showBookmark
+                      />
+                    )
+                  })}
                 </motion.div>
               </AnimatePresence>
             )}

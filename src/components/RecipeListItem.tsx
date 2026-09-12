@@ -55,8 +55,8 @@ export const RecipeListItem: React.FC<RecipeListItemProps> = ({
 
   const totalTime =
     recipe.totalTimeMinutes ||
-    (recipe.prepTimeMinutes && recipe.cookTimeMinutes
-      ? recipe.prepTimeMinutes + recipe.cookTimeMinutes
+    ((recipe.prepTimeMinutes || recipe.cookTimeMinutes)
+      ? (recipe.prepTimeMinutes || 0) + (recipe.cookTimeMinutes || 0)
       : undefined)
 
   const handleRowClick = () => {
@@ -70,16 +70,7 @@ export const RecipeListItem: React.FC<RecipeListItemProps> = ({
 
   return (
     <div
-      role="button"
-      tabIndex={0}
-      onClick={handleRowClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          handleRowClick()
-        }
-      }}
-      className={`group flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 bg-white dark:bg-slate-850 border border-gray-200 dark:border-slate-800 rounded-2xl hover:border-emerald-400 dark:hover:border-emerald-500 hover:shadow-sm transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 ${className}`}
+      className={`group relative flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 bg-white dark:bg-slate-850 border border-gray-200 dark:border-slate-800 rounded-2xl hover:border-emerald-400 dark:hover:border-emerald-500 hover:shadow-sm transition-all focus-within:ring-2 focus-within:ring-emerald-500 ${className}`}
     >
       {/* Left: Thumbnail & Core Info */}
       <div className="flex items-center space-x-4 min-w-0 flex-1">
@@ -110,8 +101,7 @@ export const RecipeListItem: React.FC<RecipeListItemProps> = ({
               {resolvedAuthorUid ? (
                 <Link
                   to={`/user/${resolvedAuthorUid}`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="font-medium hover:underline hover:text-emerald-600 dark:hover:text-emerald-400 truncate max-w-[130px]"
+                  className="relative z-10 font-medium hover:underline hover:text-emerald-600 dark:hover:text-emerald-400 truncate max-w-[130px]"
                 >
                   {resolvedAuthorName}
                 </Link>
@@ -130,7 +120,13 @@ export const RecipeListItem: React.FC<RecipeListItemProps> = ({
           )}
 
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">
-            {recipe.recipeName}
+            <button
+              type="button"
+              onClick={handleRowClick}
+              className="text-left focus:outline-none after:absolute after:inset-0 cursor-pointer"
+            >
+              {recipe.recipeName}
+            </button>
           </h3>
 
           <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
@@ -165,7 +161,7 @@ export const RecipeListItem: React.FC<RecipeListItemProps> = ({
               <svg className="w-3.5 h-3.5 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              ⏱ {recipe.prepTime} min
+              {recipe.prepTime} min
             </span>
           ) : null}
 
@@ -186,15 +182,7 @@ export const RecipeListItem: React.FC<RecipeListItemProps> = ({
         </div>
 
         {/* Action icons */}
-        <div
-          className="flex items-center gap-2"
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.stopPropagation()
-            }
-          }}
-        >
+        <div className="relative z-10 flex items-center gap-2">
           {showLike && (
             <LikeButton
               recipe={recipe}
