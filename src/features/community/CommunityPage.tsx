@@ -42,6 +42,7 @@ export const CommunityPage: React.FC = () => {
     setIsFilterDrawerOpen,
     filteredAndSortedRecipes: filtered,
     clearAllFilters,
+    nlpSummary,
   } = useRecipeSearchFilters(recipes)
 
   // Sync top nav search bar with page search text
@@ -209,6 +210,63 @@ export const CommunityPage: React.FC = () => {
               />
             )}
           </AnimatePresence>
+
+          {/* Active Filter Pills Bar */}
+          {(activeFilterCount > 0 || searchText || nlpSummary) && (
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Active:</span>
+              {nlpSummary && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-semibold rounded-full border border-emerald-500/30">
+                  <span>✨ Smart NLP:</span> {nlpSummary}
+                </span>
+              )}
+              {searchText && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
+                  Query: "{searchText}"
+                  <button onClick={() => setSearchText('')} className="hover:text-red-500 font-bold cursor-pointer">✕</button>
+                </span>
+              )}
+              {filters.dietaryTags.map(tag => (
+                <span key={tag} className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
+                  Tag: {tag}
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, dietaryTags: prev.dietaryTags.filter(t => t !== tag) }))}
+                    className="hover:text-red-500 font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+              {filters.maxPrepTime !== null && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
+                  Max Time: &lt; {filters.maxPrepTime} min
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, maxPrepTime: null }))}
+                    className="hover:text-red-500 font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
+              {filters.maxCalories !== null && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
+                  Max Calories: &lt; {filters.maxCalories} kcal
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, maxCalories: null }))}
+                    className="hover:text-red-500 font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </span>
+              )}
+              <button
+                onClick={clearAllFilters}
+                className="text-xs text-red-600 dark:text-red-400 font-medium hover:underline ml-2 cursor-pointer"
+              >
+                Reset all
+              </button>
+            </div>
+          )}
         </>
       )}
 

@@ -128,4 +128,37 @@ describe('recipeFiltering', () => {
     expect(result).toHaveLength(1)
     expect(result[0].recipeName).toBe('Keto Avocado Salad')
   })
+
+  it('should handle natural language queries with conversational stop words', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'show me quick salad for dinner')
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Keto Avocado Salad')
+  })
+
+  it('should parse multi-word dietary phrases like "low carb"', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'low carb salad')
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Keto Avocado Salad')
+  })
+
+  it('should support negative exclusions like "without cheese"', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'soup without cheese')
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Vegan Lentil Soup')
+  })
+
+  it('should combine natural language attributes, dietary intent, and time/calorie constraints', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'quick low-carb salad under 400 cals')
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Keto Avocado Salad')
+  })
+
+  it('should support aiIntent parameter seamlessly', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'soup', {
+      dietaryTags: ['Vegan'],
+      maxCalories: 600,
+    })
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Vegan Lentil Soup')
+  })
 })
