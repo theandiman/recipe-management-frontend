@@ -42,6 +42,7 @@ export interface FollowUser {
   uid: string
   displayName: string
   avatarUrl?: string
+  photoUrl?: string
 }
 
 export interface FollowListPage {
@@ -138,7 +139,14 @@ export async function getFollowers(uid: string, page = 1): Promise<FollowListPag
   const headers = await getUserApiHeaders(false)
 
   const response = await axios.get<FollowListPage>(url, { headers })
-  return response.data
+  const data = response.data
+  return {
+    ...data,
+    users: (data.users || []).map(u => ({
+      ...u,
+      avatarUrl: u.avatarUrl || u.photoUrl,
+    })),
+  }
 }
 
 export async function getFollowing(uid: string, page = 1): Promise<FollowListPage> {
@@ -146,5 +154,12 @@ export async function getFollowing(uid: string, page = 1): Promise<FollowListPag
   const headers = await getUserApiHeaders(false)
 
   const response = await axios.get<FollowListPage>(url, { headers })
-  return response.data
+  const data = response.data
+  return {
+    ...data,
+    users: (data.users || []).map(u => ({
+      ...u,
+      avatarUrl: u.avatarUrl || u.photoUrl,
+    })),
+  }
 }

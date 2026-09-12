@@ -1,7 +1,10 @@
 import React, { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
+import { updateProfile } from 'firebase/auth'
+import { auth } from '../../config/firebase'
 import { useAuth } from '../auth/AuthContext'
+import { UserAvatar } from '../../components/UserAvatar'
 import { updateMyProfile } from '../../services/userApi'
 import { uploadAvatarImage, deleteAvatarImage } from '../../utils/imageStorage'
 import type { UserProfile, UpdateUserProfileRequest } from '../../services/userApi'
@@ -18,11 +21,13 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   onProfileUpdated,
 }) => {
   let activeUid = profile.uid
+  let refreshUserFn: (() => Promise<void>) | undefined
   try {
-    const { user: currentUser } = useAuth()
-    if (currentUser?.uid) {
-      activeUid = currentUser.uid
+    const authContext = useAuth()
+    if (authContext.user?.uid) {
+      activeUid = authContext.user.uid
     }
+    refreshUserFn = authContext.refreshUser
   } catch {
     // Fallback to profile.uid if component is rendered outside AuthProvider context
   }
@@ -118,6 +123,19 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
       }
 
       const updated = await updateMyProfile(payload)
+      if (auth.currentUser) {
+        try {
+          await updateProfile(auth.currentUser, {
+            displayName: payload.displayName,
+            photoURL: payload.avatarUrl || null,
+          })
+          if (refreshUserFn) {
+            await refreshUserFn()
+          }
+        } catch (profileErr) {
+          console.error('Failed to sync Firebase Auth profile:', profileErr)
+        }
+      }
       toast.success('Profile updated successfully')
       onProfileUpdated(updated)
       onClose()
@@ -129,8 +147,6 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
       setIsSaving(false)
     }
   }
-
-  const avatarLetter = (displayName || profile.uid)?.[0]?.toUpperCase() || '?'
 
   return (
     <AnimatePresence>
@@ -170,17 +186,13 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
             {/* Avatar section */}
             <div className="flex items-center gap-6">
               <div className="relative">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt="Avatar preview"
-                    className="w-20 h-20 rounded-full object-cover border-2 border-emerald-500"
-                  />
-                ) : (
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-2xl font-bold">
-                    {avatarLetter}
-                  </div>
-                )}
+                <UserAvatar
+                  src={avatarUrl}
+                  name={displayName || profile.uid}
+                  size="xl"
+                  className="border-2 border-emerald-500"
+                  alt="Avatar preview"
+                />
                 {isUploadingAvatar && (
                   <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center">
                     <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />

@@ -6,6 +6,7 @@ import { CookingMode } from '../../components/CookingMode'
 import GlobeIcon from '../../components/GlobeIcon'
 import BookmarkButton from '../../components/BookmarkButton'
 import LikeButton from '../../components/LikeButton'
+import { UserAvatar } from '../../components/UserAvatar'
 import type { Recipe } from '../../types/nutrition'
 import RecipeBody, { getEffectiveTips } from './components/RecipeBody'
 import { HeroMetadataOverlay } from './components/HeroMetadataOverlay'
@@ -431,26 +432,20 @@ export const RecipeDetail: React.FC = () => {
       {/* Author & Top Rating Meta Row */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
         {recipe.userId && (() => {
-          const recipeWithAuthor = recipe as (Recipe & { authorName?: string; displayName?: string }) | null
+          const recipeWithAuthor = recipe as (Recipe & { authorName?: string; displayName?: string; authorAvatarUrl?: string }) | null
           const authorDisplayName = authorProfile?.displayName || recipeWithAuthor?.authorName || recipeWithAuthor?.displayName || (isOwner ? (currentUser?.displayName || currentUser?.email?.split('@')[0]) : null) || 'Chef'
-          const avatarInitial = (authorDisplayName[0] || 'C').toUpperCase()
 
           return (
             <Link
               to={`/user/${recipe.userId}`}
               className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors group"
             >
-              {authorProfile?.avatarUrl ? (
-                <img
-                  src={authorProfile.avatarUrl}
-                  alt={authorDisplayName}
-                  className="w-6 h-6 rounded-full object-cover border border-emerald-500/30 group-hover:scale-105 transition-transform flex-shrink-0"
-                />
-              ) : (
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-[10px] font-bold shadow-xs group-hover:scale-105 transition-transform flex-shrink-0">
-                  {avatarInitial}
-                </div>
-              )}
+              <UserAvatar
+                src={authorProfile?.avatarUrl || recipeWithAuthor?.authorAvatarUrl}
+                name={authorDisplayName}
+                size="xs"
+                className="border border-emerald-500/30 group-hover:scale-105 transition-transform flex-shrink-0"
+              />
               <span>
                 By{' '}
                 <span className="font-semibold underline decoration-emerald-500/40 group-hover:decoration-emerald-500">
@@ -520,6 +515,7 @@ export const RecipeDetail: React.FC = () => {
             recipeId={id}
             currentUserId={currentUser?.uid}
             currentUserInitial={(currentUser?.displayName || currentUser?.email || 'C')[0]}
+            currentUserAvatarUrl={currentUser?.photoURL || undefined}
           />
         </>
       )}

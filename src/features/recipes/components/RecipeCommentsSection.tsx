@@ -7,6 +7,7 @@ interface RecipeCommentsSectionProps {
   recipeId: string
   currentUserId?: string
   currentUserInitial?: string
+  currentUserAvatarUrl?: string
 }
 
 const MessageIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
@@ -19,6 +20,7 @@ export const RecipeCommentsSection: React.FC<RecipeCommentsSectionProps> = ({
   recipeId,
   currentUserId,
   currentUserInitial = 'C',
+  currentUserAvatarUrl,
 }) => {
   const [data, setData] = useState<CommentsResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -62,6 +64,7 @@ export const RecipeCommentsSection: React.FC<RecipeCommentsSectionProps> = ({
       {currentUserId ? (
         <div className="mb-6 bg-white dark:bg-slate-900/60 border border-gray-200/80 dark:border-slate-800/80 rounded-2xl p-4 shadow-xs">
           <CommentInput
+            authorAvatarUrl={currentUserAvatarUrl}
             authorInitial={currentUserInitial}
             onSubmit={handleCreateComment}
           />
@@ -88,6 +91,7 @@ export const RecipeCommentsSection: React.FC<RecipeCommentsSectionProps> = ({
               recipeId={recipeId}
               currentUserId={currentUserId}
               currentUserInitial={currentUserInitial}
+              currentUserAvatarUrl={currentUserAvatarUrl}
               onReply={handleReplyComment}
               onCommentChanged={fetchComments}
             />

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getFollowers, getFollowing } from '../../services/userApi'
 import type { FollowUser } from '../../services/userApi'
+import { UserAvatar } from '../../components/UserAvatar'
 
 interface FollowListModalProps {
   uid: string
@@ -108,17 +109,11 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({ uid, type, onC
                       onClick={onClose}
                       className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
                     >
-                      {u.avatarUrl ? (
-                        <img
-                          src={u.avatarUrl}
-                          alt={u.displayName}
-                          className="w-9 h-9 rounded-full object-cover flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                          {(u.displayName?.[0] ?? '?').toUpperCase()}
-                        </div>
-                      )}
+                      <UserAvatar
+                        src={u.avatarUrl || (u as any).photoUrl}
+                        name={u.displayName || u.uid}
+                        size="md"
+                      />
                       <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
                         {u.displayName}
                       </span>

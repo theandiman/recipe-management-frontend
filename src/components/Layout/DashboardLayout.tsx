@@ -5,6 +5,8 @@ import { useAuth } from '../../features/auth/AuthContext'
 import { ThemeToggle } from '../ThemeToggle'
 import { NotificationBell } from './NotificationBell'
 import { OmniSearchProvider, useOmniSearch } from '../search/OmniSearchContext'
+import { UserAvatar } from '../UserAvatar'
+
 
 const Dashboard = lazy(() => import('../Dashboard').then(m => ({ default: m.Dashboard })))
 const RecipeLibrary = lazy(() => import('../../features/recipes/RecipeLibrary').then(m => ({ default: m.RecipeLibrary })))
@@ -246,11 +248,14 @@ const DashboardLayoutInner: React.FC = () => {
             >
               <div className="flex items-center space-x-3">
                 <motion.div
-                  className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-teal-500 rounded-full flex items-center justify-center text-white font-semibold"
                   whileHover={{ scale: 1.1 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {user?.displayName?.[0].toUpperCase() || user?.email?.[0].toUpperCase() || 'U'}
+                  <UserAvatar
+                    src={user?.photoURL}
+                    name={user?.displayName || user?.email}
+                    size="lg"
+                  />
                 </motion.div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
@@ -342,9 +347,11 @@ const DashboardLayoutInner: React.FC = () => {
           className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors shadow-sm"
           title="My Profile & Settings"
         >
-          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-bold">
-            {user?.displayName?.[0].toUpperCase()|| user?.email?.[0].toUpperCase() || 'U'}
-          </div>
+          <UserAvatar
+            src={user?.photoURL}
+            name={user?.displayName || user?.email}
+            size="xs"
+          />
           <span className="text-xs font-medium text-gray-700 dark:text-gray-200 hidden sm:inline">My Profile</span>
         </button>
         <ThemeToggle />

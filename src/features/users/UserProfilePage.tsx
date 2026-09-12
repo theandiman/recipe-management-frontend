@@ -5,6 +5,7 @@ import { getUserProfile } from '../../services/userApi'
 import { useAuth } from '../../features/auth/AuthContext'
 import RecipeCard from '../../components/RecipeCard'
 import { RecipeCardSkeleton } from '../../components/skeletons/RecipeCardSkeleton'
+import { UserAvatar } from '../../components/UserAvatar'
 import { FollowListModal } from './FollowListModal'
 import { ProfileSettingsModal } from './ProfileSettingsModal'
 import { FollowButton } from './FollowButton'
@@ -104,8 +105,6 @@ export const UserProfilePage: React.FC = () => {
     )
   }
 
-  const avatarLetter = (profile.displayName || profile.uid)?.[0]?.toUpperCase() || '?'
-
   const isPrivateAccount =
     profile.visibility === 'PRIVATE' &&
     targetUid !== currentUser?.uid &&
@@ -133,17 +132,11 @@ export const UserProfilePage: React.FC = () => {
       >
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
           {/* Avatar */}
-          {profile.avatarUrl ? (
-            <img
-              src={profile.avatarUrl}
-              alt={profile.displayName}
-              className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover flex-shrink-0"
-            />
-          ) : (
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">
-              {avatarLetter}
-            </div>
-          )}
+          <UserAvatar
+            src={profile.avatarUrl}
+            name={profile.displayName || profile.uid}
+            size="xl"
+          />
 
           {/* Info */}
           <div className="flex-1 text-center sm:text-left">
