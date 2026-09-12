@@ -8,6 +8,7 @@ import { DashboardGreeting } from './dashboard/DashboardGreeting'
 import { FollowedCooksFeed } from './dashboard/FollowedCooksFeed'
 import { RecentSocialActivity } from './dashboard/RecentSocialActivity'
 import { SavedRecipeContinuation } from './dashboard/SavedRecipeContinuation'
+import { CookbookStatsCard } from './dashboard/CookbookStatsCard'
 import { NewUserOnboarding } from './dashboard/NewUserOnboarding'
 import type { Recipe } from '../types/nutrition'
 
@@ -78,13 +79,10 @@ export const Dashboard: React.FC = () => {
 
       {/* Main Social Home Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Primary Feed Column: Followed Cooks & Saved Recipes */}
-        <div className="lg:col-span-8 space-y-6">
+        {/* Primary Feed Column: Followed Cooks & Personal Cookbook Creations */}
+        <div className="lg:col-span-7 xl:col-span-8 space-y-6">
           {/* Followed Cooks Feed */}
           <FollowedCooksFeed />
-
-          {/* Continue with Saved Recipes */}
-          <SavedRecipeContinuation />
 
           {/* Your Recent Recipes (Quick Access) */}
           {loading ? (
@@ -133,7 +131,7 @@ export const Dashboard: React.FC = () => {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4">
                 {recentRecipes.map((recipe) => (
                   <RecipeCard
                     key={`my-recent-${recipe.id}`}
@@ -149,9 +147,11 @@ export const Dashboard: React.FC = () => {
           ) : null}
         </div>
 
-        {/* Sidebar Column: Recent Social Activity */}
-        <div className="lg:col-span-4 space-y-6">
+        {/* Sidebar Column: Recent Social Activity, Continue Cooking & Snapshot */}
+        <div className="lg:col-span-5 xl:col-span-4 space-y-6 lg:sticky lg:top-16">
           <RecentSocialActivity />
+          <SavedRecipeContinuation variant="compact" />
+          <CookbookStatsCard recipesCount={recipes.length} loading={loading} hasError={Boolean(cookbookError)} />
         </div>
       </div>
     </motion.div>
