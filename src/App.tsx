@@ -31,11 +31,6 @@ const LoadingFallback = () => (
 
 function RootRedirect() {
   const { isAuthenticated, isLoading } = useAuth()
-  const isTestMode = import.meta.env.MODE !== 'production' && import.meta.env.VITE_TEST_MODE === 'true'
-
-  if (isTestMode) {
-    return <Navigate to="/dashboard" replace />
-  }
 
   if (isLoading) {
     return <LoadingFallback />

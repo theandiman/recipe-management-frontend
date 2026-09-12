@@ -19,7 +19,6 @@ vi.mock('react-router-dom', async () => {
 describe('PublicRoute', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.stubEnv('VITE_TEST_MODE', 'false')
   })
 
   it('renders children when user is not authenticated', () => {

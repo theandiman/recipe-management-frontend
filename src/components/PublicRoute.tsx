@@ -9,10 +9,7 @@ interface PublicRouteProps {
 export const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth()
 
-  // In test mode without explicit auth, allow viewing public pages (never in production)
-  const isTestMode = import.meta.env.MODE !== 'production' && import.meta.env.VITE_TEST_MODE === 'true'
-
-  if (isLoading && !isTestMode) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-900 transition-colors">
         <div
@@ -25,7 +22,7 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
     )
   }
 
-  if (isAuthenticated && !isTestMode) {
+  if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />
   }
 
