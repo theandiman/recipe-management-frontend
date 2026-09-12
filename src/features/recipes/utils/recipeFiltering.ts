@@ -129,6 +129,11 @@ const STOP_WORDS = new Set([
   'lunch', 'breakfast', 'supper', 'snack', 'snacks', 'cook', 'cooking',
   'make', 'making', 'good', 'best', 'delicious', 'tasty', 'simple', 'style',
   'kind', 'type', 'please', 'like', 'using', 'idea', 'ideas',
+  'comfort', 'cozy', 'hearty', 'healthy', 'fresh', 'crispy', 'creamy',
+  'warm', 'hot', 'cold', 'easy', 'quick', 'fast', 'speedy', 'cheap', 'budget',
+  'classic', 'traditional', 'homemade', 'kid', 'friendly', 'kids', 'favorite',
+  'favourite', 'great', 'awesome', 'amazing', 'perfect', 'special', 'rich',
+  'sweet', 'savory', 'savoury', 'light', 'heavy', 'clean', 'nice', 'craving',
 ])
 
 const stemToken = (w: string): string => {
@@ -155,24 +160,114 @@ const extractMeaningfulQueryTokens = (value: string): string[] => {
   return rawTokens.filter(token => !STOP_WORDS.has(token))
 }
 
-const recipeMatchesDietaryTag = (recipe: Recipe, requiredTag: string): boolean => {
-  const recipeTags = (recipe.tags || []).map(t => t.toLowerCase())
-  const reqLower = requiredTag.toLowerCase()
+export const normalizeTag = (tag: string): string =>
+  tag.toLowerCase().replace(/[\s\-_&]+/g, '')
 
-  if (recipeTags.includes(reqLower)) return true
+const HIGH_PROTEIN_INDICATORS = [
+  'chicken', 'turkey', 'beef', 'steak', 'pork', 'salmon', 'tuna', 'shrimp',
+  'fish', 'tofu', 'tempeh', 'lentil', 'lentils', 'beans', 'chickpea', 'chickpeas',
+  'egg', 'eggs', 'greek yogurt', 'cottage cheese', 'protein powder', 'whey', 'edamame',
+]
 
-  // Semantic relationships
-  if ((requiredTag === 'Quick & Easy' || requiredTag === 'Quick') && getRecipeTotalMinutes(recipe) <= 30 && getRecipeTotalMinutes(recipe) > 0) {
-    return true
-  }
-  if (requiredTag === 'Low-Carb' && recipeTags.includes('keto')) return true
-  if (requiredTag === 'Dairy-Free' && recipeTags.includes('vegan')) return true
-  if (requiredTag === 'Vegetarian' && recipeTags.includes('vegan')) return true
+const BREAKFAST_INDICATORS = [
+  'breakfast', 'brunch', 'pancake', 'pancakes', 'waffle', 'waffles', 'oat', 'oats',
+  'oatmeal', 'cereal', 'toast', 'muffin', 'muffins', 'smoothie', 'bacon', 'frittata',
+  'omelet', 'omelette', 'bagel', 'crepe', 'crepes', 'granola', 'french toast',
+]
 
-  // Check description and title for explicit mention
+const DESSERT_INDICATORS = [
+  'dessert', 'cake', 'cookie', 'cookies', 'pie', 'tart', 'sweet', 'chocolate',
+  'pudding', 'ice cream', 'brownie', 'brownies', 'cupcake', 'cupcakes', 'pastry',
+  'pastries', 'candy', 'fudge', 'cocktail',
+]
+
+export const recipeMatchesDietaryTag = (recipe: Recipe, requiredTag: string): boolean => {
+  const normReq = normalizeTag(requiredTag)
+  if (!normReq) return true
+
+  const recipeTags = recipe.tags || []
+  const normRecipeTags = recipeTags.map(normalizeTag)
+
+  // Direct normalized tag match
+  if (normRecipeTags.includes(normReq)) return true
+
   const desc = (recipe.description || '').toLowerCase()
   const title = (recipe.recipeName || '').toLowerCase()
-  if (desc.includes(reqLower) || title.includes(reqLower)) return true
+  const ingText = (recipe.ingredients || []).map(i => getIngredientString(i)).join(' ').toLowerCase()
+  const fullText = `${title} ${desc} ${recipeTags.join(' ')} ${ingText}`.toLowerCase()
+
+  // 1. Quick & Easy / Quick
+  if (normReq === 'quickeasy' || normReq === 'quickandeasy' || normReq === 'quick' || normReq === 'easy') {
+    const totalMins = getRecipeTotalMinutes(recipe)
+    if (totalMins > 0 && totalMins <= 30) return true
+    if (recipe.prepTimeMinutes && recipe.prepTimeMinutes <= 30) return true
+    if (normRecipeTags.some(t => t.includes('quick') || t.includes('easy'))) return true
+    return false
+  }
+
+  // 2. Low-Carb / Keto
+  if (normReq === 'lowcarb') {
+    if (normRecipeTags.includes('keto')) return true
+    const carbs = recipe.nutritionalInfo?.perServing?.carbohydrates ?? recipe.nutritionalInfo?.total?.carbohydrates
+    if (typeof carbs === 'number' && carbs <= 20) return true
+    if (/\b(?:low[\s-]carb|keto(?:genic)?)\b/i.test(fullText)) return true
+    return false
+  }
+  if (normReq === 'keto') {
+    if (normRecipeTags.includes('lowcarb')) return true
+    if (/\bketo(?:genic)?\b/i.test(fullText)) return true
+    return false
+  }
+
+  // 3. High Protein
+  if (normReq === 'highprotein' || normReq === 'protein') {
+    if (normRecipeTags.some(t => t.includes('protein'))) return true
+    const protein = recipe.nutritionalInfo?.perServing?.protein ?? recipe.nutritionalInfo?.total?.protein
+    if (typeof protein === 'number' && protein >= 20) return true
+    if (HIGH_PROTEIN_INDICATORS.some(ind => fullText.includes(ind))) return true
+    return false
+  }
+
+  // 4. Dairy-Free / Vegetarian / Vegan
+  if (normReq === 'dairyfree' && normRecipeTags.includes('vegan')) return true
+  if (normReq === 'vegetarian' && normRecipeTags.includes('vegan')) return true
+
+  // 5. Meal Types: Dinner / Lunch / Breakfast / Dessert / Snack
+  if (normReq === 'dinner' || normReq === 'lunch') {
+    if (fullText.includes(normReq)) return true
+    // Exclude recipes that are purely sweet desserts or cocktails
+    const isPureDessert = normRecipeTags.some(t => ['dessert', 'cake', 'cookie', 'pie', 'sweet', 'baking', 'cocktail'].includes(t)) ||
+      /\b(?:cake|cookies?|pie|brownies?|cupcake|ice\s*cream|pudding)\b/i.test(title)
+    if (isPureDessert) return false
+    // Any savory meal (salad, soup, main, pasta, bread, etc.) matches dinner/lunch
+    return true
+  }
+
+  if (normReq === 'breakfast' || normReq === 'brunch') {
+    if (normRecipeTags.includes('breakfast') || normRecipeTags.includes('brunch')) return true
+    if (BREAKFAST_INDICATORS.some(ind => new RegExp(`\\b${ind}\\b`, 'i').test(fullText))) return true
+    return false
+  }
+
+  if (normReq === 'dessert') {
+    if (normRecipeTags.some(t => ['dessert', 'sweet', 'cake', 'cookie', 'pie', 'baking'].includes(t))) return true
+    if (DESSERT_INDICATORS.some(ind => new RegExp(`\\b${ind}\\b`, 'i').test(fullText))) return true
+    return false
+  }
+
+  if (normReq === 'snack') {
+    if (normRecipeTags.includes('snack') || normRecipeTags.includes('appetizer')) return true
+    if (/\b(?:snack|appetizer|finger\s*food|dip|bites?)\b/i.test(fullText)) return true
+    const totalMins = getRecipeTotalMinutes(recipe)
+    if (totalMins > 0 && totalMins <= 15) return true
+    return false
+  }
+
+  // Fallback: check explicit mention in title, description, or tags
+  const reqLower = requiredTag.toLowerCase()
+  if (desc.includes(reqLower) || title.includes(reqLower) || recipeTags.some(t => t.toLowerCase().includes(reqLower))) {
+    return true
+  }
 
   return false
 }
@@ -223,17 +318,26 @@ export const matchesAiIntent = (
   const queryMaxCals = (query ? parseNumericCalsFromQuery(query) : null) ?? aiIntent?.maxCalories ?? null
 
   const queryDietaryGroups: string[][] = []
-  if (query) {
+  const seenNormTags = new Set<string>()
+
+  if (aiIntent?.dietaryTags && aiIntent.dietaryTags.length > 0) {
+    aiIntent.dietaryTags.forEach(tag => {
+      const norm = normalizeTag(tag)
+      if (norm && !seenNormTags.has(norm)) {
+        seenNormTags.add(norm)
+        queryDietaryGroups.push([tag])
+      }
+    })
+  } else if (query) {
     for (const { pattern, tags } of DIETARY_PHRASES) {
       if (pattern.test(query)) {
-        queryDietaryGroups.push(tags)
+        const groupNorms = tags.map(normalizeTag)
+        if (!groupNorms.some(n => seenNormTags.has(n))) {
+          groupNorms.forEach(n => seenNormTags.add(n))
+          queryDietaryGroups.push(tags)
+        }
       }
     }
-  }
-  if (aiIntent?.dietaryTags) {
-    aiIntent.dietaryTags.forEach(tag => {
-      queryDietaryGroups.push([tag])
-    })
   }
 
   const queryExclusions = query ? parseExclusionsFromQuery(query) : []

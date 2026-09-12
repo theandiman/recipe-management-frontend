@@ -207,4 +207,79 @@ describe('recipeFiltering', () => {
     expect(result).toHaveLength(1)
     expect(result[0].recipeName).toBe('Keto Avocado Salad')
   })
+
+  it('should match meal-type tags like Dinner and Quick & Easy without requiring literal Dinner tag on recipes', () => {
+    // Quick dinner under 30 mins with dietaryTags: ["Quick & Easy", "Dinner"], maxPrepTime: 30
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', {
+      queryKeywords: '',
+      dietaryTags: ['Quick & Easy', 'Dinner'],
+      maxPrepTime: 30,
+      explanation: 'Quick dinner recipes under 30 minutes',
+    })
+    expect(result.map(r => r.recipeName)).toEqual(['Keto Avocado Salad', 'Cheesy Garlic Bread'])
+  })
+
+  it('should match un-hyphenated Low Carb tag from AI intent to recipes with Low-Carb or Keto tags', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', {
+      queryKeywords: '',
+      dietaryTags: ['Low Carb'],
+      explanation: 'Low carb recipes',
+    })
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Keto Avocado Salad')
+  })
+
+  it('should match High Protein recipes via protein nutrition or high-protein ingredients', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', {
+      queryKeywords: '',
+      dietaryTags: ['High Protein', 'Vegan'],
+      explanation: 'High protein vegan meals',
+    })
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Vegan Lentil Soup')
+  })
+
+  it('should match recipes when AI queryKeywords include mood words like comfort', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', {
+      queryKeywords: 'comfort cheese garlic',
+      dietaryTags: [],
+      explanation: 'Comfort food with cheese and garlic',
+    })
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Cheesy Garlic Bread')
+  })
+
+  it('should exclude pure desserts from dinner queries', () => {
+    const recipesWithDessert: Recipe[] = [
+      ...sampleRecipes,
+      {
+        id: '4',
+        recipeName: 'Chocolate Lava Cake',
+        description: 'Warm gooey chocolate cake',
+        tags: ['Dessert', 'Baking', 'Sweet'],
+        prepTimeMinutes: 10,
+        cookTimeMinutes: 15,
+        servings: 2,
+        instructions: ['Bake at 400F'],
+        source: 'manual',
+        nutritionalInfo: { perServing: { calories: 500 } },
+        ingredients: ['1 cup Chocolate', '1/2 cup Sugar'],
+      },
+    ]
+
+    const dinnerResult = filterRecipes(recipesWithDessert, DEFAULT_RECIPE_FILTERS, '', {
+      dietaryTags: ['Dinner'],
+      explanation: 'Dinner recipes',
+    })
+    expect(dinnerResult.map(r => r.recipeName)).not.toContain('Chocolate Lava Cake')
+    expect(dinnerResult.map(r => r.recipeName)).toContain('Keto Avocado Salad')
+    expect(dinnerResult.map(r => r.recipeName)).toContain('Cheesy Garlic Bread')
+
+    const dessertResult = filterRecipes(recipesWithDessert, DEFAULT_RECIPE_FILTERS, '', {
+      dietaryTags: ['Dessert'],
+      explanation: 'Dessert recipes',
+    })
+    expect(dessertResult).toHaveLength(1)
+    expect(dessertResult[0].recipeName).toBe('Chocolate Lava Cake')
+  })
 })
