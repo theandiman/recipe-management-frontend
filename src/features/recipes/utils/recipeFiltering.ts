@@ -1,4 +1,5 @@
 import type { Recipe } from '../../../types/nutrition'
+import type { RecipeSummaryForAi } from '../../../utils/aiApi'
 
 export interface RecipeFilterState {
   dietaryTags: string[]
@@ -240,4 +241,20 @@ export const getActiveFilterCount = (filters: RecipeFilterState): number => {
   count += filters.includeIngredients.length
   count += filters.excludeIngredients.length
   return count
+}
+
+export const toRecipeSummaryForAi = (recipe: Recipe): RecipeSummaryForAi => {
+  const cals = getRecipeCalories(recipe)
+  const ingList = Array.isArray(recipe.ingredients)
+    ? recipe.ingredients.map(getIngredientString)
+    : []
+  return {
+    id: recipe.id || '',
+    recipeName: recipe.recipeName,
+    description: recipe.description,
+    tags: recipe.tags,
+    ingredients: ingList,
+    prepTimeMinutes: getRecipeTotalMinutes(recipe),
+    calories: cals !== null ? cals : undefined,
+  }
 }

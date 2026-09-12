@@ -5,9 +5,7 @@ import {
   type AiMatchScore,
   DEFAULT_RECIPE_FILTERS,
   filterRecipes,
-  getIngredientString,
-  getRecipeTotalMinutes,
-  getRecipeCalories,
+  toRecipeSummaryForAi,
 } from '../utils/recipeFiltering'
 import {
   type SortOption,
@@ -78,6 +76,7 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
   // Guard against asynchronous race conditions and URL sync loops
   const aiRequestSequenceRef = useRef(0)
   const latestPromptRef = useRef(initialAiPrompt)
+  const pendingAiPromptRef = useRef(initialAiPrompt)
   const lastSyncedUrlQRef = useRef(initialQuery)
   const lastSyncedUrlAiRef = useRef('')
 
@@ -109,6 +108,7 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     setAiPrompt(trimmed)
 
     if (!trimmed) {
+      pendingAiPromptRef.current = ''
       setAppliedAiPrompt('')
       setNlpSummary(null)
       setAiMatchesMap(null)
@@ -117,26 +117,19 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
       return
     }
 
+    if (allRecipesRef.current.length === 0) {
+      pendingAiPromptRef.current = trimmed
+      setIsAiLoading(true)
+      return
+    }
+    pendingAiPromptRef.current = ''
+
     try {
       setIsAiLoading(true)
 
       const summaryList: RecipeSummaryForAi[] = allRecipesRef.current
         .filter(r => Boolean(r.id))
-        .map(r => {
-          const cals = getRecipeCalories(r)
-          const ingList = Array.isArray(r.ingredients)
-            ? r.ingredients.map(getIngredientString)
-            : []
-          return {
-            id: r.id!,
-            recipeName: r.recipeName,
-            description: r.description,
-            tags: r.tags,
-            ingredients: ingList,
-            prepTimeMinutes: getRecipeTotalMinutes(r),
-            calories: cals !== null ? cals : undefined,
-          }
-        })
+        .map(toRecipeSummaryForAi)
 
       const result = await queryAiSearch(trimmed, summaryList)
 
@@ -179,9 +172,19 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     }
   }, [])
 
+  // Re-trigger pending AI prompt when recipes finish loading asynchronously (e.g. deep-linked initial load)
+  useEffect(() => {
+    if (pendingAiPromptRef.current && allRecipes.length > 0) {
+      const promptToRun = pendingAiPromptRef.current
+      pendingAiPromptRef.current = ''
+      submitAiPrompt(promptToRun)
+    }
+  }, [allRecipes, submitAiPrompt])
+
   const clearAiPrompt = useCallback(() => {
     aiRequestSequenceRef.current += 1
     latestPromptRef.current = ''
+    pendingAiPromptRef.current = ''
     lastSyncedUrlAiRef.current = ''
     setAiPrompt('')
     setAppliedAiPrompt('')
