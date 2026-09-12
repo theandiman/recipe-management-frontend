@@ -171,21 +171,49 @@ export interface NlpSearchIntentInput {
   explanation?: string
 }
 
-export const filterRecipes = (
-  recipes: Recipe[],
-  filters: RecipeFilterState,
-  searchText: string = '',
-  aiIntent?: NlpSearchIntentInput | null
-): Recipe[] => {
-  const query = searchText.trim().toLowerCase()
+/**
+ * Plain-text search matching across recipe title, description, tags, and ingredients.
+ * Deterministic, instant, and case-insensitive. Every whitespace-separated word token
+ * must match at least one field in the recipe (AND logic across words).
+ */
+export const matchesPlainTextSearch = (recipe: Recipe, searchText: string): boolean => {
+  const trimmed = searchText.trim().toLowerCase()
+  if (!trimmed) return true
 
-  const queryMaxTime = parseNumericTimeFromQuery(query) ?? aiIntent?.maxPrepTime ?? null
-  const queryMaxCals = parseNumericCalsFromQuery(query) ?? aiIntent?.maxCalories ?? null
+  const tokens = trimmed.split(/\s+/).filter(Boolean)
+  if (tokens.length === 0) return true
+
+  const searchableText = [
+    recipe.recipeName || '',
+    recipe.description || '',
+    ...(recipe.tags || []),
+    ...(recipe.ingredients || []).map(i => getIngredientString(i)),
+  ].join(' ').toLowerCase()
+
+  return tokens.every(token => searchableText.includes(token))
+}
+
+/**
+ * Evaluates recipe against natural language AI prompt constraints and/or parsed AI intent.
+ */
+export const matchesAiIntent = (
+  recipe: Recipe,
+  aiIntent?: NlpSearchIntentInput | null,
+  aiPrompt?: string
+): boolean => {
+  if (!aiIntent && !aiPrompt) return true
+
+  const query = (aiPrompt || '').trim().toLowerCase()
+
+  const queryMaxTime = (query ? parseNumericTimeFromQuery(query) : null) ?? aiIntent?.maxPrepTime ?? null
+  const queryMaxCals = (query ? parseNumericCalsFromQuery(query) : null) ?? aiIntent?.maxCalories ?? null
 
   const queryDietaryGroups: string[][] = []
-  for (const { pattern, tags } of DIETARY_PHRASES) {
-    if (pattern.test(query)) {
-      queryDietaryGroups.push(tags)
+  if (query) {
+    for (const { pattern, tags } of DIETARY_PHRASES) {
+      if (pattern.test(query)) {
+        queryDietaryGroups.push(tags)
+      }
     }
   }
   if (aiIntent?.dietaryTags) {
@@ -194,106 +222,115 @@ export const filterRecipes = (
     })
   }
 
-  const queryExclusions = parseExclusionsFromQuery(query)
+  const queryExclusions = query ? parseExclusionsFromQuery(query) : []
 
-  // Strip numeric, exclusion, and dietary phrases from text to isolate core keyword tokens
-  let cleanedText = query
-    .replace(/(?:under|less than|within|in|below|<=|<)?\s*\d+\s*(?:mins?|minutes?|m|cals?|calories?|kcal)\b/gi, '')
-    .replace(/\b(?:without|no|free from|exclude)\s+[a-z]+/gi, '')
-
-  // Remove matched dietary patterns from keyword matching
-  for (const { pattern } of DIETARY_PHRASES) {
-    cleanedText = cleanedText.replace(pattern, '')
+  // 1. Check numeric prep time limit
+  if (queryMaxTime !== null) {
+    const totalMins = getRecipeTotalMinutes(recipe)
+    if (totalMins > 0 && totalMins > queryMaxTime) {
+      return false
+    }
   }
-  cleanedText = cleanedText.trim()
 
-  const rawTokens = cleanedText ? cleanedText.split(/[\s,]+/).filter(Boolean) : []
-  // Filter stop words unless ALL tokens are stop words (e.g. user specifically searched "breakfast" or "dinner")
-  const meaningfulTokens = rawTokens.filter(t => !STOP_WORDS.has(t))
-  const searchTokens = meaningfulTokens.length > 0 ? meaningfulTokens : rawTokens
-
-  return recipes.filter(recipe => {
-    // 1. Check Query Numeric Time limit if present in text
-    if (queryMaxTime !== null) {
-      const totalMins = getRecipeTotalMinutes(recipe)
-      if (totalMins > 0 && totalMins > queryMaxTime) {
-        return false
-      }
+  // 2. Check numeric calorie limit
+  if (queryMaxCals !== null) {
+    const cals = getRecipeCalories(recipe)
+    if (cals !== null && cals > queryMaxCals) {
+      return false
     }
+  }
 
-    // 2. Check Query Numeric Calorie limit if present in text
-    if (queryMaxCals !== null) {
-      const cals = getRecipeCalories(recipe)
-      if (cals !== null && cals > queryMaxCals) {
-        return false
+  // 3. Check dietary tags (AND logic across groups)
+  if (queryDietaryGroups.length > 0) {
+    const satisfiesAllGroups = queryDietaryGroups.every(group =>
+      group.some(tag => recipeMatchesDietaryTag(recipe, tag))
+    )
+    if (!satisfiesAllGroups) return false
+  }
+
+  // 4. Check negative exclusions
+  if (queryExclusions.length > 0) {
+    const ingredientStrings = (recipe.ingredients || []).map(i => getIngredientString(i).toLowerCase())
+    const desc = (recipe.description || '').toLowerCase()
+    const title = (recipe.recipeName || '').toLowerCase()
+
+    const hasExcluded = queryExclusions.some(exc => {
+      const stemmed = stemToken(exc)
+      const isExcludedText = (text: string) => {
+        const pattern = new RegExp(`\\b(?:${exc}|${stemmed})(?!-free\\b|\\s+free\\b)`, 'i')
+        return pattern.test(text)
       }
-    }
-
-    // 3. Check Query NLP Dietary Tags (must satisfy ALL matched groups)
-    if (queryDietaryGroups.length > 0) {
-      const satisfiesAllGroups = queryDietaryGroups.every(group =>
-        group.some(tag => recipeMatchesDietaryTag(recipe, tag))
+      return (
+        ingredientStrings.some(i => isExcludedText(i)) ||
+        isExcludedText(title) ||
+        isExcludedText(desc)
       )
-      if (!satisfiesAllGroups) return false
-    }
+    })
+    if (hasExcluded) return false
+  }
 
-    // 4. Check Query Exclusions
-    if (queryExclusions.length > 0) {
-      const ingredientStrings = (recipe.ingredients || []).map(i => getIngredientString(i).toLowerCase())
-      const desc = (recipe.description || '').toLowerCase()
-      const title = (recipe.recipeName || '').toLowerCase()
+  // 5. Check AI query keywords or remaining prompt tokens
+  const kwTokens = (aiIntent?.queryKeywords && aiIntent.queryKeywords.trim())
+    ? aiIntent.queryKeywords.toLowerCase().split(/\s+/).filter(Boolean)
+    : (() => {
+        let cleanedPrompt = query
+          .replace(/(?:under|less than|within|in|below|<=|<)?\s*\d+\s*(?:mins?|minutes?|m|cals?|calories?|kcal)\b/gi, '')
+          .replace(/\b(?:without|no|free from|exclude)\s+[a-z]+/gi, '')
 
-      const hasExcluded = queryExclusions.some(exc => {
-        const stemmed = stemToken(exc)
-        const isExcludedText = (text: string) => {
-          const pattern = new RegExp(`\\b(?:${exc}|${stemmed})(?!-free\\b|\\s+free\\b)`, 'i')
-          return pattern.test(text)
+        for (const { pattern } of DIETARY_PHRASES) {
+          cleanedPrompt = cleanedPrompt.replace(pattern, '')
         }
-        return (
-          ingredientStrings.some(i => isExcludedText(i)) ||
-          isExcludedText(title) ||
-          isExcludedText(desc)
-        )
-      })
-      if (hasExcluded) return false
+        cleanedPrompt = cleanedPrompt.trim()
+
+        const rawTokens = cleanedPrompt ? cleanedPrompt.split(/[\s,]+/).filter(Boolean) : []
+        const meaningful = rawTokens.filter(t => !STOP_WORDS.has(t))
+        return meaningful.length > 0 ? meaningful : rawTokens
+      })()
+
+  if (kwTokens.length > 0) {
+    const fullText = [
+      recipe.recipeName || '',
+      recipe.description || '',
+      ...(recipe.tags || []),
+      ...(recipe.ingredients || []).map(i => getIngredientString(i)),
+    ].join(' ').toLowerCase()
+
+    const matched = kwTokens.every(t => {
+      if (fullText.includes(t)) return true
+      const stemmed = stemToken(t)
+      return stemmed.length > 2 && fullText.includes(stemmed)
+    })
+    if (!matched) return false
+  }
+
+  return true
+}
+
+export const filterRecipes = (
+  recipes: Recipe[],
+  filters: RecipeFilterState,
+  searchText: string = '',
+  aiIntent?: NlpSearchIntentInput | null,
+  aiPrompt?: string
+): Recipe[] => {
+  return recipes.filter(recipe => {
+    // 1. Plain text search match (instant keyword search across title, description, tags, ingredients)
+    if (searchText && !matchesPlainTextSearch(recipe, searchText)) {
+      return false
     }
 
-    // 5. Core Keywords Tokenized NLP Match
-    if (searchTokens.length > 0) {
-      const fullText = [
-        recipe.recipeName || '',
-        recipe.description || '',
-        ...(recipe.tags || []),
-        ...(recipe.ingredients || []).map(i => getIngredientString(i)),
-      ].join(' ').toLowerCase()
-
-      const exactMatch = cleanedText.length > 0 && fullText.includes(cleanedText)
-
-      if (!exactMatch) {
-        const allTokensMatched = searchTokens.every(token => {
-          if (fullText.includes(token)) return true
-
-          const stemmed = stemToken(token)
-          if (stemmed.length > 2 && fullText.includes(stemmed)) return true
-
-          // Check if token matches a recipe tag directly or via dietary option
-          const recipeTags = (recipe.tags || []).map(t => t.toLowerCase())
-          if (recipeTags.some(rt => rt.includes(token) || rt.includes(stemmed))) return true
-
-          return false
-        })
-
-        if (!allTokensMatched) return false
-      }
+    // 2. AI Intent / Prompt match
+    if ((aiIntent || aiPrompt) && !matchesAiIntent(recipe, aiIntent, aiPrompt)) {
+      return false
     }
 
-    // 6. Explicit Manual Dietary Tags Match from Filter Drawer (must contain ALL selected dietary tags)
+    // 3. Explicit Manual Dietary Tags Match from Filter Drawer
     if (filters.dietaryTags.length > 0) {
       const hasAllDietary = filters.dietaryTags.every(dt => recipeMatchesDietaryTag(recipe, dt))
       if (!hasAllDietary) return false
     }
 
-    // 7. Manual Prep/Cook Time Limit Match from Filter Drawer
+    // 4. Manual Prep/Cook Time Limit Match from Filter Drawer
     if (filters.maxPrepTime !== null) {
       const timeMinutes = getRecipeTotalMinutes(recipe)
       if (timeMinutes > 0 && timeMinutes > filters.maxPrepTime) {
@@ -301,7 +338,7 @@ export const filterRecipes = (
       }
     }
 
-    // 8. Manual Calorie Target Match from Filter Drawer
+    // 5. Manual Calorie Target Match from Filter Drawer
     if (filters.maxCalories !== null) {
       const cals = getRecipeCalories(recipe)
       if (cals !== null && cals > filters.maxCalories) {
@@ -309,7 +346,7 @@ export const filterRecipes = (
       }
     }
 
-    // 9. Included Ingredients (Must contain all)
+    // 6. Included Ingredients (Must contain all)
     if (filters.includeIngredients.length > 0) {
       const ingredientStrings = (recipe.ingredients || []).map(i => getIngredientString(i).toLowerCase())
       const containsAll = filters.includeIngredients.every(inc =>
@@ -318,7 +355,7 @@ export const filterRecipes = (
       if (!containsAll) return false
     }
 
-    // 10. Excluded Ingredients / Allergens (Must NOT contain any)
+    // 7. Excluded Ingredients / Allergens (Must NOT contain any)
     if (filters.excludeIngredients.length > 0) {
       const ingredientStrings = (recipe.ingredients || []).map(i => getIngredientString(i).toLowerCase())
       const containsExcluded = filters.excludeIngredients.some(exc =>

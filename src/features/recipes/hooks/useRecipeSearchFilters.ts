@@ -16,6 +16,13 @@ import type { Recipe } from '../../../types/nutrition'
 export interface UseRecipeSearchFiltersReturn {
   searchText: string
   setSearchText: (text: string) => void
+  aiPrompt: string
+  setAiPrompt: (prompt: string) => void
+  submitAiPrompt: (prompt: string) => Promise<void>
+  clearAiPrompt: () => void
+  isAiPromptOpen: boolean
+  setIsAiPromptOpen: React.Dispatch<React.SetStateAction<boolean>>
+  isAiLoading: boolean
   filters: RecipeFilterState
   setFilters: React.Dispatch<React.SetStateAction<RecipeFilterState>>
   sortOption: SortOption
@@ -35,6 +42,7 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
 
   // Parse initial query state from URL
   const initialQuery = searchParams.get('q') || ''
+  const initialAiPrompt = searchParams.get('ai_prompt') || ''
   const initialTag = searchParams.get('tag')
   const initialDiet = searchParams.get('diet') ? searchParams.get('diet')!.split(',') : (initialTag ? [initialTag] : [])
   const initialMaxTime = searchParams.get('maxTime') ? Number(searchParams.get('maxTime')) : null
@@ -43,6 +51,12 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
   const initialView = (searchParams.get('view') as ViewMode) || (localStorage.getItem('recipe_view_mode_v1') as ViewMode) || 'grid'
 
   const [searchText, setSearchText] = useState(initialQuery)
+  const [aiPrompt, setAiPrompt] = useState(initialAiPrompt)
+  const [isAiPromptOpen, setIsAiPromptOpen] = useState(Boolean(initialAiPrompt))
+  const [isAiLoading, setIsAiLoading] = useState(false)
+  const [nlpSummary, setNlpSummary] = useState<string | null>(null)
+  const [aiIntent, setAiIntent] = useState<AiSearchIntentResult | null>(null)
+
   const [filters, setFilters] = useState<RecipeFilterState>({
     dietaryTags: initialDiet,
     maxPrepTime: initialMaxTime,
@@ -63,14 +77,81 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     }
   }, [])
 
+  const submitAiPrompt = useCallback(async (promptText: string) => {
+    const trimmed = promptText.trim()
+    setAiPrompt(trimmed)
+
+    if (!trimmed) {
+      setNlpSummary(null)
+      setAiIntent(null)
+      setIsAiLoading(false)
+      return
+    }
+
+    try {
+      setIsAiLoading(true)
+      const intent = await parseAiSearchIntent(trimmed)
+      setAiIntent(intent)
+
+      const summaryParts: string[] = []
+      if (
+        intent.explanation &&
+        !intent.explanation.toLowerCase().includes('empty search prompt') &&
+        !intent.explanation.toLowerCase().includes('using standard keyword search')
+      ) {
+        summaryParts.push(intent.explanation)
+      } else {
+        if (typeof intent.maxPrepTime === 'number') {
+          summaryParts.push(`Max Prep: ${intent.maxPrepTime} mins`)
+        }
+        if (typeof intent.maxCalories === 'number') {
+          summaryParts.push(`Max Cals: ${intent.maxCalories} kcal`)
+        }
+        if (intent.dietaryTags && intent.dietaryTags.length > 0) {
+          summaryParts.push(`Tags: ${intent.dietaryTags.join(', ')}`)
+        }
+      }
+
+      if (summaryParts.length > 0) {
+        setNlpSummary(summaryParts.join(' • '))
+      } else {
+        setNlpSummary(null)
+      }
+    } catch {
+      setNlpSummary(null)
+      setAiIntent(null)
+    } finally {
+      setIsAiLoading(false)
+    }
+  }, [])
+
+  const clearAiPrompt = useCallback(() => {
+    setAiPrompt('')
+    setNlpSummary(null)
+    setAiIntent(null)
+    setIsAiLoading(false)
+  }, [])
+
+  // Auto-run initial AI prompt if present in URL
+  useEffect(() => {
+    if (initialAiPrompt) {
+      submitAiPrompt(initialAiPrompt)
+    }
+  }, [initialAiPrompt, submitAiPrompt])
+
   // Listen for incoming URL parameter changes (e.g. from Dashboard navigation)
   useEffect(() => {
     const urlQ = searchParams.get('q') || ''
+    const urlAi = searchParams.get('ai_prompt') || ''
     const urlTag = searchParams.get('tag')
     const urlDiet = searchParams.get('diet') ? searchParams.get('diet')!.split(',') : (urlTag ? [urlTag] : [])
 
     if (urlQ && urlQ !== searchText) {
       setSearchText(urlQ)
+    }
+
+    if (urlAi && urlAi !== aiPrompt) {
+      submitAiPrompt(urlAi)
     }
 
     if (urlDiet.length > 0) {
@@ -83,7 +164,7 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
         return prev
       })
     }
-  }, [searchParams])
+  }, [searchParams, submitAiPrompt])
 
   // Sync internal state out to URL search parameters
   useEffect(() => {
@@ -91,6 +172,9 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
 
     if (searchText.trim()) params.set('q', searchText.trim())
     else params.delete('q')
+
+    if (aiPrompt.trim()) params.set('ai_prompt', aiPrompt.trim())
+    else params.delete('ai_prompt')
 
     if (filters.dietaryTags.length > 0) params.set('diet', filters.dietaryTags.join(','))
     else params.delete('diet')
@@ -113,78 +197,20 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     if (newQueryString !== currentQueryString) {
       setSearchParams(params, { replace: true })
     }
-  }, [searchText, filters, sortOption, viewMode])
-
-  const [nlpSummary, setNlpSummary] = useState<string | null>(null)
-  const [aiIntent, setAiIntent] = useState<AiSearchIntentResult | null>(null)
-
-  // Debounced NLP intent parser for conversational queries
-  useEffect(() => {
-    const trimmed = searchText.trim()
-    if (!trimmed || trimmed.length < 4) {
-      setNlpSummary(null)
-      setAiIntent(null)
-      return
-    }
-
-    let active = true
-
-    const timer = setTimeout(async () => {
-      try {
-        const intent = await parseAiSearchIntent(trimmed)
-        if (!active) return
-        setAiIntent(intent)
-
-        const summaryParts: string[] = []
-        if (
-          intent.explanation &&
-          !intent.explanation.toLowerCase().includes('empty search prompt') &&
-          !intent.explanation.toLowerCase().includes('using standard keyword search')
-        ) {
-          summaryParts.push(intent.explanation)
-        } else {
-          if (typeof intent.maxPrepTime === 'number') {
-            summaryParts.push(`Max Prep: ${intent.maxPrepTime} mins`)
-          }
-          if (typeof intent.maxCalories === 'number') {
-            summaryParts.push(`Max Cals: ${intent.maxCalories} kcal`)
-          }
-          if (intent.dietaryTags && intent.dietaryTags.length > 0) {
-            summaryParts.push(`Tags: ${intent.dietaryTags.join(', ')}`)
-          }
-        }
-
-        if (summaryParts.length > 0) {
-          setNlpSummary(summaryParts.join(' • '))
-        } else {
-          setNlpSummary(null)
-        }
-      } catch {
-        if (!active) return
-        setNlpSummary(null)
-        setAiIntent(null)
-      }
-    }, 400)
-
-    return () => {
-      active = false
-      clearTimeout(timer)
-    }
-  }, [searchText])
+  }, [searchText, aiPrompt, filters, sortOption, viewMode])
 
   // Filter & Sort Pipeline
   const filteredAndSortedRecipes = useMemo(() => {
-    const filtered = filterRecipes(allRecipes, filters, searchText, aiIntent)
+    const filtered = filterRecipes(allRecipes, filters, searchText, aiIntent, aiPrompt)
     return sortRecipes(filtered, sortOption)
-  }, [allRecipes, filters, searchText, aiIntent, sortOption])
+  }, [allRecipes, filters, searchText, aiIntent, aiPrompt, sortOption])
 
   const clearAllFilters = useCallback(() => {
     setSearchText('')
-    setNlpSummary(null)
-    setAiIntent(null)
+    clearAiPrompt()
     setFilters(DEFAULT_RECIPE_FILTERS)
     setSortOption('relevance')
-  }, [])
+  }, [clearAiPrompt])
 
   const removeDietaryTag = useCallback((tag: string) => {
     setFilters(prev => ({
@@ -196,6 +222,13 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
   return {
     searchText,
     setSearchText,
+    aiPrompt,
+    setAiPrompt,
+    submitAiPrompt,
+    clearAiPrompt,
+    isAiPromptOpen,
+    setIsAiPromptOpen,
+    isAiLoading,
     filters,
     setFilters,
     sortOption,

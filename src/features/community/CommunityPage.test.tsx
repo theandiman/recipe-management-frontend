@@ -18,6 +18,14 @@ vi.mock('../../components/BookmarkButton', () => ({
   BookmarkButton: () => null,
 }))
 
+vi.mock('../../utils/aiApi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../utils/aiApi')>()
+  return {
+    ...actual,
+    parseAiSearchIntent: vi.fn(),
+  }
+})
+
 // Mock LikeButton to avoid LikeContext dependencies
 vi.mock('../../components/LikeButton', () => ({
   default: () => null,
@@ -280,6 +288,61 @@ describe('CommunityPage', () => {
       // Both recipes are displayed in list mode
       expect(screen.getByText('Spaghetti Carbonara')).toBeInTheDocument()
       expect(screen.getByText('Chicken Tikka Masala')).toBeInTheDocument()
+    })
+  })
+
+  describe('Search & AI Prompt Features', () => {
+    it('filters recipes directly using on-page plain-text search', async () => {
+      const user = userEvent.setup()
+      vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue(mockRecipes)
+
+      renderWithRouter(<CommunityPage />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Spaghetti Carbonara')).toBeInTheDocument()
+        expect(screen.getByText('Chicken Tikka Masala')).toBeInTheDocument()
+      })
+
+      const onPageSearch = screen.getByPlaceholderText('Search community recipes, tags...')
+      await user.type(onPageSearch, 'chicken')
+
+      expect(screen.getByText('Chicken Tikka Masala')).toBeInTheDocument()
+      expect(screen.queryByText('Spaghetti Carbonara')).not.toBeInTheDocument()
+    })
+
+    it('toggles AI prompt bar and executes AI prompt search with active pill', async () => {
+      const user = userEvent.setup()
+      vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue(mockRecipes)
+      const { parseAiSearchIntent } = await import('../../utils/aiApi')
+      vi.mocked(parseAiSearchIntent).mockResolvedValue({
+        queryKeywords: 'spaghetti',
+        dietaryTags: [],
+        explanation: 'Filtered Italian pasta',
+      })
+
+      renderWithRouter(<CommunityPage />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Spaghetti Carbonara')).toBeInTheDocument()
+      })
+
+      const askAiBtn = screen.getByTitle(/Search with Natural Language AI Prompt/i)
+      await user.click(askAiBtn)
+
+      expect(screen.getByText(/Smart AI Recipe Search/i)).toBeInTheDocument()
+
+      const aiInput = screen.getByPlaceholderText(/e\.g\. Quick 20-min dinner/i)
+      await user.type(aiInput, 'delicious pasta')
+
+      const submitBtn = screen.getByRole('button', { name: /➔/i })
+      await user.click(submitBtn)
+
+      await waitFor(() => {
+        expect(screen.getByText(/✨ AI:/i)).toBeInTheDocument()
+      })
+
+      expect(screen.getByText('Spaghetti Carbonara')).toBeInTheDocument()
+      expect(screen.queryByText('Chicken Tikka Masala')).not.toBeInTheDocument()
     })
   })
 })

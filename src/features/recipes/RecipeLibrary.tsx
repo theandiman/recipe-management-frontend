@@ -7,6 +7,7 @@ import RecipeListItem from '../../components/RecipeListItem'
 import { ViewModeToggle } from '../../components/common/ViewModeToggle'
 import { RecipeCardSkeleton } from '../../components/skeletons/RecipeCardSkeleton'
 import { RecipeFilterDrawer } from '../../components/search/RecipeFilterDrawer'
+import { AiSearchPromptBar } from '../../components/search/AiSearchPromptBar'
 import { useOmniSearch } from '../../components/search/OmniSearchContext'
 import { useRecipeSearchFilters } from './hooks/useRecipeSearchFilters'
 import { SORT_OPTIONS, type SortOption } from './utils/recipeSorting'
@@ -32,6 +33,12 @@ export const RecipeLibrary: React.FC = () => {
   const {
     searchText,
     setSearchText,
+    aiPrompt,
+    submitAiPrompt,
+    clearAiPrompt,
+    isAiPromptOpen,
+    setIsAiPromptOpen,
+    isAiLoading,
     filters,
     setFilters,
     sortOption,
@@ -229,39 +236,85 @@ export const RecipeLibrary: React.FC = () => {
 
       {/* Unified Action & Filter Toolbar Bar */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        {/* Left Side: Filter Trigger Button */}
-        <div className="flex items-center gap-3">
+        {/* Left Side: Plain-text search input + Filter & AI Triggers */}
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 flex-1 min-w-[280px]">
+          {/* Plain Text Search Input */}
+          <div className="relative flex-1 min-w-[180px] max-w-sm">
+            <svg
+              className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-3 top-2.5 pointer-events-none"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="Search title, tag, ingredients..."
+              className="w-full pl-9 pr-7 py-2 text-xs sm:text-sm border border-gray-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-xs"
+            />
+            {searchText && (
+              <button
+                type="button"
+                onClick={() => setSearchText('')}
+                className="absolute right-2.5 top-2.5 text-gray-400 hover:text-red-500 text-xs font-bold cursor-pointer"
+                aria-label="Clear keyword search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Filters Trigger Button */}
           <button
             type="button"
             onClick={() => setIsFilterDrawerOpen(prev => !prev)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-xl transition-colors shadow-xs"
+            className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 border rounded-xl text-xs sm:text-sm font-medium transition-colors shadow-xs ${
+              isFilterDrawerOpen
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-700 dark:text-emerald-300'
+                : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-gray-200'
+            }`}
           >
             <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
             <span>Filters</span>
             {activeFilterCount > 0 && (
-              <span className="px-2 py-0.5 text-xs font-bold bg-emerald-600 text-white rounded-full">
+              <span className="px-1.5 py-0.2 text-[10px] sm:text-xs font-bold bg-emerald-600 text-white rounded-full">
                 {activeFilterCount}
               </span>
             )}
-            <svg
-              className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isFilterDrawerOpen ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+          </button>
+
+          {/* ✨ Ask AI Trigger Button */}
+          <button
+            type="button"
+            onClick={() => setIsAiPromptOpen(prev => !prev)}
+            className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 border rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-xs ${
+              aiPrompt
+                ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700'
+                : isAiPromptOpen
+                ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-800 dark:text-emerald-300 border-emerald-400 dark:border-emerald-600'
+                : 'bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-800/80 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
+            }`}
+            title="Search with Natural Language AI Prompt"
+          >
+            <span>✨</span>
+            <span>Ask AI</span>
+            {aiPrompt && (
+              <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+            )}
           </button>
 
           {activeFilterCount > 0 && (
             <button
               type="button"
               onClick={clearAllFilters}
-              className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline"
+              className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline ml-1"
             >
-              Clear all filters ({activeFilterCount})
+              Clear all ({activeFilterCount})
             </button>
           )}
         </div>
@@ -288,6 +341,17 @@ export const RecipeLibrary: React.FC = () => {
         </div>
       </div>
 
+      {/* Expandable AI Search Prompt Bar */}
+      <AiSearchPromptBar
+        isOpen={isAiPromptOpen}
+        onClose={() => setIsAiPromptOpen(false)}
+        activePrompt={aiPrompt}
+        nlpSummary={nlpSummary}
+        isLoading={isAiLoading}
+        onSubmitPrompt={submitAiPrompt}
+        onClearPrompt={clearAiPrompt}
+      />
+
       {/* Multi-Facet Filter Drawer Panel (Header Hidden) */}
       <RecipeFilterDrawer
         isOpen={isFilterDrawerOpen}
@@ -299,22 +363,22 @@ export const RecipeLibrary: React.FC = () => {
         onClearFilters={clearAllFilters}
       />
 
-        {/* Active Filter Pills Bar */}
-        {(activeFilterCount > 0 || searchText || nlpSummary) && (
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Active:</span>
-            {nlpSummary && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-semibold rounded-full border border-emerald-500/30">
-                <span>✨ Smart NLP:</span> {nlpSummary}
-                <button type="button" onClick={() => setSearchText('')} className="hover:text-red-500 font-bold ml-1 cursor-pointer" title="Clear NLP search" aria-label="Clear NLP search">✕</button>
-              </span>
-            )}
-            {searchText && !nlpSummary && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
-                Query: "{searchText}"
-                <button type="button" onClick={() => setSearchText('')} className="hover:text-red-500 font-bold cursor-pointer" title="Clear query" aria-label="Clear query">✕</button>
-              </span>
-            )}
+      {/* Active Filter Pills Bar */}
+      {(activeFilterCount > 0 || searchText || aiPrompt) && (
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Active:</span>
+          {aiPrompt && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-emerald-500/15 to-teal-500/15 text-emerald-800 dark:text-emerald-300 text-xs font-semibold rounded-full border border-emerald-500/30">
+              <span>✨ AI:</span> "{aiPrompt}"{nlpSummary ? ` (${nlpSummary})` : ''}
+              <button type="button" onClick={clearAiPrompt} className="hover:text-red-500 font-bold ml-1 cursor-pointer" title="Clear AI prompt" aria-label="Clear AI prompt">✕</button>
+            </span>
+          )}
+          {searchText && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
+              Query: "{searchText}"
+              <button type="button" onClick={() => setSearchText('')} className="hover:text-red-500 font-bold cursor-pointer" title="Clear query" aria-label="Clear query">✕</button>
+            </span>
+          )}
             {filters.dietaryTags.map(tag => (
               <span key={tag} className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
                 Tag: {tag}

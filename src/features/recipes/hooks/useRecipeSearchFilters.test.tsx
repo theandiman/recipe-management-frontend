@@ -1,10 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook, act, waitFor } from '@testing-library/react'
+import { renderHook, act } from '@testing-library/react'
 import React from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { useRecipeSearchFilters } from './useRecipeSearchFilters'
-import * as aiApi from '../../../utils/aiApi'
+import { parseAiSearchIntent } from '../../../utils/aiApi'
 import type { Recipe } from '../../../types/nutrition'
+
+vi.mock('../../../utils/aiApi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../utils/aiApi')>()
+  return {
+    ...actual,
+    parseAiSearchIntent: vi.fn(),
+  }
+})
 
 const sampleRecipes: Recipe[] = [
   {
@@ -43,27 +51,27 @@ const wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 describe('useRecipeSearchFilters', () => {
   beforeEach(() => {
-    vi.restoreAllMocks()
+    vi.resetAllMocks()
   })
 
-  it('filters recipes instantly via in-memory NLP without mutating manual filters', () => {
+  it('filters recipes instantly via plain-text matching across title, tags, ingredients without AI API calls', () => {
     const { result } = renderHook(() => useRecipeSearchFilters(sampleRecipes), { wrapper })
 
     expect(result.current.filteredAndSortedRecipes).toHaveLength(2)
     expect(result.current.filters.dietaryTags).toEqual([])
 
     act(() => {
-      result.current.setSearchText('quick low carb salad')
+      result.current.setSearchText('spinach')
     })
 
     expect(result.current.filteredAndSortedRecipes).toHaveLength(1)
     expect(result.current.filteredAndSortedRecipes[0].recipeName).toBe('Keto Avocado Salad')
-    // Crucial: typing in search MUST NOT mutate the manual filter drawer dietaryTags
-    expect(result.current.filters.dietaryTags).toEqual([])
+    // Crucial: plain-text search MUST NOT invoke parseAiSearchIntent
+    expect(vi.mocked(parseAiSearchIntent)).not.toHaveBeenCalled()
   })
 
-  it('debounces parseAiSearchIntent and updates nlpSummary', async () => {
-    const parseSpy = vi.spyOn(aiApi, 'parseAiSearchIntent').mockResolvedValueOnce({
+  it('invokes parseAiSearchIntent on submitAiPrompt and updates nlpSummary', async () => {
+    vi.mocked(parseAiSearchIntent).mockResolvedValue({
       queryKeywords: 'salad',
       dietaryTags: ['Keto'],
       maxCalories: 400,
@@ -73,25 +81,20 @@ describe('useRecipeSearchFilters', () => {
 
     const { result } = renderHook(() => useRecipeSearchFilters(sampleRecipes), { wrapper })
 
-    act(() => {
-      result.current.setSearchText('Quick keto salad under 400 kcal')
+    await act(async () => {
+      await result.current.submitAiPrompt('Quick keto salad under 400 kcal')
     })
 
-    await waitFor(() => {
-      expect(parseSpy).toHaveBeenCalledWith('Quick keto salad under 400 kcal')
-    })
-
-    await waitFor(() => {
-      expect(result.current.nlpSummary).toBe('Filtered keto salad under 400 kcal')
-    })
-
+    expect(vi.mocked(parseAiSearchIntent)).toHaveBeenCalledWith('Quick keto salad under 400 kcal')
+    expect(result.current.nlpSummary).toBe('Filtered keto salad under 400 kcal')
+    expect(result.current.aiPrompt).toBe('Quick keto salad under 400 kcal')
     // Filter drawer state should remain untouched
     expect(result.current.filters.dietaryTags).toEqual([])
     expect(result.current.filters.maxCalories).toBeNull()
   })
 
-  it('resets search and nlpSummary on clearAllFilters', async () => {
-    vi.spyOn(aiApi, 'parseAiSearchIntent').mockResolvedValueOnce({
+  it('resets search, aiPrompt and nlpSummary on clearAllFilters', async () => {
+    vi.mocked(parseAiSearchIntent).mockResolvedValue({
       queryKeywords: 'salad',
       dietaryTags: ['Keto'],
       explanation: 'Filtered salad',
@@ -102,34 +105,62 @@ describe('useRecipeSearchFilters', () => {
     act(() => {
       result.current.setSearchText('salad')
     })
-
-    await waitFor(() => {
-      expect(result.current.nlpSummary).toBe('Filtered salad')
+    await act(async () => {
+      await result.current.submitAiPrompt('healthy salad')
     })
+
+    expect(result.current.nlpSummary).toBe('Filtered salad')
 
     act(() => {
       result.current.clearAllFilters()
     })
 
     expect(result.current.searchText).toBe('')
+    expect(result.current.aiPrompt).toBe('')
     expect(result.current.nlpSummary).toBeNull()
     expect(result.current.filteredAndSortedRecipes).toHaveLength(2)
   })
 
-  it('handles AI intent parser failure gracefully without disrupting search results', async () => {
-    vi.spyOn(aiApi, 'parseAiSearchIntent').mockRejectedValueOnce(new Error('AI Service Offline'))
+  it('clears only AI prompt when clearAiPrompt is called', async () => {
+    vi.mocked(parseAiSearchIntent).mockResolvedValue({
+      queryKeywords: 'soup',
+      dietaryTags: [],
+      explanation: 'Filtered soup',
+    })
 
     const { result } = renderHook(() => useRecipeSearchFilters(sampleRecipes), { wrapper })
 
     act(() => {
       result.current.setSearchText('soup')
     })
-
-    await waitFor(() => {
-      expect(result.current.filteredAndSortedRecipes).toHaveLength(1)
-      expect(result.current.filteredAndSortedRecipes[0].recipeName).toBe('Vegan Lentil Soup')
+    await act(async () => {
+      await result.current.submitAiPrompt('vegan soup')
     })
 
+    expect(result.current.nlpSummary).toBe('Filtered soup')
+
+    act(() => {
+      result.current.clearAiPrompt()
+    })
+
+    expect(result.current.aiPrompt).toBe('')
+    expect(result.current.nlpSummary).toBeNull()
+    // searchText remains intact
+    expect(result.current.searchText).toBe('soup')
+    expect(result.current.filteredAndSortedRecipes).toHaveLength(1)
+    expect(result.current.filteredAndSortedRecipes[0].recipeName).toBe('Vegan Lentil Soup')
+  })
+
+  it('handles AI intent parser failure gracefully without disrupting search results', async () => {
+    vi.mocked(parseAiSearchIntent).mockRejectedValueOnce(new Error('AI Service Offline'))
+
+    const { result } = renderHook(() => useRecipeSearchFilters(sampleRecipes), { wrapper })
+
+    await act(async () => {
+      await result.current.submitAiPrompt('soup')
+    })
+
+    expect(result.current.isAiLoading).toBe(false)
     expect(result.current.nlpSummary).toBeNull()
   })
 })
