@@ -179,6 +179,8 @@ describe('useRecipeSearchFilters', () => {
 
     expect(result.current.isAiLoading).toBe(false)
     expect(result.current.nlpSummary).toBeNull()
+    expect(result.current.aiMatchesMap).toBeNull()
+    expect(result.current.filteredAndSortedRecipes).toHaveLength(2)
   })
 
   it('prevents race conditions when subsequent AI prompts or clear are called before previous finishes', async () => {

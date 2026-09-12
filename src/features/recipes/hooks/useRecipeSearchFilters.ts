@@ -5,6 +5,9 @@ import {
   type AiMatchScore,
   DEFAULT_RECIPE_FILTERS,
   filterRecipes,
+  getIngredientString,
+  getRecipeTotalMinutes,
+  getRecipeCalories,
 } from '../utils/recipeFiltering'
 import {
   type SortOption,
@@ -120,9 +123,9 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
       const summaryList: RecipeSummaryForAi[] = allRecipesRef.current
         .filter(r => Boolean(r.id))
         .map(r => {
-          const cals = r.nutritionalInfo?.perServing?.calories ?? r.nutritionalInfo?.total?.calories
+          const cals = getRecipeCalories(r)
           const ingList = Array.isArray(r.ingredients)
-            ? r.ingredients.map(ing => (typeof ing === 'string' ? ing : (ing as { item?: string })?.item || ''))
+            ? r.ingredients.map(getIngredientString)
             : []
           return {
             id: r.id!,
@@ -130,8 +133,8 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
             description: r.description,
             tags: r.tags,
             ingredients: ingList,
-            prepTimeMinutes: r.prepTimeMinutes,
-            calories: typeof cals === 'number' ? cals : undefined,
+            prepTimeMinutes: getRecipeTotalMinutes(r),
+            calories: cals !== null ? cals : undefined,
           }
         })
 
@@ -144,7 +147,9 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
       const matchesMap: Record<string, AiMatchScore> = {}
       if (Array.isArray(result.matches)) {
         result.matches.forEach(m => {
-          matchesMap[m.recipeId] = { score: m.matchScore, reason: m.matchReason }
+          if (m.recipeId) {
+            matchesMap[m.recipeId] = { score: m.matchScore, reason: m.matchReason }
+          }
         })
       }
 
@@ -163,8 +168,8 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
       if (aiRequestSequenceRef.current !== requestSequence) {
         return
       }
-      setAppliedAiPrompt(trimmed)
-      setAiMatchesMap({})
+      setAppliedAiPrompt('')
+      setAiMatchesMap(null)
       setSuggestedIdea(null)
       setNlpSummary(null)
     } finally {
