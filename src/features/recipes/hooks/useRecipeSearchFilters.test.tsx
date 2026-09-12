@@ -339,11 +339,69 @@ describe('useRecipeSearchFilters', () => {
     expect(result.current.filteredAndSortedRecipes[1].id).toBe('1')
   })
 
-  it('provides availableTags and availableIngredients derived from all recipes', () => {
+  it('provides availableTags (excluding dietary options) and availableIngredients derived from all recipes', () => {
     const { result } = renderHook(() => useRecipeSearchFilters(sampleRecipes), { wrapper })
-    expect(result.current.availableTags).toEqual(['Gluten-Free', 'Keto', 'Salad', 'Soup', 'Vegan'])
+    // Dietary options (Keto, Vegan, Gluten-Free) must be excluded from availableTags
+    expect(result.current.availableTags).toEqual(['Salad', 'Soup'])
     expect(result.current.availableIngredients).toContain('Avocado')
     expect(result.current.availableIngredients).toContain('Garlic')
+  })
+
+  it('deduplicates availableTags case-insensitively and filters dietary options case-insensitively', () => {
+    const recipesWithCaseVariants: Recipe[] = [
+      {
+        id: '1',
+        recipeName: 'Pasta 1',
+        description: '',
+        tags: ['Italian', 'italian', 'VEGAN', 'vegan'],
+        prepTimeMinutes: 10,
+        cookTimeMinutes: 10,
+        servings: 1,
+        instructions: [],
+        ingredients: [],
+        source: 'manual',
+      },
+      {
+        id: '2',
+        recipeName: 'Pasta 2',
+        description: '',
+        tags: ['ITALIAN', 'Dinner', 'dinner', 'gluten-free'],
+        prepTimeMinutes: 10,
+        cookTimeMinutes: 10,
+        servings: 1,
+        instructions: [],
+        ingredients: [],
+        source: 'manual',
+      },
+    ]
+
+    const { result } = renderHook(() => useRecipeSearchFilters(recipesWithCaseVariants), { wrapper })
+    // Only category tags 'Dinner' and 'Italian' should remain, deduplicated case-insensitively
+    expect(result.current.availableTags).toEqual(['Dinner', 'Italian'])
+  })
+
+  it('synchronizes tags and dietaryTags with URL parameters and clears them when removed', () => {
+    const customWrapper = ({ children, initialEntries }: { children: React.ReactNode; initialEntries: string[] }) => (
+      <MemoryRouter initialEntries={initialEntries}>
+        {children}
+      </MemoryRouter>
+    )
+
+    const { result } = renderHook(
+      () => useRecipeSearchFilters(sampleRecipes),
+      {
+        wrapper: ({ children }) => customWrapper({ children, initialEntries: ['/dashboard/recipes?tags=Soup&diet=Vegan'] }),
+      }
+    )
+
+    expect(result.current.filters.tags).toEqual(['Soup'])
+    expect(result.current.filters.dietaryTags).toEqual(['Vegan'])
+
+    // Remove tags
+    act(() => {
+      result.current.removeTag('Soup')
+    })
+    expect(result.current.filters.tags).toEqual([])
   })
 
   it('manages recipe category tags filtering and removeTag', () => {

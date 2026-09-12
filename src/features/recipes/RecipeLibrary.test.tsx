@@ -213,6 +213,9 @@ describe('RecipeLibrary', () => {
       const pastaTagBtn = screen.getByRole('button', { name: 'pasta' })
       fireEvent.click(pastaTagBtn)
 
+      const applyBtn = screen.getByRole('button', { name: /Show 1 Recipe/i })
+      fireEvent.click(applyBtn)
+
       await waitFor(() => {
         expect(screen.queryByText('Chocolate Cake')).not.toBeInTheDocument()
       })

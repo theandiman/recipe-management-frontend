@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   type RecipeFilterState,
+  type AiMatchScore,
+  DEFAULT_RECIPE_FILTERS,
   DIETARY_OPTIONS,
   PREP_TIME_OPTIONS,
   CALORIE_OPTIONS,
   getActiveFilterCount,
+  filterRecipes,
 } from '../../features/recipes/utils/recipeFiltering'
+import type { Recipe } from '../../types/nutrition'
 import { FilterTypeaheadCombobox } from './FilterTypeaheadCombobox'
 
 export interface RecipeFilterDrawerProps {
@@ -17,6 +21,10 @@ export interface RecipeFilterDrawerProps {
   availableIngredients?: string[]
   hideHeaderButton?: boolean
   matchingCount?: number
+  allRecipes?: Recipe[]
+  searchText?: string
+  aiMatchesMap?: Record<string, AiMatchScore> | null
+  appliedAiPrompt?: string
   onFiltersChange: (newFilters: RecipeFilterState) => void
   onClearFilters: () => void
 }
@@ -29,25 +37,100 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
   availableIngredients = [],
   hideHeaderButton = false,
   matchingCount,
+  allRecipes,
+  searchText = '',
+  aiMatchesMap = null,
+  appliedAiPrompt = '',
   onFiltersChange,
   onClearFilters,
 }) => {
+  const [draftFilters, setDraftFilters] = useState<RecipeFilterState>(filters)
   const [incInput, setIncInput] = useState('')
   const [excInput, setExcInput] = useState('')
   const [incSuggestionsOpen, setIncSuggestionsOpen] = useState(false)
   const [excSuggestionsOpen, setExcSuggestionsOpen] = useState(false)
 
-  const activeCount = getActiveFilterCount(filters)
+  const modalRef = useRef<HTMLDivElement>(null)
+  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null)
 
-  // Close modal on Escape key
+  const [prevFilters, setPrevFilters] = useState<RecipeFilterState>(filters)
+  const [prevIsOpen, setPrevIsOpen] = useState<boolean>(isOpen)
+
+  // Adjust draft filters during render when dialog opens or parent filters change
+  if (isOpen !== prevIsOpen || filters !== prevFilters) {
+    setPrevIsOpen(isOpen)
+    setPrevFilters(filters)
+    setDraftFilters(filters)
+  }
+
+  // Count active filters for external trigger and modal draft
+  const activeExternalCount = getActiveFilterCount(filters)
+  const activeDraftCount = getActiveFilterCount(draftFilters)
+
+  // Live matching count calculated dynamically against draft filters
+  const liveMatchingCount = useMemo(() => {
+    if (allRecipes) {
+      return filterRecipes(allRecipes, draftFilters, searchText, aiMatchesMap, appliedAiPrompt).length
+    }
+    return matchingCount
+  }, [allRecipes, draftFilters, searchText, aiMatchesMap, appliedAiPrompt, matchingCount])
+
+  // Focus management: store previous active element, trap Tab focus, and restore on close
   useEffect(() => {
+    if (!isOpen) return
+
+    previouslyFocusedElementRef.current = document.activeElement as HTMLElement | null
+
+    // Focus the first focusable element inside the modal on open
+    const timer = setTimeout(() => {
+      if (modalRef.current) {
+        const firstFocusable = modalRef.current.querySelector<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+        firstFocusable?.focus()
+      }
+    }, 50)
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
+        e.preventDefault()
         onToggleOpen()
+        return
+      }
+
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+        if (focusableElements.length === 0) {
+          e.preventDefault()
+          return
+        }
+
+        const firstElement = focusableElements[0]
+        const lastElement = focusableElements[focusableElements.length - 1]
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            e.preventDefault()
+            lastElement.focus()
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            e.preventDefault()
+            firstElement.focus()
+          }
+        }
       }
     }
+
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('keydown', handleKeyDown)
+      previouslyFocusedElementRef.current?.focus()
+    }
   }, [isOpen, onToggleOpen])
 
   // Prevent background body scroll when modal is open
@@ -63,57 +146,67 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
   }, [isOpen])
 
   const setMaxPrepTime = (value: number | null) => {
-    onFiltersChange({
-      ...filters,
-      maxPrepTime: filters.maxPrepTime === value ? null : value,
-    })
+    setDraftFilters(prev => ({
+      ...prev,
+      maxPrepTime: prev.maxPrepTime === value ? null : value,
+    }))
   }
 
   const setMaxCalories = (value: number | null) => {
-    onFiltersChange({
-      ...filters,
-      maxCalories: filters.maxCalories === value ? null : value,
-    })
+    setDraftFilters(prev => ({
+      ...prev,
+      maxCalories: prev.maxCalories === value ? null : value,
+    }))
   }
 
   const handleAddIncludeIngredient = (ingredient: string) => {
     const trimmed = ingredient.trim()
     if (!trimmed) return
-    if (!filters.includeIngredients.some(i => i.toLowerCase() === trimmed.toLowerCase())) {
-      onFiltersChange({
-        ...filters,
-        includeIngredients: [...filters.includeIngredients, trimmed],
-      })
+    if (!draftFilters.includeIngredients.some(i => i.toLowerCase() === trimmed.toLowerCase())) {
+      setDraftFilters(prev => ({
+        ...prev,
+        includeIngredients: [...prev.includeIngredients, trimmed],
+      }))
     }
     setIncInput('')
     setIncSuggestionsOpen(false)
   }
 
   const handleRemoveIncludeIngredient = (item: string) => {
-    onFiltersChange({
-      ...filters,
-      includeIngredients: filters.includeIngredients.filter(i => i !== item),
-    })
+    setDraftFilters(prev => ({
+      ...prev,
+      includeIngredients: prev.includeIngredients.filter(i => i !== item),
+    }))
   }
 
   const handleAddExcludeIngredient = (ingredient: string) => {
     const trimmed = ingredient.trim()
     if (!trimmed) return
-    if (!filters.excludeIngredients.some(i => i.toLowerCase() === trimmed.toLowerCase())) {
-      onFiltersChange({
-        ...filters,
-        excludeIngredients: [...filters.excludeIngredients, trimmed],
-      })
+    if (!draftFilters.excludeIngredients.some(i => i.toLowerCase() === trimmed.toLowerCase())) {
+      setDraftFilters(prev => ({
+        ...prev,
+        excludeIngredients: [...prev.excludeIngredients, trimmed],
+      }))
     }
     setExcInput('')
     setExcSuggestionsOpen(false)
   }
 
   const handleRemoveExcludeIngredient = (item: string) => {
-    onFiltersChange({
-      ...filters,
-      excludeIngredients: filters.excludeIngredients.filter(i => i !== item),
-    })
+    setDraftFilters(prev => ({
+      ...prev,
+      excludeIngredients: prev.excludeIngredients.filter(i => i !== item),
+    }))
+  }
+
+  const handleApply = () => {
+    onFiltersChange(draftFilters)
+    onToggleOpen()
+  }
+
+  const handleCancel = () => {
+    setDraftFilters(filters)
+    onToggleOpen()
   }
 
   // Filter ingredient suggestions
@@ -124,10 +217,10 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
       .filter(
         ing =>
           ing.toLowerCase().includes(q) &&
-          !filters.includeIngredients.some(sel => sel.toLowerCase() === ing.toLowerCase())
+          !draftFilters.includeIngredients.some(sel => sel.toLowerCase() === ing.toLowerCase())
       )
       .slice(0, 6)
-  }, [availableIngredients, incInput, filters.includeIngredients])
+  }, [availableIngredients, incInput, draftFilters.includeIngredients])
 
   const filteredExcIngredients = React.useMemo(() => {
     const q = excInput.trim().toLowerCase()
@@ -136,10 +229,10 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
       .filter(
         ing =>
           ing.toLowerCase().includes(q) &&
-          !filters.excludeIngredients.some(sel => sel.toLowerCase() === ing.toLowerCase())
+          !draftFilters.excludeIngredients.some(sel => sel.toLowerCase() === ing.toLowerCase())
       )
       .slice(0, 6)
-  }, [availableIngredients, excInput, filters.excludeIngredients])
+  }, [availableIngredients, excInput, draftFilters.excludeIngredients])
 
   return (
     <>
@@ -155,20 +248,20 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
             <span>Filters</span>
-            {activeCount > 0 && (
+            {activeExternalCount > 0 && (
               <span className="px-2 py-0.5 text-xs font-bold bg-emerald-600 text-white rounded-full">
-                {activeCount}
+                {activeExternalCount}
               </span>
             )}
           </button>
 
-          {activeCount > 0 && (
+          {activeExternalCount > 0 && (
             <button
               type="button"
               onClick={onClearFilters}
               className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline cursor-pointer"
             >
-              Clear all filters ({activeCount})
+              Clear all filters ({activeExternalCount})
             </button>
           )}
         </div>
@@ -184,18 +277,20 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              onClick={onToggleOpen}
+              onClick={handleCancel}
               className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-xs"
               aria-hidden="true"
             />
 
             {/* Modal Dialog Card */}
             <motion.div
+              ref={modalRef}
+              tabIndex={-1}
               initial={{ opacity: 0, scale: 0.95, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="relative w-full max-w-2xl bg-white dark:bg-slate-850 rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-750 overflow-hidden flex flex-col max-h-[90vh] z-10"
+              className="relative w-full max-w-2xl bg-white dark:bg-slate-850 rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-750 overflow-hidden flex flex-col max-h-[90vh] z-10 focus:outline-none"
               role="dialog"
               aria-modal="true"
               aria-labelledby="filter-dialog-title"
@@ -219,18 +314,18 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
                 </div>
 
                 <div className="flex items-center gap-3">
-                  {activeCount > 0 && (
+                  {activeDraftCount > 0 && (
                     <button
                       type="button"
-                      onClick={onClearFilters}
+                      onClick={() => setDraftFilters(DEFAULT_RECIPE_FILTERS)}
                       className="text-xs font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors cursor-pointer"
                     >
-                      Reset all ({activeCount})
+                      Reset all ({activeDraftCount})
                     </button>
                   )}
                   <button
                     type="button"
-                    onClick={onToggleOpen}
+                    onClick={handleCancel}
                     className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                     aria-label="Close filter dialog"
                   >
@@ -253,8 +348,8 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
                       placeholder="Search diet (e.g. Vegan, Keto)..."
                       icon="🥗"
                       options={DIETARY_OPTIONS}
-                      selected={filters.dietaryTags}
-                      onChange={newDiet => onFiltersChange({ ...filters, dietaryTags: newDiet })}
+                      selected={draftFilters.dietaryTags}
+                      onChange={newDiet => setDraftFilters(prev => ({ ...prev, dietaryTags: newDiet }))}
                       quickOptions={['Vegetarian', 'Vegan', 'Gluten-Free']}
                       chipColor="emerald"
                     />
@@ -268,8 +363,8 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
                       placeholder="Search tags (e.g. Italian, Dinner)..."
                       icon="🏷️"
                       options={availableTags}
-                      selected={filters.tags || []}
-                      onChange={newTags => onFiltersChange({ ...filters, tags: newTags })}
+                      selected={draftFilters.tags || []}
+                      onChange={newTags => setDraftFilters(prev => ({ ...prev, tags: newTags }))}
                       allowCustom={true}
                       chipColor="indigo"
                     />
@@ -288,7 +383,7 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
                         type="button"
                         onClick={() => setMaxPrepTime(null)}
                         className={`py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer ${
-                          filters.maxPrepTime === null
+                          draftFilters.maxPrepTime === null
                             ? 'bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 shadow-2xs'
                             : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                         }`}
@@ -296,7 +391,7 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
                         Any
                       </button>
                       {PREP_TIME_OPTIONS.map(opt => {
-                        const isSelected = filters.maxPrepTime === opt.value
+                        const isSelected = draftFilters.maxPrepTime === opt.value
                         return (
                           <button
                             key={opt.value}
@@ -325,7 +420,7 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
                         type="button"
                         onClick={() => setMaxCalories(null)}
                         className={`py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer ${
-                          filters.maxCalories === null
+                          draftFilters.maxCalories === null
                             ? 'bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 shadow-2xs'
                             : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                         }`}
@@ -333,7 +428,7 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
                         Any
                       </button>
                       {CALORIE_OPTIONS.map(opt => {
-                        const isSelected = filters.maxCalories === opt.value
+                        const isSelected = draftFilters.maxCalories === opt.value
                         return (
                           <button
                             key={opt.value}
@@ -402,7 +497,7 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
                       </button>
                     </form>
                     <div className="flex flex-wrap gap-1.5">
-                      {filters.includeIngredients.map(item => (
+                      {draftFilters.includeIngredients.map(item => (
                         <span
                           key={item}
                           className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-medium rounded-lg"
@@ -468,7 +563,7 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
                       </button>
                     </form>
                     <div className="flex flex-wrap gap-1.5">
-                      {filters.excludeIngredients.map(item => (
+                      {draftFilters.excludeIngredients.map(item => (
                         <span
                           key={item}
                           className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 text-xs font-medium rounded-lg"
@@ -492,13 +587,13 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
               {/* Sticky Footer */}
               <div className="px-5 py-3.5 bg-gray-50/80 dark:bg-slate-900/80 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between gap-3">
                 <div className="text-xs text-gray-500 dark:text-gray-400">
-                  {activeCount === 0 ? 'No filters currently applied' : `${activeCount} active filter${activeCount === 1 ? '' : 's'}`}
+                  {activeDraftCount === 0 ? 'No filters currently applied' : `${activeDraftCount} active filter${activeDraftCount === 1 ? '' : 's'}`}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={onToggleOpen}
+                    onClick={handleCancel}
                     className="px-4 py-2 border border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
                   >
                     Cancel
@@ -506,18 +601,18 @@ export const RecipeFilterDrawer: React.FC<RecipeFilterDrawerProps> = ({
 
                   <button
                     type="button"
-                    onClick={onToggleOpen}
-                    disabled={matchingCount === 0}
+                    onClick={handleApply}
+                    disabled={liveMatchingCount === 0}
                     className={`px-5 py-2 text-xs font-semibold rounded-xl transition-all shadow-sm cursor-pointer ${
-                      matchingCount === 0
+                      liveMatchingCount === 0
                         ? 'bg-gray-200 dark:bg-slate-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                         : 'bg-emerald-600 hover:bg-emerald-700 text-white'
                     }`}
                   >
-                    {matchingCount !== undefined
-                      ? matchingCount === 0
+                    {liveMatchingCount !== undefined
+                      ? liveMatchingCount === 0
                         ? '0 Recipes Match'
-                        : `Show ${matchingCount} Recipe${matchingCount === 1 ? '' : 's'}`
+                        : `Show ${liveMatchingCount} Recipe${liveMatchingCount === 1 ? '' : 's'}`
                       : 'Apply Filters'}
                   </button>
                 </div>

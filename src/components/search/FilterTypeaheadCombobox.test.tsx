@@ -86,4 +86,37 @@ describe('FilterTypeaheadCombobox', () => {
 
     expect(defaultProps.onChange).toHaveBeenCalledWith(['Vegan', 'Pescatarian'])
   })
+
+  it('strips commas from custom tags to maintain URL compatibility', () => {
+    render(<FilterTypeaheadCombobox {...defaultProps} />)
+    const input = screen.getByRole('combobox')
+    fireEvent.change(input, { target: { value: 'Italian, Quick' } })
+
+    const addCustomBtn = screen.getByRole('button', { name: /Add "Italian Quick"/i })
+    fireEvent.click(addCustomBtn)
+
+    expect(defaultProps.onChange).toHaveBeenCalledWith(['Vegan', 'Italian Quick'])
+  })
+
+  it('closes dropdown when clicking outside only when open', () => {
+    const addEventListenerSpy = vi.spyOn(document, 'addEventListener')
+    const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener')
+
+    const { unmount } = render(<FilterTypeaheadCombobox {...defaultProps} />)
+    // Initially closed: mousedown listener should not be active
+    expect(addEventListenerSpy).not.toHaveBeenCalledWith('mousedown', expect.any(Function))
+
+    // Open combobox
+    const input = screen.getByRole('combobox')
+    fireEvent.focus(input)
+    expect(addEventListenerSpy).toHaveBeenCalledWith('mousedown', expect.any(Function))
+
+    // Click outside
+    fireEvent.mouseDown(document.body)
+
+    unmount()
+    expect(removeEventListenerSpy).toHaveBeenCalledWith('mousedown', expect.any(Function))
+    addEventListenerSpy.mockRestore()
+    removeEventListenerSpy.mockRestore()
+  })
 })
