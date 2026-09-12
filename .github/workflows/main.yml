@@ -42,7 +42,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
 
       - name: Run ESLint
         run: npm run lint
@@ -274,6 +274,216 @@ jobs:
           path: ./
           base: ${{ github.event.pull_request.base.sha }}
           head: ${{ github.event.pull_request.head.sha }}
+
+  owasp-pr-scan:
+    name: OWASP PR Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@theandiman'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_REGISTRY_READER }}
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build PR app for scan
+        run: npm run build
+        env:
+          VITE_FIREBASE_API_KEY: 'build-test-key'
+          VITE_FIREBASE_AUTH_DOMAIN: 'build-test.firebaseapp.com'
+          VITE_FIREBASE_PROJECT_ID: 'build-test-project'
+          VITE_FIREBASE_STORAGE_BUCKET: 'build-test.appspot.com'
+          VITE_FIREBASE_MESSAGING_SENDER_ID: '123456789'
+          VITE_FIREBASE_APP_ID: 'build-test-app'
+          VITE_API_URL: 'http://localhost:8080'
+          VITE_MANAGEMENT_API_URL: 'http://localhost:8081'
+
+      - name: OWASP ZAP Baseline Scan
+        run: |
+          echo "Running OWASP ZAP baseline scan..."
+          test -f .zap/rules.tsv || { echo "::error::.zap/rules.tsv not found"; exit 1; }
+          npm run preview -- --host 0.0.0.0 --port 4173 > /tmp/vite-preview.log 2>&1 &
+          for i in {1..30}; do
+            if curl -sf http://127.0.0.1:4173 > /dev/null; then
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "::error::Timed out waiting for local preview server"
+              cat /tmp/vite-preview.log || true
+              exit 1
+            fi
+            sleep 1
+          done
+          docker pull ghcr.io/zaproxy/zaproxy:stable
+
+          touch zap_report.html zap_report.json zap_report.md
+          chmod 666 zap_report.html zap_report.json zap_report.md
+
+          set +e
+          docker run -v ${{ github.workspace }}:/zap/wrk/:rw \
+            --network=host \
+            -t ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py \
+            -t http://127.0.0.1:4173/ \
+            -r /zap/wrk/zap_report.html \
+            -J /zap/wrk/zap_report.json \
+            -w /zap/wrk/zap_report.md \
+            -a \
+            -c /zap/wrk/.zap/rules.tsv
+          zap_exit=$?
+          set -e
+
+          if [ "$zap_exit" -gt 2 ]; then
+            echo "::error::OWASP ZAP scan failed with exit code $zap_exit"
+            exit "$zap_exit"
+          fi
+
+      - name: Summarize OWASP findings
+        id: zap-summary
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import sys
+
+          report_path = "zap_report.json"
+          if not os.path.exists(report_path):
+              print("::error::ZAP report not found")
+              sys.exit(1)
+
+          with open(report_path, "r", encoding="utf-8") as f:
+              report = json.load(f)
+
+          risk_counts = {"3": 0, "2": 0, "1": 0, "0": 0}
+          instance_total = 0
+
+          for site in report.get("site", []):
+              for alert in site.get("alerts", []):
+                  risk = str(alert.get("riskcode", "0"))
+                  instances = alert.get("instances") or []
+                  risk_counts[risk] = risk_counts.get(risk, 0) + 1
+                  instance_total += len(instances)
+
+          high = risk_counts.get("3", 0)
+          medium = risk_counts.get("2", 0)
+          low = risk_counts.get("1", 0)
+          info = risk_counts.get("0", 0)
+          total = high + medium + low + info
+
+          summary = (
+              "## 🔒 OWASP ZAP Summary (Brief)\n\n"
+              "**Target:** PR preview build (http://127.0.0.1:4173/)\n\n"
+              f"- High: {high}\n"
+              f"- Medium: {medium}\n"
+              f"- Low: {low}\n"
+              f"- Informational: {info}\n"
+              f"- Total alerts: {total}\n"
+              f"- Total affected instances: {instance_total}\n"
+          )
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
+              f.write(summary)
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write(f"high={high}\n")
+              f.write(f"medium={medium}\n")
+              f.write(f"low={low}\n")
+              f.write(f"info={info}\n")
+              f.write(f"total={total}\n")
+              f.write(f"instances={instance_total}\n")
+          PY
+
+      - name: Comment OWASP summary on PR
+        if: ${{ always() && steps.zap-summary.outcome == 'success' }}
+        uses: actions/github-script@v9
+        env:
+          ZAP_HIGH: ${{ steps.zap-summary.outputs.high }}
+          ZAP_MEDIUM: ${{ steps.zap-summary.outputs.medium }}
+          ZAP_LOW: ${{ steps.zap-summary.outputs.low }}
+          ZAP_INFO: ${{ steps.zap-summary.outputs.info }}
+          ZAP_TOTAL: ${{ steps.zap-summary.outputs.total }}
+          ZAP_INSTANCES: ${{ steps.zap-summary.outputs.instances }}
+        with:
+          script: |
+            const marker = '<!-- owasp-zap-pr-summary -->';
+            const body = `${marker}
+            ## 🔒 OWASP ZAP Summary (Brief)
+            
+            - High: ${process.env.ZAP_HIGH}
+            - Medium: ${process.env.ZAP_MEDIUM}
+            - Low: ${process.env.ZAP_LOW}
+            - Informational: ${process.env.ZAP_INFO}
+            - Total alerts: ${process.env.ZAP_TOTAL}
+            - Total affected instances: ${process.env.ZAP_INSTANCES}
+            
+            Full reports are available in the workflow artifacts.`;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.user.login === 'github-actions[bot]' &&
+              comment.body.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Upload ZAP Scan Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-pr-scan-report
+          path: |
+            zap_report.html
+            zap_report.json
+            zap_report.md
+          retention-days: 14
+
+      - name: Fail when OWASP summary cannot be generated
+        if: ${{ always() && steps.zap-summary.outcome != 'success' }}
+        run: |
+          echo "::error::Failed to parse OWASP ZAP report."
+          exit 1
+
+      - name: Fail on high findings
+        if: ${{ steps.zap-summary.outcome == 'success' && steps.zap-summary.outputs.high != '0' }}
+        run: |
+          echo "::error::OWASP ZAP found high-severity findings."
+          exit 1
 
   dependency-review:
     name: Dependency Review
@@ -715,7 +925,7 @@ jobs:
     name: PR Summary
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && always()
-    needs: [lint, type-check, unit-tests, e2e-tests, build, security-scan, dependency-review]
+    needs: [lint, type-check, unit-tests, e2e-tests, build, security-scan, owasp-pr-scan, dependency-review]
     steps:
       - name: Check job statuses
         uses: actions/github-script@v9
@@ -728,6 +938,7 @@ jobs:
               { name: 'E2E Tests', status: '${{ needs.e2e-tests.result }}' },
               { name: 'Build', status: '${{ needs.build.result }}' },
               { name: 'Security Scan', status: '${{ needs.security-scan.result }}' },
+              { name: 'OWASP PR Scan', status: '${{ needs.owasp-pr-scan.result }}' },
               { name: 'Dependency Review', status: '${{ needs.dependency-review.result }}' }
             ];
             
