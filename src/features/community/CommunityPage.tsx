@@ -141,6 +141,7 @@ export const CommunityPage: React.FC = () => {
                 </svg>
                 <input
                   type="text"
+                  aria-label="Search community recipes"
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search community recipes, tags..."
@@ -182,6 +183,8 @@ export const CommunityPage: React.FC = () => {
               {/* ✨ Ask AI Trigger Button */}
               <button
                 type="button"
+                aria-expanded={isAiPromptOpen}
+                aria-controls="community-ai-search-prompt-bar"
                 onClick={() => setIsAiPromptOpen(prev => !prev)}
                 className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 border rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-xs cursor-pointer ${
                   aiPrompt
@@ -252,6 +255,7 @@ export const CommunityPage: React.FC = () => {
 
           {/* Expandable AI Search Prompt Bar */}
           <AiSearchPromptBar
+            id="community-ai-search-prompt-bar"
             isOpen={isAiPromptOpen}
             onClose={() => setIsAiPromptOpen(false)}
             activePrompt={aiPrompt}

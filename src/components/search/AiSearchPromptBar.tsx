@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export interface AiSearchPromptBarProps {
+  id?: string
   isOpen: boolean
   onClose: () => void
   activePrompt?: string
@@ -20,6 +21,7 @@ const PROMPT_SUGGESTIONS = [
 ]
 
 export const AiSearchPromptBar: React.FC<AiSearchPromptBarProps> = ({
+  id,
   isOpen,
   onClose,
   activePrompt = '',
@@ -55,6 +57,7 @@ export const AiSearchPromptBar: React.FC<AiSearchPromptBarProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          id={id}
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
@@ -91,6 +94,7 @@ export const AiSearchPromptBar: React.FC<AiSearchPromptBarProps> = ({
               <div className="relative flex-1">
                 <input
                   type="text"
+                  aria-label="AI recipe search prompt"
                   value={promptText}
                   onChange={(e) => setPromptText(e.target.value)}
                   placeholder="e.g. Quick 20-min dinner with chicken and spinach under 500 calories..."

@@ -250,6 +250,7 @@ export const RecipeLibrary: React.FC = () => {
             </svg>
             <input
               type="text"
+              aria-label="Search recipes"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               placeholder="Search title, tag, ingredients..."
@@ -291,6 +292,8 @@ export const RecipeLibrary: React.FC = () => {
           {/* ✨ Ask AI Trigger Button */}
           <button
             type="button"
+            aria-expanded={isAiPromptOpen}
+            aria-controls="recipe-ai-search-prompt-bar"
             onClick={() => setIsAiPromptOpen(prev => !prev)}
             className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 border rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-xs ${
               aiPrompt
@@ -343,6 +346,7 @@ export const RecipeLibrary: React.FC = () => {
 
       {/* Expandable AI Search Prompt Bar */}
       <AiSearchPromptBar
+        id="recipe-ai-search-prompt-bar"
         isOpen={isAiPromptOpen}
         onClose={() => setIsAiPromptOpen(false)}
         activePrompt={aiPrompt}

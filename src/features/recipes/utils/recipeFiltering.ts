@@ -284,7 +284,7 @@ export const matchesAiIntent = (
 
         const rawTokens = cleanedPrompt ? cleanedPrompt.split(/[\s,]+/).filter(Boolean) : []
         const meaningful = rawTokens.filter(t => !STOP_WORDS.has(t))
-        return meaningful.length > 0 ? meaningful : rawTokens
+        return meaningful
       })()
 
   if (kwTokens.length > 0) {
