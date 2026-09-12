@@ -6,11 +6,13 @@ import { useSavedRecipes } from '../../features/recipes/SavedRecipesContext'
 export interface CookbookStatsCardProps {
   recipesCount: number
   loading?: boolean
+  hasError?: boolean
 }
 
 export const CookbookStatsCard: React.FC<CookbookStatsCardProps> = ({
   recipesCount,
   loading = false,
+  hasError = false,
 }) => {
   const navigate = useNavigate()
   const { savedRecipes } = useSavedRecipes()
@@ -41,6 +43,7 @@ export const CookbookStatsCard: React.FC<CookbookStatsCardProps> = ({
         </div>
 
         <button
+          type="button"
           onClick={() => navigate('/dashboard/recipes')}
           className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors cursor-pointer"
         >
@@ -49,21 +52,25 @@ export const CookbookStatsCard: React.FC<CookbookStatsCardProps> = ({
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div
+        <button
+          type="button"
           onClick={() => navigate('/dashboard/recipes')}
-          className="p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100/80 dark:border-emerald-900/30 cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 transition-all"
+          aria-label={`View ${hasError ? 'recipes' : `${recipesCount} created recipes`} in My Cookbook`}
+          className="p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100/80 dark:border-emerald-900/30 cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
           <span className="text-[11px] font-medium text-emerald-800 dark:text-emerald-300 block mb-0.5">
             Recipes Created
           </span>
           <span className="text-xl font-extrabold text-emerald-700 dark:text-emerald-400">
-            {loading ? '—' : recipesCount}
+            {loading || hasError ? '—' : recipesCount}
           </span>
-        </div>
+        </button>
 
-        <div
+        <button
+          type="button"
           onClick={() => navigate('/dashboard/saved')}
-          className="p-3 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100/80 dark:border-blue-900/30 cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-all"
+          aria-label={`View ${savedRecipes.length} saved recipes to make`}
+          className="p-3 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100/80 dark:border-blue-900/30 cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <span className="text-[11px] font-medium text-blue-800 dark:text-blue-300 block mb-0.5">
             Saved to Make
@@ -71,20 +78,22 @@ export const CookbookStatsCard: React.FC<CookbookStatsCardProps> = ({
           <span className="text-xl font-extrabold text-blue-700 dark:text-blue-400">
             {savedRecipes.length}
           </span>
-        </div>
+        </button>
       </div>
 
       {/* Quick Discovery & Creation Links */}
       <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-slate-700/60 text-xs">
         <button
+          type="button"
           onClick={() => navigate('/dashboard/community')}
-          className="flex-1 py-1.5 px-2.5 rounded-lg bg-gray-50 dark:bg-slate-750 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium text-center transition-colors cursor-pointer truncate"
+          className="flex-1 py-1.5 px-2.5 rounded-lg bg-gray-50 dark:bg-slate-750 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium text-center transition-colors cursor-pointer truncate focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
           Explore Community
         </button>
         <button
+          type="button"
           onClick={() => navigate('/dashboard/create')}
-          className="flex-1 py-1.5 px-2.5 rounded-lg bg-gray-50 dark:bg-slate-750 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium text-center transition-colors cursor-pointer truncate"
+          className="flex-1 py-1.5 px-2.5 rounded-lg bg-gray-50 dark:bg-slate-750 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium text-center transition-colors cursor-pointer truncate focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
           + New Recipe
         </button>

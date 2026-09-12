@@ -119,9 +119,10 @@ export const SavedRecipeContinuation: React.FC<SavedRecipeContinuationProps> = (
             const timeDisplay = formatRecipeTime(recipe)
             return (
               <li key={`saved-compact-${recipe.id || idx}`}>
-                <div
+                <button
+                  type="button"
                   onClick={() => recipe.id && navigate(`/recipes/${recipe.id}`)}
-                  className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group"
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group text-left focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     {recipe.imageUrl ? (
@@ -132,7 +133,7 @@ export const SavedRecipeContinuation: React.FC<SavedRecipeContinuationProps> = (
                       />
                     ) : (
                       <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0 border border-blue-100 dark:border-blue-900/30">
-                        {recipe.recipeName[0]?.toUpperCase() || 'R'}
+                        {recipe.recipeName?.[0]?.toUpperCase() || 'R'}
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
@@ -158,7 +159,7 @@ export const SavedRecipeContinuation: React.FC<SavedRecipeContinuationProps> = (
                   <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0">
                     Cook →
                   </span>
-                </div>
+                </button>
               </li>
             )
           })}

@@ -90,4 +90,23 @@ describe('CookbookStatsCard', () => {
     fireEvent.click(screen.getByText('+ New Recipe'))
     expect(mockNavigate).toHaveBeenCalledWith('/dashboard/create')
   })
+
+  it('renders indeterminate dash when hasError is true', () => {
+    vi.mocked(SavedRecipesContext.useSavedRecipes).mockReturnValue({
+      savedIds: new Set(),
+      savedRecipes: [],
+      isSaved: vi.fn(),
+      toggleSave: vi.fn(),
+      isLoading: false,
+      reload: vi.fn(),
+    })
+
+    render(
+      <BrowserRouter>
+        <CookbookStatsCard recipesCount={0} hasError={true} />
+      </BrowserRouter>
+    )
+
+    expect(screen.getByText('—')).toBeInTheDocument()
+  })
 })

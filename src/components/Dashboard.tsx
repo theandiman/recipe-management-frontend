@@ -151,7 +151,7 @@ export const Dashboard: React.FC = () => {
         <div className="lg:col-span-5 xl:col-span-4 space-y-6 lg:sticky lg:top-16">
           <RecentSocialActivity />
           <SavedRecipeContinuation variant="compact" />
-          <CookbookStatsCard recipesCount={recipes.length} loading={loading} />
+          <CookbookStatsCard recipesCount={recipes.length} loading={loading} hasError={Boolean(cookbookError)} />
         </div>
       </div>
     </motion.div>
