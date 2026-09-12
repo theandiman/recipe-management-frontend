@@ -50,6 +50,7 @@ export const CommunityPage: React.FC = () => {
     filteredAndSortedRecipes: filtered,
     clearAllFilters,
     nlpSummary,
+    aiMatchesMap,
   } = useRecipeSearchFilters(recipes)
 
   // Sync top nav search bar with page search text
@@ -465,6 +466,7 @@ export const CommunityPage: React.FC = () => {
                   showBookmark={true}
                   showLike={true}
                   onView={(id) => navigate(`/recipes/${id}`)}
+                  matchReason={recipe.id && aiMatchesMap ? aiMatchesMap[recipe.id]?.reason : undefined}
                 />
               </motion.div>
             ))}
@@ -483,6 +485,7 @@ export const CommunityPage: React.FC = () => {
                   showBookmark={true}
                   showLike={true}
                   onView={(id) => navigate(`/recipes/${id}`)}
+                  matchReason={recipe.id && aiMatchesMap ? aiMatchesMap[recipe.id]?.reason : undefined}
                 />
               </motion.div>
             ))}

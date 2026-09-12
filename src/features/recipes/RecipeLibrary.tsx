@@ -50,6 +50,8 @@ export const RecipeLibrary: React.FC = () => {
     filteredAndSortedRecipes: filtered,
     clearAllFilters,
     nlpSummary,
+    aiMatchesMap,
+    suggestedIdea,
   } = useRecipeSearchFilters(recipes)
 
   // Sync top nav search bar with page search text
@@ -454,6 +456,7 @@ export const RecipeLibrary: React.FC = () => {
                       onView={(id) => navigate(`/dashboard/recipes/${id}`)}
                       onDelete={(currentUser && (!recipe.userId || recipe.userId === currentUser.uid)) ? ((r) => r.id && setDeleteConfirm({ id: r.id, title: r.recipeName })) : undefined}
                       showBookmark
+                      matchReason={recipe.id && aiMatchesMap ? aiMatchesMap[recipe.id]?.reason : undefined}
                     />
                   ))}
                 </motion.div>
@@ -478,6 +481,7 @@ export const RecipeLibrary: React.FC = () => {
                         onDelete={isOwner ? ((r) => r.id && setDeleteConfirm({ id: r.id, title: r.recipeName })) : undefined}
                         isOwner={isOwner}
                         showBookmark
+                        matchReason={recipe.id && aiMatchesMap ? aiMatchesMap[recipe.id]?.reason : undefined}
                       />
                     )
                   })}
@@ -492,11 +496,27 @@ export const RecipeLibrary: React.FC = () => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <div className="text-gray-900 dark:text-gray-100 font-bold mb-2">
-                  No recipes found in your cookbook{searchText ? ` for "${searchText}"` : ''}.
-                </div>
+                {suggestedIdea ? (
+                  <div className="max-w-md mx-auto mb-4 p-4 bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-500/30 rounded-xl text-left">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider mb-1">
+                      <span>✨</span> AI Suggested Idea
+                    </div>
+                    <div className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-1">
+                      {suggestedIdea.title}
+                    </div>
+                    <p className="text-xs text-gray-600 dark:text-gray-300">
+                      {suggestedIdea.reason}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-gray-900 dark:text-gray-100 font-bold mb-2">
+                    No recipes found in your cookbook{searchText ? ` for "${searchText}"` : (aiPrompt ? ` for "${aiPrompt}"` : '')}.
+                  </div>
+                )}
                 <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
-                  Try clearing active search filters or let AI Kitchen generate a custom recipe for you in seconds.
+                  {suggestedIdea
+                    ? 'None of your existing recipes matched, but AI Kitchen can craft this recipe for you now!'
+                    : 'Try clearing active search filters or let AI Kitchen generate a custom recipe for you in seconds.'}
                 </p>
                 <div className="flex flex-wrap justify-center gap-3">
                   <button
@@ -506,10 +526,10 @@ export const RecipeLibrary: React.FC = () => {
                     Clear All Filters
                   </button>
                   <button
-                    onClick={() => navigate(`/dashboard/generate?prompt=${encodeURIComponent(searchText)}`)}
+                    onClick={() => navigate(`/dashboard/generate?prompt=${encodeURIComponent(suggestedIdea?.prompt || aiPrompt || searchText)}`)}
                     className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-semibold transition-colors shadow-sm flex items-center gap-1.5"
                   >
-                    <span>✨</span> Generate {searchText ? `"${searchText}" ` : ''}with AI Kitchen
+                    <span>✨</span> Generate {suggestedIdea ? `"${suggestedIdea.title}"` : (aiPrompt ? `"${aiPrompt}"` : (searchText ? `"${searchText}"` : ''))} with AI Kitchen
                   </button>
                 </div>
               </motion.div>

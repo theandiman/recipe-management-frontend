@@ -9,6 +9,14 @@ vi.mock('../../services/recipeStorageApi', () => ({
   getRecipes: vi.fn(),
 }))
 
+vi.mock('../../utils/aiApi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../utils/aiApi')>()
+  return {
+    ...actual,
+    queryAiSearch: vi.fn(),
+  }
+})
+
 const mockRecipes: Recipe[] = [
   {
     id: 'r1',
@@ -78,7 +86,13 @@ describe('OmniSearchModal', () => {
     })
   })
 
-  it('should support NLP queries with conversational stop words and time constraints', async () => {
+  it('should support NLP queries via AI search button', async () => {
+    const { queryAiSearch } = await import('../../utils/aiApi')
+    vi.mocked(queryAiSearch).mockResolvedValue({
+      matches: [{ recipeId: 'r1', matchScore: 0.95, matchReason: 'Fast pasta dinner' }],
+      suggestedIdea: null,
+    })
+
     render(
       <MemoryRouter>
         <OmniSearchModal isOpen={true} onClose={vi.fn()} />
@@ -88,8 +102,12 @@ describe('OmniSearchModal', () => {
     const input = screen.getByPlaceholderText(/Search recipes, tags, ingredients/i)
     fireEvent.change(input, { target: { value: 'show me quick pasta for dinner under 20 mins' } })
 
+    const aiSearchBtn = await screen.findByText(/Ask AI Kitchen to search/i)
+    fireEvent.click(aiSearchBtn)
+
     await waitFor(() => {
       expect(screen.getByText('Creamy Garlic Pasta')).toBeInTheDocument()
+      expect(screen.getByText(/Fast pasta dinner/i)).toBeInTheDocument()
       expect(screen.queryByText('Keto Avocado Salad')).not.toBeInTheDocument()
     })
   })

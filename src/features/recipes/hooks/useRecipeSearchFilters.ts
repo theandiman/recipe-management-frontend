@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   type RecipeFilterState,
+  type AiMatchScore,
   DEFAULT_RECIPE_FILTERS,
   filterRecipes,
 } from '../utils/recipeFiltering'
@@ -10,7 +11,11 @@ import {
   type ViewMode,
   sortRecipes,
 } from '../utils/recipeSorting'
-import { parseAiSearchIntent, type AiSearchIntentResult } from '../../../utils/aiApi'
+import {
+  queryAiSearch,
+  type RecipeSummaryForAi,
+  type AiSearchQueryResult,
+} from '../../../utils/aiApi'
 import type { Recipe } from '../../../types/nutrition'
 
 export interface UseRecipeSearchFiltersReturn {
@@ -35,6 +40,8 @@ export interface UseRecipeSearchFiltersReturn {
   clearAllFilters: () => void
   removeDietaryTag: (tag: string) => void
   nlpSummary: string | null
+  aiMatchesMap: Record<string, AiMatchScore> | null
+  suggestedIdea: AiSearchQueryResult['suggestedIdea'] | null
 }
 
 export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFiltersReturn => {
@@ -55,8 +62,15 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
   const [isAiPromptOpen, setIsAiPromptOpen] = useState(Boolean(initialAiPrompt))
   const [isAiLoading, setIsAiLoading] = useState(false)
   const [nlpSummary, setNlpSummary] = useState<string | null>(null)
-  const [aiIntent, setAiIntent] = useState<AiSearchIntentResult | null>(null)
+  const [aiMatchesMap, setAiMatchesMap] = useState<Record<string, AiMatchScore> | null>(null)
+  const [suggestedIdea, setSuggestedIdea] = useState<AiSearchQueryResult['suggestedIdea'] | null>(null)
   const [appliedAiPrompt, setAppliedAiPrompt] = useState('')
+
+  // Keep a ref to allRecipes for the callback without unnecessary re-attachments
+  const allRecipesRef = useRef(allRecipes)
+  useEffect(() => {
+    allRecipesRef.current = allRecipes
+  }, [allRecipes])
 
   // Guard against asynchronous race conditions and URL sync loops
   const aiRequestSequenceRef = useRef(0)
@@ -94,51 +108,65 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     if (!trimmed) {
       setAppliedAiPrompt('')
       setNlpSummary(null)
-      setAiIntent(null)
+      setAiMatchesMap(null)
+      setSuggestedIdea(null)
       setIsAiLoading(false)
       return
     }
 
     try {
       setIsAiLoading(true)
-      const intent = await parseAiSearchIntent(trimmed)
+
+      const summaryList: RecipeSummaryForAi[] = allRecipesRef.current
+        .filter(r => Boolean(r.id))
+        .map(r => {
+          const cals = r.nutritionalInfo?.perServing?.calories ?? r.nutritionalInfo?.total?.calories
+          const ingList = Array.isArray(r.ingredients)
+            ? r.ingredients.map(ing => (typeof ing === 'string' ? ing : (ing as { item?: string })?.item || ''))
+            : []
+          return {
+            id: r.id!,
+            recipeName: r.recipeName,
+            description: r.description,
+            tags: r.tags,
+            ingredients: ingList,
+            prepTimeMinutes: r.prepTimeMinutes,
+            calories: typeof cals === 'number' ? cals : undefined,
+          }
+        })
+
+      const result = await queryAiSearch(trimmed, summaryList)
+
       if (aiRequestSequenceRef.current !== requestSequence || latestPromptRef.current !== trimmed) {
         return
       }
-      setAiIntent(intent)
-      setAppliedAiPrompt(trimmed)
 
-      const summaryParts: string[] = []
-      if (
-        intent.explanation &&
-        !intent.explanation.toLowerCase().includes('empty search prompt') &&
-        !intent.explanation.toLowerCase().includes('using standard keyword search')
-      ) {
-        summaryParts.push(intent.explanation)
-      } else {
-        if (typeof intent.maxPrepTime === 'number') {
-          summaryParts.push(`Max Prep: ${intent.maxPrepTime} mins`)
-        }
-        if (typeof intent.maxCalories === 'number') {
-          summaryParts.push(`Max Cals: ${intent.maxCalories} kcal`)
-        }
-        if (intent.dietaryTags && intent.dietaryTags.length > 0) {
-          summaryParts.push(`Tags: ${intent.dietaryTags.join(', ')}`)
-        }
+      const matchesMap: Record<string, AiMatchScore> = {}
+      if (Array.isArray(result.matches)) {
+        result.matches.forEach(m => {
+          matchesMap[m.recipeId] = { score: m.matchScore, reason: m.matchReason }
+        })
       }
 
-      if (summaryParts.length > 0) {
-        setNlpSummary(summaryParts.join(' • '))
+      setAiMatchesMap(matchesMap)
+      setSuggestedIdea(result.suggestedIdea || null)
+      setAppliedAiPrompt(trimmed)
+
+      if (result.matches && result.matches.length > 0) {
+        setNlpSummary(`${result.matches.length} matching ${result.matches.length === 1 ? 'recipe' : 'recipes'} found`)
+      } else if (result.suggestedIdea) {
+        setNlpSummary(`No direct match — suggested: ${result.suggestedIdea.title}`)
       } else {
-        setNlpSummary(null)
+        setNlpSummary('No matching recipes found')
       }
     } catch {
       if (aiRequestSequenceRef.current !== requestSequence) {
         return
       }
       setAppliedAiPrompt(trimmed)
+      setAiMatchesMap({})
+      setSuggestedIdea(null)
       setNlpSummary(null)
-      setAiIntent(null)
     } finally {
       if (aiRequestSequenceRef.current === requestSequence) {
         setIsAiLoading(false)
@@ -153,7 +181,8 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     setAiPrompt('')
     setAppliedAiPrompt('')
     setNlpSummary(null)
-    setAiIntent(null)
+    setAiMatchesMap(null)
+    setSuggestedIdea(null)
     setIsAiLoading(false)
   }, [])
 
@@ -223,9 +252,16 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
 
   // Filter & Sort Pipeline
   const filteredAndSortedRecipes = useMemo(() => {
-    const filtered = filterRecipes(allRecipes, filters, searchText, aiIntent, appliedAiPrompt)
+    const filtered = filterRecipes(allRecipes, filters, searchText, aiMatchesMap, appliedAiPrompt)
+    if (aiMatchesMap && Object.keys(aiMatchesMap).length > 0 && sortOption === 'relevance') {
+      return [...filtered].sort((a, b) => {
+        const scoreA = (a.id ? aiMatchesMap[a.id]?.score : undefined) ?? 0
+        const scoreB = (b.id ? aiMatchesMap[b.id]?.score : undefined) ?? 0
+        return scoreB - scoreA
+      })
+    }
     return sortRecipes(filtered, sortOption)
-  }, [allRecipes, filters, searchText, aiIntent, appliedAiPrompt, sortOption])
+  }, [allRecipes, filters, searchText, aiMatchesMap, appliedAiPrompt, sortOption])
 
   const clearAllFilters = useCallback(() => {
     setSearchText('')
@@ -263,5 +299,7 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     clearAllFilters,
     removeDietaryTag,
     nlpSummary,
+    aiMatchesMap,
+    suggestedIdea,
   }
 }
