@@ -4,20 +4,27 @@ import { BrowserRouter } from 'react-router-dom'
 import { Dashboard } from './Dashboard'
 import * as recipeStorageApi from '../services/recipeStorageApi'
 import * as AuthContext from '../features/auth/AuthContext'
+import * as SavedRecipesContext from '../features/recipes/SavedRecipesContext'
+import * as notificationApi from '../services/notificationApi'
 import type { Recipe } from '../types/nutrition'
 
 // Mock dependencies
 vi.mock('../services/recipeStorageApi')
+vi.mock('../services/notificationApi')
 vi.mock('../features/auth/AuthContext', () => ({
-  useAuth: vi.fn()
+  useAuth: vi.fn(),
+}))
+vi.mock('../features/recipes/SavedRecipesContext', () => ({
+  useSavedRecipes: vi.fn(),
 }))
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
   return {
     ...actual,
-    useNavigate: () => vi.fn()
+    useNavigate: () => vi.fn(),
   }
 })
+
 // Mock BookmarkButton to avoid SavedRecipesContext dependencies
 vi.mock('../components/BookmarkButton', () => ({
   default: () => null,
@@ -34,8 +41,8 @@ describe('Dashboard', () => {
   const mockUser = {
     uid: 'test-uid',
     email: 'test@example.com',
-    displayName: 'Test User',
-    photoURL: null
+    displayName: 'Chef Andy',
+    photoURL: null,
   }
 
   const mockRecipes: Recipe[] = [
@@ -48,7 +55,7 @@ describe('Dashboard', () => {
       servings: 8,
       source: 'user-created',
       createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
+      updatedAt: '2024-01-01T00:00:00Z',
     },
     {
       id: '2',
@@ -59,7 +66,7 @@ describe('Dashboard', () => {
       servings: 4,
       source: 'ai-generated',
       createdAt: '2024-01-02T00:00:00Z',
-      updatedAt: '2024-01-02T00:00:00Z'
+      updatedAt: '2024-01-02T00:00:00Z',
     },
     {
       id: '3',
@@ -70,13 +77,13 @@ describe('Dashboard', () => {
       servings: 2,
       source: 'user-created',
       createdAt: '2024-01-03T00:00:00Z',
-      updatedAt: '2024-01-03T00:00:00Z'
-    }
+      updatedAt: '2024-01-03T00:00:00Z',
+    },
   ]
 
   beforeEach(() => {
     vi.clearAllMocks()
-    
+
     vi.mocked(AuthContext.useAuth).mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
@@ -85,25 +92,42 @@ describe('Dashboard', () => {
       login: vi.fn(),
       register: vi.fn(),
       logout: vi.fn(),
-      loginWithGoogle: vi.fn()
+      loginWithGoogle: vi.fn(),
+      refreshUser: vi.fn(),
+    })
+
+    vi.mocked(SavedRecipesContext.useSavedRecipes).mockReturnValue({
+      savedIds: new Set(),
+      savedRecipes: [],
+      isSaved: vi.fn(),
+      toggleSave: vi.fn(),
+      isLoading: false,
+      reload: vi.fn(),
+    })
+
+    vi.mocked(recipeStorageApi.getFeed).mockResolvedValue([])
+    vi.mocked(notificationApi.getNotifications).mockResolvedValue({
+      unreadCount: 0,
+      notifications: [],
+      hasMore: false,
     })
   })
 
-  it('should render loading skeletons initially', () => {
-    vi.mocked(recipeStorageApi.getRecipes).mockImplementation(() => new Promise(() => {}))
-    
+  it('renders greeting with user display name and creation buttons', async () => {
+    vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
+
     render(
       <BrowserRouter>
         <Dashboard />
       </BrowserRouter>
     )
 
-    // Should show loading skeletons
-    const skeletons = document.querySelectorAll('.animate-pulse')
-    expect(skeletons.length).toBeGreaterThan(0)
+    expect(screen.getByText('Chef Andy')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Create Recipe/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Generate with AI/i })).toBeInTheDocument()
   })
 
-  it('should fetch and display recipes', async () => {
+  it('renders followed cooks feed, saved recipes continuation, and recent activity sections', async () => {
     vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
 
     render(
@@ -113,11 +137,13 @@ describe('Dashboard', () => {
     )
 
     await waitFor(() => {
-      expect(recipeStorageApi.getRecipes).toHaveBeenCalled()
+      expect(screen.getByText('From cooks you follow')).toBeInTheDocument()
+      expect(screen.getByText('Continue Cooking')).toBeInTheDocument()
+      expect(screen.getByText('Recent Activity')).toBeInTheDocument()
     })
   })
 
-  it('should display recent recipes (last 3)', async () => {
+  it('renders your recent recipes when user has recipes in their cookbook', async () => {
     vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
 
     render(
@@ -127,14 +153,14 @@ describe('Dashboard', () => {
     )
 
     await waitFor(() => {
-      // Should show the 3 most recent recipes (using getAllByText since they might be in FYP too)
-      expect(screen.getAllByText('Salad').length).toBeGreaterThan(0)
-      expect(screen.getAllByText('Pasta').length).toBeGreaterThan(0)
-      expect(screen.getAllByText('Chocolate Cake').length).toBeGreaterThan(0)
+      expect(screen.getByText('Your Recent Recipes')).toBeInTheDocument()
+      expect(screen.getByText('Salad')).toBeInTheDocument()
+      expect(screen.getByText('Pasta')).toBeInTheDocument()
+      expect(screen.getByText('Chocolate Cake')).toBeInTheDocument()
     })
   })
 
-  it('should handle empty recipes list', async () => {
+  it('renders new-user onboarding when user has zero recipes', async () => {
     vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue([])
 
     render(
@@ -144,13 +170,14 @@ describe('Dashboard', () => {
     )
 
     await waitFor(() => {
-      expect(recipeStorageApi.getRecipes).toHaveBeenCalled()
+      expect(screen.getByText('Get started with CookFlow')).toBeInTheDocument()
+      expect(screen.getByText('Discover the Community')).toBeInTheDocument()
     })
   })
 
-  it('should handle fetch error gracefully', async () => {
+  it('handles fetch error gracefully without crashing dashboard', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    vi.mocked(recipeStorageApi.getRecipes).mockRejectedValue(new Error('Failed to fetch'))
+    vi.mocked(recipeStorageApi.getRecipes).mockRejectedValue(new Error('Failed to fetch recipes'))
 
     render(
       <BrowserRouter>
@@ -160,28 +187,15 @@ describe('Dashboard', () => {
 
     await waitFor(() => {
       expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to fetch recipes:', expect.any(Error))
+      // Dashboard still renders greeting and sections even if personal recipes fail
+      expect(screen.getByText('Chef Andy')).toBeInTheDocument()
+      expect(screen.getByText('From cooks you follow')).toBeInTheDocument()
     })
 
     consoleErrorSpy.mockRestore()
   })
 
-  it('should display quick action buttons', async () => {
-    vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue([])
-
-    render(
-      <BrowserRouter>
-        <Dashboard />
-      </BrowserRouter>
-    )
-
-    await waitFor(() => {
-      const createButtons = screen.getAllByRole('button', { name: /Create Recipe/i })
-      expect(createButtons.length).toBeGreaterThan(0)
-      expect(screen.getByRole('button', { name: /Try AI Generator/i })).toBeInTheDocument()
-    })
-  })
-
-  it('should display recommended recipes FYP', async () => {
+  it('does not render duplicate hero search bar or old FYP recommendations', async () => {
     vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
 
     render(
@@ -191,26 +205,8 @@ describe('Dashboard', () => {
     )
 
     await waitFor(() => {
-      // Should show the FYP section header
-      expect(screen.getByText('Recommended For You')).toBeInTheDocument()
-    })
-  })
-
-  it('should sort recent recipes by creation date', async () => {
-    vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
-
-    const { container } = render(
-      <BrowserRouter>
-        <Dashboard />
-      </BrowserRouter>
-    )
-
-    await waitFor(() => {
-      const recipeCards = container.querySelectorAll('[data-testid="recipe-card"], .recipe-card')
-      // Most recent should be first (Salad created on 2024-01-03)
-      if (recipeCards.length > 0) {
-        expect(recipeCards[0].textContent).toContain('Salad')
-      }
+      expect(screen.queryByPlaceholderText(/Search recipes, ingredients, or tags/i)).not.toBeInTheDocument()
+      expect(screen.queryByText('Recommended For You')).not.toBeInTheDocument()
     })
   })
 })
