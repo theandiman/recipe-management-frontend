@@ -293,8 +293,6 @@ export const RecipeLibrary: React.FC = () => {
         isOpen={isFilterDrawerOpen}
         onToggleOpen={() => setIsFilterDrawerOpen(prev => !prev)}
         filters={filters}
-        searchText={searchText}
-        onSearchTextChange={setSearchText}
         availableTags={tags}
         hideHeaderButton
         onFiltersChange={setFilters}
@@ -308,12 +306,13 @@ export const RecipeLibrary: React.FC = () => {
             {nlpSummary && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-semibold rounded-full border border-emerald-500/30">
                 <span>✨ Smart NLP:</span> {nlpSummary}
+                <button type="button" onClick={() => setSearchText('')} className="hover:text-red-500 font-bold ml-1 cursor-pointer" title="Clear NLP search" aria-label="Clear NLP search">✕</button>
               </span>
             )}
-            {searchText && (
+            {searchText && !nlpSummary && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
                 Query: "{searchText}"
-                <button onClick={() => setSearchText('')} className="hover:text-red-500 font-bold">✕</button>
+                <button type="button" onClick={() => setSearchText('')} className="hover:text-red-500 font-bold cursor-pointer" title="Clear query" aria-label="Clear query">✕</button>
               </span>
             )}
             {filters.dietaryTags.map(tag => (
