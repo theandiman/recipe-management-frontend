@@ -507,4 +507,30 @@ describe('RecipeLibrary', () => {
       expect(mockNavigate).not.toHaveBeenCalled()
     })
   })
+
+  describe('View Mode Switching', () => {
+    it('switches between grid and list view and displays recipes with RecipeListItem', async () => {
+      vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
+
+      renderRecipeLibrary()
+
+      await waitFor(() => {
+        expect(screen.getByText('Chocolate Cake')).toBeInTheDocument()
+      })
+
+      // Click List view mode toggle
+      const listToggle = screen.getByRole('button', { name: /List/i })
+      fireEvent.click(listToggle)
+
+      // Recipes should still be visible in list format
+      expect(screen.getByText('Chocolate Cake')).toBeInTheDocument()
+      expect(screen.getByText('Pasta Carbonara')).toBeInTheDocument()
+
+      // Click on list item to navigate
+      const cakeItem = screen.getByText('Chocolate Cake')
+      fireEvent.click(cakeItem)
+
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard/recipes/1')
+    })
+  })
 })

@@ -262,4 +262,24 @@ describe('CommunityPage', () => {
       expect(cards[2]).toHaveTextContent('Caesar Salad')
     })
   })
+
+  describe('view mode', () => {
+    it('toggles between grid and list view mode', async () => {
+      const user = userEvent.setup()
+      vi.spyOn(recipeStorageApi, 'getPublicRecipes').mockResolvedValue(mockRecipes)
+
+      renderWithRouter(<CommunityPage />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Spaghetti Carbonara')).toBeInTheDocument()
+      })
+
+      const listToggle = screen.getByRole('button', { name: /List/i })
+      await user.click(listToggle)
+
+      // Both recipes are displayed in list mode
+      expect(screen.getByText('Spaghetti Carbonara')).toBeInTheDocument()
+      expect(screen.getByText('Chicken Tikka Masala')).toBeInTheDocument()
+    })
+  })
 })

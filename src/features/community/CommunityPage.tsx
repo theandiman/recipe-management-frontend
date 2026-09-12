@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { getPublicRecipes, getFeed } from '../../services/recipeStorageApi'
 import { useAuth } from '../auth/AuthContext'
 import RecipeCard from '../../components/RecipeCard'
+import RecipeListItem from '../../components/RecipeListItem'
+import { ViewModeToggle } from '../../components/common/ViewModeToggle'
 import { RecipeCardSkeleton } from '../../components/skeletons/RecipeCardSkeleton'
 import { RecipeFilterDrawer } from '../../components/search/RecipeFilterDrawer'
 import { useOmniSearch } from '../../components/search/OmniSearchContext'
@@ -189,36 +191,7 @@ export const CommunityPage: React.FC = () => {
               </div>
 
               {/* View Mode Switcher (Grid vs List) */}
-              <div className="flex items-center gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl border border-gray-200 dark:border-slate-700">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('grid')}
-                  title="Grid view"
-                  className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                    viewMode === 'grid'
-                      ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                  }`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('list')}
-                  title="Compact list view"
-                  className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                    viewMode === 'list'
-                      ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                  }`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                </button>
-              </div>
+              <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
             </div>
           </div>
 
@@ -350,29 +323,43 @@ export const CommunityPage: React.FC = () => {
 
       {/* Main Recipe Cards Grid or List View */}
       {!loading && !error && filtered.length > 0 && (
-        <div
-          className={
-            viewMode === 'grid'
-              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
-              : 'space-y-4'
-          }
-        >
-          {filtered.map((recipe, index) => (
-            <motion.div
-              key={recipe.id || index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3), ease: 'easeOut' }}
-            >
-              <RecipeCard
-                recipe={recipe}
-                showBookmark={true}
-                showLike={true}
-                onView={(id) => navigate(`/recipes/${id}`)}
-              />
-            </motion.div>
-          ))}
-        </div>
+        viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map((recipe, index) => (
+              <motion.div
+                key={recipe.id || index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3), ease: 'easeOut' }}
+              >
+                <RecipeCard
+                  recipe={recipe}
+                  showBookmark={true}
+                  showLike={true}
+                  onView={(id) => navigate(`/recipes/${id}`)}
+                />
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filtered.map((recipe, index) => (
+              <motion.div
+                key={recipe.id || index}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.3) }}
+              >
+                <RecipeListItem
+                  recipe={recipe}
+                  showBookmark={true}
+                  showLike={true}
+                  onView={(id) => navigate(`/recipes/${id}`)}
+                />
+              </motion.div>
+            ))}
+          </div>
+        )
       )}
     </div>
   )
