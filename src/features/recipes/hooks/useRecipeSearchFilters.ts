@@ -48,6 +48,7 @@ export interface UseRecipeSearchFiltersReturn {
   nlpSummary: string | null
   aiMatchesMap: Record<string, AiMatchScore> | null
   suggestedIdea: AiSearchQueryResult['suggestedIdea'] | null
+  appliedAiPrompt: string
 }
 
 export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFiltersReturn => {
@@ -59,14 +60,14 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
   const urlTagsParam = searchParams.get('tags')
   const initialTag = searchParams.get('tag')
   const initialTags = urlTagsParam
-    ? urlTagsParam.split(',')
-    : initialTag && !DIETARY_OPTIONS.includes(initialTag)
-    ? [initialTag]
+    ? urlTagsParam.split(',').map(t => t.trim()).filter(Boolean)
+    : initialTag && !DIETARY_OPTIONS.some(d => d.toLowerCase() === initialTag.toLowerCase())
+    ? [initialTag.trim()].filter(Boolean)
     : []
   const initialDiet = searchParams.get('diet')
-    ? searchParams.get('diet')!.split(',')
-    : initialTag && DIETARY_OPTIONS.includes(initialTag)
-    ? [initialTag]
+    ? searchParams.get('diet')!.split(',').map(d => d.trim()).filter(Boolean)
+    : initialTag && DIETARY_OPTIONS.some(d => d.toLowerCase() === initialTag.toLowerCase())
+    ? [initialTag.trim()].filter(Boolean)
     : []
   const initialMaxTime = searchParams.get('maxTime') ? Number(searchParams.get('maxTime')) : null
   const initialMaxCal = searchParams.get('maxCal') ? Number(searchParams.get('maxCal')) : null
@@ -217,15 +218,19 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     const urlTagsParam = searchParams.get('tags')
     const urlTag = searchParams.get('tag')
     const urlTags = urlTagsParam
-      ? urlTagsParam.split(',')
-      : urlTag && !DIETARY_OPTIONS.includes(urlTag)
-      ? [urlTag]
+      ? urlTagsParam.split(',').map(t => t.trim()).filter(Boolean)
+      : urlTag && !DIETARY_OPTIONS.some(d => d.toLowerCase() === urlTag.toLowerCase())
+      ? [urlTag.trim()].filter(Boolean)
       : []
     const urlDiet = searchParams.get('diet')
-      ? searchParams.get('diet')!.split(',')
-      : urlTag && DIETARY_OPTIONS.includes(urlTag)
-      ? [urlTag]
+      ? searchParams.get('diet')!.split(',').map(d => d.trim()).filter(Boolean)
+      : urlTag && DIETARY_OPTIONS.some(d => d.toLowerCase() === urlTag.toLowerCase())
+      ? [urlTag.trim()].filter(Boolean)
       : []
+    const urlMaxTime = searchParams.get('maxTime') ? Number(searchParams.get('maxTime')) : null
+    const urlMaxCal = searchParams.get('maxCal') ? Number(searchParams.get('maxCal')) : null
+    const urlSort = (searchParams.get('sort') as SortOption) || 'relevance'
+    const urlView = (searchParams.get('view') as ViewMode) || 'grid'
 
     if (urlQ !== lastSyncedUrlQRef.current) {
       lastSyncedUrlQRef.current = urlQ
@@ -237,28 +242,30 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
       submitAiPrompt(urlAi)
     }
 
-    if (urlDiet.length > 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFilters(prev => {
-        const hasAll = urlDiet.every(t => prev.dietaryTags.includes(t))
-        if (!hasAll) {
-          const merged = Array.from(new Set([...prev.dietaryTags, ...urlDiet]))
-          return { ...prev, dietaryTags: merged }
-        }
-        return prev
-      })
-    }
+    // Bidirectional sync: keep sort, view, and filters aligned with URL, including clearing when empty
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSortOption(prev => (prev !== urlSort ? urlSort : prev))
+    setViewModeState(prev => (prev !== urlView ? urlView : prev))
 
-    if (urlTags.length > 0) {
-      setFilters(prev => {
-        const hasAll = urlTags.every(t => (prev.tags || []).includes(t))
-        if (!hasAll) {
-          const merged = Array.from(new Set([...(prev.tags || []), ...urlTags]))
-          return { ...prev, tags: merged }
-        }
+    setFilters(prev => {
+      const prevDiet = prev.dietaryTags || []
+      const dietEqual = prevDiet.length === urlDiet.length && prevDiet.every((d, i) => d === urlDiet[i])
+      const prevTags = prev.tags || []
+      const tagsEqual = prevTags.length === urlTags.length && prevTags.every((t, i) => t === urlTags[i])
+      const maxTimeEqual = prev.maxPrepTime === urlMaxTime
+      const maxCalEqual = prev.maxCalories === urlMaxCal
+
+      if (dietEqual && tagsEqual && maxTimeEqual && maxCalEqual) {
         return prev
-      })
-    }
+      }
+      return {
+        ...prev,
+        dietaryTags: dietEqual ? prev.dietaryTags : urlDiet,
+        tags: tagsEqual ? prev.tags : urlTags,
+        maxPrepTime: maxTimeEqual ? prev.maxPrepTime : urlMaxTime,
+        maxCalories: maxCalEqual ? prev.maxCalories : urlMaxCal,
+      }
+    })
   }, [searchParams, submitAiPrompt])
 
   // Sync internal state out to URL search parameters
@@ -275,10 +282,10 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     else params.delete('diet')
 
     if (filters.tags && filters.tags.length > 0) params.set('tags', filters.tags.join(','))
-    else {
-      params.delete('tags')
-      params.delete('tag')
-    }
+    else params.delete('tags')
+
+    // Always delete legacy parameter whenever serializing tags
+    params.delete('tag')
 
     if (filters.maxPrepTime !== null) params.set('maxTime', String(filters.maxPrepTime))
     else params.delete('maxTime')
@@ -337,15 +344,23 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
   }, [])
 
   const availableTags = useMemo(() => {
-    const set = new Set<string>()
+    const dietarySet = new Set(DIETARY_OPTIONS.map(d => d.toLowerCase()))
+    const tagMap = new Map<string, string>()
+
     allRecipes.forEach(r => {
       if (Array.isArray(r.tags)) {
         r.tags.forEach(t => {
-          if (t && typeof t === 'string' && t.trim()) set.add(t.trim())
+          if (t && typeof t === 'string' && t.trim()) {
+            const trimmed = t.trim()
+            const lower = trimmed.toLowerCase()
+            if (!dietarySet.has(lower) && !tagMap.has(lower)) {
+              tagMap.set(lower, trimmed)
+            }
+          }
         })
       }
     })
-    return Array.from(set).sort((a, b) => a.localeCompare(b))
+    return Array.from(tagMap.values()).sort((a, b) => a.localeCompare(b))
   }, [allRecipes])
 
   const availableIngredients = useMemo(() => {
@@ -379,5 +394,6 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     nlpSummary,
     aiMatchesMap,
     suggestedIdea,
+    appliedAiPrompt,
   }
 }

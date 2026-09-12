@@ -55,6 +55,7 @@ export const CommunityPage: React.FC = () => {
     availableIngredients,
     nlpSummary,
     aiMatchesMap,
+    appliedAiPrompt,
   } = useRecipeSearchFilters(recipes)
 
   // Sync top nav search bar with page search text
@@ -274,6 +275,10 @@ export const CommunityPage: React.FC = () => {
                 availableTags={availableTags}
                 availableIngredients={availableIngredients}
                 matchingCount={filtered.length}
+                allRecipes={recipes}
+                searchText={searchText}
+                aiMatchesMap={aiMatchesMap}
+                appliedAiPrompt={appliedAiPrompt}
                 hideHeaderButton={true}
                 onFiltersChange={setFilters}
                 onClearFilters={clearAllFilters}

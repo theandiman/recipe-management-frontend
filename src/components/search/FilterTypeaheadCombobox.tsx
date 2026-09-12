@@ -43,15 +43,21 @@ export const FilterTypeaheadCombobox: React.FC<FilterTypeaheadComboboxProps> = (
     return options.filter(opt => opt.toLowerCase().includes(q))
   }, [options, query])
 
+  // Helper to sanitize options and tags (disallow commas for URL compatibility)
+  const sanitizeOption = (text: string) => text.replace(/,/g, '').trim()
+
   // Can add custom option if allowed and not already in options or selected
+  const cleanedQuery = sanitizeOption(query)
   const canAddCustom =
     allowCustom &&
-    query.trim().length > 0 &&
-    !options.some(opt => opt.toLowerCase() === query.trim().toLowerCase()) &&
-    !selected.some(sel => sel.toLowerCase() === query.trim().toLowerCase())
+    cleanedQuery.length > 0 &&
+    !options.some(opt => opt.toLowerCase() === cleanedQuery.toLowerCase()) &&
+    !selected.some(sel => sel.toLowerCase() === cleanedQuery.toLowerCase())
 
-  // Close dropdown on outside click
+  // Close dropdown on outside click (only listen when open)
   useEffect(() => {
+    if (!isOpen) return
+
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false)
@@ -59,7 +65,7 @@ export const FilterTypeaheadCombobox: React.FC<FilterTypeaheadComboboxProps> = (
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  }, [isOpen])
 
   const toggleOption = (option: string) => {
     const trimmed = option.trim()
@@ -72,6 +78,12 @@ export const FilterTypeaheadCombobox: React.FC<FilterTypeaheadComboboxProps> = (
     }
     setQuery('')
     inputRef.current?.focus()
+  }
+
+  const addCustomOption = (text: string) => {
+    const cleaned = sanitizeOption(text)
+    if (!cleaned) return
+    toggleOption(cleaned)
   }
 
   const removeOption = (option: string) => {
@@ -101,16 +113,16 @@ export const FilterTypeaheadCombobox: React.FC<FilterTypeaheadComboboxProps> = (
       }
     } else if (e.key === 'Enter') {
       e.preventDefault()
-      if (!isOpen && query.trim()) {
+      if (!isOpen && cleanedQuery) {
         setIsOpen(true)
         return
       }
       if (canAddCustom && highlightedIndex === filteredOptions.length) {
-        toggleOption(query.trim())
+        addCustomOption(cleanedQuery)
       } else if (filteredOptions[highlightedIndex]) {
         toggleOption(filteredOptions[highlightedIndex])
-      } else if (query.trim() && allowCustom) {
-        toggleOption(query.trim())
+      } else if (cleanedQuery && allowCustom) {
+        addCustomOption(cleanedQuery)
       }
     } else if (e.key === 'Backspace' && !query && selected.length > 0) {
       removeOption(selected[selected.length - 1])
@@ -248,7 +260,7 @@ export const FilterTypeaheadCombobox: React.FC<FilterTypeaheadComboboxProps> = (
                 {canAddCustom && (
                   <button
                     type="button"
-                    onClick={() => toggleOption(query.trim())}
+                    onClick={() => addCustomOption(cleanedQuery)}
                     onMouseEnter={() => setHighlightedIndex(filteredOptions.length)}
                     className={`w-full flex items-center justify-between px-3 py-2 border-t border-gray-100 dark:border-slate-800 text-left transition-colors cursor-pointer ${
                       highlightedIndex === filteredOptions.length
@@ -256,7 +268,7 @@ export const FilterTypeaheadCombobox: React.FC<FilterTypeaheadComboboxProps> = (
                         : 'text-emerald-600 dark:text-emerald-400 hover:bg-gray-50 dark:hover:bg-slate-800'
                     }`}
                   >
-                    <span>Add "<strong>{query.trim()}</strong>"</span>
+                    <span>Add "<strong>{cleanedQuery}</strong>"</span>
                     <span className="text-xs font-semibold">+</span>
                   </button>
                 )}
