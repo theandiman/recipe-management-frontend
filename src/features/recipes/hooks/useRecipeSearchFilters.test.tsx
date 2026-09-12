@@ -338,4 +338,29 @@ describe('useRecipeSearchFilters', () => {
     expect(result.current.filteredAndSortedRecipes[0].id).toBe('2')
     expect(result.current.filteredAndSortedRecipes[1].id).toBe('1')
   })
+
+  it('provides availableTags and availableIngredients derived from all recipes', () => {
+    const { result } = renderHook(() => useRecipeSearchFilters(sampleRecipes), { wrapper })
+    expect(result.current.availableTags).toEqual(['Gluten-Free', 'Keto', 'Salad', 'Soup', 'Vegan'])
+    expect(result.current.availableIngredients).toContain('Avocado')
+    expect(result.current.availableIngredients).toContain('Garlic')
+  })
+
+  it('manages recipe category tags filtering and removeTag', () => {
+    const { result } = renderHook(() => useRecipeSearchFilters(sampleRecipes), { wrapper })
+
+    act(() => {
+      result.current.setFilters(prev => ({ ...prev, tags: ['Soup'] }))
+    })
+
+    expect(result.current.filteredAndSortedRecipes).toHaveLength(1)
+    expect(result.current.filteredAndSortedRecipes[0].recipeName).toBe('Vegan Lentil Soup')
+
+    act(() => {
+      result.current.removeTag('Soup')
+    })
+
+    expect(result.current.filters.tags).toEqual([])
+    expect(result.current.filteredAndSortedRecipes).toHaveLength(2)
+  })
 })

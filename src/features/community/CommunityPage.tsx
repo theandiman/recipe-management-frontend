@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getPublicRecipes, getFeed } from '../../services/recipeStorageApi'
@@ -49,6 +49,10 @@ export const CommunityPage: React.FC = () => {
     setIsFilterDrawerOpen,
     filteredAndSortedRecipes: filtered,
     clearAllFilters,
+    removeDietaryTag,
+    removeTag,
+    availableTags,
+    availableIngredients,
     nlpSummary,
     aiMatchesMap,
   } = useRecipeSearchFilters(recipes)
@@ -99,12 +103,6 @@ export const CommunityPage: React.FC = () => {
       setSearchParams({ following: 'true' }, { replace: true })
     }
   }
-
-  // Derive unique tags from current recipe set
-  const availableTags = useMemo(
-    () => Array.from(new Set(recipes.flatMap((r) => r.tags || []))).filter(Boolean),
-    [recipes]
-  )
 
   const activeFilterCount = getActiveFilterCount(filters)
   const hasRecipes = !loading && !error && recipes.length > 0
@@ -273,10 +271,12 @@ export const CommunityPage: React.FC = () => {
                 isOpen={isFilterDrawerOpen}
                 onToggleOpen={() => setIsFilterDrawerOpen((prev) => !prev)}
                 filters={filters}
+                availableTags={availableTags}
+                availableIngredients={availableIngredients}
+                matchingCount={filtered.length}
+                hideHeaderButton={true}
                 onFiltersChange={setFilters}
                 onClearFilters={clearAllFilters}
-                availableTags={availableTags}
-                hideHeaderButton={true}
               />
             )}
           </AnimatePresence>
@@ -297,12 +297,27 @@ export const CommunityPage: React.FC = () => {
                   <button type="button" onClick={() => setSearchText('')} className="hover:text-red-500 font-bold cursor-pointer" title="Clear query" aria-label="Clear query">✕</button>
                 </span>
               )}
-              {filters.dietaryTags.map(tag => (
-                <span key={tag} className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
-                  Tag: {tag}
+              {filters.dietaryTags.map(diet => (
+                <span key={diet} className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
+                  Diet: {diet}
                   <button
-                    onClick={() => setFilters(prev => ({ ...prev, dietaryTags: prev.dietaryTags.filter(t => t !== tag) }))}
+                    type="button"
+                    onClick={() => removeDietaryTag(diet)}
                     className="hover:text-red-500 font-bold cursor-pointer"
+                    aria-label={`Remove diet ${diet}`}
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+              {(filters.tags || []).map(tag => (
+                <span key={tag} className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-xs font-medium rounded-full border border-indigo-200 dark:border-indigo-900">
+                  Tag: #{tag}
+                  <button
+                    type="button"
+                    onClick={() => removeTag(tag)}
+                    className="hover:text-red-500 font-bold cursor-pointer"
+                    aria-label={`Remove tag ${tag}`}
                   >
                     ✕
                   </button>
@@ -312,8 +327,10 @@ export const CommunityPage: React.FC = () => {
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
                   Max Time: &lt; {filters.maxPrepTime} min
                   <button
+                    type="button"
                     onClick={() => setFilters(prev => ({ ...prev, maxPrepTime: null }))}
                     className="hover:text-red-500 font-bold cursor-pointer"
+                    aria-label="Remove max time limit"
                   >
                     ✕
                   </button>
@@ -323,14 +340,43 @@ export const CommunityPage: React.FC = () => {
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
                   Max Calories: &lt; {filters.maxCalories} kcal
                   <button
+                    type="button"
                     onClick={() => setFilters(prev => ({ ...prev, maxCalories: null }))}
                     className="hover:text-red-500 font-bold cursor-pointer"
+                    aria-label="Remove max calories limit"
                   >
                     ✕
                   </button>
                 </span>
               )}
+              {filters.includeIngredients.map(ing => (
+                <span key={ing} className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
+                  +{ing}
+                  <button
+                    type="button"
+                    onClick={() => setFilters(prev => ({ ...prev, includeIngredients: prev.includeIngredients.filter(i => i !== ing) }))}
+                    className="hover:text-red-500 font-bold cursor-pointer"
+                    aria-label={`Remove ingredient ${ing}`}
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+              {filters.excludeIngredients.map(ing => (
+                <span key={ing} className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 text-xs font-medium rounded-full border border-red-200 dark:border-red-900">
+                  -{ing}
+                  <button
+                    type="button"
+                    onClick={() => setFilters(prev => ({ ...prev, excludeIngredients: prev.excludeIngredients.filter(i => i !== ing) }))}
+                    className="hover:text-red-500 font-bold cursor-pointer"
+                    aria-label={`Remove exclusion ${ing}`}
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
               <button
+                type="button"
                 onClick={clearAllFilters}
                 className="text-xs text-red-600 dark:text-red-400 font-medium hover:underline ml-2 cursor-pointer"
               >
