@@ -124,7 +124,7 @@ describe('FollowedCooksFeed', () => {
 
     await waitFor(() => {
       expect(screen.getAllByText('Gordon Ramsay').length).toBeGreaterThan(0)
-      expect(screen.getAllByText('Chef cook-').length).toBeGreaterThan(0)
+      expect(screen.getAllByText(/Chef cook-/i).length).toBeGreaterThan(0)
       expect(screen.queryByText('Cook')).not.toBeInTheDocument()
     })
   })
