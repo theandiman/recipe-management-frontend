@@ -6,6 +6,7 @@ import type { Recipe } from '../types/nutrition'
 import GlobeIcon from './GlobeIcon'
 import BookmarkButton from './BookmarkButton'
 import LikeButton from './LikeButton'
+import { UserAvatar } from './UserAvatar'
 
 interface RecipeCardProps {
   recipe: Recipe
@@ -16,6 +17,7 @@ interface RecipeCardProps {
   compact?: boolean
   authorUid?: string
   authorName?: string
+  authorAvatarUrl?: string
   showBookmark?: boolean
   showLike?: boolean
   showMenu?: boolean
@@ -31,6 +33,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
   compact,
   authorUid,
   authorName,
+  authorAvatarUrl,
   showBookmark = false,
   showLike = false,
   showMenu,
@@ -87,9 +90,19 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
     }
   }
 
-  // Determine author display name
-  const recipeWithAuthor = recipe as Recipe & { authorName?: string; displayName?: string; averageRating?: number; ratingCount?: number }
+  // Determine author display name and avatar
+  const recipeWithAuthor = recipe as Recipe & {
+    authorName?: string
+    displayName?: string
+    authorAvatarUrl?: string
+    avatarUrl?: string
+    photoUrl?: string
+    averageRating?: number
+    ratingCount?: number
+  }
   const displayAuthorName = authorName || recipeWithAuthor.authorName || recipeWithAuthor.displayName
+  const displayAuthorAvatarUrl = authorAvatarUrl || recipeWithAuthor.authorAvatarUrl || recipeWithAuthor.avatarUrl || recipeWithAuthor.photoUrl
+
 
   const renderMenu = (placement: 'front' | 'back') => {
     const isThisMenuOpen = isMenuOpen && menuPlacement === placement
@@ -444,9 +457,12 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
                   className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors min-w-0"
                   aria-label={displayAuthorName ? `View ${displayAuthorName}'s profile` : 'View author profile'}
                 >
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 shadow-inner">
-                    {(displayAuthorName ? displayAuthorName[0] : 'C').toUpperCase()}
-                  </div>
+                  <UserAvatar
+                    src={displayAuthorAvatarUrl}
+                    name={displayAuthorName || 'C'}
+                    size="xs"
+                    className="shadow-inner flex-shrink-0"
+                  />
                   <span className="truncate font-medium">{displayAuthorName || 'View Author'}</span>
                 </Link>
               ) : <div />}

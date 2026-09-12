@@ -159,6 +159,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
+  const refreshUser = async () => {
+    if (auth.currentUser) {
+      await auth.currentUser.reload()
+      setUser(convertFirebaseUser(auth.currentUser))
+    }
+  }
+
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
@@ -168,6 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loginWithGoogle,
     register,
     logout,
+    refreshUser,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

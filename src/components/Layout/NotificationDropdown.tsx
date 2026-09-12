@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { SocialNotification } from '../../services/notificationApi'
+import { UserAvatar } from '../UserAvatar'
 
 interface NotificationDropdownProps {
   notifications: SocialNotification[]
@@ -105,8 +106,15 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                 !item.isRead ? 'bg-amber-500/5 hover:bg-amber-500/10' : 'hover:bg-slate-800/50'
               }`}
             >
-              <div className="p-2 rounded-xl bg-slate-800 shrink-0">
-                {getEventIcon(item.eventType)}
+              <div className="relative shrink-0">
+                <UserAvatar
+                  src={item.actorAvatarUrl}
+                  name={item.actorName || 'User'}
+                  size="md"
+                />
+                <div className="absolute -bottom-1 -right-1 p-0.5 rounded-full bg-slate-800 ring-2 ring-slate-900">
+                  {getEventIcon(item.eventType)}
+                </div>
               </div>
 
               <div className="flex-1 min-w-0">

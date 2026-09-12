@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { UserAvatar } from '../../../components/UserAvatar'
 
 interface CommentInputProps {
   placeholder?: string
@@ -44,13 +45,12 @@ export const CommentInput: React.FC<CommentInputProps> = ({
   return (
     <form onSubmit={handleSubmit} className="flex gap-3">
       {/* Avatar */}
-      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-xs mt-0.5">
-        {authorAvatarUrl ? (
-          <img src={authorAvatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
-        ) : (
-          authorInitial.toUpperCase()
-        )}
-      </div>
+      <UserAvatar
+        src={authorAvatarUrl}
+        name={authorInitial}
+        size="md"
+        className="mt-0.5"
+      />
 
       <div className="flex-1 space-y-2">
         <textarea

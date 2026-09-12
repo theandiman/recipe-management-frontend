@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 import { updateComment, deleteComment, type CommentItem } from '../../../services/commentApi'
 import { CommentInput } from './CommentInput'
+import { UserAvatar } from '../../../components/UserAvatar'
 
 interface CommentCardProps {
   comment: CommentItem
   recipeId: string
   currentUserId?: string
   currentUserInitial?: string
+  currentUserAvatarUrl?: string
   onReply: (parentId: string, content: string) => Promise<void>
   onCommentChanged: () => void
 }
@@ -33,6 +35,7 @@ export const CommentCard: React.FC<CommentCardProps> = ({
   comment,
   currentUserId,
   currentUserInitial,
+  currentUserAvatarUrl,
   onReply,
   onCommentChanged,
 }) => {
@@ -62,15 +65,15 @@ export const CommentCard: React.FC<CommentCardProps> = ({
     }
   }
 
-  const authorInitial = (comment.authorName || 'C')[0].toUpperCase()
-
   return (
     <div className="group bg-white dark:bg-slate-900/60 border border-gray-200/80 dark:border-slate-800/80 rounded-2xl p-4 transition-all hover:border-gray-300 dark:hover:border-slate-700 shadow-xs">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-xs">
-            {authorInitial}
-          </div>
+          <UserAvatar
+            src={comment.authorAvatarUrl}
+            name={comment.authorName || 'Home Cook'}
+            size="sm"
+          />
           <div>
             <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
               {comment.authorName || 'Home Cook'}
@@ -150,6 +153,7 @@ export const CommentCard: React.FC<CommentCardProps> = ({
           <CommentInput
             placeholder={`Reply to ${comment.authorName || 'cook'}...`}
             submitLabel="Reply"
+            authorAvatarUrl={currentUserAvatarUrl}
             authorInitial={currentUserInitial}
             onCancel={() => setIsReplying(false)}
             onSubmit={async (text) => {
@@ -170,6 +174,7 @@ export const CommentCard: React.FC<CommentCardProps> = ({
               recipeId={comment.recipeId}
               currentUserId={currentUserId}
               currentUserInitial={currentUserInitial}
+              currentUserAvatarUrl={currentUserAvatarUrl}
               onReply={onReply}
               onCommentChanged={onCommentChanged}
             />
