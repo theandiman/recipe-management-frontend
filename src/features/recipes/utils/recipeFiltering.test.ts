@@ -162,6 +162,15 @@ describe('recipeFiltering', () => {
     expect(result[0].recipeName).toBe('Keto Avocado Salad')
   })
 
+  it('should fall back to cleaned prompt keywords when AI intent uses standard keyword search', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', {
+      queryKeywords: 'Quick dinner under 30 mins',
+      dietaryTags: [],
+      explanation: 'Using standard keyword search.',
+    }, 'Quick dinner under 30 mins')
+    expect(result.map(r => r.recipeName)).toEqual(['Keto Avocado Salad', 'Cheesy Garlic Bread'])
+  })
+
   it('should require ALL dietary groups to be satisfied in AI prompt (AND logic across groups)', () => {
     // Vegan Lentil Soup is Vegan + Gluten-Free
     // Keto Avocado Salad is Keto + Gluten-Free (NOT Vegan)

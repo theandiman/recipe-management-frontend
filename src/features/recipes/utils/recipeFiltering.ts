@@ -141,6 +141,20 @@ const stemToken = (w: string): string => {
   return w
 }
 
+const extractMeaningfulQueryTokens = (value: string): string[] => {
+  let cleanedQuery = value
+    .toLowerCase()
+    .replace(/(?:under|less than|within|in|below|<=|<)?\s*\d+\s*(?:mins?|minutes?|m|cals?|calories?|kcal)\b/gi, '')
+    .replace(/\b(?:without|no|free from|exclude)\s+[a-z]+/gi, '')
+
+  for (const { pattern } of DIETARY_PHRASES) {
+    cleanedQuery = cleanedQuery.replace(pattern, '')
+  }
+
+  const rawTokens = cleanedQuery.trim().split(/[\s,]+/).filter(Boolean)
+  return rawTokens.filter(token => !STOP_WORDS.has(token))
+}
+
 const recipeMatchesDietaryTag = (recipe: Recipe, requiredTag: string): boolean => {
   const recipeTags = (recipe.tags || []).map(t => t.toLowerCase())
   const reqLower = requiredTag.toLowerCase()
@@ -270,22 +284,13 @@ export const matchesAiIntent = (
   }
 
   // 5. Check AI query keywords or remaining prompt tokens
-  const kwTokens = (aiIntent?.queryKeywords && aiIntent.queryKeywords.trim())
-    ? aiIntent.queryKeywords.toLowerCase().split(/\s+/).filter(Boolean)
-    : (() => {
-        let cleanedPrompt = query
-          .replace(/(?:under|less than|within|in|below|<=|<)?\s*\d+\s*(?:mins?|minutes?|m|cals?|calories?|kcal)\b/gi, '')
-          .replace(/\b(?:without|no|free from|exclude)\s+[a-z]+/gi, '')
-
-        for (const { pattern } of DIETARY_PHRASES) {
-          cleanedPrompt = cleanedPrompt.replace(pattern, '')
-        }
-        cleanedPrompt = cleanedPrompt.trim()
-
-        const rawTokens = cleanedPrompt ? cleanedPrompt.split(/[\s,]+/).filter(Boolean) : []
-        const meaningful = rawTokens.filter(t => !STOP_WORDS.has(t))
-        return meaningful
-      })()
+  const aiKeywordText = aiIntent?.queryKeywords?.trim() || ''
+  const isKeywordFallback =
+    aiIntent?.explanation?.toLowerCase().includes('using standard keyword search') ||
+    aiKeywordText.toLowerCase() === query
+  const kwTokens = extractMeaningfulQueryTokens(
+    aiKeywordText && !isKeywordFallback ? aiKeywordText : query,
+  )
 
   if (kwTokens.length > 0) {
     const fullText = [

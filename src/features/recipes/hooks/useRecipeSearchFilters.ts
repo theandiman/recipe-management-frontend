@@ -58,6 +58,7 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
   const [aiIntent, setAiIntent] = useState<AiSearchIntentResult | null>(null)
 
   // Guard against asynchronous race conditions and URL sync loops
+  const aiRequestSequenceRef = useRef(0)
   const latestPromptRef = useRef(initialAiPrompt)
   const lastSyncedUrlQRef = useRef(initialQuery)
   const lastSyncedUrlAiRef = useRef('')
@@ -84,6 +85,7 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
 
   const submitAiPrompt = useCallback(async (promptText: string) => {
     const trimmed = promptText.trim()
+    const requestSequence = ++aiRequestSequenceRef.current
     latestPromptRef.current = trimmed
     lastSyncedUrlAiRef.current = trimmed
     setAiPrompt(trimmed)
@@ -98,7 +100,7 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     try {
       setIsAiLoading(true)
       const intent = await parseAiSearchIntent(trimmed)
-      if (latestPromptRef.current !== trimmed) {
+      if (aiRequestSequenceRef.current !== requestSequence || latestPromptRef.current !== trimmed) {
         return
       }
       setAiIntent(intent)
@@ -128,14 +130,20 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
         setNlpSummary(null)
       }
     } catch {
+      if (aiRequestSequenceRef.current !== requestSequence) {
+        return
+      }
       setNlpSummary(null)
       setAiIntent(null)
     } finally {
-      setIsAiLoading(false)
+      if (aiRequestSequenceRef.current === requestSequence) {
+        setIsAiLoading(false)
+      }
     }
   }, [])
 
   const clearAiPrompt = useCallback(() => {
+    aiRequestSequenceRef.current += 1
     latestPromptRef.current = ''
     lastSyncedUrlAiRef.current = ''
     setAiPrompt('')
