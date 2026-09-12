@@ -11,7 +11,7 @@ import { FollowProvider } from './features/users/FollowContext'
 import { LikeProvider } from './features/recipes/LikeContext'
 import { SavedRecipesProvider } from './features/recipes/SavedRecipesContext'
 import { NotificationProvider } from './features/notifications/NotificationContext'
-import { DashboardLayout } from './components/Layout/DashboardLayout'
+import DashboardLayout from './components/Layout/DashboardLayout'
 import './App.css'
 
 const Login = lazy(() => import('./features/auth/Login').then(m => ({ default: m.Login })))

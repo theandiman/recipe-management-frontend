@@ -96,6 +96,6 @@ describe('DashboardLayout routing', () => {
   it('redirects unknown subroutes under /dashboard/* to /dashboard', async () => {
     renderAt('/dashboard/unknown-nested-path')
 
-    expect(await screen.findByRole('link', { name: /my cookbook/i })).toBeInTheDocument()
+    expect(await screen.findByText('DashboardStub')).toBeInTheDocument()
   })
 })
