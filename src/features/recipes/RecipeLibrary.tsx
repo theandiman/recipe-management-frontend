@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getRecipes, deleteRecipe } from '../../services/recipeStorageApi'
 import RecipeCard from '../../components/RecipeCard'
+import RecipeListItem from '../../components/RecipeListItem'
+import { ViewModeToggle } from '../../components/common/ViewModeToggle'
 import { RecipeCardSkeleton } from '../../components/skeletons/RecipeCardSkeleton'
 import { RecipeFilterDrawer } from '../../components/search/RecipeFilterDrawer'
 import { useOmniSearch } from '../../components/search/OmniSearchContext'
@@ -281,38 +283,7 @@ export const RecipeLibrary: React.FC = () => {
           </div>
 
           {/* View Mode Switcher (Grid vs List) */}
-          <div className="flex items-center gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl border border-gray-200 dark:border-slate-700">
-            <button
-              type="button"
-              onClick={() => setViewMode('grid')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                viewMode === 'grid'
-                  ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-xs'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-              title="Grid View"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-              </svg>
-              <span>Grid</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('list')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                viewMode === 'list'
-                  ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-xs'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-              title="List View"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-              </svg>
-              <span>List</span>
-            </button>
-          </div>
+          <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
         </div>
       </div>
 
@@ -424,60 +395,19 @@ export const RecipeLibrary: React.FC = () => {
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {paged.map((recipe) => (
-                    <div
-                      key={recipe.id}
-                      onClick={() => recipe.id && navigate(`/dashboard/recipes/${recipe.id}`)}
-                      className="flex items-center justify-between p-4 bg-white dark:bg-slate-850 border border-gray-200 dark:border-slate-800 rounded-2xl hover:border-emerald-400 dark:hover:border-emerald-500 cursor-pointer transition-all shadow-xs"
-                    >
-                      <div className="flex items-center space-x-4 min-w-0">
-                        {recipe.imageUrl ? (
-                          <img
-                            src={recipe.imageUrl}
-                            alt={recipe.recipeName}
-                            className="w-12 h-12 rounded-xl object-cover flex-shrink-0"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-sm flex-shrink-0">
-                            {recipe.recipeName[0]?.toUpperCase()}
-                          </div>
-                        )}
-                        <div className="min-w-0">
-                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">{recipe.recipeName}</h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{recipe.description || 'No description provided.'}</p>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {(recipe.tags || []).slice(0, 3).map(t => (
-                              <span key={t} className="px-2 py-0.5 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 text-[10px] rounded-md font-medium">
-                                #{t}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-4 ml-4 flex-shrink-0">
-                        {recipe.prepTime && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                            ⏱ {recipe.prepTime} min
-                          </span>
-                        )}
-                        {Boolean(currentUser && (!recipe.userId || recipe.userId === currentUser.uid)) && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              if (recipe.id) setDeleteConfirm({ id: recipe.id, title: recipe.recipeName })
-                            }}
-                            className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-                            title="Delete recipe"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                  {paged.map((recipe) => {
+                    const isOwner = Boolean(currentUser && (!recipe.userId || recipe.userId === currentUser.uid))
+                    return (
+                      <RecipeListItem
+                        key={recipe.id}
+                        recipe={recipe}
+                        onView={(id) => navigate(`/dashboard/recipes/${id}`)}
+                        onDelete={isOwner ? ((r) => r.id && setDeleteConfirm({ id: r.id, title: r.recipeName })) : undefined}
+                        isOwner={isOwner}
+                        showBookmark
+                      />
+                    )
+                  })}
                 </motion.div>
               </AnimatePresence>
             )}
