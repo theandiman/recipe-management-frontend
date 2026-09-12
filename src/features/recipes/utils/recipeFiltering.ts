@@ -90,9 +90,9 @@ interface DietaryPhrase {
 const DIETARY_PHRASES: DietaryPhrase[] = [
   { pattern: /\b(?:low[\s-]carb|lowcarb)\b/i, tags: ['Low-Carb', 'Keto'] },
   { pattern: /\bketo(?:genic)?\b/i, tags: ['Keto', 'Low-Carb'] },
-  { pattern: /\bgluten[\s-]free\b/i, tags: ['Gluten-Free'] },
-  { pattern: /\bdairy[\s-]free|lactose[\s-]free\b/i, tags: ['Dairy-Free'] },
-  { pattern: /\bnut[\s-]free|peanut[\s-]free\b/i, tags: ['Nut-Free'] },
+  { pattern: /\b(?:gluten[\s-]free|(?:no|without)\s+gluten)\b/i, tags: ['Gluten-Free'] },
+  { pattern: /\b(?:dairy[\s-]free|lactose[\s-]free|(?:no|without)\s+dairy)\b/i, tags: ['Dairy-Free'] },
+  { pattern: /\b(?:nut[\s-]free|peanut[\s-]free|(?:no|without)\s+nuts?)\b/i, tags: ['Nut-Free'] },
   { pattern: /\bvegan|plant[\s-]based\b/i, tags: ['Vegan'] },
   { pattern: /\bvegetarian|veggie|meatless\b/i, tags: ['Vegetarian'] },
   { pattern: /\bhealthy\b/i, tags: ['Healthy', 'Low-Carb', 'Quick & Easy'] },
@@ -116,10 +116,7 @@ export const parseExclusionsFromQuery = (query: string): string[] => {
   const regex = /\b(?:without|no|free from|exclude)\s+([a-z]+)/gi
   let match: RegExpExecArray | null
   while ((match = regex.exec(query)) !== null) {
-    const word = match[1].toLowerCase()
-    if (!['gluten', 'dairy', 'nuts', 'sugar'].includes(word) || word === 'dairy') {
-      exclusions.push(word)
-    }
+    exclusions.push(match[1].toLowerCase())
   }
   return exclusions
 }
@@ -136,7 +133,10 @@ const STOP_WORDS = new Set([
 
 const stemToken = (w: string): string => {
   if (w.endsWith('ies') && w.length > 4) return w.slice(0, -3) + 'y'
-  if (w.endsWith('es') && w.length > 3) return w.slice(0, -2)
+  if (w.endsWith('es') && w.length > 3) {
+    if (/(?:[cs]h|[xsz])es$/i.test(w)) return w.slice(0, -2)
+    return w.slice(0, -1)
+  }
   if (w.endsWith('s') && !w.endsWith('ss') && w.length > 2) return w.slice(0, -1)
   return w
 }
@@ -181,12 +181,19 @@ export const filterRecipes = (
 
   const queryMaxTime = parseNumericTimeFromQuery(query) ?? aiIntent?.maxPrepTime ?? null
   const queryMaxCals = parseNumericCalsFromQuery(query) ?? aiIntent?.maxCalories ?? null
-  const queryDietaryTags = parseDietaryTagsFromQuery(query)
+
+  const queryDietaryGroups: string[][] = []
+  for (const { pattern, tags } of DIETARY_PHRASES) {
+    if (pattern.test(query)) {
+      queryDietaryGroups.push(tags)
+    }
+  }
   if (aiIntent?.dietaryTags) {
     aiIntent.dietaryTags.forEach(tag => {
-      if (!queryDietaryTags.includes(tag)) queryDietaryTags.push(tag)
+      queryDietaryGroups.push([tag])
     })
   }
+
   const queryExclusions = parseExclusionsFromQuery(query)
 
   // Strip numeric, exclusion, and dietary phrases from text to isolate core keyword tokens
@@ -222,11 +229,12 @@ export const filterRecipes = (
       }
     }
 
-    // 3. Check Query NLP Dietary Tags (must match at least one corresponding semantic tag)
-    if (queryDietaryTags.length > 0) {
-      // Group tags by category if multiple synonyms exist (e.g. ['Low-Carb', 'Keto'])
-      const satisfiesDietary = queryDietaryTags.some(tag => recipeMatchesDietaryTag(recipe, tag))
-      if (!satisfiesDietary) return false
+    // 3. Check Query NLP Dietary Tags (must satisfy ALL matched groups)
+    if (queryDietaryGroups.length > 0) {
+      const satisfiesAllGroups = queryDietaryGroups.every(group =>
+        group.some(tag => recipeMatchesDietaryTag(recipe, tag))
+      )
+      if (!satisfiesAllGroups) return false
     }
 
     // 4. Check Query Exclusions
@@ -237,10 +245,14 @@ export const filterRecipes = (
 
       const hasExcluded = queryExclusions.some(exc => {
         const stemmed = stemToken(exc)
+        const isExcludedText = (text: string) => {
+          const pattern = new RegExp(`\\b(?:${exc}|${stemmed})(?!-free\\b|\\s+free\\b)`, 'i')
+          return pattern.test(text)
+        }
         return (
-          ingredientStrings.some(i => i.includes(exc) || i.includes(stemmed)) ||
-          title.includes(exc) ||
-          desc.includes(exc)
+          ingredientStrings.some(i => isExcludedText(i)) ||
+          isExcludedText(title) ||
+          isExcludedText(desc)
         )
       })
       if (hasExcluded) return false

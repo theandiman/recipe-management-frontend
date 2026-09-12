@@ -127,9 +127,12 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
       return
     }
 
+    let active = true
+
     const timer = setTimeout(async () => {
       try {
         const intent = await parseAiSearchIntent(trimmed)
+        if (!active) return
         setAiIntent(intent)
 
         const summaryParts: string[] = []
@@ -157,12 +160,16 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
           setNlpSummary(null)
         }
       } catch {
+        if (!active) return
         setNlpSummary(null)
         setAiIntent(null)
       }
     }, 400)
 
-    return () => clearTimeout(timer)
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
   }, [searchText])
 
   // Filter & Sort Pipeline
