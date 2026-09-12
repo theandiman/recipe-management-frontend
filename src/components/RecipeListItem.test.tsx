@@ -136,4 +136,22 @@ describe('RecipeListItem', () => {
     // Row click should NOT have been triggered
     expect(mockNavigate).not.toHaveBeenCalled()
   })
+
+  it('renders edit button for owner and triggers onEdit on click', () => {
+    const onEditSpy = vi.fn()
+    renderWithRouter(
+      <RecipeListItem
+        recipe={mockRecipe}
+        isOwner={true}
+        onEdit={onEditSpy}
+      />
+    )
+
+    const editBtn = screen.getByRole('button', { name: /Edit Spaghetti Bolognese/i })
+    expect(editBtn).toBeInTheDocument()
+
+    fireEvent.click(editBtn)
+    expect(onEditSpy).toHaveBeenCalledWith(mockRecipe)
+    expect(mockNavigate).not.toHaveBeenCalled()
+  })
 })

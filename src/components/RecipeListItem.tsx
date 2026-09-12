@@ -24,7 +24,7 @@ export const RecipeListItem: React.FC<RecipeListItemProps> = ({
   recipe,
   onView,
   onDelete,
-  onEdit: _onEdit,
+  onEdit,
   isOwner,
   authorUid: propAuthorUid,
   authorName: propAuthorName,
@@ -52,6 +52,7 @@ export const RecipeListItem: React.FC<RecipeListItemProps> = ({
   const resolvedAuthorAvatarUrl = propAuthorAvatarUrl || recipeWithAuthor.authorAvatarUrl || recipeWithAuthor.avatarUrl || recipeWithAuthor.photoUrl
 
   const canDelete = Boolean(onDelete && (isOwner || !recipe.userId))
+  const canEdit = Boolean(onEdit && (isOwner || !recipe.userId))
 
   const totalTime =
     recipe.totalTimeMinutes ||
@@ -195,6 +196,23 @@ export const RecipeListItem: React.FC<RecipeListItemProps> = ({
               recipe={recipe}
               className="bg-gray-50 dark:bg-slate-800 shadow-2xs hover:bg-gray-100 dark:hover:bg-slate-700"
             />
+          )}
+
+          {canEdit && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onEdit?.(recipe)
+              }}
+              aria-label={`Edit ${recipe.recipeName}`}
+              title="Edit recipe"
+              className="p-2 text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors cursor-pointer"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
           )}
 
           {canDelete && (
