@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getRecipes, deleteRecipe } from '../../services/recipeStorageApi'
@@ -49,6 +49,10 @@ export const RecipeLibrary: React.FC = () => {
     setIsFilterDrawerOpen,
     filteredAndSortedRecipes: filtered,
     clearAllFilters,
+    removeDietaryTag,
+    removeTag,
+    availableTags,
+    availableIngredients,
     nlpSummary,
     aiMatchesMap,
     suggestedIdea,
@@ -108,9 +112,6 @@ export const RecipeLibrary: React.FC = () => {
   const handleDeleteCancel = () => {
     setDeleteConfirm(null)
   }
-
-  // Tags list for quick select
-  const tags = useMemo(() => Array.from(new Set(recipes.flatMap(r => r.tags || []))).filter(Boolean), [recipes])
 
   const activeFilterCount = getActiveFilterCount(filters)
 
@@ -358,12 +359,14 @@ export const RecipeLibrary: React.FC = () => {
         onClearPrompt={clearAiPrompt}
       />
 
-      {/* Multi-Facet Filter Drawer Panel (Header Hidden) */}
+      {/* Multi-Facet Filter Drawer / Dialog Panel (Header Hidden) */}
       <RecipeFilterDrawer
         isOpen={isFilterDrawerOpen}
         onToggleOpen={() => setIsFilterDrawerOpen(prev => !prev)}
         filters={filters}
-        availableTags={tags}
+        availableTags={availableTags}
+        availableIngredients={availableIngredients}
+        matchingCount={filtered.length}
         hideHeaderButton
         onFiltersChange={setFilters}
         onClearFilters={clearAllFilters}
@@ -385,47 +388,93 @@ export const RecipeLibrary: React.FC = () => {
               <button type="button" onClick={() => setSearchText('')} className="hover:text-red-500 font-bold cursor-pointer" title="Clear query" aria-label="Clear query">✕</button>
             </span>
           )}
-            {filters.dietaryTags.map(tag => (
-              <span key={tag} className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
-                Tag: {tag}
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, dietaryTags: prev.dietaryTags.filter(t => t !== tag) }))}
-                  className="hover:text-red-500 font-bold"
-                >
-                  ✕
-                </button>
-              </span>
-            ))}
-            {filters.maxPrepTime !== null && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
-                Max Time: &lt; {filters.maxPrepTime} min
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, maxPrepTime: null }))}
-                  className="hover:text-red-500 font-bold"
-                >
-                  ✕
-                </button>
-              </span>
-            )}
-            {filters.maxCalories !== null && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
-                Max Calories: &lt; {filters.maxCalories} kcal
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, maxCalories: null }))}
-                  className="hover:text-red-500 font-bold"
-                >
-                  ✕
-                </button>
-              </span>
-            )}
-            <button
-              onClick={clearAllFilters}
-              className="text-xs text-red-600 dark:text-red-400 font-medium hover:underline ml-2"
-            >
-              Reset all
-            </button>
-          </div>
-        )}
+          {filters.dietaryTags.map(diet => (
+            <span key={diet} className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
+              Diet: {diet}
+              <button
+                type="button"
+                onClick={() => removeDietaryTag(diet)}
+                className="hover:text-red-500 font-bold cursor-pointer"
+                aria-label={`Remove diet ${diet}`}
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+          {(filters.tags || []).map(tag => (
+            <span key={tag} className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-xs font-medium rounded-full border border-indigo-200 dark:border-indigo-900">
+              Tag: #{tag}
+              <button
+                type="button"
+                onClick={() => removeTag(tag)}
+                className="hover:text-red-500 font-bold cursor-pointer"
+                aria-label={`Remove tag ${tag}`}
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+          {filters.maxPrepTime !== null && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
+              Max Time: &lt; {filters.maxPrepTime} min
+              <button
+                type="button"
+                onClick={() => setFilters(prev => ({ ...prev, maxPrepTime: null }))}
+                className="hover:text-red-500 font-bold cursor-pointer"
+                aria-label="Remove max time limit"
+              >
+                ✕
+              </button>
+            </span>
+          )}
+          {filters.maxCalories !== null && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
+              Max Calories: &lt; {filters.maxCalories} kcal
+              <button
+                type="button"
+                onClick={() => setFilters(prev => ({ ...prev, maxCalories: null }))}
+                className="hover:text-red-500 font-bold cursor-pointer"
+                aria-label="Remove max calories limit"
+              >
+                ✕
+              </button>
+            </span>
+          )}
+          {filters.includeIngredients.map(ing => (
+            <span key={ing} className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full border border-emerald-200 dark:border-emerald-900">
+              +{ing}
+              <button
+                type="button"
+                onClick={() => setFilters(prev => ({ ...prev, includeIngredients: prev.includeIngredients.filter(i => i !== ing) }))}
+                className="hover:text-red-500 font-bold cursor-pointer"
+                aria-label={`Remove ingredient ${ing}`}
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+          {filters.excludeIngredients.map(ing => (
+            <span key={ing} className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 text-xs font-medium rounded-full border border-red-200 dark:border-red-900">
+              -{ing}
+              <button
+                type="button"
+                onClick={() => setFilters(prev => ({ ...prev, excludeIngredients: prev.excludeIngredients.filter(i => i !== ing) }))}
+                className="hover:text-red-500 font-bold cursor-pointer"
+                aria-label={`Remove exclusion ${ing}`}
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+          <button
+            type="button"
+            onClick={clearAllFilters}
+            className="text-xs text-red-600 dark:text-red-400 font-medium hover:underline ml-2 cursor-pointer"
+          >
+            Reset all
+          </button>
+        </div>
+      )}
 
       {/* Paged recipes rendering */}
       {(() => {

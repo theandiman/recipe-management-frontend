@@ -207,6 +207,9 @@ describe('RecipeLibrary', () => {
       const filtersBtn = screen.getByRole('button', { name: /Filters/i })
       fireEvent.click(filtersBtn)
 
+      const tagInput = screen.getByPlaceholderText(/Search tags/i)
+      fireEvent.change(tagInput, { target: { value: 'pasta' } })
+
       const pastaTagBtn = screen.getByRole('button', { name: 'pasta' })
       fireEvent.click(pastaTagBtn)
 

@@ -3,6 +3,7 @@ import type { RecipeSummaryForAi } from '../../../utils/aiApi'
 
 export interface RecipeFilterState {
   dietaryTags: string[]
+  tags?: string[]
   maxPrepTime: number | null
   maxCalories: number | null
   includeIngredients: string[]
@@ -11,6 +12,7 @@ export interface RecipeFilterState {
 
 export const DEFAULT_RECIPE_FILTERS: RecipeFilterState = {
   dietaryTags: [],
+  tags: [],
   maxPrepTime: null,
   maxCalories: null,
   includeIngredients: [],
@@ -195,6 +197,13 @@ export const filterRecipes = (
       if (!hasAllDietary) return false
     }
 
+    // 3b. Explicit Manual Recipe Category/Custom Tags Match
+    if (filters.tags && filters.tags.length > 0) {
+      const recipeTags = (recipe.tags || []).map(normalizeTag)
+      const hasAllTags = filters.tags.every(tag => recipeTags.includes(normalizeTag(tag)))
+      if (!hasAllTags) return false
+    }
+
     // 4. Manual Prep/Cook Time Limit Match from Filter Drawer
     if (filters.maxPrepTime !== null) {
       const timeMinutes = getRecipeTotalMinutes(recipe)
@@ -236,11 +245,34 @@ export const filterRecipes = (
 export const getActiveFilterCount = (filters: RecipeFilterState): number => {
   let count = 0
   count += filters.dietaryTags.length
+  count += (filters.tags || []).length
   if (filters.maxPrepTime !== null) count += 1
   if (filters.maxCalories !== null) count += 1
   count += filters.includeIngredients.length
   count += filters.excludeIngredients.length
   return count
+}
+
+export const getAvailableIngredients = (recipes: Recipe[]): string[] => {
+  const set = new Set<string>()
+  recipes.forEach(r => {
+    if (Array.isArray(r.ingredients)) {
+      r.ingredients.forEach(ing => {
+        const str = getIngredientString(ing).trim()
+        if (!str) return
+        const cleaned = str
+          .replace(/^[\d\s./¼½¾]+(cups?|tbsp|tsp|oz|g|kg|lbs?|cloves?|pinch|cans?|jars?|slices?|dash|whole)?\s*(of\s+)?/i, '')
+          .trim()
+        if (cleaned.length > 1) {
+          const capitalized = cleaned.charAt(0).toUpperCase() + cleaned.slice(1)
+          set.add(capitalized)
+        } else if (str.length > 1) {
+          set.add(str)
+        }
+      })
+    }
+  })
+  return Array.from(set).sort((a, b) => a.localeCompare(b))
 }
 
 export const toRecipeSummaryForAi = (recipe: Recipe): RecipeSummaryForAi => {

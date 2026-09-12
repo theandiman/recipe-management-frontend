@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   filterRecipes,
   getActiveFilterCount,
+  getAvailableIngredients,
   DEFAULT_RECIPE_FILTERS,
   type RecipeFilterState,
 } from './recipeFiltering'
@@ -162,5 +163,46 @@ describe('recipeFiltering', () => {
     const result = filterRecipes(sampleRecipes, filters, '', aiMatchesMap, 'healthy dinner')
     expect(result).toHaveLength(1)
     expect(result[0].recipeName).toBe('Vegan Lentil Soup')
+  })
+
+  it('should filter recipes by category tags independently from dietary restrictions', () => {
+    const filters: RecipeFilterState = {
+      ...DEFAULT_RECIPE_FILTERS,
+      tags: ['Soup'],
+    }
+    const result = filterRecipes(sampleRecipes, filters)
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Vegan Lentil Soup')
+  })
+
+  it('should filter recipes combining dietary requirements and category tags', () => {
+    const filters: RecipeFilterState = {
+      ...DEFAULT_RECIPE_FILTERS,
+      dietaryTags: ['Gluten-Free'],
+      tags: ['Salad'],
+    }
+    const result = filterRecipes(sampleRecipes, filters)
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Keto Avocado Salad')
+  })
+
+  it('should correctly count active filters including tags', () => {
+    const filters: RecipeFilterState = {
+      dietaryTags: ['Vegan'],
+      tags: ['Dinner', 'Quick'],
+      maxPrepTime: 30,
+      maxCalories: null,
+      includeIngredients: ['Garlic'],
+      excludeIngredients: ['Peanuts'],
+    }
+    expect(getActiveFilterCount(filters)).toBe(6)
+  })
+
+  it('should extract clean, unique available ingredients from recipes', () => {
+    const ingredients = getAvailableIngredients(sampleRecipes)
+    expect(ingredients).toContain('Avocado')
+    expect(ingredients).toContain('Spinach')
+    expect(ingredients).toContain('Lentils')
+    expect(ingredients).toContain('Garlic')
   })
 })
