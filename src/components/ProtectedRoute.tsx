@@ -9,8 +9,8 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth()
   
-  // Bypass authentication in test mode
-  const isTestMode = import.meta.env.VITE_TEST_MODE === 'true'
+  // Bypass authentication in test mode (never in production)
+  const isTestMode = import.meta.env.MODE !== 'production' && import.meta.env.VITE_TEST_MODE === 'true'
   
   if (isTestMode) {
     return <>{children}</>

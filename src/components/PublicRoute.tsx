@@ -9,8 +9,8 @@ interface PublicRouteProps {
 export const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth()
 
-  // In test mode without explicit auth, allow viewing public pages
-  const isTestMode = import.meta.env.VITE_TEST_MODE === 'true'
+  // In test mode without explicit auth, allow viewing public pages (never in production)
+  const isTestMode = import.meta.env.MODE !== 'production' && import.meta.env.VITE_TEST_MODE === 'true'
 
   if (isLoading && !isTestMode) {
     return (

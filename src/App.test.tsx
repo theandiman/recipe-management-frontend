@@ -95,7 +95,7 @@ describe('App', () => {
 
   it('should redirect from root to /dashboard when authenticated', async () => {
     mockAuthState.isAuthenticated = true
-    mockAuthState.user = { uid: '123', email: 'user@example.com' }
+    mockAuthState.user = { uid: '123', email: 'user@example.com', displayName: 'Chef Andy', photoURL: null }
     window.history.pushState({}, 'Home', '/')
     render(<App />)
     expect(await screen.findByTestId('protected-route')).toBeInTheDocument()

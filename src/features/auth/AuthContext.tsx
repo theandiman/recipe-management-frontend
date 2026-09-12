@@ -52,10 +52,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return
     }
 
-    // Fallback safety timeout so isLoading never hangs indefinitely
+    // Fallback safety timeout so isLoading never hangs indefinitely on slow networks
     const timeoutId = setTimeout(() => {
       setIsLoading(false)
-    }, 5000)
+    }, 10000)
 
     const unsubscribe = onAuthStateChanged(
       auth,

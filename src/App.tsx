@@ -19,14 +19,19 @@ const RecipeDetail = lazy(() => import('./features/recipes/RecipeDetail').then(m
 const UserProfilePage = lazy(() => import('./features/users/UserProfilePage').then(m => ({ default: m.UserProfilePage })))
 
 const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[60vh]">
+  <div
+    role="status"
+    aria-label="Loading page content"
+    className="flex flex-col items-center justify-center min-h-[60vh]"
+  >
     <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+    <span className="sr-only">Loading page content...</span>
   </div>
 )
 
 function RootRedirect() {
   const { isAuthenticated, isLoading } = useAuth()
-  const isTestMode = import.meta.env.VITE_TEST_MODE === 'true'
+  const isTestMode = import.meta.env.MODE !== 'production' && import.meta.env.VITE_TEST_MODE === 'true'
 
   if (isTestMode) {
     return <Navigate to="/dashboard" replace />
