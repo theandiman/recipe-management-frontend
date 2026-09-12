@@ -180,6 +180,26 @@ const normalizeRecipe = (recipe: ManagementRecipePayload): Recipe => {
     normalized.isPublic = recipe.isPublic ?? Boolean(recipe.public)
   }
 
+  const rawAuthorName =
+    (recipe as { authorDisplayName?: string }).authorDisplayName ||
+    (recipe as { authorName?: string }).authorName ||
+    (recipe as { displayName?: string }).displayName
+
+  const rawAuthorAvatarUrl =
+    (recipe as { authorAvatarUrl?: string }).authorAvatarUrl ||
+    (recipe as { avatarUrl?: string }).avatarUrl ||
+    (recipe as { photoUrl?: string }).photoUrl
+
+  const extendedNormalized = normalized as unknown as Record<string, unknown>
+  if (rawAuthorName) {
+    extendedNormalized.authorDisplayName = rawAuthorName
+    extendedNormalized.authorName = rawAuthorName
+  }
+
+  if (rawAuthorAvatarUrl) {
+    extendedNormalized.authorAvatarUrl = rawAuthorAvatarUrl
+  }
+
   return normalized
 }
 

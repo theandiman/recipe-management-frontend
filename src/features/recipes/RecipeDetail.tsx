@@ -432,8 +432,8 @@ export const RecipeDetail: React.FC = () => {
       {/* Author & Top Rating Meta Row */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
         {recipe.userId && (() => {
-          const recipeWithAuthor = recipe as (Recipe & { authorName?: string; displayName?: string; authorAvatarUrl?: string }) | null
-          const authorDisplayName = authorProfile?.displayName || recipeWithAuthor?.authorName || recipeWithAuthor?.displayName || (isOwner ? (currentUser?.displayName || currentUser?.email?.split('@')[0]) : null) || 'Chef'
+          const recipeWithAuthor = recipe as (Recipe & { authorDisplayName?: string; authorName?: string; displayName?: string; authorAvatarUrl?: string }) | null
+          const authorDisplayName = authorProfile?.displayName || recipeWithAuthor?.authorDisplayName || recipeWithAuthor?.authorName || recipeWithAuthor?.displayName || (isOwner ? (currentUser?.displayName || currentUser?.email?.split('@')[0]) : null) || 'Chef'
 
           return (
             <Link

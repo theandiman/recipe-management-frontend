@@ -91,6 +91,44 @@ describe('FollowedCooksFeed', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/dashboard/community?following=true')
   })
 
+  it('renders authorDisplayName and falls back to Chef <id> instead of Cook', async () => {
+    const recipes = [
+      {
+        id: 'recipe-author-display',
+        userId: 'cook-11111',
+        authorDisplayName: 'Gordon Ramsay',
+        recipeName: 'Scrambled Eggs',
+        ingredients: ['eggs'],
+        instructions: ['whisk'],
+        servings: 2,
+        source: 'user-created',
+      },
+      {
+        id: 'recipe-author-fallback',
+        userId: 'cook-22222',
+        recipeName: 'Toast',
+        ingredients: ['bread'],
+        instructions: ['toast'],
+        servings: 1,
+        source: 'user-created',
+      },
+    ] as unknown as Recipe[]
+
+    vi.mocked(recipeStorageApi.getFeed).mockResolvedValue(recipes)
+
+    render(
+      <BrowserRouter>
+        <FollowedCooksFeed />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Gordon Ramsay').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('Chef cook-').length).toBeGreaterThan(0)
+      expect(screen.queryByText('Cook')).not.toBeInTheDocument()
+    })
+  })
+
   it('renders empty discovery state when user follows no cooks or feed is empty', async () => {
     vi.mocked(recipeStorageApi.getFeed).mockResolvedValue([])
 

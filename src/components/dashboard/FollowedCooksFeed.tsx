@@ -118,8 +118,14 @@ export const FollowedCooksFeed: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4">
           {recipes.slice(0, 3).map((recipe, idx) => {
-            const authorName = (recipe as { authorName?: string }).authorName || 'Cook'
-            const authorAvatar = (recipe as { authorAvatarUrl?: string }).authorAvatarUrl
+            const authorName =
+              (recipe as { authorDisplayName?: string }).authorDisplayName ||
+              (recipe as { authorName?: string }).authorName ||
+              (recipe as { displayName?: string }).displayName ||
+              (recipe.userId ? `Chef ${recipe.userId.slice(0, 5)}` : 'Chef')
+            const authorAvatar =
+              (recipe as { authorAvatarUrl?: string }).authorAvatarUrl ||
+              (recipe as { avatarUrl?: string }).avatarUrl
             return (
               <div key={`followed-${recipe.id || idx}`} className="flex flex-col gap-1.5">
                 {recipe.userId && (

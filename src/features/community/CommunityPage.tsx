@@ -509,6 +509,16 @@ export const CommunityPage: React.FC = () => {
               >
                 <RecipeCard
                   recipe={recipe}
+                  authorUid={recipe.userId}
+                  authorName={
+                    (recipe as { authorDisplayName?: string }).authorDisplayName ||
+                    (recipe as { authorName?: string }).authorName ||
+                    (recipe as { displayName?: string }).displayName
+                  }
+                  authorAvatarUrl={
+                    (recipe as { authorAvatarUrl?: string }).authorAvatarUrl ||
+                    (recipe as { avatarUrl?: string }).avatarUrl
+                  }
                   showBookmark={true}
                   showLike={true}
                   onView={(id) => navigate(`/recipes/${id}`)}
@@ -528,6 +538,16 @@ export const CommunityPage: React.FC = () => {
               >
                 <RecipeListItem
                   recipe={recipe}
+                  authorUid={recipe.userId}
+                  authorName={
+                    (recipe as { authorDisplayName?: string }).authorDisplayName ||
+                    (recipe as { authorName?: string }).authorName ||
+                    (recipe as { displayName?: string }).displayName
+                  }
+                  authorAvatarUrl={
+                    (recipe as { authorAvatarUrl?: string }).authorAvatarUrl ||
+                    (recipe as { avatarUrl?: string }).avatarUrl
+                  }
                   showBookmark={true}
                   showLike={true}
                   onView={(id) => navigate(`/recipes/${id}`)}

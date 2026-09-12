@@ -92,6 +92,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
 
   // Determine author display name and avatar
   const recipeWithAuthor = recipe as Recipe & {
+    authorDisplayName?: string
     authorName?: string
     displayName?: string
     authorAvatarUrl?: string
@@ -100,7 +101,11 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
     averageRating?: number
     ratingCount?: number
   }
-  const displayAuthorName = authorName || recipeWithAuthor.authorName || recipeWithAuthor.displayName
+  const displayAuthorName =
+    authorName ||
+    recipeWithAuthor.authorDisplayName ||
+    recipeWithAuthor.authorName ||
+    recipeWithAuthor.displayName
   const displayAuthorAvatarUrl = authorAvatarUrl || recipeWithAuthor.authorAvatarUrl || recipeWithAuthor.avatarUrl || recipeWithAuthor.photoUrl
 
 

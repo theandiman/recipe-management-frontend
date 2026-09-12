@@ -373,6 +373,18 @@ describe('RecipeCard', () => {
       expect(link).toHaveAttribute('href', '/user/user123')
     })
 
+    it('should use recipe.authorDisplayName if authorName prop is not provided', () => {
+      const recipeWithAuthor = {
+        ...mockRecipe,
+        authorDisplayName: 'Chef Remi',
+      } as unknown as Recipe
+      renderWithRouter(<RecipeCard recipe={recipeWithAuthor} authorUid="user123" />)
+      const link = screen.getByRole('link', { name: "View Chef Remi's profile" })
+      expect(link).toBeInTheDocument()
+      expect(link).toHaveAttribute('href', '/user/user123')
+      expect(screen.getByText('Chef Remi')).toBeInTheDocument()
+    })
+
     it('clicking the author chip does not call onView', async () => {
       const user = userEvent.setup()
       const onView = vi.fn()

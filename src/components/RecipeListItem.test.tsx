@@ -84,6 +84,25 @@ describe('RecipeListItem', () => {
     expect(authorLink).toHaveAttribute('href', '/user/chef-1')
   })
 
+  it('resolves authorDisplayName from recipe when authorName prop is not provided', () => {
+    const recipeWithAuthor = {
+      ...mockRecipe,
+      authorDisplayName: 'Chef Luigi',
+      author: undefined,
+    } as unknown as Recipe
+
+    renderWithRouter(
+      <RecipeListItem
+        recipe={recipeWithAuthor}
+        authorUid="chef-2"
+      />
+    )
+
+    expect(screen.getByText('Chef Luigi')).toBeInTheDocument()
+    const authorLink = screen.getByText('Chef Luigi').closest('a')
+    expect(authorLink).toHaveAttribute('href', '/user/chef-2')
+  })
+
   it('navigates on row click when onView is not provided', () => {
     renderWithRouter(<RecipeListItem recipe={mockRecipe} />)
 
