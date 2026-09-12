@@ -214,4 +214,20 @@ describe('Dashboard', () => {
       expect(screen.queryByText('Recommended For You')).not.toBeInTheDocument()
     })
   })
+
+  it('renders cookbook snapshot stats card in the sidebar', async () => {
+    vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
+
+    render(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Cookbook Snapshot')).toBeInTheDocument()
+      expect(screen.getByText('Recipes Created')).toBeInTheDocument()
+      expect(screen.getByText('Saved to Make')).toBeInTheDocument()
+    })
+  })
 })

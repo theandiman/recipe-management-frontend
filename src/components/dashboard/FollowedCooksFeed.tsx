@@ -76,7 +76,7 @@ export const FollowedCooksFeed: React.FC = () => {
         <div
           role="status"
           aria-label="Loading followed cooks recipes"
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse"
+          className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4 animate-pulse"
           data-testid="feed-loading-skeleton"
         >
           <span className="sr-only">Loading followed cooks recipes...</span>
@@ -116,7 +116,7 @@ export const FollowedCooksFeed: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4">
           {recipes.slice(0, 3).map((recipe, idx) => {
             const authorName = (recipe as { authorName?: string }).authorName || 'Cook'
             const authorAvatar = (recipe as { authorAvatarUrl?: string }).authorAvatarUrl
