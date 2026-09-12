@@ -246,16 +246,9 @@ const RecipeBody: React.FC<RecipeBodyProps> = ({ recipe }) => {
       {/* Tips & Tricks */}
       {effectiveTips && (
         <div id="tips-section" className="mt-10 pt-8 border-t border-gray-200 dark:border-slate-800 scroll-mt-24">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2.5 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shadow-xs">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 01-2 2h-1.343a2 2 0 01-2-2v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-2xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">Tips &amp; Tricks</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Substitutions, variations, storage, make-ahead, and reheating recommendations</p>
-            </div>
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tips &amp; Tricks</h2>
+            <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">Substitutions, variations, storage, make-ahead, and reheating recommendations</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
