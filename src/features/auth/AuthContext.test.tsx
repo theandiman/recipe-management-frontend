@@ -151,6 +151,51 @@ describe('AuthContext', () => {
     })
   })
 
+  it('should clear loading when onAuthStateChanged triggers error callback', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    vi.mocked(firebaseAuth.onAuthStateChanged).mockImplementation((_auth, _callback, onError) => {
+      if (typeof onError === 'function') {
+        onError(new Error('Auth network error') as unknown as firebaseAuth.AuthError)
+      }
+      return vi.fn()
+    })
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('authenticated')).toHaveTextContent('false')
+      expect(screen.getByTestId('user')).toHaveTextContent('null')
+      expect(screen.getByTestId('loading')).toHaveTextContent('false')
+    })
+
+    consoleSpy.mockRestore()
+  })
+
+  it('should stop loading after timeout when onAuthStateChanged stalls', async () => {
+    vi.useFakeTimers()
+    vi.mocked(firebaseAuth.onAuthStateChanged).mockImplementation(() => vi.fn())
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>
+    )
+
+    expect(screen.getByTestId('loading')).toHaveTextContent('true')
+
+    act(() => {
+      vi.advanceTimersByTime(10000)
+    })
+
+    expect(screen.getByTestId('loading')).toHaveTextContent('false')
+    vi.useRealTimers()
+  })
+
   it('should cleanup auth listener on unmount', () => {
     const unsubscribe = vi.fn()
     vi.mocked(firebaseAuth.onAuthStateChanged).mockReturnValue(unsubscribe)
