@@ -29,16 +29,14 @@ export const RecentSocialActivity: React.FC = () => {
     fetchActivity()
   }, [fetchActivity])
 
-  const handleItemClick = async (item: SocialNotification) => {
+  const handleItemClick = (item: SocialNotification) => {
     if (!item.isRead) {
-      try {
-        await markNotificationsAsRead([item.id])
-        setNotifications((prev) =>
-          prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n))
-        )
-      } catch (err) {
+      markNotificationsAsRead([item.id]).catch((err) => {
         console.error('Failed to mark notification read:', err)
-      }
+      })
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n))
+      )
     }
 
     if (item.targetRecipeId) {
@@ -190,7 +188,7 @@ export const RecentSocialActivity: React.FC = () => {
 
                   <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 block">
                     {item.createdAt
-                      ? new Date(item.createdAt).toLocaleDateString([], {
+                      ? new Date(item.createdAt).toLocaleString([], {
                           month: 'short',
                           day: 'numeric',
                           hour: '2-digit',

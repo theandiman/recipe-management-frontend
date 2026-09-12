@@ -19,8 +19,8 @@ export const FollowedCooksFeed: React.FC = () => {
       setRecipes(Array.isArray(data) ? data : [])
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load feed'
-      const apiError = err as { response?: { data?: { message?: string } } }
-      setError(apiError.response?.data?.message || errorMessage)
+      const apiError = err && typeof err === 'object' ? (err as { response?: { data?: { message?: string } } }) : null
+      setError(apiError?.response?.data?.message || errorMessage)
       setRecipes([])
     } finally {
       setLoading(false)
