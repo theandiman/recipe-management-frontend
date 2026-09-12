@@ -161,25 +161,13 @@ const extractMeaningfulQueryTokens = (value: string): string[] => {
 }
 
 export const normalizeTag = (tag: string): string =>
-  tag.toLowerCase().replace(/[\s\-_&]+/g, '')
+  typeof tag === 'string' ? tag.toLowerCase().replace(/[\s\-_&]+/g, '') : ''
 
-const HIGH_PROTEIN_INDICATORS = [
-  'chicken', 'turkey', 'beef', 'steak', 'pork', 'salmon', 'tuna', 'shrimp',
-  'fish', 'tofu', 'tempeh', 'lentil', 'lentils', 'beans', 'chickpea', 'chickpeas',
-  'egg', 'eggs', 'greek yogurt', 'cottage cheese', 'protein powder', 'whey', 'edamame',
-]
+const HIGH_PROTEIN_REGEXP = /\b(?:chicken|turkey|beef|steak|pork|salmon|tuna|shrimp|fish|tofu|tempeh|lentils?|beans|chickpeas?|eggs?|greek yogurt|cottage cheese|protein powder|whey|edamame)\b/i
 
-const BREAKFAST_INDICATORS = [
-  'breakfast', 'brunch', 'pancake', 'pancakes', 'waffle', 'waffles', 'oat', 'oats',
-  'oatmeal', 'cereal', 'toast', 'muffin', 'muffins', 'smoothie', 'bacon', 'frittata',
-  'omelet', 'omelette', 'bagel', 'crepe', 'crepes', 'granola', 'french toast',
-]
+const BREAKFAST_REGEXP = /\b(?:breakfast|brunch|pancakes?|waffles?|oats?|oatmeal|cereal|toast|muffins?|smoothie|bacon|frittata|omelettes?|omelets?|bagel|crepes?|granola|french toast)\b/i
 
-const DESSERT_INDICATORS = [
-  'dessert', 'cake', 'cookie', 'cookies', 'pie', 'tart', 'sweet', 'chocolate',
-  'pudding', 'ice cream', 'brownie', 'brownies', 'cupcake', 'cupcakes', 'pastry',
-  'pastries', 'candy', 'fudge', 'cocktail',
-]
+const DESSERT_REGEXP = /\b(?:dessert|cakes?|cookies?|pies?|tart|sweet|chocolate|pudding|ice cream|brownies?|cupcakes?|pastr(?:y|ies)|candy|fudge|cocktail)\b/i
 
 export const recipeMatchesDietaryTag = (recipe: Recipe, requiredTag: string): boolean => {
   const normReq = normalizeTag(requiredTag)
@@ -224,7 +212,7 @@ export const recipeMatchesDietaryTag = (recipe: Recipe, requiredTag: string): bo
     if (normRecipeTags.some(t => t.includes('protein'))) return true
     const protein = recipe.nutritionalInfo?.perServing?.protein ?? recipe.nutritionalInfo?.total?.protein
     if (typeof protein === 'number' && protein >= 20) return true
-    if (HIGH_PROTEIN_INDICATORS.some(ind => fullText.includes(ind))) return true
+    if (HIGH_PROTEIN_REGEXP.test(fullText)) return true
     return false
   }
 
@@ -245,13 +233,13 @@ export const recipeMatchesDietaryTag = (recipe: Recipe, requiredTag: string): bo
 
   if (normReq === 'breakfast' || normReq === 'brunch') {
     if (normRecipeTags.includes('breakfast') || normRecipeTags.includes('brunch')) return true
-    if (BREAKFAST_INDICATORS.some(ind => new RegExp(`\\b${ind}\\b`, 'i').test(fullText))) return true
+    if (BREAKFAST_REGEXP.test(fullText)) return true
     return false
   }
 
   if (normReq === 'dessert') {
     if (normRecipeTags.some(t => ['dessert', 'sweet', 'cake', 'cookie', 'pie', 'baking'].includes(t))) return true
-    if (DESSERT_INDICATORS.some(ind => new RegExp(`\\b${ind}\\b`, 'i').test(fullText))) return true
+    if (DESSERT_REGEXP.test(fullText)) return true
     return false
   }
 
@@ -320,14 +308,16 @@ export const matchesAiIntent = (
   const queryDietaryGroups: string[][] = []
   const seenNormTags = new Set<string>()
 
-  if (aiIntent?.dietaryTags && aiIntent.dietaryTags.length > 0) {
-    aiIntent.dietaryTags.forEach(tag => {
-      const norm = normalizeTag(tag)
-      if (norm && !seenNormTags.has(norm)) {
-        seenNormTags.add(norm)
-        queryDietaryGroups.push([tag])
-      }
-    })
+  if (aiIntent) {
+    if (aiIntent.dietaryTags && aiIntent.dietaryTags.length > 0) {
+      aiIntent.dietaryTags.forEach(tag => {
+        const norm = normalizeTag(tag)
+        if (norm && !seenNormTags.has(norm)) {
+          seenNormTags.add(norm)
+          queryDietaryGroups.push([tag])
+        }
+      })
+    }
   } else if (query) {
     for (const { pattern, tags } of DIETARY_PHRASES) {
       if (pattern.test(query)) {

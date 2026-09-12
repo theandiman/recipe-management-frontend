@@ -56,7 +56,7 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
   const [isAiLoading, setIsAiLoading] = useState(false)
   const [nlpSummary, setNlpSummary] = useState<string | null>(null)
   const [aiIntent, setAiIntent] = useState<AiSearchIntentResult | null>(null)
-  const [appliedAiPrompt, setAppliedAiPrompt] = useState(initialAiPrompt)
+  const [appliedAiPrompt, setAppliedAiPrompt] = useState('')
 
   // Guard against asynchronous race conditions and URL sync loops
   const aiRequestSequenceRef = useRef(0)
