@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react'
-import { NavLink, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { NavLink, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../features/auth/AuthContext'
 import { ThemeToggle } from '../ThemeToggle'
@@ -375,6 +375,7 @@ const DashboardLayoutInner: React.FC = () => {
               <Route path="community" element={<CommunityPage />} />
               <Route path="help" element={<HelpPage />} />
               <Route path="saved" element={<SavedRecipesPage />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </Suspense>
         </main>
@@ -396,3 +397,6 @@ export const DashboardLayout: React.FC = () => (
     <DashboardLayoutInner />
   </OmniSearchProvider>
 )
+
+export default DashboardLayout
+
