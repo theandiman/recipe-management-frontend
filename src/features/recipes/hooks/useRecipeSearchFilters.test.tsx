@@ -163,4 +163,47 @@ describe('useRecipeSearchFilters', () => {
     expect(result.current.isAiLoading).toBe(false)
     expect(result.current.nlpSummary).toBeNull()
   })
+
+  it('prevents race conditions when subsequent AI prompts or clear are called before previous finishes', async () => {
+    let resolveFirst: (val: any) => void
+    const firstPromise = new Promise((resolve) => {
+      resolveFirst = resolve
+    })
+
+    vi.mocked(parseAiSearchIntent)
+      .mockImplementationOnce(() => firstPromise as any)
+      .mockResolvedValueOnce({
+        queryKeywords: 'salad',
+        dietaryTags: ['Keto'],
+        explanation: 'Second intent',
+      })
+
+    const { result } = renderHook(() => useRecipeSearchFilters(sampleRecipes), { wrapper })
+
+    // Trigger first (slow) prompt
+    let p1: Promise<void>
+    act(() => {
+      p1 = result.current.submitAiPrompt('slow query')
+    })
+
+    // Trigger second prompt before first resolves
+    await act(async () => {
+      await result.current.submitAiPrompt('salad')
+    })
+
+    expect(result.current.nlpSummary).toBe('Second intent')
+
+    // Now let first promise resolve
+    await act(async () => {
+      resolveFirst!({
+        queryKeywords: 'slow',
+        dietaryTags: [],
+        explanation: 'First intent stale',
+      })
+      await p1!
+    })
+
+    // Should remain 'Second intent' and not be overwritten by stale first intent
+    expect(result.current.nlpSummary).toBe('Second intent')
+  })
 })

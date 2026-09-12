@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   type RecipeFilterState,
@@ -57,6 +57,11 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
   const [nlpSummary, setNlpSummary] = useState<string | null>(null)
   const [aiIntent, setAiIntent] = useState<AiSearchIntentResult | null>(null)
 
+  // Guard against asynchronous race conditions and URL sync loops
+  const latestPromptRef = useRef(initialAiPrompt)
+  const lastSyncedUrlQRef = useRef(initialQuery)
+  const lastSyncedUrlAiRef = useRef('')
+
   const [filters, setFilters] = useState<RecipeFilterState>({
     dietaryTags: initialDiet,
     maxPrepTime: initialMaxTime,
@@ -79,6 +84,8 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
 
   const submitAiPrompt = useCallback(async (promptText: string) => {
     const trimmed = promptText.trim()
+    latestPromptRef.current = trimmed
+    lastSyncedUrlAiRef.current = trimmed
     setAiPrompt(trimmed)
 
     if (!trimmed) {
@@ -91,6 +98,9 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     try {
       setIsAiLoading(true)
       const intent = await parseAiSearchIntent(trimmed)
+      if (latestPromptRef.current !== trimmed) {
+        return
+      }
       setAiIntent(intent)
 
       const summaryParts: string[] = []
@@ -126,31 +136,28 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
   }, [])
 
   const clearAiPrompt = useCallback(() => {
+    latestPromptRef.current = ''
+    lastSyncedUrlAiRef.current = ''
     setAiPrompt('')
     setNlpSummary(null)
     setAiIntent(null)
     setIsAiLoading(false)
   }, [])
 
-  // Auto-run initial AI prompt if present in URL
-  useEffect(() => {
-    if (initialAiPrompt) {
-      submitAiPrompt(initialAiPrompt)
-    }
-  }, [initialAiPrompt, submitAiPrompt])
-
-  // Listen for incoming URL parameter changes (e.g. from Dashboard navigation)
+  // Listen for incoming URL parameter changes (e.g. from Dashboard navigation or browser history)
   useEffect(() => {
     const urlQ = searchParams.get('q') || ''
     const urlAi = searchParams.get('ai_prompt') || ''
     const urlTag = searchParams.get('tag')
     const urlDiet = searchParams.get('diet') ? searchParams.get('diet')!.split(',') : (urlTag ? [urlTag] : [])
 
-    if (urlQ && urlQ !== searchText) {
+    if (urlQ !== lastSyncedUrlQRef.current) {
+      lastSyncedUrlQRef.current = urlQ
       setSearchText(urlQ)
     }
 
-    if (urlAi && urlAi !== aiPrompt) {
+    if (urlAi !== lastSyncedUrlAiRef.current) {
+      lastSyncedUrlAiRef.current = urlAi
       submitAiPrompt(urlAi)
     }
 
@@ -195,6 +202,8 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     const currentQueryString = searchParams.toString()
 
     if (newQueryString !== currentQueryString) {
+      lastSyncedUrlQRef.current = searchText.trim()
+      lastSyncedUrlAiRef.current = aiPrompt.trim()
       setSearchParams(params, { replace: true })
     }
   }, [searchText, aiPrompt, filters, sortOption, viewMode])
