@@ -98,6 +98,23 @@ describe('FilterTypeaheadCombobox', () => {
     expect(defaultProps.onChange).toHaveBeenCalledWith(['Vegan', 'Italian Quick'])
   })
 
+  it('preserves commas in predefined options when selected', () => {
+    const propsWithCommaOption = {
+      ...defaultProps,
+      options: ['Asian, Fusion', 'Vegetarian'],
+      selected: [],
+      onChange: vi.fn(),
+    }
+    render(<FilterTypeaheadCombobox {...propsWithCommaOption} />)
+    const input = screen.getByRole('combobox')
+    fireEvent.change(input, { target: { value: 'Asian' } })
+
+    const option = screen.getByRole('button', { name: 'Asian, Fusion' })
+    fireEvent.click(option)
+
+    expect(propsWithCommaOption.onChange).toHaveBeenCalledWith(['Asian, Fusion'])
+  })
+
   it('closes dropdown when clicking outside only when open', () => {
     const addEventListenerSpy = vi.spyOn(document, 'addEventListener')
     const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener')

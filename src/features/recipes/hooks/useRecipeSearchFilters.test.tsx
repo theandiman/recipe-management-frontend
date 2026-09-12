@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import React from 'react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useNavigate } from 'react-router-dom'
 import { useRecipeSearchFilters } from './useRecipeSearchFilters'
 import { queryAiSearch } from '../../../utils/aiApi'
 import type { Recipe } from '../../../types/nutrition'
@@ -381,27 +380,35 @@ describe('useRecipeSearchFilters', () => {
   })
 
   it('synchronizes tags and dietaryTags with URL parameters and clears them when removed', () => {
-    const customWrapper = ({ children, initialEntries }: { children: React.ReactNode; initialEntries: string[] }) => (
-      <MemoryRouter initialEntries={initialEntries}>
-        {children}
-      </MemoryRouter>
-    )
+    let navigateFn: (to: string) => void = () => {}
+    const NavigationCapturer = () => {
+      const navigate = useNavigate()
+      navigateFn = navigate
+      return null
+    }
 
     const { result } = renderHook(
       () => useRecipeSearchFilters(sampleRecipes),
       {
-        wrapper: ({ children }) => customWrapper({ children, initialEntries: ['/dashboard/recipes?tags=Soup&diet=Vegan'] }),
+        wrapper: ({ children }) => (
+          <MemoryRouter initialEntries={['/dashboard/recipes?tags=Soup&diet=Vegan']}>
+            <NavigationCapturer />
+            {children}
+          </MemoryRouter>
+        ),
       }
     )
 
     expect(result.current.filters.tags).toEqual(['Soup'])
     expect(result.current.filters.dietaryTags).toEqual(['Vegan'])
 
-    // Remove tags
+    // Simulate URL navigation removing tags and diet query parameters
     act(() => {
-      result.current.removeTag('Soup')
+      navigateFn('/dashboard/recipes')
     })
+
     expect(result.current.filters.tags).toEqual([])
+    expect(result.current.filters.dietaryTags).toEqual([])
   })
 
   it('gracefully handles malformed percent-encoded sequences in URL parameters without crashing', () => {

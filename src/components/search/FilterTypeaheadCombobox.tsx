@@ -68,16 +68,22 @@ export const FilterTypeaheadCombobox: React.FC<FilterTypeaheadComboboxProps> = (
   }, [isOpen])
 
   const toggleOption = (option: string) => {
-    const cleaned = sanitizeOption(option)
-    if (!cleaned) return
-    const isSelected = selected.some(s => s.toLowerCase() === cleaned.toLowerCase())
+    const trimmed = option.trim()
+    if (!trimmed) return
+    const isSelected = selected.some(s => s.toLowerCase() === trimmed.toLowerCase())
     if (isSelected) {
-      onChange(selected.filter(s => s.toLowerCase() !== cleaned.toLowerCase()))
+      onChange(selected.filter(s => s.toLowerCase() !== trimmed.toLowerCase()))
     } else {
-      onChange([...selected, cleaned])
+      onChange([...selected, trimmed])
     }
     setQuery('')
     inputRef.current?.focus()
+  }
+
+  const addCustomOption = (text: string) => {
+    const cleaned = sanitizeOption(text)
+    if (!cleaned) return
+    toggleOption(cleaned)
   }
 
   const removeOption = (option: string) => {
@@ -112,11 +118,11 @@ export const FilterTypeaheadCombobox: React.FC<FilterTypeaheadComboboxProps> = (
         return
       }
       if (canAddCustom && highlightedIndex === filteredOptions.length) {
-        toggleOption(cleanedQuery)
+        addCustomOption(cleanedQuery)
       } else if (filteredOptions[highlightedIndex]) {
         toggleOption(filteredOptions[highlightedIndex])
       } else if (cleanedQuery && allowCustom) {
-        toggleOption(cleanedQuery)
+        addCustomOption(cleanedQuery)
       }
     } else if (e.key === 'Backspace' && !query && selected.length > 0) {
       removeOption(selected[selected.length - 1])
@@ -254,7 +260,7 @@ export const FilterTypeaheadCombobox: React.FC<FilterTypeaheadComboboxProps> = (
                 {canAddCustom && (
                   <button
                     type="button"
-                    onClick={() => toggleOption(cleanedQuery)}
+                    onClick={() => addCustomOption(cleanedQuery)}
                     onMouseEnter={() => setHighlightedIndex(filteredOptions.length)}
                     className={`w-full flex items-center justify-between px-3 py-2 border-t border-gray-100 dark:border-slate-800 text-left transition-colors cursor-pointer ${
                       highlightedIndex === filteredOptions.length

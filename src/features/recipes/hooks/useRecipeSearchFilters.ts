@@ -51,14 +51,6 @@ export interface UseRecipeSearchFiltersReturn {
   appliedAiPrompt: string
 }
 
-const safeDecode = (str: string): string => {
-  try {
-    return decodeURIComponent(str)
-  } catch {
-    return str
-  }
-}
-
 export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFiltersReturn => {
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -68,14 +60,14 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
   const urlTagsParam = searchParams.get('tags')
   const initialTag = searchParams.get('tag')
   const initialTags = urlTagsParam
-    ? urlTagsParam.split(',').map(t => safeDecode(t).trim()).filter(Boolean)
+    ? urlTagsParam.split(',').map(t => t.trim()).filter(Boolean)
     : initialTag && !DIETARY_OPTIONS.some(d => d.toLowerCase() === initialTag.toLowerCase())
-    ? [safeDecode(initialTag).trim()].filter(Boolean)
+    ? [initialTag.trim()].filter(Boolean)
     : []
   const initialDiet = searchParams.get('diet')
-    ? searchParams.get('diet')!.split(',').map(d => safeDecode(d).trim()).filter(Boolean)
+    ? searchParams.get('diet')!.split(',').map(d => d.trim()).filter(Boolean)
     : initialTag && DIETARY_OPTIONS.some(d => d.toLowerCase() === initialTag.toLowerCase())
-    ? [safeDecode(initialTag).trim()].filter(Boolean)
+    ? [initialTag.trim()].filter(Boolean)
     : []
   const initialMaxTime = searchParams.get('maxTime') ? Number(searchParams.get('maxTime')) : null
   const initialMaxCal = searchParams.get('maxCal') ? Number(searchParams.get('maxCal')) : null
@@ -226,14 +218,14 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     const urlTagsParam = searchParams.get('tags')
     const urlTag = searchParams.get('tag')
     const urlTags = urlTagsParam
-      ? urlTagsParam.split(',').map(t => safeDecode(t).trim()).filter(Boolean)
+      ? urlTagsParam.split(',').map(t => t.trim()).filter(Boolean)
       : urlTag && !DIETARY_OPTIONS.some(d => d.toLowerCase() === urlTag.toLowerCase())
-      ? [safeDecode(urlTag).trim()].filter(Boolean)
+      ? [urlTag.trim()].filter(Boolean)
       : []
     const urlDiet = searchParams.get('diet')
-      ? searchParams.get('diet')!.split(',').map(d => safeDecode(d).trim()).filter(Boolean)
+      ? searchParams.get('diet')!.split(',').map(d => d.trim()).filter(Boolean)
       : urlTag && DIETARY_OPTIONS.some(d => d.toLowerCase() === urlTag.toLowerCase())
-      ? [safeDecode(urlTag).trim()].filter(Boolean)
+      ? [urlTag.trim()].filter(Boolean)
       : []
     const urlMaxTime = searchParams.get('maxTime') ? Number(searchParams.get('maxTime')) : null
     const urlMaxCal = searchParams.get('maxCal') ? Number(searchParams.get('maxCal')) : null
