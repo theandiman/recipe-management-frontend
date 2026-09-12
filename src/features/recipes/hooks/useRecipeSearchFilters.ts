@@ -10,6 +10,7 @@ import {
   type ViewMode,
   sortRecipes,
 } from '../utils/recipeSorting'
+import { parseAiSearchIntent, type AiSearchIntentResult } from '../../../utils/aiApi'
 import type { Recipe } from '../../../types/nutrition'
 
 export interface UseRecipeSearchFiltersReturn {
@@ -26,6 +27,7 @@ export interface UseRecipeSearchFiltersReturn {
   filteredAndSortedRecipes: Recipe[]
   clearAllFilters: () => void
   removeDietaryTag: (tag: string) => void
+  nlpSummary: string | null
 }
 
 export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFiltersReturn => {
@@ -113,14 +115,73 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     }
   }, [searchText, filters, sortOption, viewMode])
 
+  const [nlpSummary, setNlpSummary] = useState<string | null>(null)
+  const [aiIntent, setAiIntent] = useState<AiSearchIntentResult | null>(null)
+
+  // Debounced NLP intent parser for conversational queries
+  useEffect(() => {
+    const trimmed = searchText.trim()
+    if (!trimmed || trimmed.length < 4) {
+      setNlpSummary(null)
+      setAiIntent(null)
+      return
+    }
+
+    let active = true
+
+    const timer = setTimeout(async () => {
+      try {
+        const intent = await parseAiSearchIntent(trimmed)
+        if (!active) return
+        setAiIntent(intent)
+
+        const summaryParts: string[] = []
+        if (
+          intent.explanation &&
+          !intent.explanation.toLowerCase().includes('empty search prompt') &&
+          !intent.explanation.toLowerCase().includes('using standard keyword search')
+        ) {
+          summaryParts.push(intent.explanation)
+        } else {
+          if (typeof intent.maxPrepTime === 'number') {
+            summaryParts.push(`Max Prep: ${intent.maxPrepTime} mins`)
+          }
+          if (typeof intent.maxCalories === 'number') {
+            summaryParts.push(`Max Cals: ${intent.maxCalories} kcal`)
+          }
+          if (intent.dietaryTags && intent.dietaryTags.length > 0) {
+            summaryParts.push(`Tags: ${intent.dietaryTags.join(', ')}`)
+          }
+        }
+
+        if (summaryParts.length > 0) {
+          setNlpSummary(summaryParts.join(' • '))
+        } else {
+          setNlpSummary(null)
+        }
+      } catch {
+        if (!active) return
+        setNlpSummary(null)
+        setAiIntent(null)
+      }
+    }, 400)
+
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
+  }, [searchText])
+
   // Filter & Sort Pipeline
   const filteredAndSortedRecipes = useMemo(() => {
-    const filtered = filterRecipes(allRecipes, filters, searchText)
+    const filtered = filterRecipes(allRecipes, filters, searchText, aiIntent)
     return sortRecipes(filtered, sortOption)
-  }, [allRecipes, filters, searchText, sortOption])
+  }, [allRecipes, filters, searchText, aiIntent, sortOption])
 
   const clearAllFilters = useCallback(() => {
     setSearchText('')
+    setNlpSummary(null)
+    setAiIntent(null)
     setFilters(DEFAULT_RECIPE_FILTERS)
     setSortOption('relevance')
   }, [])
@@ -146,5 +207,6 @@ export const useRecipeSearchFilters = (allRecipes: Recipe[]): UseRecipeSearchFil
     filteredAndSortedRecipes,
     clearAllFilters,
     removeDietaryTag,
+    nlpSummary,
   }
 }

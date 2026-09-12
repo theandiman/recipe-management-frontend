@@ -78,6 +78,22 @@ describe('OmniSearchModal', () => {
     })
   })
 
+  it('should support NLP queries with conversational stop words and time constraints', async () => {
+    render(
+      <MemoryRouter>
+        <OmniSearchModal isOpen={true} onClose={vi.fn()} />
+      </MemoryRouter>
+    )
+
+    const input = screen.getByPlaceholderText(/Search recipes, tags, ingredients/i)
+    fireEvent.change(input, { target: { value: 'show me quick pasta for dinner under 20 mins' } })
+
+    await waitFor(() => {
+      expect(screen.getByText('Creamy Garlic Pasta')).toBeInTheDocument()
+      expect(screen.queryByText('Keto Avocado Salad')).not.toBeInTheDocument()
+    })
+  })
+
   it('should show matching tags', async () => {
     render(
       <MemoryRouter>

@@ -128,4 +128,57 @@ describe('recipeFiltering', () => {
     expect(result).toHaveLength(1)
     expect(result[0].recipeName).toBe('Keto Avocado Salad')
   })
+
+  it('should handle natural language queries with conversational stop words', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'show me quick salad for dinner')
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Keto Avocado Salad')
+  })
+
+  it('should parse multi-word dietary phrases like "low carb"', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'low carb salad')
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Keto Avocado Salad')
+  })
+
+  it('should support negative exclusions like "without cheese"', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'soup without cheese')
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Vegan Lentil Soup')
+  })
+
+  it('should combine natural language attributes, dietary intent, and time/calorie constraints', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'quick low-carb salad under 400 cals')
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Keto Avocado Salad')
+  })
+
+  it('should require ALL dietary groups to be satisfied (AND logic across groups)', () => {
+    // Vegan Lentil Soup is Vegan + Gluten-Free
+    // Keto Avocado Salad is Keto + Gluten-Free (NOT Vegan)
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'vegan gluten free')
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Vegan Lentil Soup')
+  })
+
+  it('should not exclude recipes when exclusion word is part of a -free compound (e.g. without dairy matches dairy-free)', () => {
+    // Vegan Lentil Soup is vegan (so dairy-free)
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'without dairy')
+    expect(result.map(r => r.recipeName)).toContain('Vegan Lentil Soup')
+  })
+
+  it('should support excluding allergens like gluten and nuts', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'without gluten')
+    // Cheesy Garlic Bread does not have gluten-free tag and is excluded if gluten is present
+    expect(result.map(r => r.recipeName)).toEqual(['Keto Avocado Salad', 'Vegan Lentil Soup'])
+  })
+
+  it('should support aiIntent parameter seamlessly', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'soup', {
+      dietaryTags: ['Vegan'],
+      maxCalories: 600,
+    })
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Vegan Lentil Soup')
+  })
 })

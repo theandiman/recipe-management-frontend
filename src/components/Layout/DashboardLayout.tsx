@@ -328,6 +328,11 @@ const DashboardLayoutInner: React.FC = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  navigate(`/dashboard/recipes?q=${encodeURIComponent(searchQuery.trim())}`)
+                }
+              }}
               placeholder="Search recipes, tags..."
               className="pl-9 pr-14 py-1.5 rounded-xl bg-white/90 dark:bg-slate-800/90 border border-gray-200/80 dark:border-slate-700/80 text-gray-900 dark:text-gray-100 placeholder-gray-400 text-xs font-medium w-44 sm:w-64 md:w-80 focus:outline-none focus:ring-2 focus:ring-emerald-400 shadow-xs transition-all"
             />

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getRecipes } from '../../services/recipeStorageApi'
 import { queryAiSearch } from '../../utils/aiApi'
+import { filterRecipes, DEFAULT_RECIPE_FILTERS } from '../../features/recipes/utils/recipeFiltering'
 import type { Recipe } from '../../types/nutrition'
 
 const RECENT_SEARCHES_KEY = 'recipe_search_history_v1'
@@ -124,13 +125,7 @@ export const OmniSearchModal: React.FC<OmniSearchModalProps> = ({ isOpen, onClos
         .sort((a, b) => (aiSearchResults.matchesMap[b.id!].score || 0) - (aiSearchResults.matchesMap[a.id!].score || 0))
     }
 
-    const q = query.trim().toLowerCase()
-    return recipes.filter(r => 
-      (r.recipeName || '').toLowerCase().includes(q) ||
-      (r.description || '').toLowerCase().includes(q) ||
-      (r.tags || []).some(t => t.toLowerCase().includes(q)) ||
-      (r.ingredients || []).some(ing => (typeof ing === 'string' ? ing : (ing as { item?: string })?.item || '').toLowerCase().includes(q))
-    ).slice(0, 6)
+    return filterRecipes(recipes, DEFAULT_RECIPE_FILTERS, query).slice(0, 6)
   }, [recipes, query, aiSearchResults])
 
   const matchingTags = useMemo(() => {
