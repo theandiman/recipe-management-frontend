@@ -107,68 +107,86 @@ describe('recipeFiltering', () => {
     expect(getActiveFilterCount(filters)).toBe(5)
   })
 
-  it('should support tokenized NLP search for attribute words like "quick"', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'quick')
-    expect(result.length).toBeGreaterThanOrEqual(2)
+  it('should support plain text search across title, description, tags, and ingredients', () => {
+    // Title
+    expect(filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'Salad')).toHaveLength(1)
+    // Description
+    expect(filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'hearty')).toHaveLength(1)
+    // Tags
+    expect(filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'gluten-free')).toHaveLength(2)
+    // Ingredients
+    expect(filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'spinach')).toHaveLength(1)
   })
 
-  it('should match multi-token search terms across fields in any order', () => {
+  it('should match multi-token plain text search terms across fields in any order', () => {
     const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'garlic bread')
     expect(result).toHaveLength(1)
     expect(result[0].recipeName).toBe('Cheesy Garlic Bread')
   })
 
-  it('should parse numeric prep time limits directly from text query without mutating filters', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'under 15 mins')
+  it('should parse numeric prep time limits from AI prompt without mutating filters', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', null, 'under 15 mins')
     expect(result.map(r => r.recipeName)).toEqual(['Keto Avocado Salad', 'Cheesy Garlic Bread'])
   })
 
-  it('should parse numeric calorie limits directly from text query without mutating filters', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'under 400 cals')
+  it('should parse numeric calorie limits from AI prompt without mutating filters', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', null, 'under 400 cals')
     expect(result).toHaveLength(1)
     expect(result[0].recipeName).toBe('Keto Avocado Salad')
   })
 
-  it('should handle natural language queries with conversational stop words', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'show me quick salad for dinner')
+  it('should handle natural language queries in AI prompt with conversational intent', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', {
+      queryKeywords: 'salad',
+      dietaryTags: ['Keto'],
+    }, 'show me quick salad for dinner')
     expect(result).toHaveLength(1)
     expect(result[0].recipeName).toBe('Keto Avocado Salad')
   })
 
-  it('should parse multi-word dietary phrases like "low carb"', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'low carb salad')
+  it('should parse multi-word dietary phrases in AI prompt like "low carb"', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', null, 'low carb salad')
     expect(result).toHaveLength(1)
     expect(result[0].recipeName).toBe('Keto Avocado Salad')
   })
 
-  it('should support negative exclusions like "without cheese"', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'soup without cheese')
+  it('should support negative exclusions in AI prompt like "without cheese"', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', null, 'soup without cheese')
     expect(result).toHaveLength(1)
     expect(result[0].recipeName).toBe('Vegan Lentil Soup')
   })
 
-  it('should combine natural language attributes, dietary intent, and time/calorie constraints', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'quick low-carb salad under 400 cals')
+  it('should combine natural language attributes, dietary intent, and time/calorie constraints in AI prompt', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', null, 'quick low-carb salad under 400 cals')
     expect(result).toHaveLength(1)
     expect(result[0].recipeName).toBe('Keto Avocado Salad')
   })
 
-  it('should require ALL dietary groups to be satisfied (AND logic across groups)', () => {
+  it('should fall back to cleaned prompt keywords when AI intent uses standard keyword search', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', {
+      queryKeywords: 'Quick dinner under 30 mins',
+      dietaryTags: [],
+      explanation: 'Using standard keyword search.',
+    }, 'Quick dinner under 30 mins')
+    expect(result.map(r => r.recipeName)).toEqual(['Keto Avocado Salad', 'Cheesy Garlic Bread'])
+  })
+
+  it('should require ALL dietary groups to be satisfied in AI prompt (AND logic across groups)', () => {
     // Vegan Lentil Soup is Vegan + Gluten-Free
     // Keto Avocado Salad is Keto + Gluten-Free (NOT Vegan)
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'vegan gluten free')
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', null, 'vegan gluten free')
     expect(result).toHaveLength(1)
     expect(result[0].recipeName).toBe('Vegan Lentil Soup')
   })
 
-  it('should not exclude recipes when exclusion word is part of a -free compound (e.g. without dairy matches dairy-free)', () => {
+  it('should not exclude recipes when exclusion word in AI prompt is part of a -free compound (e.g. without dairy matches dairy-free)', () => {
     // Vegan Lentil Soup is vegan (so dairy-free)
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'without dairy')
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', null, 'without dairy')
     expect(result.map(r => r.recipeName)).toContain('Vegan Lentil Soup')
   })
 
-  it('should support excluding allergens like gluten and nuts', () => {
-    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'without gluten')
+  it('should support excluding allergens in AI prompt like gluten and nuts', () => {
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, '', null, 'without gluten')
     // Cheesy Garlic Bread does not have gluten-free tag and is excluded if gluten is present
     expect(result.map(r => r.recipeName)).toEqual(['Keto Avocado Salad', 'Vegan Lentil Soup'])
   })
@@ -180,5 +198,13 @@ describe('recipeFiltering', () => {
     })
     expect(result).toHaveLength(1)
     expect(result[0].recipeName).toBe('Vegan Lentil Soup')
+  })
+
+  it('should combine plain text search with AI prompt seamlessly', () => {
+    // AI prompt filters to < 15 mins (Keto Avocado Salad, Cheesy Garlic Bread)
+    // Plain text search filters to "salad" -> only Keto Avocado Salad
+    const result = filterRecipes(sampleRecipes, DEFAULT_RECIPE_FILTERS, 'salad', null, 'under 15 mins')
+    expect(result).toHaveLength(1)
+    expect(result[0].recipeName).toBe('Keto Avocado Salad')
   })
 })
