@@ -37,6 +37,14 @@ export const PrintRecipeModal: React.FC<PrintRecipeModalProps> = ({
   const [includeNotesArea, setIncludeNotesArea] = useState<boolean>(true)
 
   React.useEffect(() => {
+    setServings(baseServings)
+    setIncludePhoto(Boolean(recipe.imageUrl))
+    setIncludeNutrition(Boolean(recipe.nutritionalInfo?.perServing))
+    setIncludeTips(Boolean(getEffectiveTips(recipe)))
+    setIncludeNotesArea(true)
+  }, [recipe.id, baseServings, recipe.imageUrl, recipe.nutritionalInfo?.perServing])
+
+  React.useEffect(() => {
     onConfigChange?.({
       servings,
       includePhoto,
@@ -98,7 +106,7 @@ export const PrintRecipeModal: React.FC<PrintRecipeModalProps> = ({
                 <button
                   type="button"
                   onClick={handlePrint}
-                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold text-sm shadow-md transition-all hover:scale-102 cursor-pointer"
+                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold text-sm shadow-md transition-all hover:scale-[1.02] cursor-pointer"
                 >
                   <span>🖨️</span>
                   <span>Print Now</span>
@@ -285,7 +293,7 @@ export const PrintRecipeModal: React.FC<PrintRecipeModalProps> = ({
               <button
                 type="button"
                 onClick={handlePrint}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition-all hover:scale-102 cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition-all hover:scale-[1.02] cursor-pointer"
               >
                 <span>🖨️</span>
                 <span>Print Now</span>

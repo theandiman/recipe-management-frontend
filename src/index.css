@@ -107,8 +107,7 @@
   /* Reset all potential container offsets and scroll containers */
   #root,
   .min-h-screen,
-  main,
-  div {
+  main {
     overflow: visible !important;
     height: auto !important;
     min-height: 0 !important;
@@ -154,9 +153,11 @@
   }
 
   /* Enforce black/dark text on paper even if user was in dark mode */
-  #printable-recipe-root * {
+  #printable-recipe-root {
     color: #0f172a !important;
-    border-color: #cbd5e1 !important;
+  }
+
+  #printable-recipe-root * {
     text-shadow: none !important;
     box-shadow: none !important;
   }

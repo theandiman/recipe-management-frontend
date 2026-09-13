@@ -112,8 +112,11 @@ export const RecipeDetail: React.FC = () => {
     }
   }, [])
 
+  const prevRecipeIdRef = useRef<string | undefined>(undefined)
+
   useEffect(() => {
-    if (recipe) {
+    if (recipe && recipe.id !== prevRecipeIdRef.current) {
+      prevRecipeIdRef.current = recipe.id
       setPrintConfig({
         servings: typeof recipe.servings === 'number' && recipe.servings > 0 ? recipe.servings : 4,
         includePhoto: Boolean(recipe.imageUrl),
