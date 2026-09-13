@@ -10,6 +10,8 @@ import {
   type User as FirebaseUser
 } from 'firebase/auth'
 import { auth } from '../../config/firebase'
+import { store } from '../../store'
+import { recipeApi } from '../../services/recipeApi'
 import { getFirebaseErrorMessage } from '../../utils/firebaseErrors'
 import type { AuthContextType, LoginCredentials, RegisterData, User } from '../../types/auth'
 
@@ -66,6 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           setUser(null)
         }
+        store.dispatch(recipeApi.util.resetApiState())
         setIsLoading(false)
       },
       (err) => {
@@ -172,6 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await firebaseSignOut(auth)
       setUser(null)
+      store.dispatch(recipeApi.util.resetApiState())
     } catch (err) {
       const errorMessage = getFirebaseErrorMessage(err)
       setError(errorMessage)
