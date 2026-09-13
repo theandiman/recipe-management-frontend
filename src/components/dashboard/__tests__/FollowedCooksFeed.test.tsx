@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
+import { Provider } from 'react-redux'
+import { store } from '../../../store'
+import { recipeApi } from '../../../services/recipeApi'
 import { FollowedCooksFeed } from '../FollowedCooksFeed'
 import * as recipeStorageApi from '../../../services/recipeStorageApi'
 import type { Recipe } from '../../../types/nutrition'
@@ -27,6 +30,13 @@ vi.mock('../../LikeButton', () => ({
   default: () => <button data-testid="like-btn">Like</button>,
   LikeButton: () => <button data-testid="like-btn">Like</button>,
 }))
+
+const renderWithProviders = (ui: React.ReactElement) =>
+  render(
+    <Provider store={store}>
+      <BrowserRouter>{ui}</BrowserRouter>
+    </Provider>
+  )
 
 describe('FollowedCooksFeed', () => {
   const mockFeedRecipes: Recipe[] = [
@@ -56,16 +66,13 @@ describe('FollowedCooksFeed', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    store.dispatch(recipeApi.util.resetApiState())
   })
 
   it('renders loading skeleton while fetching feed', () => {
     vi.mocked(recipeStorageApi.getFeed).mockImplementation(() => new Promise(() => {}))
 
-    render(
-      <BrowserRouter>
-        <FollowedCooksFeed />
-      </BrowserRouter>
-    )
+    renderWithProviders(<FollowedCooksFeed />)
 
     expect(screen.getByTestId('feed-loading-skeleton')).toBeInTheDocument()
     expect(screen.getByText('From cooks you follow')).toBeInTheDocument()
@@ -74,11 +81,7 @@ describe('FollowedCooksFeed', () => {
   it('renders followed cook recipes and community link on success', async () => {
     vi.mocked(recipeStorageApi.getFeed).mockResolvedValue(mockFeedRecipes)
 
-    render(
-      <BrowserRouter>
-        <FollowedCooksFeed />
-      </BrowserRouter>
-    )
+    renderWithProviders(<FollowedCooksFeed />)
 
     await waitFor(() => {
       expect(screen.getByText('Beef Wellington')).toBeInTheDocument()
@@ -116,11 +119,7 @@ describe('FollowedCooksFeed', () => {
 
     vi.mocked(recipeStorageApi.getFeed).mockResolvedValue(recipes)
 
-    render(
-      <BrowserRouter>
-        <FollowedCooksFeed />
-      </BrowserRouter>
-    )
+    renderWithProviders(<FollowedCooksFeed />)
 
     await waitFor(() => {
       expect(screen.getAllByText('Gordon Ramsay').length).toBeGreaterThan(0)
@@ -132,11 +131,7 @@ describe('FollowedCooksFeed', () => {
   it('renders empty discovery state when user follows no cooks or feed is empty', async () => {
     vi.mocked(recipeStorageApi.getFeed).mockResolvedValue([])
 
-    render(
-      <BrowserRouter>
-        <FollowedCooksFeed />
-      </BrowserRouter>
-    )
+    renderWithProviders(<FollowedCooksFeed />)
 
     await waitFor(() => {
       expect(screen.getByText('No followed-cook recipes yet')).toBeInTheDocument()
@@ -153,11 +148,7 @@ describe('FollowedCooksFeed', () => {
       .mockRejectedValueOnce(new Error('Network offline'))
       .mockResolvedValueOnce(mockFeedRecipes)
 
-    render(
-      <BrowserRouter>
-        <FollowedCooksFeed />
-      </BrowserRouter>
-    )
+    renderWithProviders(<FollowedCooksFeed />)
 
     await waitFor(() => {
       expect(screen.getByText(/Failed to load followed cooks: Network offline/i)).toBeInTheDocument()

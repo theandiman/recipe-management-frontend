@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
+import { Provider } from 'react-redux'
+import { store } from '../store'
+import { recipeApi } from '../services/recipeApi'
 import { Dashboard } from './Dashboard'
 import * as recipeStorageApi from '../services/recipeStorageApi'
 import * as AuthContext from '../features/auth/AuthContext'
@@ -36,6 +39,13 @@ vi.mock('../components/LikeButton', () => ({
   default: () => null,
   LikeButton: () => null,
 }))
+
+const renderWithProviders = (ui: React.ReactElement) =>
+  render(
+    <Provider store={store}>
+      <BrowserRouter>{ui}</BrowserRouter>
+    </Provider>
+  )
 
 describe('Dashboard', () => {
   const mockUser = {
@@ -83,6 +93,7 @@ describe('Dashboard', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    store.dispatch(recipeApi.util.resetApiState())
 
     vi.mocked(AuthContext.useAuth).mockReturnValue({
       isAuthenticated: true,
@@ -116,11 +127,7 @@ describe('Dashboard', () => {
   it('renders greeting with user display name and creation buttons', async () => {
     vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
 
-    render(
-      <BrowserRouter>
-        <Dashboard />
-      </BrowserRouter>
-    )
+    renderWithProviders(<Dashboard />)
 
     expect(screen.getByText('Chef Andy')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Create Recipe/i })).toBeInTheDocument()
@@ -130,11 +137,7 @@ describe('Dashboard', () => {
   it('renders followed cooks feed, saved recipes continuation, and recent activity sections', async () => {
     vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
 
-    render(
-      <BrowserRouter>
-        <Dashboard />
-      </BrowserRouter>
-    )
+    renderWithProviders(<Dashboard />)
 
     await waitFor(() => {
       expect(screen.getByText('From cooks you follow')).toBeInTheDocument()
@@ -146,11 +149,7 @@ describe('Dashboard', () => {
   it('renders your recent recipes when user has recipes in their cookbook', async () => {
     vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
 
-    render(
-      <BrowserRouter>
-        <Dashboard />
-      </BrowserRouter>
-    )
+    renderWithProviders(<Dashboard />)
 
     await waitFor(() => {
       expect(screen.getByText('Your Recent Recipes')).toBeInTheDocument()
@@ -163,11 +162,7 @@ describe('Dashboard', () => {
   it('renders new-user onboarding when user has zero recipes', async () => {
     vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue([])
 
-    render(
-      <BrowserRouter>
-        <Dashboard />
-      </BrowserRouter>
-    )
+    renderWithProviders(<Dashboard />)
 
     await waitFor(() => {
       expect(screen.getByText('Get started with CookFlow')).toBeInTheDocument()
@@ -179,11 +174,7 @@ describe('Dashboard', () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     vi.mocked(recipeStorageApi.getRecipes).mockRejectedValueOnce(new Error('Failed to fetch recipes'))
 
-    render(
-      <BrowserRouter>
-        <Dashboard />
-      </BrowserRouter>
-    )
+    renderWithProviders(<Dashboard />)
 
     await waitFor(() => {
       expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to fetch recipes:', expect.any(Error))
@@ -203,11 +194,7 @@ describe('Dashboard', () => {
   it('does not render duplicate hero search bar or old FYP recommendations', async () => {
     vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
 
-    render(
-      <BrowserRouter>
-        <Dashboard />
-      </BrowserRouter>
-    )
+    renderWithProviders(<Dashboard />)
 
     await waitFor(() => {
       expect(screen.queryByPlaceholderText(/Search recipes, ingredients, or tags/i)).not.toBeInTheDocument()
@@ -218,11 +205,7 @@ describe('Dashboard', () => {
   it('renders cookbook snapshot stats card in the sidebar', async () => {
     vi.mocked(recipeStorageApi.getRecipes).mockResolvedValue(mockRecipes)
 
-    render(
-      <BrowserRouter>
-        <Dashboard />
-      </BrowserRouter>
-    )
+    renderWithProviders(<Dashboard />)
 
     await waitFor(() => {
       expect(screen.getByText('Cookbook Snapshot')).toBeInTheDocument()

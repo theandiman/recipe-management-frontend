@@ -1,19 +1,15 @@
 import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react'
 import type { Recipe } from '../types/nutrition'
-import {
-  getRecipes,
-  getPublicRecipes,
-  getFeed,
-  getRecipe,
-  getSavedRecipes,
-  likeRecipe as apiLikeRecipe,
-  unlikeRecipe as apiUnlikeRecipe,
-  bookmarkRecipe as apiBookmarkRecipe,
-  unbookmarkRecipe as apiUnbookmarkRecipe,
-  saveRecipe as apiSaveRecipe,
-  updateRecipe as apiUpdateRecipe,
-  deleteRecipe as apiDeleteRecipe,
-} from './recipeStorageApi'
+import * as storageApi from './recipeStorageApi'
+
+function extractErrorMessage(err: unknown, fallback: string): string {
+  if (err && typeof err === 'object') {
+    const apiError = err as { response?: { data?: { message?: string } }; message?: string }
+    if (apiError.response?.data?.message) return apiError.response.data.message
+    if (apiError.message) return apiError.message
+  }
+  return fallback
+}
 
 export const recipeApi = createApi({
   reducerPath: 'recipeApi',
@@ -24,11 +20,10 @@ export const recipeApi = createApi({
     getRecipes: builder.query<Recipe[], void>({
       queryFn: async () => {
         try {
-          const data = await getRecipes()
+          const data = await storageApi.getRecipes()
           return { data: Array.isArray(data) ? data : [] }
         } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : 'Failed to fetch recipes'
-          return { error: { message } }
+          return { error: { message: extractErrorMessage(err, 'Failed to fetch recipes') } }
         }
       },
       providesTags: (result) =>
@@ -40,11 +35,10 @@ export const recipeApi = createApi({
     getPublicRecipes: builder.query<Recipe[], void>({
       queryFn: async () => {
         try {
-          const data = await getPublicRecipes()
+          const data = await storageApi.getPublicRecipes()
           return { data: Array.isArray(data) ? data : [] }
         } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : 'Failed to fetch public recipes'
-          return { error: { message } }
+          return { error: { message: extractErrorMessage(err, 'Failed to fetch public recipes') } }
         }
       },
       providesTags: [{ type: 'PublicRecipes', id: 'LIST' }],
@@ -53,11 +47,10 @@ export const recipeApi = createApi({
     getFeed: builder.query<Recipe[], void>({
       queryFn: async () => {
         try {
-          const data = await getFeed()
+          const data = await storageApi.getFeed()
           return { data: Array.isArray(data) ? data : [] }
         } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : 'Failed to fetch feed'
-          return { error: { message } }
+          return { error: { message: extractErrorMessage(err, 'Failed to fetch feed') } }
         }
       },
       providesTags: [{ type: 'Feed', id: 'LIST' }],
@@ -66,11 +59,10 @@ export const recipeApi = createApi({
     getRecipe: builder.query<Recipe, string>({
       queryFn: async (id) => {
         try {
-          const data = await getRecipe(id)
+          const data = await storageApi.getRecipe(id)
           return { data }
         } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : 'Failed to fetch recipe'
-          return { error: { message } }
+          return { error: { message: extractErrorMessage(err, 'Failed to fetch recipe') } }
         }
       },
       providesTags: (_result, _error, id) => [{ type: 'Recipe', id }],
@@ -79,11 +71,10 @@ export const recipeApi = createApi({
     getSavedRecipes: builder.query<Recipe[], void>({
       queryFn: async () => {
         try {
-          const data = await getSavedRecipes()
+          const data = await storageApi.getSavedRecipes()
           return { data: Array.isArray(data) ? data : [] }
         } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : 'Failed to fetch saved recipes'
-          return { error: { message } }
+          return { error: { message: extractErrorMessage(err, 'Failed to fetch saved recipes') } }
         }
       },
       providesTags: [{ type: 'SavedRecipes', id: 'LIST' }],
@@ -93,14 +84,13 @@ export const recipeApi = createApi({
       queryFn: async ({ id, currentlyLiked }) => {
         try {
           if (currentlyLiked) {
-            await apiUnlikeRecipe(id)
+            await storageApi.unlikeRecipe(id)
           } else {
-            await apiLikeRecipe(id)
+            await storageApi.likeRecipe(id)
           }
           return { data: undefined }
         } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : 'Failed to toggle like'
-          return { error: { message } }
+          return { error: { message: extractErrorMessage(err, 'Failed to toggle like') } }
         }
       },
       async onQueryStarted({ id, currentlyLiked, currentLikeCount }, { dispatch, queryFulfilled }) {
@@ -133,6 +123,19 @@ export const recipeApi = createApi({
           })
         )
 
+        // Optimistically update getSavedRecipes
+        const patchSaved = dispatch(
+          recipeApi.util.updateQueryData('getSavedRecipes', undefined, (draft) => {
+            const recipe = draft.find((r) => r.id === id) as
+              | (Recipe & { isLikedByCurrentUser?: boolean; likeCount?: number })
+              | undefined
+            if (recipe) {
+              recipe.isLikedByCurrentUser = nextLiked
+              recipe.likeCount = nextLikeCount
+            }
+          })
+        )
+
         // Optimistically update getRecipe
         const patchDetail = dispatch(
           recipeApi.util.updateQueryData('getRecipe', id, (draft) => {
@@ -147,6 +150,7 @@ export const recipeApi = createApi({
         } catch {
           patchPublic.undo()
           patchFeed.undo()
+          patchSaved.undo()
           patchDetail.undo()
         }
       },
@@ -157,9 +161,9 @@ export const recipeApi = createApi({
         if (!recipe.id) return { data: undefined }
         try {
           if (currentlySaved) {
-            await apiUnbookmarkRecipe(recipe.id)
+            await storageApi.unbookmarkRecipe(recipe.id)
           } else {
-            await apiBookmarkRecipe(recipe.id)
+            await storageApi.bookmarkRecipe(recipe.id)
           }
           return { data: undefined }
         } catch (err: unknown) {
@@ -233,7 +237,7 @@ export const recipeApi = createApi({
     createRecipe: builder.mutation<Recipe, Recipe>({
       queryFn: async (recipe) => {
         try {
-          const data = await apiSaveRecipe(recipe)
+          const data = await storageApi.saveRecipe(recipe)
           return { data }
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : 'Failed to create recipe'
@@ -250,7 +254,7 @@ export const recipeApi = createApi({
     updateRecipe: builder.mutation<Recipe, { id: string; recipe: Recipe }>({
       queryFn: async ({ id, recipe }) => {
         try {
-          const data = await apiUpdateRecipe(id, recipe)
+          const data = await storageApi.updateRecipe(id, recipe)
           return { data }
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : 'Failed to update recipe'
@@ -268,7 +272,7 @@ export const recipeApi = createApi({
     deleteRecipe: builder.mutation<void, string>({
       queryFn: async (id) => {
         try {
-          await apiDeleteRecipe(id)
+          await storageApi.deleteRecipe(id)
           return { data: undefined }
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : 'Failed to delete recipe'
@@ -344,3 +348,18 @@ export const useRecipe = (id?: string, options?: { skip?: boolean }) => {
     refetch: query.refetch,
   }
 }
+
+export const useSavedRecipes = (options?: { skip?: boolean } | boolean) => {
+  const skip = typeof options === 'boolean' ? !options : (options?.skip ?? false)
+  const query = useGetSavedRecipesQuery(undefined, { skip })
+  return {
+    ...query,
+    savedRecipes: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error ? ((query.error as { message?: string }).message ?? 'Error fetching saved recipes') : null,
+    refetch: query.refetch,
+  }
+}
+
+export const useSavedRecipesQuery = useSavedRecipes
+

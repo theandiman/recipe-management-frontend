@@ -9,7 +9,11 @@ export const store = configureStore({
     [recipeApi.reducerPath]: recipeApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(recipeApi.middleware),
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredPaths: [recipeApi.reducerPath],
+      },
+    }).concat(recipeApi.middleware),
 })
 
 export type RootState = ReturnType<typeof store.getState>

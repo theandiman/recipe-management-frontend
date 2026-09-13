@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useAppDispatch } from '../../store'
 import { updateRecipeSharing, deleteRecipe } from '../../services/recipeStorageApi'
-import { useRecipe, queryClient } from '../../services/serverState'
+import { useRecipe, recipeApi } from '../../services/recipeApi'
 import { getUserProfile, type UserProfile } from '../../services/userApi'
 import { CookingMode } from '../../components/CookingMode'
 import GlobeIcon from '../../components/GlobeIcon'
@@ -48,6 +49,7 @@ const TrashIcon = () => (
 export const RecipeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const { user: currentUser } = useAuth()
   const { recipe, loading, error } = useRecipe(id)
   const [fetchedAuthorProfile, setFetchedAuthorProfile] = useState<UserProfile | null>(null)
@@ -94,10 +96,14 @@ export const RecipeDetail: React.FC = () => {
       setIsDeleting(true)
       setDeleteError(null)
       await deleteRecipe(id)
-      queryClient.setQueryData<Recipe>(`recipe:${id}`, () => null)
-      queryClient.invalidateQueries('recipes')
-      queryClient.invalidateQueries('publicRecipes')
-      queryClient.invalidateQueries('feed')
+      dispatch(
+        recipeApi.util.invalidateTags([
+          { type: 'Recipe', id },
+          { type: 'Recipe', id: 'LIST' },
+          { type: 'PublicRecipes', id: 'LIST' },
+          { type: 'Feed', id: 'LIST' },
+        ])
+      )
       setIsDeleteModalOpen(false)
       navigate('/dashboard/recipes', { replace: true })
     } catch (err: unknown) {
@@ -218,9 +224,18 @@ export const RecipeDetail: React.FC = () => {
       setSharingError(null)
       const newIsPublic = !recipe.isPublic
       const updatedRecipe = await updateRecipeSharing(id, newIsPublic)
-      queryClient.setQueryData<Recipe>(`recipe:${id}`, () => updatedRecipe)
-      queryClient.invalidateQueries('publicRecipes')
-      queryClient.invalidateQueries('recipes')
+      dispatch(
+        recipeApi.util.updateQueryData('getRecipe', id, (draft) => {
+          Object.assign(draft, updatedRecipe)
+        })
+      )
+      dispatch(
+        recipeApi.util.invalidateTags([
+          { type: 'PublicRecipes', id: 'LIST' },
+          { type: 'Recipe', id: 'LIST' },
+          { type: 'Feed', id: 'LIST' },
+        ])
+      )
     } catch (err) {
       console.error('Failed to update recipe sharing:', err)
       setSharingError('Could not update sharing status. Please try again.')

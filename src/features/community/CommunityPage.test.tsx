@@ -48,18 +48,24 @@ const mockFeedRecipes = [
   { id: '3', recipeName: 'Avocado Toast', description: 'Simple breakfast', servings: 1 },
 ] as unknown as Recipe[]
 
+import { Provider } from 'react-redux'
+import { store } from '../../store'
+import { recipeApi } from '../../services/recipeApi'
 import { OmniSearchProvider, useOmniSearch } from '../../components/search/OmniSearchContext'
 
 const renderWithRouter = (ui: React.ReactElement, initialEntries = ['/community']) =>
   render(
-    <MemoryRouter initialEntries={initialEntries}>
-      <OmniSearchProvider>{ui}</OmniSearchProvider>
-    </MemoryRouter>
+    <Provider store={store}>
+      <MemoryRouter initialEntries={initialEntries}>
+        <OmniSearchProvider>{ui}</OmniSearchProvider>
+      </MemoryRouter>
+    </Provider>
   )
 
 describe('CommunityPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    store.dispatch(recipeApi.util.resetApiState())
     // Default: unauthenticated
     mockUseAuth.mockReturnValue({ user: null })
   })

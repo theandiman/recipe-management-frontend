@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { usePublicRecipes, useFeed } from '../../services/serverState'
+import { usePublicRecipes, useFeed } from '../../services/recipeApi'
 import { useAuth } from '../auth/AuthContext'
 import RecipeCard from '../../components/RecipeCard'
 import RecipeListItem from '../../components/RecipeListItem'

@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { useFeed } from '../../services/serverState'
+import { useFeed } from '../../services/recipeApi'
 import RecipeCard from '../RecipeCard'
 import { UserAvatar } from '../UserAvatar'
 

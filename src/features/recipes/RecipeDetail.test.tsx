@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Provider } from 'react-redux'
+import { store } from '../../store'
+import { recipeApi } from '../../services/recipeApi'
 import userEvent from '@testing-library/user-event'
 import { RecipeDetail } from './RecipeDetail'
 import * as recipeStorageApi from '../../services/recipeStorageApi'
@@ -95,13 +98,15 @@ const openMoreMenu = async () => {
 
 const renderWithRouter = (initialPath = '/dashboard/recipes/recipe-1') => {
   return render(
-    <BrowserRouter>
-      <Routes>
-        <Route path="/dashboard/recipes/:id" element={<RecipeDetail />} />
-        <Route path="/dashboard/recipes" element={<div>Recipe Library</div>} />
-        <Route path="/dashboard/recipes/edit/:id" element={<div>Edit Recipe</div>} />
-      </Routes>
-    </BrowserRouter>,
+    <Provider store={store}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/dashboard/recipes/:id" element={<RecipeDetail />} />
+          <Route path="/dashboard/recipes" element={<div>Recipe Library</div>} />
+          <Route path="/dashboard/recipes/edit/:id" element={<div>Edit Recipe</div>} />
+        </Routes>
+      </BrowserRouter>
+    </Provider>,
     { wrapper: ({ children }) => {
       window.history.pushState({}, '', initialPath)
       return <>{children}</>
@@ -112,6 +117,7 @@ const renderWithRouter = (initialPath = '/dashboard/recipes/recipe-1') => {
 describe('RecipeDetail', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    store.dispatch(recipeApi.util.resetApiState())
     vi.mocked(useAuth).mockReturnValue({
       user: { uid: 'owner-uid', email: null, displayName: null, photoURL: null },
     } as any)
