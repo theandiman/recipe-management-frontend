@@ -21,6 +21,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
     { key: 'L', description: 'Toggle Like' },
     { key: 'B', description: 'Toggle Bookmark' },
     { key: 'I', description: 'Jump to Ingredients' },
+    { key: 'P', description: 'Print Recipe' },
     { key: '?', description: 'Toggle Keyboard Shortcuts Legend' },
   ]
 

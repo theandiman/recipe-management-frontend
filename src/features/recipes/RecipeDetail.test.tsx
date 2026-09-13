@@ -1127,4 +1127,74 @@ describe('RecipeDetail', () => {
       consoleErrorSpy.mockRestore()
     })
   })
+
+  describe('Recipe Printing', () => {
+    it('should open the print modal when clicking Print recipe in more menu', async () => {
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipeOwnedByUser)
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      await openMoreMenu()
+      const printMenuItem = screen.getByRole('menuitem', { name: /print recipe/i })
+      await userEvent.click(printMenuItem)
+
+      expect(screen.getByRole('dialog', { name: /print recipe/i })).toBeInTheDocument()
+      expect(screen.getByText(/Live Print Preview/i)).toBeInTheDocument()
+    })
+
+    it('should open print modal when pressing "p" shortcut', async () => {
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipe)
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      fireEvent.keyDown(window, { key: 'p' })
+
+      expect(screen.getByRole('dialog', { name: /print recipe/i })).toBeInTheDocument()
+    })
+
+    it('should close print modal when clicking Cancel', async () => {
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipe)
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      fireEvent.keyDown(window, { key: 'p' })
+      expect(screen.getByRole('dialog', { name: /print recipe/i })).toBeInTheDocument()
+
+      const cancelBtn = screen.getByRole('button', { name: /cancel/i })
+      await userEvent.click(cancelBtn)
+
+      expect(screen.queryByRole('dialog', { name: /print recipe/i })).not.toBeInTheDocument()
+    })
+
+    it('should trigger window.print when clicking Print Now in the modal', async () => {
+      const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {})
+      vi.mocked(recipeStorageApi.getRecipe).mockResolvedValue(mockRecipe)
+
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText('Delicious Pasta')).toBeInTheDocument()
+      })
+
+      fireEvent.keyDown(window, { key: 'p' })
+
+      const printNowBtn = screen.getAllByRole('button', { name: /print now/i })[0]
+      await userEvent.click(printNowBtn)
+
+      expect(printSpy).toHaveBeenCalled()
+      printSpy.mockRestore()
+    })
+  })
 })

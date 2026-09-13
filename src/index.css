@@ -84,12 +84,43 @@
 
 /* Printable Recipe Card Stylesheet */
 @media print {
-  body {
-    background: #ffffff !important;
-    color: #000000 !important;
-    font-size: 12pt !important;
+  @page {
+    size: auto;
+    margin: 10mm 12mm;
   }
 
+  html,
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Reset all potential container offsets and scroll containers */
+  #root,
+  .min-h-screen,
+  main,
+  div {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Neutralize layout sidebar offset */
+  .lg\:pl-\[19rem\] {
+    padding-left: 0 !important;
+  }
+
+  /* Hide screen-only interactive chrome and background content */
   nav,
   header,
   footer,
@@ -98,23 +129,41 @@
   .print\:hidden,
   #recipe-comments-section,
   #recipe-options-button,
-  #recipe-options-menu {
+  #recipe-options-menu,
+  .fixed,
+  .recipe-detail-screen-content {
     display: none !important;
   }
 
-  .max-w-4xl,
-  .max-w-7xl {
-    max-width: 100% !important;
+  /* Make printable recipe container visible and full width */
+  #printable-recipe-root {
+    display: block !important;
+    visibility: visible !important;
+    position: relative !important;
+    width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
   }
 
-  .bg-white,
-  .dark\:bg-slate-800,
-  .dark\:bg-slate-900 {
-    background: transparent !important;
-    border: none !important;
+  /* Page break rules for clean multi-page flow */
+  .print-avoid-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Enforce black/dark text on paper even if user was in dark mode */
+  #printable-recipe-root * {
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+    text-shadow: none !important;
     box-shadow: none !important;
+  }
+
+  #printable-recipe-root .bg-slate-50,
+  #printable-recipe-root .bg-slate-100 {
+    background-color: #f8fafc !important;
   }
 }
 
