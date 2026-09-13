@@ -171,13 +171,49 @@ export const recipeApi = createApi({
         const id = recipe.id
         if (!id) return
 
+        const nextSaved = !currentlySaved
+
         // Optimistically update getSavedRecipes
         const patchSaved = dispatch(
           recipeApi.util.updateQueryData('getSavedRecipes', undefined, (draft) => {
             if (currentlySaved) {
               return draft.filter((r) => r.id !== id)
             } else {
-              draft.push(recipe)
+              draft.push({ ...recipe, isSavedByCurrentUser: true } as Recipe)
+            }
+          })
+        )
+
+        // Optimistically update getPublicRecipes
+        const patchPublic = dispatch(
+          recipeApi.util.updateQueryData('getPublicRecipes', undefined, (draft) => {
+            const r = draft.find((item) => item.id === id) as
+              | (Recipe & { isSavedByCurrentUser?: boolean })
+              | undefined
+            if (r) {
+              r.isSavedByCurrentUser = nextSaved
+            }
+          })
+        )
+
+        // Optimistically update getFeed
+        const patchFeed = dispatch(
+          recipeApi.util.updateQueryData('getFeed', undefined, (draft) => {
+            const r = draft.find((item) => item.id === id) as
+              | (Recipe & { isSavedByCurrentUser?: boolean })
+              | undefined
+            if (r) {
+              r.isSavedByCurrentUser = nextSaved
+            }
+          })
+        )
+
+        // Optimistically update getRecipe
+        const patchDetail = dispatch(
+          recipeApi.util.updateQueryData('getRecipe', id, (draft) => {
+            const r = draft as (Recipe & { isSavedByCurrentUser?: boolean }) | undefined
+            if (r) {
+              r.isSavedByCurrentUser = nextSaved
             }
           })
         )
@@ -186,6 +222,9 @@ export const recipeApi = createApi({
           await queryFulfilled
         } catch {
           patchSaved.undo()
+          patchPublic.undo()
+          patchFeed.undo()
+          patchDetail.undo()
         }
       },
       invalidatesTags: [{ type: 'SavedRecipes', id: 'LIST' }],
@@ -201,7 +240,11 @@ export const recipeApi = createApi({
           return { error: { message } }
         }
       },
-      invalidatesTags: [{ type: 'Recipe', id: 'LIST' }],
+      invalidatesTags: [
+        { type: 'Recipe', id: 'LIST' },
+        { type: 'PublicRecipes', id: 'LIST' },
+        { type: 'Feed', id: 'LIST' },
+      ],
     }),
 
     updateRecipe: builder.mutation<Recipe, { id: string; recipe: Recipe }>({
@@ -214,7 +257,12 @@ export const recipeApi = createApi({
           return { error: { message } }
         }
       },
-      invalidatesTags: (_result, _error, { id }) => [{ type: 'Recipe', id }, { type: 'Recipe', id: 'LIST' }],
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: 'Recipe', id },
+        { type: 'Recipe', id: 'LIST' },
+        { type: 'PublicRecipes', id: 'LIST' },
+        { type: 'Feed', id: 'LIST' },
+      ],
     }),
 
     deleteRecipe: builder.mutation<void, string>({
@@ -227,7 +275,12 @@ export const recipeApi = createApi({
           return { error: { message } }
         }
       },
-      invalidatesTags: (_result, _error, id) => [{ type: 'Recipe', id }, { type: 'Recipe', id: 'LIST' }],
+      invalidatesTags: (_result, _error, id) => [
+        { type: 'Recipe', id },
+        { type: 'Recipe', id: 'LIST' },
+        { type: 'PublicRecipes', id: 'LIST' },
+        { type: 'Feed', id: 'LIST' },
+      ],
     }),
   }),
 })
@@ -246,8 +299,8 @@ export const {
 } = recipeApi
 
 // Ergonomic alias hooks per Issue #640
-export const useRecipes = () => {
-  const query = useGetRecipesQuery()
+export const useRecipes = (options?: { skip?: boolean }) => {
+  const query = useGetRecipesQuery(undefined, options)
   return {
     ...query,
     recipes: query.data ?? [],
@@ -257,8 +310,9 @@ export const useRecipes = () => {
   }
 }
 
-export const usePublicRecipes = () => {
-  const query = useGetPublicRecipesQuery()
+export const usePublicRecipes = (options?: { skip?: boolean } | boolean) => {
+  const skip = typeof options === 'boolean' ? !options : (options?.skip ?? false)
+  const query = useGetPublicRecipesQuery(undefined, { skip })
   return {
     ...query,
     recipes: query.data ?? [],
@@ -268,8 +322,9 @@ export const usePublicRecipes = () => {
   }
 }
 
-export const useFeed = () => {
-  const query = useGetFeedQuery()
+export const useFeed = (options?: { skip?: boolean } | boolean) => {
+  const skip = typeof options === 'boolean' ? !options : (options?.skip ?? false)
+  const query = useGetFeedQuery(undefined, { skip })
   return {
     ...query,
     recipes: query.data ?? [],
@@ -279,8 +334,8 @@ export const useFeed = () => {
   }
 }
 
-export const useRecipe = (id?: string) => {
-  const query = useGetRecipeQuery(id ?? '', { skip: !id })
+export const useRecipe = (id?: string, options?: { skip?: boolean }) => {
+  const query = useGetRecipeQuery(id ?? '', { skip: !id || options?.skip })
   return {
     ...query,
     recipe: query.data ?? null,
