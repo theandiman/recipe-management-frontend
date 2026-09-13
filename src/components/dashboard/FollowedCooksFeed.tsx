@@ -1,36 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { getFeed } from '../../services/recipeStorageApi'
+import { useFeed } from '../../services/serverState'
 import RecipeCard from '../RecipeCard'
 import { UserAvatar } from '../UserAvatar'
-import type { Recipe } from '../../types/nutrition'
 
 export const FollowedCooksFeed: React.FC = () => {
   const navigate = useNavigate()
-  const [recipes, setRecipes] = useState<Recipe[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchFeed = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await getFeed()
-      setRecipes(Array.isArray(data) ? data : [])
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load feed'
-      const apiError = err && typeof err === 'object' ? (err as { response?: { data?: { message?: string } } }) : null
-      setError(apiError?.response?.data?.message || errorMessage)
-      setRecipes([])
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchFeed()
-  }, [fetchFeed])
+  const { recipes, loading, error, refetch: fetchFeed } = useFeed()
 
   return (
     <motion.section
