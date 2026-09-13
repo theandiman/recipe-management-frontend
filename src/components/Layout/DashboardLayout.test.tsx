@@ -98,4 +98,19 @@ describe('DashboardLayout routing', () => {
 
     expect(await screen.findByText('DashboardStub')).toBeInTheDocument()
   })
+
+  it('does not render top navigation search bar on dashboard route', () => {
+    renderAt('/dashboard')
+    expect(screen.queryByPlaceholderText(/search recipes, tags\.\.\./i)).not.toBeInTheDocument()
+  })
+
+  it('does not render top navigation search bar on cookbook route', () => {
+    renderAt('/dashboard/recipes')
+    expect(screen.queryByPlaceholderText(/search recipes, tags\.\.\./i)).not.toBeInTheDocument()
+  })
+
+  it('does not render top navigation search bar on community route', () => {
+    renderAt('/dashboard/community')
+    expect(screen.queryByPlaceholderText(/search recipes, tags\.\.\./i)).not.toBeInTheDocument()
+  })
 })
