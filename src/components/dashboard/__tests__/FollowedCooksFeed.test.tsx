@@ -2,8 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { Provider } from 'react-redux'
-import { store } from '../../../store'
-import { recipeApi } from '../../../services/recipeApi'
+import { createStore } from '../../../store'
 import { FollowedCooksFeed } from '../FollowedCooksFeed'
 import * as recipeStorageApi from '../../../services/recipeStorageApi'
 import type { Recipe } from '../../../types/nutrition'
@@ -31,9 +30,11 @@ vi.mock('../../LikeButton', () => ({
   LikeButton: () => <button data-testid="like-btn">Like</button>,
 }))
 
+let testStore = createStore()
+
 const renderWithProviders = (ui: React.ReactElement) =>
   render(
-    <Provider store={store}>
+    <Provider store={testStore}>
       <BrowserRouter>{ui}</BrowserRouter>
     </Provider>
   )
@@ -66,7 +67,7 @@ describe('FollowedCooksFeed', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    store.dispatch(recipeApi.util.resetApiState())
+    testStore = createStore()
   })
 
   it('renders loading skeleton while fetching feed', () => {

@@ -2,8 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { Provider } from 'react-redux'
-import { store } from '../store'
-import { recipeApi } from '../services/recipeApi'
+import { createStore } from '../store'
 import { Dashboard } from './Dashboard'
 import * as recipeStorageApi from '../services/recipeStorageApi'
 import * as AuthContext from '../features/auth/AuthContext'
@@ -40,9 +39,11 @@ vi.mock('../components/LikeButton', () => ({
   LikeButton: () => null,
 }))
 
+let testStore = createStore()
+
 const renderWithProviders = (ui: React.ReactElement) =>
   render(
-    <Provider store={store}>
+    <Provider store={testStore}>
       <BrowserRouter>{ui}</BrowserRouter>
     </Provider>
   )
@@ -93,7 +94,7 @@ describe('Dashboard', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    store.dispatch(recipeApi.util.resetApiState())
+    testStore = createStore()
 
     vi.mocked(AuthContext.useAuth).mockReturnValue({
       isAuthenticated: true,

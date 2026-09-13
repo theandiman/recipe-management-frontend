@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { Provider } from 'react-redux'
 import React from 'react'
-import { store } from '../store'
+import { createStore } from '../store'
 import {
   recipeApi,
   useRecipes,
@@ -29,8 +29,10 @@ vi.mock('./recipeStorageApi', () => ({
   deleteRecipe: vi.fn(),
 }))
 
+let testStore = createStore()
+
 const wrapper = ({ children }: { children: React.ReactNode }) => (
-  <Provider store={store}>{children}</Provider>
+  <Provider store={testStore}>{children}</Provider>
 )
 
 type RecipeWithInteractions = Recipe & {
@@ -54,7 +56,7 @@ describe('recipeApi RTK Query', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    store.dispatch(recipeApi.util.resetApiState())
+    testStore = createStore()
   })
 
   describe('Queries and ergonomic hooks', () => {
@@ -149,7 +151,7 @@ describe('recipeApi RTK Query', () => {
       })
 
       expect(storageApi.likeRecipe).toHaveBeenCalledWith('rec-1')
-      const cached = recipeApi.endpoints.getPublicRecipes.select()(store.getState()).data as
+      const cached = recipeApi.endpoints.getPublicRecipes.select()(testStore.getState()).data as
         | RecipeWithInteractions[]
         | undefined
       expect(cached?.[0].isLikedByCurrentUser).toBe(true)
@@ -177,7 +179,7 @@ describe('recipeApi RTK Query', () => {
         ).rejects.toThrow()
       })
 
-      const cached = recipeApi.endpoints.getPublicRecipes.select()(store.getState()).data as
+      const cached = recipeApi.endpoints.getPublicRecipes.select()(testStore.getState()).data as
         | RecipeWithInteractions[]
         | undefined
       expect(cached?.[0].isLikedByCurrentUser).toBe(false)
@@ -204,7 +206,7 @@ describe('recipeApi RTK Query', () => {
         ).rejects.toThrow()
       })
 
-      const cached = recipeApi.endpoints.getSavedRecipes.select()(store.getState()).data
+      const cached = recipeApi.endpoints.getSavedRecipes.select()(testStore.getState()).data
       expect(cached).toEqual([])
     })
   })
