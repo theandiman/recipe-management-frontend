@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { getPublicRecipes, getFeed } from '../../services/recipeStorageApi'
+import { usePublicRecipes, useFeed } from '../../services/recipeApi'
 import { useAuth } from '../auth/AuthContext'
 import RecipeCard from '../../components/RecipeCard'
 import RecipeListItem from '../../components/RecipeListItem'
@@ -13,7 +13,6 @@ import { useOmniSearch } from '../../components/search/OmniSearchContext'
 import { useRecipeSearchFilters } from '../recipes/hooks/useRecipeSearchFilters'
 import { SORT_OPTIONS, type SortOption } from '../recipes/utils/recipeSorting'
 import { getActiveFilterCount } from '../recipes/utils/recipeFiltering'
-import type { Recipe } from '../../types/nutrition'
 
 export const CommunityPage: React.FC = () => {
   const navigate = useNavigate()
@@ -25,9 +24,10 @@ export const CommunityPage: React.FC = () => {
     !!user &&
     (searchParams.get('tab') === 'following' || searchParams.get('following') === 'true')
 
-  const [recipes, setRecipes] = useState<Recipe[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const publicQuery = usePublicRecipes(!isFollowingFilter)
+  const feedQuery = useFeed(isFollowingFilter)
+
+  const { recipes, loading, error } = isFollowingFilter ? feedQuery : publicQuery
 
   // Custom Search & Multi-Facet Filtering Hook
   const {
@@ -70,26 +70,6 @@ export const CommunityPage: React.FC = () => {
       setSearchQuery(searchText)
     }
   }, [searchText])
-
-  // Fetch community or following feed recipes
-  useEffect(() => {
-    const fetchRecipes = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const data = isFollowingFilter ? await getFeed() : await getPublicRecipes()
-        setRecipes(data)
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load recipes'
-        const apiError = err as { response?: { data?: { message?: string } } }
-        setError(apiError.response?.data?.message || errorMessage)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchRecipes()
-  }, [isFollowingFilter])
 
   const toggleFollowingFilter = () => {
     if (!user) {

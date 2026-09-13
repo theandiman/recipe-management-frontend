@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { getRecipe, updateRecipeSharing, deleteRecipe } from '../../services/recipeStorageApi'
+import { useAppDispatch } from '../../store'
+import { updateRecipeSharing, deleteRecipe } from '../../services/recipeStorageApi'
+import { useRecipe, recipeApi } from '../../services/recipeApi'
 import { getUserProfile, type UserProfile } from '../../services/userApi'
 import { CookingMode } from '../../components/CookingMode'
 import GlobeIcon from '../../components/GlobeIcon'
@@ -47,11 +49,30 @@ const TrashIcon = () => (
 export const RecipeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const { user: currentUser } = useAuth()
-  const [recipe, setRecipe] = useState<Recipe | null>(null)
-  const [authorProfile, setAuthorProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { recipe, loading, error } = useRecipe(id)
+  const [fetchedAuthorProfile, setFetchedAuthorProfile] = useState<UserProfile | null>(null)
+
+  const isCurrentUserAuthor = !!(
+    currentUser &&
+    recipe?.userId &&
+    currentUser.uid === recipe.userId &&
+    (currentUser.displayName || currentUser.email)
+  )
+
+  const authorProfile = useMemo<UserProfile | null>(() => {
+    if (isCurrentUserAuthor && currentUser) {
+      return {
+        uid: currentUser.uid,
+        displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Chef',
+        avatarUrl: currentUser.photoURL || undefined,
+        publicRecipeCount: 0,
+        publicRecipes: [],
+      }
+    }
+    return fetchedAuthorProfile
+  }, [isCurrentUserAuthor, currentUser, fetchedAuthorProfile])
   const [isCookingMode, setIsCookingMode] = useState(false)
   const [isTogglingShare, setIsTogglingShare] = useState(false)
   const [sharingError, setSharingError] = useState<string | null>(null)
@@ -75,6 +96,14 @@ export const RecipeDetail: React.FC = () => {
       setIsDeleting(true)
       setDeleteError(null)
       await deleteRecipe(id)
+      dispatch(
+        recipeApi.util.invalidateTags([
+          { type: 'Recipe', id },
+          { type: 'Recipe', id: 'LIST' },
+          { type: 'PublicRecipes', id: 'LIST' },
+          { type: 'Feed', id: 'LIST' },
+        ])
+      )
       setIsDeleteModalOpen(false)
       navigate('/dashboard/recipes', { replace: true })
     } catch (err: unknown) {
@@ -141,45 +170,12 @@ export const RecipeDetail: React.FC = () => {
   }, [isMenuOpen])
 
   useEffect(() => {
-    const fetchRecipe = async () => {
-      if (!id) return
-      
-      try {
-        setLoading(true)
-        setError(null)
-        const data = await getRecipe(id)
-        setRecipe(data)
-      } catch (err: unknown) {
-        console.error('Failed to fetch recipe:', err)
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load recipe'
-        const apiError = err as { response?: { data?: { message?: string } } }
-        setError(apiError.response?.data?.message || errorMessage)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchRecipe()
-  }, [id])
-
-  useEffect(() => {
-    if (!recipe?.userId) return
-
-    if (currentUser && currentUser.uid === recipe.userId && (currentUser.displayName || currentUser.email)) {
-      setAuthorProfile({
-        uid: currentUser.uid,
-        displayName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Chef',
-        avatarUrl: currentUser.photoURL || undefined,
-        publicRecipeCount: 0,
-        publicRecipes: [],
-      })
-      return
-    }
+    if (!recipe?.userId || isCurrentUserAuthor) return
 
     let isMounted = true
     getUserProfile(recipe.userId)
       .then((profile) => {
-        if (isMounted) setAuthorProfile(profile)
+        if (isMounted) setFetchedAuthorProfile(profile)
       })
       .catch(() => {
         // Fall back gracefully if user profile is unavailable
@@ -188,7 +184,7 @@ export const RecipeDetail: React.FC = () => {
     return () => {
       isMounted = false
     }
-  }, [recipe?.userId, currentUser])
+  }, [recipe?.userId, isCurrentUserAuthor])
 
   const handleCopyLink = async () => {
     if (!id) return
@@ -228,7 +224,18 @@ export const RecipeDetail: React.FC = () => {
       setSharingError(null)
       const newIsPublic = !recipe.isPublic
       const updatedRecipe = await updateRecipeSharing(id, newIsPublic)
-      setRecipe(updatedRecipe)
+      dispatch(
+        recipeApi.util.updateQueryData('getRecipe', id, (draft) => {
+          Object.assign(draft, updatedRecipe)
+        })
+      )
+      dispatch(
+        recipeApi.util.invalidateTags([
+          { type: 'PublicRecipes', id: 'LIST' },
+          { type: 'Recipe', id: 'LIST' },
+          { type: 'Feed', id: 'LIST' },
+        ])
+      )
     } catch (err) {
       console.error('Failed to update recipe sharing:', err)
       setSharingError('Could not update sharing status. Please try again.')

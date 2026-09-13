@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import { Provider } from 'react-redux'
+import { createStore } from '../../store'
 import userEvent from '@testing-library/user-event'
 import { RecipeDetail } from './RecipeDetail'
 import * as recipeStorageApi from '../../services/recipeStorageApi'
@@ -93,25 +95,26 @@ const openMoreMenu = async () => {
   await userEvent.click(screen.getByRole('button', { name: /more options/i }))
 }
 
+let testStore = createStore()
+
 const renderWithRouter = (initialPath = '/dashboard/recipes/recipe-1') => {
   return render(
-    <BrowserRouter>
-      <Routes>
-        <Route path="/dashboard/recipes/:id" element={<RecipeDetail />} />
-        <Route path="/dashboard/recipes" element={<div>Recipe Library</div>} />
-        <Route path="/dashboard/recipes/edit/:id" element={<div>Edit Recipe</div>} />
-      </Routes>
-    </BrowserRouter>,
-    { wrapper: ({ children }) => {
-      window.history.pushState({}, '', initialPath)
-      return <>{children}</>
-    }}
+    <Provider store={testStore}>
+      <MemoryRouter initialEntries={[initialPath]}>
+        <Routes>
+          <Route path="/dashboard/recipes/:id" element={<RecipeDetail />} />
+          <Route path="/dashboard/recipes" element={<div>Recipe Library</div>} />
+          <Route path="/dashboard/recipes/edit/:id" element={<div>Edit Recipe</div>} />
+        </Routes>
+      </MemoryRouter>
+    </Provider>
   )
 }
 
 describe('RecipeDetail', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    testStore = createStore()
     vi.mocked(useAuth).mockReturnValue({
       user: { uid: 'owner-uid', email: null, displayName: null, photoURL: null },
     } as any)
