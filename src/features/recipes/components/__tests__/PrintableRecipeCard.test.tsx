@@ -41,6 +41,7 @@ const mockRecipe: Recipe = {
     storage: 'Store leftover slices in an airtight container for up to 3 days.',
     makeAhead: 'Dough can be cold-fermented in the refrigerator for up to 48 hours.',
     reheating: 'Reheat slices in a hot skillet for 2-3 minutes for a crispy bottom.',
+    variations: ['Top with prosciutto and arugula after baking.'],
   },
   source: 'user',
 }
@@ -90,7 +91,27 @@ describe('PrintableRecipeCard', () => {
 
     expect(screen.getByText(/Instructions/i)).toBeInTheDocument()
     expect(screen.getByText(/Mix flour, yeast, and warm water/i)).toBeInTheDocument()
-    expect(screen.getByText(/Knead dough for 10 minutes/i)).toBeInTheDocument()
+    // Timer chips extracted from instructions
+    expect(screen.getByText('10 minutes')).toBeInTheDocument()
+    expect(screen.getByText('60 minutes')).toBeInTheDocument()
+    expect(screen.getByText('12 minutes')).toBeInTheDocument()
+    expect(screen.getAllByText('⏱️').length).toBe(3)
+  })
+
+  it('uses explicit totalTimeMinutes when provided', () => {
+    render(
+      <PrintableRecipeCard
+        recipe={{
+          ...mockRecipe,
+          prepTimeMinutes: 15,
+          cookTimeMinutes: 12,
+          totalTimeMinutes: 90,
+        }}
+        servings={4}
+      />
+    )
+
+    expect(screen.getByText('90 min')).toBeInTheDocument()
   })
 
   it('conditionally renders photo based on includePhoto prop', () => {
@@ -135,7 +156,7 @@ describe('PrintableRecipeCard', () => {
     expect(screen.getByText(/18g/)).toBeInTheDocument() // protein
   })
 
-  it('renders tips and storage recommendations when includeTips is true', () => {
+  it('renders tips, storage recommendations, and variations when includeTips is true', () => {
     const { rerender } = render(
       <PrintableRecipeCard
         recipe={mockRecipe}
@@ -154,6 +175,8 @@ describe('PrintableRecipeCard', () => {
     )
     expect(screen.getByText(/Chef's Tips & Storage/i)).toBeInTheDocument()
     expect(screen.getByText(/Use gluten-free 1-to-1 baking flour/i)).toBeInTheDocument()
+    expect(screen.getByText(/Variations:/i)).toBeInTheDocument()
+    expect(screen.getByText(/Top with prosciutto and arugula after baking/i)).toBeInTheDocument()
   })
 
   it('renders handwritten kitchen notes area when includeNotesArea is true', () => {

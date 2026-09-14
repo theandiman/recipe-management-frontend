@@ -597,6 +597,7 @@ export const RecipeDetail: React.FC = () => {
       {/* Print Recipe Modal */}
       {recipe && (
         <PrintRecipeModal
+          key={recipe.id}
           recipe={recipe}
           isOpen={isPrintModalOpen}
           onClose={() => setIsPrintModalOpen(false)}

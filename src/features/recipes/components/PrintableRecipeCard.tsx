@@ -2,6 +2,7 @@ import React from 'react'
 import type { Recipe } from '../../../types/nutrition'
 import { scaleIngredient } from '../../../utils/quantityUtils'
 import { getEffectiveTips } from './RecipeBody'
+import { parseTimerDurations } from '../utils/timerParser'
 
 export interface PrintableRecipeCardProps {
   recipe: Recipe
@@ -33,11 +34,26 @@ export const PrintableRecipeCard: React.FC<PrintableRecipeCardProps> = ({
   const multiplier = activeServings / baseServings
   const scaledIngredients = (recipe.ingredients || []).map((ing) => scaleIngredient(ing, multiplier) as string)
   const effectiveTips = getEffectiveTips(recipe)
+  const hasAnyTips = Boolean(
+    effectiveTips && (
+      (effectiveTips.substitutions && effectiveTips.substitutions.length > 0) ||
+      effectiveTips.storage ||
+      effectiveTips.makeAhead ||
+      effectiveTips.reheating ||
+      (effectiveTips.variations && effectiveTips.variations.length > 0)
+    )
+  )
 
   const prepDisplay = recipe.prepTimeMinutes ? `${recipe.prepTimeMinutes} min` : recipe.prepTime || null
   const cookDisplay = recipe.cookTimeMinutes ? `${recipe.cookTimeMinutes} min` : recipe.cookTime || null
-  const totalMinutes = (recipe.prepTimeMinutes || 0) + (recipe.cookTimeMinutes || 0)
-  const totalDisplay = totalMinutes > 0 ? `${totalMinutes} min` : null
+  const prepAndCookMinutes = (recipe.prepTimeMinutes || 0) + (recipe.cookTimeMinutes || 0)
+  const totalDisplay = recipe.totalTimeMinutes
+    ? `${recipe.totalTimeMinutes} min`
+    : recipe.totalTime
+    ? recipe.totalTime
+    : prepAndCookMinutes > 0
+    ? `${prepAndCookMinutes} min`
+    : null
 
   const todayFormatted = new Date().toLocaleDateString(undefined, {
     year: 'numeric',
@@ -129,7 +145,6 @@ export const PrintableRecipeCard: React.FC<PrintableRecipeCardProps> = ({
                 src={recipe.imageUrl}
                 alt={recipe.recipeName}
                 className="w-full h-full object-cover"
-                crossOrigin="anonymous"
               />
             </div>
           )}
@@ -201,20 +216,54 @@ export const PrintableRecipeCard: React.FC<PrintableRecipeCardProps> = ({
           </div>
 
           <ol className="space-y-3.5 text-xs">
-            {(recipe.instructions || []).map((instruction, idx) => (
-              <li key={idx} className="flex items-start gap-3 print-avoid-break leading-relaxed">
-                <span className="font-bold text-slate-900 bg-slate-100 border border-slate-300 w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-[11px]">
-                  {idx + 1}
-                </span>
-                <span className="text-slate-800 pt-0.5">{instruction}</span>
-              </li>
-            ))}
+            {(recipe.instructions || []).map((instruction, idx) => {
+              const detectedTimers = parseTimerDurations(instruction)
+              let content: React.ReactNode = instruction
+
+              if (detectedTimers.length > 0) {
+                const segments: React.ReactNode[] = []
+                let lastIndex = 0
+
+                detectedTimers.forEach((timer, tIdx) => {
+                  if (timer.startIndex > lastIndex) {
+                    segments.push(instruction.slice(lastIndex, timer.startIndex))
+                  }
+
+                  segments.push(
+                    <span
+                      key={`timer-${tIdx}`}
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 mx-1 bg-amber-50 border border-amber-300 text-amber-800 font-semibold text-[11px] rounded print-avoid-break"
+                    >
+                      <span className="text-[10px]">⏱️</span>
+                      <span>{timer.label}</span>
+                    </span>
+                  )
+
+                  lastIndex = timer.endIndex
+                })
+
+                if (lastIndex < instruction.length) {
+                  segments.push(instruction.slice(lastIndex))
+                }
+
+                content = segments
+              }
+
+              return (
+                <li key={idx} className="flex items-start gap-3 print-avoid-break leading-relaxed">
+                  <span className="font-bold text-slate-900 bg-slate-100 border border-slate-300 w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-[11px]">
+                    {idx + 1}
+                  </span>
+                  <span className="text-slate-800 pt-0.5">{content}</span>
+                </li>
+              )
+            })}
           </ol>
         </div>
       </div>
 
       {/* Chef's Tips & Tricks Section */}
-      {includeTips && effectiveTips && (
+      {includeTips && effectiveTips && hasAnyTips && (
         <div className="mb-6 pt-4 border-t-2 border-slate-200 print-avoid-break">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 mb-2.5 flex items-center gap-1.5">
             <span>💡</span> Chef&apos;s Tips &amp; Storage
@@ -246,6 +295,16 @@ export const PrintableRecipeCard: React.FC<PrintableRecipeCardProps> = ({
               <div className="p-2.5 bg-orange-50/50 border border-orange-200 rounded-lg">
                 <span className="font-bold text-orange-900 block mb-1">Reheating:</span>
                 <p className="text-orange-900/90 text-[11px] leading-snug">{effectiveTips.reheating}</p>
+              </div>
+            )}
+            {effectiveTips.variations && effectiveTips.variations.length > 0 && (
+              <div className="p-2.5 bg-purple-50/50 border border-purple-200 rounded-lg">
+                <span className="font-bold text-purple-900 block mb-1">Variations:</span>
+                <ul className="list-disc list-inside space-y-0.5 text-purple-900/90 text-[11px]">
+                  {effectiveTips.variations.map((v, i) => (
+                    <li key={i}>{v}</li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
