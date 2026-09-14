@@ -5,6 +5,7 @@ interface RecipeKeyboardShortcutsOptions {
   onLike?: () => void
   onBookmark?: () => void
   onJumpIngredients?: () => void
+  onPrint?: () => void
   onToggleShortcutsModal?: () => void
   disabled?: boolean
 }
@@ -14,6 +15,7 @@ export function useRecipeKeyboardShortcuts({
   onLike,
   onBookmark,
   onJumpIngredients,
+  onPrint,
   onToggleShortcutsModal,
   disabled = false,
 }: RecipeKeyboardShortcutsOptions) {
@@ -48,6 +50,9 @@ export function useRecipeKeyboardShortcuts({
       } else if (key === 'i' && onJumpIngredients) {
         e.preventDefault()
         onJumpIngredients()
+      } else if (key === 'p' && onPrint) {
+        e.preventDefault()
+        onPrint()
       } else if ((key === '?' || e.key === '/') && onToggleShortcutsModal) {
         e.preventDefault()
         onToggleShortcutsModal()
@@ -56,5 +61,5 @@ export function useRecipeKeyboardShortcuts({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onCookMode, onLike, onBookmark, onJumpIngredients, onToggleShortcutsModal, disabled])
+  }, [onCookMode, onLike, onBookmark, onJumpIngredients, onPrint, onToggleShortcutsModal, disabled])
 }

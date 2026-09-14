@@ -20,6 +20,7 @@ describe('KeyboardShortcutsModal', () => {
     expect(screen.getByText('Toggle Like')).toBeInTheDocument()
     expect(screen.getByText('Toggle Bookmark')).toBeInTheDocument()
     expect(screen.getByText('Jump to Ingredients')).toBeInTheDocument()
+    expect(screen.getByText('Print Recipe')).toBeInTheDocument()
   })
 
   it('calls onClose when close button is clicked', () => {

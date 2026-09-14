@@ -43,6 +43,16 @@ describe('useRecipeKeyboardShortcuts', () => {
     expect(onJumpIngredients).toHaveBeenCalledTimes(1)
   })
 
+  it('triggers onPrint when P is pressed', () => {
+    const onPrint = vi.fn()
+    renderHook(() => useRecipeKeyboardShortcuts({ onPrint }))
+
+    const event = new KeyboardEvent('keydown', { key: 'p' })
+    window.dispatchEvent(event)
+
+    expect(onPrint).toHaveBeenCalledTimes(1)
+  })
+
   it('triggers onToggleShortcutsModal when ? is pressed', () => {
     const onToggleShortcutsModal = vi.fn()
     renderHook(() => useRecipeKeyboardShortcuts({ onToggleShortcutsModal }))

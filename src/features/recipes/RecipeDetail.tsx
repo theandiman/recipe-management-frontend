@@ -17,6 +17,8 @@ import { RecipeReviewsSection } from './components/RecipeReviewsSection'
 import { RecipeCommentsSection } from './components/RecipeCommentsSection'
 import { useRecipeKeyboardShortcuts } from './hooks/useRecipeKeyboardShortcuts'
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal'
+import { PrintableRecipeCard } from './components/PrintableRecipeCard'
+import { PrintRecipeModal } from './components/PrintRecipeModal'
 import { useAuth } from '../../features/auth/AuthContext'
 
 // ── Icon helpers ────────────────────────────────────────────────────────────
@@ -60,6 +62,7 @@ export const RecipeDetail: React.FC = () => {
     currentUser.uid === recipe.userId &&
     (currentUser.displayName || currentUser.email)
   )
+  const isOwner = !!currentUser && !!recipe?.userId && currentUser.uid === recipe.userId
 
   const authorProfile = useMemo<UserProfile | null>(() => {
     if (isCurrentUserAuthor && currentUser) {
@@ -73,7 +76,57 @@ export const RecipeDetail: React.FC = () => {
     }
     return fetchedAuthorProfile
   }, [isCurrentUserAuthor, currentUser, fetchedAuthorProfile])
+
+  const authorDisplayName = useMemo(() => {
+    const recipeWithAuthor = recipe as (Recipe & { authorDisplayName?: string; authorName?: string; displayName?: string; authorAvatarUrl?: string }) | null
+    return (
+      authorProfile?.displayName ||
+      recipeWithAuthor?.authorDisplayName ||
+      recipeWithAuthor?.authorName ||
+      recipeWithAuthor?.displayName ||
+      (isOwner ? (currentUser?.displayName || currentUser?.email?.split('@')[0]) : null) ||
+      'Chef'
+    )
+  }, [authorProfile?.displayName, recipe, isOwner, currentUser?.displayName, currentUser?.email])
+
   const [isCookingMode, setIsCookingMode] = useState(false)
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false)
+  const [isPrinting, setIsPrinting] = useState(false)
+  const [printConfig, setPrintConfig] = useState({
+    servings: typeof recipe?.servings === 'number' && recipe.servings > 0 ? recipe.servings : 4,
+    includePhoto: Boolean(recipe?.imageUrl),
+    includeNutrition: Boolean(recipe?.nutritionalInfo?.perServing),
+    includeTips: Boolean(getEffectiveTips(recipe)),
+    includeNotesArea: true,
+  })
+
+  useEffect(() => {
+    const handleBeforePrint = () => setIsPrinting(true)
+    const handleAfterPrint = () => setIsPrinting(false)
+
+    window.addEventListener('beforeprint', handleBeforePrint)
+    window.addEventListener('afterprint', handleAfterPrint)
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint)
+      window.removeEventListener('afterprint', handleAfterPrint)
+    }
+  }, [])
+
+  const prevRecipeIdRef = useRef<string | undefined>(undefined)
+
+  useEffect(() => {
+    if (recipe && recipe.id !== prevRecipeIdRef.current) {
+      prevRecipeIdRef.current = recipe.id
+      setPrintConfig({
+        servings: typeof recipe.servings === 'number' && recipe.servings > 0 ? recipe.servings : 4,
+        includePhoto: Boolean(recipe.imageUrl),
+        includeNutrition: Boolean(recipe.nutritionalInfo?.perServing),
+        includeTips: Boolean(getEffectiveTips(recipe)),
+        includeNotesArea: true,
+      })
+    }
+  }, [recipe])
+
   const [isTogglingShare, setIsTogglingShare] = useState(false)
   const [sharingError, setSharingError] = useState<string | null>(null)
   const [isCopied, setIsCopied] = useState(false)
@@ -87,7 +140,6 @@ export const RecipeDetail: React.FC = () => {
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
-  const isOwner = !!currentUser && !!recipe?.userId && currentUser.uid === recipe.userId
   const hasTips = useMemo(() => !!getEffectiveTips(recipe), [recipe])
 
   const handleDeleteRecipe = async () => {
@@ -134,6 +186,7 @@ export const RecipeDetail: React.FC = () => {
         window.scrollTo({ top: y, behavior: 'smooth' })
       }
     },
+    onPrint: () => setIsPrintModalOpen(true),
     onToggleShortcutsModal: () => setIsShortcutsModalOpen((v) => !v),
     disabled: isCookingMode,
   })
@@ -276,7 +329,8 @@ export const RecipeDetail: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Header: back nav + action toolbar */}
+      <div className="recipe-detail-screen-content">
+        {/* Header: back nav + action toolbar */}
       <div className="mb-6 flex items-center justify-between gap-3">
         <button
           onClick={() => navigate('/dashboard/recipes')}
@@ -373,7 +427,7 @@ export const RecipeDetail: React.FC = () => {
                     role="menuitem"
                     onClick={() => {
                       setIsMenuOpen(false)
-                      window.print()
+                      setIsPrintModalOpen(true)
                     }}
                     className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-t border-gray-100 dark:border-slate-700/60"
                   >
@@ -438,30 +492,25 @@ export const RecipeDetail: React.FC = () => {
 
       {/* Author & Top Rating Meta Row */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
-        {recipe.userId && (() => {
-          const recipeWithAuthor = recipe as (Recipe & { authorDisplayName?: string; authorName?: string; displayName?: string; authorAvatarUrl?: string }) | null
-          const authorDisplayName = authorProfile?.displayName || recipeWithAuthor?.authorDisplayName || recipeWithAuthor?.authorName || recipeWithAuthor?.displayName || (isOwner ? (currentUser?.displayName || currentUser?.email?.split('@')[0]) : null) || 'Chef'
-
-          return (
-            <Link
-              to={`/user/${recipe.userId}`}
-              className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors group"
-            >
-              <UserAvatar
-                src={authorProfile?.avatarUrl || recipeWithAuthor?.authorAvatarUrl}
-                name={authorDisplayName}
-                size="xs"
-                className="border border-emerald-500/30 group-hover:scale-105 transition-transform flex-shrink-0"
-              />
-              <span>
-                By{' '}
-                <span className="font-semibold underline decoration-emerald-500/40 group-hover:decoration-emerald-500">
-                  {authorDisplayName}
-                </span>
+        {recipe.userId && (
+          <Link
+            to={`/user/${recipe.userId}`}
+            className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition-colors group"
+          >
+            <UserAvatar
+              src={authorProfile?.avatarUrl || (recipe as { authorAvatarUrl?: string })?.authorAvatarUrl}
+              name={authorDisplayName}
+              size="xs"
+              className="border border-emerald-500/30 group-hover:scale-105 transition-transform flex-shrink-0"
+            />
+            <span>
+              By{' '}
+              <span className="font-semibold underline decoration-emerald-500/40 group-hover:decoration-emerald-500">
+                {authorDisplayName}
               </span>
-            </Link>
-          )
-        })()}
+            </span>
+          </Link>
+        )}
 
         {/* Top Average Rating Pill */}
         {topRating > 0 ? (
@@ -525,6 +574,38 @@ export const RecipeDetail: React.FC = () => {
             currentUserAvatarUrl={currentUser?.photoURL || undefined}
           />
         </>
+      )}
+      </div>
+
+      {/* Printable recipe card: hidden on screen, displayed on print */}
+      {recipe && (isPrintModalOpen || isPrinting) && (
+        <div id="printable-recipe-root" className="hidden print:block">
+          <PrintableRecipeCard
+            recipe={recipe}
+            servings={printConfig.servings}
+            includePhoto={printConfig.includePhoto}
+            includeNutrition={printConfig.includeNutrition}
+            includeTips={printConfig.includeTips}
+            includeNotesArea={printConfig.includeNotesArea}
+            authorName={authorDisplayName}
+            rating={topRating}
+            ratingCount={topRatingCount}
+          />
+        </div>
+      )}
+
+      {/* Print Recipe Modal */}
+      {recipe && (
+        <PrintRecipeModal
+          key={recipe.id}
+          recipe={recipe}
+          isOpen={isPrintModalOpen}
+          onClose={() => setIsPrintModalOpen(false)}
+          authorName={authorDisplayName}
+          rating={topRating}
+          ratingCount={topRatingCount}
+          onConfigChange={setPrintConfig}
+        />
       )}
 
       {/* Cooking Mode Modal */}
