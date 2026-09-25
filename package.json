@@ -28,7 +28,7 @@
     "@theandiman/recipe-management-shared": "1.0.27",
     "axios": "^1.13.2",
     "firebase": "^12.5.0",
-    "motion": "^12.23.24",
+    "motion": "^13.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-redux": "^9.2.0",
