@@ -15,6 +15,13 @@
     "test:e2e:local": "playwright test --project=chromium",
     "test:e2e:ui": "playwright test --ui",
     "test:post-deploy": "playwright test --project=post-deploy",
+    "allowlist": "node scripts/manage-allowlist.mjs",
+    "allowlist:add": "node scripts/manage-allowlist.mjs add",
+    "allowlist:remove": "node scripts/manage-allowlist.mjs remove",
+    "allowlist:list": "node scripts/manage-allowlist.mjs list",
+    "allowlist:requests": "node scripts/manage-allowlist.mjs requests",
+    "allowlist:approve": "node scripts/manage-allowlist.mjs approve",
+    "allowlist:reject": "node scripts/manage-allowlist.mjs reject",
     "prepare": "husky || true"
   },
   "lint-staged": {
