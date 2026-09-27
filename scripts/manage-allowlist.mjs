@@ -92,12 +92,45 @@ async function listAllowed() {
   console.log(`Total: ${items.length} allowlist record(s)\n`);
 }
 
+function isValidAllowlistTarget(target) {
+  if (!target || typeof target !== 'string') return false;
+  const trimmed = target.trim().toLowerCase();
+
+  // Reject unrestricted or global wildcards
+  if (trimmed === '*' || trimmed === '*@*' || trimmed === '*.*' || trimmed === '@*') {
+    return false;
+  }
+
+  // Wildcard patterns must have valid domain structure and not contain wildcards in the TLD
+  if (trimmed.includes('*')) {
+    const atIndex = trimmed.lastIndexOf('@');
+    if (atIndex <= 0) return false;
+    const local = trimmed.slice(0, atIndex);
+    const domain = trimmed.slice(atIndex + 1);
+    if (!local || !domain || !domain.includes('.')) return false;
+    // Wildcard should be in username/prefix or directly "*@domain.tld"
+    if (domain.includes('*')) return false;
+    return true;
+  }
+
+  // Exact email validation
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+}
+
 async function addAllowed(target) {
   if (!target) {
     console.error('Error: Please provide an email or wildcard pattern to add.');
     process.exit(1);
   }
   const normalized = target.trim().toLowerCase();
+
+  if (!isValidAllowlistTarget(normalized)) {
+    console.error(
+      `Error: Invalid allowlist target '${target}'.\nTarget must be an exact email (e.g. user@test.com) or a scoped pattern (e.g. *@company.com or user+*@gmail.com). Global wildcards like '*' or '*@*' are not permitted.`
+    );
+    process.exit(1);
+  }
+
   const isPattern = normalized.includes('*');
 
   await db.collection('allowed_users').doc(normalized).set(
@@ -132,11 +165,20 @@ async function removeAllowed(target) {
   console.log(`\nSuccessfully removed '${normalized}' from allowlist.\n`);
 }
 
-async function listRequests() {
-  console.log(`\nFetching signup access requests from Firestore (project: ${projectId})...\n`);
-  const snapshot = await db.collection('access_requests').get();
+async function listRequests(filter) {
+  const showAll = filter === '--all' || filter === 'all';
+  console.log(
+    `\nFetching ${showAll ? 'all' : 'pending'} signup access requests from Firestore (project: ${projectId})...\n`
+  );
+
+  let query = db.collection('access_requests');
+  if (!showAll) {
+    query = query.where('status', '==', 'pending');
+  }
+
+  const snapshot = await query.get();
   if (snapshot.empty) {
-    console.log('No access requests found.');
+    console.log(`No ${showAll ? '' : 'pending '}access requests found.`);
     return;
   }
 
@@ -164,23 +206,27 @@ async function approveRequest(email) {
   }
   const normalized = email.trim().toLowerCase();
 
+  // Verify that an access request exists before approving
+  const reqRef = db.collection('access_requests').doc(normalized);
+  const reqDoc = await reqRef.get();
+  if (!reqDoc.exists) {
+    console.error(`Error: No access request found for '${normalized}'.`);
+    process.exit(1);
+  }
+
   // 1. Add to allowed_users
   await addAllowed(normalized);
 
   // 2. Mark request as approved
-  const reqRef = db.collection('access_requests').doc(normalized);
-  const reqDoc = await reqRef.get();
-  if (reqDoc.exists) {
-    await reqRef.set(
-      {
-        status: 'approved',
-        approvedAt: FieldValue.serverTimestamp(),
-        approvedBy: process.env.USER || 'admin-cli',
-      },
-      { merge: true }
-    );
-    console.log(`Access request for ${normalized} marked as approved.`);
-  }
+  await reqRef.set(
+    {
+      status: 'approved',
+      approvedAt: FieldValue.serverTimestamp(),
+      approvedBy: process.env.USER || 'admin-cli',
+    },
+    { merge: true }
+  );
+  console.log(`Access request for ${normalized} marked as approved.`);
 }
 
 async function rejectRequest(email) {
@@ -189,7 +235,15 @@ async function rejectRequest(email) {
     process.exit(1);
   }
   const normalized = email.trim().toLowerCase();
+
+  // Verify that an access request exists before rejecting
   const reqRef = db.collection('access_requests').doc(normalized);
+  const reqDoc = await reqRef.get();
+  if (!reqDoc.exists) {
+    console.error(`Error: No access request found for '${normalized}'.`);
+    process.exit(1);
+  }
+
   await reqRef.set(
     {
       status: 'rejected',
@@ -220,7 +274,7 @@ async function main() {
       break;
     case 'requests':
     case 'reqs':
-      await listRequests();
+      await listRequests(arg1);
       break;
     case 'approve':
       await approveRequest(arg1);

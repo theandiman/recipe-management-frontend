@@ -21,6 +21,7 @@
     "allowlist:list": "node scripts/manage-allowlist.mjs list",
     "allowlist:requests": "node scripts/manage-allowlist.mjs requests",
     "allowlist:approve": "node scripts/manage-allowlist.mjs approve",
+    "allowlist:reject": "node scripts/manage-allowlist.mjs reject",
     "prepare": "husky || true"
   },
   "lint-staged": {

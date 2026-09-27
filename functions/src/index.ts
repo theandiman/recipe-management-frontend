@@ -5,7 +5,8 @@
  */
 
 import { setGlobalOptions } from "firebase-functions";
-import { beforeUserCreated, HttpsError } from "firebase-functions/v2/identity";
+import { beforeUserCreated } from "firebase-functions/v2/identity";
+import { HttpsError } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
@@ -50,6 +51,10 @@ export const getAllowedDomains = (): string[] => {
  * 2. Wildcard domain document: `allowed_users/*@{domain}`
  * 3. Base email if plus-addressed: `allowed_users/{baseEmail}`
  * 4. Wildcard patterns stored with `isPattern: true` (e.g., `user+*@domain.com`, `*@domain.com`)
+ *
+ * Strict Revocation Security:
+ * If an email address or its base email is explicitly marked with `revoked: true`,
+ * access is immediately denied and cannot be bypassed by wildcard patterns or domain matches.
  */
 export async function isAllowedInFirestore(email: string): Promise<{ allowed: boolean; reason?: string }> {
   try {
@@ -57,16 +62,35 @@ export async function isAllowedInFirestore(email: string): Promise<{ allowed: bo
     const [, domain] = normalizedEmail.split("@");
     const baseEmail = getBaseEmail(normalizedEmail);
 
-    // 1. Direct email lookup
+    // 1. Fetch direct and base documents first to check for explicit revocation
     const directDoc = await db.collection("allowed_users").doc(normalizedEmail).get();
-    if (directDoc.exists) {
-      const data = directDoc.data();
-      if (data?.revoked !== true) {
-        return { allowed: true, reason: `Direct match: ${normalizedEmail}` };
+    const directData = directDoc.exists ? directDoc.data() : null;
+
+    if (directData?.revoked === true) {
+      return { allowed: false, reason: `Directly revoked: ${normalizedEmail}` };
+    }
+
+    let baseData: FirebaseFirestore.DocumentData | null = null;
+    if (baseEmail && baseEmail !== normalizedEmail) {
+      const baseDoc = await db.collection("allowed_users").doc(baseEmail).get();
+      if (baseDoc.exists) {
+        baseData = baseDoc.data() || null;
+        if (baseData?.revoked === true) {
+          return { allowed: false, reason: `Base email revoked: ${baseEmail}` };
+        }
       }
     }
 
-    // 2. Wildcard domain document lookup: allowed_users/*@domain.com
+    // 2. If not revoked, check if explicitly allowed directly or via base email
+    if (directDoc.exists) {
+      return { allowed: true, reason: `Direct match: ${normalizedEmail}` };
+    }
+
+    if (baseData && baseData.allowPlus !== false) {
+      return { allowed: true, reason: `Base email match with sub-addressing: ${baseEmail}` };
+    }
+
+    // 3. Wildcard domain document lookup: allowed_users/*@domain.com
     if (domain) {
       const domainDoc = await db.collection("allowed_users").doc(`*@${domain}`).get();
       if (domainDoc.exists && domainDoc.data()?.revoked !== true) {
@@ -74,19 +98,10 @@ export async function isAllowedInFirestore(email: string): Promise<{ allowed: bo
       }
     }
 
-    // 3. Base email lookup for plus-addressing (e.g., andy+test@gmail.com -> andy@gmail.com)
-    if (baseEmail && baseEmail !== normalizedEmail) {
-      const baseDoc = await db.collection("allowed_users").doc(baseEmail).get();
-      if (baseDoc.exists && baseDoc.data()?.revoked !== true && baseDoc.data()?.allowPlus !== false) {
-        return { allowed: true, reason: `Base email match with sub-addressing: ${baseEmail}` };
-      }
-    }
-
     // 4. Custom wildcard patterns (documents with isPattern: true)
     const patternSnapshot = await db
       .collection("allowed_users")
       .where("isPattern", "==", true)
-      .limit(50)
       .get();
 
     for (const doc of patternSnapshot.docs) {
@@ -106,7 +121,8 @@ export async function isAllowedInFirestore(email: string): Promise<{ allowed: bo
 }
 
 /**
- * Records an unauthorized registration attempt into `access_requests`
+ * Records an unauthorized registration attempt into `access_requests`.
+ * Preserves the initial `requestedAt` timestamp and current status on subsequent retries.
  */
 export async function recordAccessRequest(
   email: string,
@@ -114,18 +130,27 @@ export async function recordAccessRequest(
 ): Promise<void> {
   try {
     const normalizedEmail = email.trim().toLowerCase();
-    await db.collection("access_requests").doc(normalizedEmail).set(
-      {
+    const docRef = db.collection("access_requests").doc(normalizedEmail);
+    const docSnap = await docRef.get();
+
+    if (!docSnap.exists) {
+      await docRef.set({
         email: normalizedEmail,
         displayName: user.displayName || null,
         photoURL: user.photoURL || null,
         status: "pending",
         requestedAt: FieldValue.serverTimestamp(),
         lastAttemptAt: FieldValue.serverTimestamp(),
+        attemptCount: 1,
+      });
+    } else {
+      await docRef.update({
+        displayName: user.displayName || null,
+        photoURL: user.photoURL || null,
+        lastAttemptAt: FieldValue.serverTimestamp(),
         attemptCount: FieldValue.increment(1),
-      },
-      { merge: true }
-    );
+      });
+    }
     logger.info(`Access request logged for: ${normalizedEmail}`);
   } catch (error) {
     logger.error(`Failed to record access request for ${email}:`, error);
