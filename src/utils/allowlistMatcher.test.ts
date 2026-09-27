@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { matchesPattern, getBaseEmail, isEmailAllowedStatic } from './matcher';
+import { matchesPattern, getBaseEmail, isEmailAllowedStatic } from './allowlistMatcher';
 
-describe('matcher utilities', () => {
+describe('allowlistMatcher', () => {
   describe('matchesPattern', () => {
     it('matches exact strings', () => {
       expect(matchesPattern('test@example.com', 'test@example.com')).toBe(true);
