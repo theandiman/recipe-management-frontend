@@ -18,12 +18,15 @@ export default defineConfig({
       '**/dist/**',
       '**/tests/**',
       '**/*.spec.ts',
+      'functions/**',
+      '**/functions/**',
     ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       exclude: [
         'node_modules/',
+        'functions/',
         'src/test/',
         '**/*.test.{ts,tsx}',
         '**/*.spec.{ts,tsx}',

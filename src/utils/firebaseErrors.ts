@@ -49,7 +49,18 @@ export const getFirebaseErrorMessage = (error: unknown): string => {
     
     case 'auth/network-request-failed':
       return 'Network error. Please check your connection'
-    
+
+    case 'auth/blocking-cloud-function-error': {
+      const cleanMessage = error.message
+        ? error.message
+            .replace(/^Firebase:\s*(Error\s*)?/i, '')
+            .replace(/^Cloud function returned an error:\s*/i, '')
+            .replace(/\s*\(auth\/[a-z0-9-]+\)\.?$/i, '')
+            .trim()
+        : ''
+      return cleanMessage || 'Registration is currently invite-only in this dev environment. Your access request has been recorded for review.'
+    }
+
     // Default
     default:
       console.error('Unhandled Firebase error:', error.code, error.message)
