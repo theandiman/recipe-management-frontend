@@ -74,6 +74,23 @@ describe('firebaseErrors', () => {
       expect(getFirebaseErrorMessage(error)).toBe('Network error. Please check your connection')
     })
 
+    it('should clean and return message for blocking cloud function error', () => {
+      const error = new FirebaseError(
+        'auth/blocking-cloud-function-error',
+        'Firebase: Cloud function returned an error: Registration is currently invite-only in this dev environment. Your access request has been recorded for review. (auth/blocking-cloud-function-error).'
+      )
+      expect(getFirebaseErrorMessage(error)).toBe(
+        'Registration is currently invite-only in this dev environment. Your access request has been recorded for review.'
+      )
+    })
+
+    it('should provide default message if blocking cloud function error has empty message', () => {
+      const error = new FirebaseError('auth/blocking-cloud-function-error', '')
+      expect(getFirebaseErrorMessage(error)).toBe(
+        'Registration is currently invite-only in this dev environment. Your access request has been recorded for review.'
+      )
+    })
+
     it('should return error message for unhandled Firebase error codes', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       const error = new FirebaseError('auth/unknown-error', 'Some unknown error occurred')

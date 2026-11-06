@@ -1,171 +1,142 @@
 # Managing Allowed Emails for CookFlow
 
-CookFlow uses invite-only registration enforced by Firebase Cloud Functions. This document explains how to manage the allowlist.
+CookFlow uses invite-only registration enforced by Firebase Cloud Functions. Registration is verified via a dynamic Firestore allowlist (`allowed_users`) with static environment variable fallback (`ALLOWED_EMAILS`, `ALLOWED_DOMAINS`).
+
+---
 
 ## 🔒 Security Architecture
 
-The email allowlist is stored in **environment variables** and enforced by Firebase Cloud Functions. This means:
-- ✅ Email addresses are **NOT** committed to source control
-- ✅ The allowlist runs on Firebase's servers and **cannot be bypassed**
-- ✅ Works for both email/password registration AND Google OAuth
-- ✅ Each environment (dev, staging, prod) has its own allowlist
+The allowlist is enforced by the server-side Firebase Identity blocking Cloud Function (`beforeUserCreated`). This means:
+- ✅ **Server-Side Enforcement**: Runs directly on Firebase Identity Platform servers and **cannot be bypassed** by client manipulation.
+- ✅ **Dynamic & Instant**: Adding users to Firestore takes effect **immediately** without redeploying Cloud Functions.
+- ✅ **Wildcards & Sub-Addressing**: Supports wildcards (e.g. `*@company.com`) and sub-addressing / plus-addressing (e.g. `user+*@gmail.com`).
+- ✅ **Self-Service Requests**: When an unauthorized user attempts to register in dev, their request is automatically recorded in the `access_requests` collection for administrative review.
+- ✅ **Zero Secrets in Git**: No emails are committed to source control.
+- ✅ **Provider Agnostic**: Works seamlessly for both email/password registration and Google OAuth sign-in.
 
-## 📝 Setting Up the Allowlist
+---
 
-### 1. Create Local Environment File
+## 🚀 Quick Start: Managing Allowed Users (Instant CLI)
+
+CookFlow provides CLI commands to manage the Firestore allowlist without needing to edit `.env` files or redeploy Cloud Functions.
+
+### 1. View Current Allowlist
+
+```bash
+npm run allowlist:list
+```
+
+### 2. Add an Email or Wildcard Pattern
+
+```bash
+# Add a single email
+npm run allowlist:add developer@example.com
+
+# Add all sub-aliases (plus-addressing) for an email (e.g. tester+1@gmail.com)
+npm run allowlist:add "tester+*@gmail.com"
+
+# Allow an entire company domain
+npm run allowlist:add "*@mycompany.com"
+```
+
+*Note: By default, any allowed individual email also permits plus-addressing (e.g., allowing `andy@gmail.com` permits `andy+stage@gmail.com`).*
+
+### 3. Remove an Email or Pattern
+
+```bash
+npm run allowlist:remove developer@example.com
+```
+
+### 4. Review & Approve Signup Requests
+
+When a developer or tester attempts to sign up without being allowlisted, an access request is automatically generated.
+
+```bash
+# List all pending access requests
+npm run allowlist:requests
+
+# Approve an access request (automatically adds to allowlist and marks approved)
+npm run allowlist:approve tester@example.com
+
+# Reject an access request
+npm run allowlist:reject tester@example.com
+```
+
+---
+
+## 🖥️ Alternative: Managing via Firebase Console
+
+You can also manage allowed users directly in the [Firebase Console](https://console.firebase.google.com/):
+
+### Adding Allowed Users in Firestore
+
+1. Open **Firestore Database** in your Firebase project (e.g., `recipe-mgmt-dev`).
+2. Go to the `allowed_users` collection.
+3. Click **Add document**:
+   - **Document ID**: The email or wildcard pattern (e.g., `developer@example.com` or `*@company.com`).
+   - Fields:
+     - `target`: String (same as document ID)
+     - `isPattern`: Boolean (`true` if contains `*`, otherwise `false`)
+     - `allowPlus`: Boolean (`true`)
+
+### Approving Access Requests in Firestore
+
+1. Open the `access_requests` collection in Firestore.
+2. Review the document matching the user's email.
+3. To approve: add a document in `allowed_users` with their email, and update `status: "approved"` in `access_requests`.
+
+---
+
+## ⚙️ Static Environment Variables (Fallback)
+
+For automated CI environments or baseline defaults, static environment variables are still supported as a fallback:
+
+### 1. Edit Local `.env` in `functions/`
 
 ```bash
 cd functions
 cp .env.example .env
 ```
 
-### 2. Edit `.env` File
-
 ```bash
-# Add your allowed email addresses (comma-separated)
-ALLOWED_EMAILS=user1@example.com,user2@example.com,user3@example.com
+# Add comma-separated emails
+ALLOWED_EMAILS=admin@example.com,lead@example.com
 
 # Optional: Allow entire domains
-ALLOWED_DOMAINS=yourcompany.com,partner.com
+ALLOWED_DOMAINS=company.com
 ```
 
-**Important**: `.env` is in `.gitignore` and will NOT be committed.
-
-### 3. Deploy to Firebase
+### 2. Deploy Functions
 
 ```bash
-# Deploy with environment variables
 firebase deploy --only functions
 ```
 
-Firebase will read the environment variables from your local `.env` file and store them securely.
-
-## 🔄 Updating the Allowlist
-
-### Option 1: Using Firebase Console (Recommended for Production)
-
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Select your project
-3. Navigate to **Functions** → **Dashboard**
-4. Click on `beforecreated` function
-5. Go to **Configuration** tab
-6. Update `ALLOWED_EMAILS` and/or `ALLOWED_DOMAINS`
-7. Save changes
-
-### Option 2: Using Firebase CLI
-
-```bash
-# Set environment variables
-firebase functions:config:set \
-  allowed.emails="user1@example.com,user2@example.com" \
-  allowed.domains="company.com"
-
-# Deploy functions to apply changes
-firebase deploy --only functions
-```
-
-### Option 3: Update Local .env and Redeploy
-
-```bash
-cd functions
-# Edit .env file with your changes
-nano .env
-
-# Deploy to Firebase
-firebase deploy --only functions
-```
+---
 
 ## 🧪 Testing
 
-### Test with Allowed Email
+### Test Allowed Registration
+1. Go to the registration page (`/register`) or click **Sign up with Google**.
+2. Register with an allowed email or wildcard alias.
+3. ✅ Registration succeeds and signs the user in.
 
-1. Go to your app's registration page
-2. Try to register with an email in `ALLOWED_EMAILS`
-3. ✅ Should succeed
+### Test Unauthorized Registration
+1. Try to register with an unlisted email.
+2. ❌ Blocked with: *"Registration is currently invite-only in this dev environment. Your access request has been recorded for review."*
+3. Check `access_requests` in Firestore or run `npm run allowlist:requests` to verify the request was recorded.
 
-### Test with Blocked Email
-
-1. Try to register with an email NOT in the allowlist
-2. ❌ Should fail with: "Registration is currently invite-only"
-
-### Test Google OAuth
-
-1. Try to sign in with Google using an allowed email
-2. ✅ Should succeed
-3. Try with a blocked email
-4. ❌ Should fail with invite-only message
-
-## 📋 Format Guidelines
-
-### Email Format
-- Comma-separated
-- Case-insensitive (automatically lowercased)
-- Whitespace is trimmed
-```bash
-ALLOWED_EMAILS=user@example.com,another@test.com
-```
-
-### Domain Format
-- Comma-separated
-- Just the domain, no @ symbol
-- Case-insensitive
-```bash
-ALLOWED_DOMAINS=company.com,partner.org
-```
-
-### Example Combinations
-
-Allow specific emails:
-```bash
-ALLOWED_EMAILS=admin@example.com,ceo@company.com
-ALLOWED_DOMAINS=
-```
-
-Allow an entire organization:
-```bash
-ALLOWED_EMAILS=
-ALLOWED_DOMAINS=yourcompany.com
-```
-
-Mix both:
-```bash
-ALLOWED_EMAILS=partner@external.com,consultant@freelance.com
-ALLOWED_DOMAINS=yourcompany.com
-```
-
-## 🚨 Important Notes
-
-1. **Security**: The `.env` file should NEVER be committed to git
-2. **Each environment needs its own configuration**: Dev, staging, and production should have separate allowlists
-3. **Changes require redeployment**: After updating environment variables, redeploy the functions
-4. **No client-side check**: There is no client-side validation - security is 100% server-side
-5. **Works for all auth methods**: Email/password, Google OAuth, or any future auth providers
+---
 
 ## 🔍 Troubleshooting
 
-### "Registration is currently invite-only" Error
+### Error: `auth/blocking-cloud-function-error`
+- **Cause**: The email is not in `allowed_users` or static environment variables.
+- **Solution**: Run `npm run allowlist:add <email>` or approve the request via `npm run allowlist:approve <email>`.
 
-**Cause**: Email is not in the allowlist
-
-**Solution**: Add the email to `ALLOWED_EMAILS` or add their domain to `ALLOWED_DOMAINS`, then redeploy
-
-### Changes Not Taking Effect
-
-**Cause**: Functions not redeployed or environment variables not updated
-
-**Solution**: 
-```bash
-firebase deploy --only functions
-```
-
-### Empty Allowlist
-
-**Cause**: Environment variables not set
-
-**Solution**: Check that `.env` file exists and has correct format, then redeploy
-
-## 📚 Related Documentation
-
-- [Google OAuth Setup](./GOOGLE_OAUTH_SETUP.md)
-- [Deployment Guide](./DEPLOYMENT_COMPLETE.md)
-- [Firebase Functions Documentation](https://firebase.google.com/docs/functions)
+### Error: Missing credentials when running CLI
+- **Solution**: Ensure you are authenticated with Google Cloud / Firebase CLI:
+  ```bash
+  gcloud auth application-default login
+  ```
+  Or specify `GOOGLE_APPLICATION_CREDENTIALS=/path/to/serviceAccountKey.json`.
