@@ -150,7 +150,7 @@ jobs:
           VITE_MANAGEMENT_API_URL: http://localhost:8081
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report
@@ -230,7 +230,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Upload coverage report as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: sonar-coverage-report
@@ -607,7 +607,7 @@ jobs:
           CI: true
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always() && steps.check-secrets.outputs.skip == 'false'
         with:
           name: multi-user-post-deploy-playwright-report
@@ -659,7 +659,7 @@ jobs:
           echo "✅ ZAP scan completed"
 
       - name: Upload ZAP Scan Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: zap-scan-report
